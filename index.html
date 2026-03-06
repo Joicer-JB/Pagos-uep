@@ -6,6 +6,7 @@
   <title>Sistema de Gestión - U.E.P Josefa Joaquina Sánchez</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef2f9;min-height:100vh}
@@ -176,6 +177,13 @@ firebase.initializeApp({
   appId:"1:1007197351478:web:3948a2480b9c79a33ab297"
 });
 const db = firebase.firestore();
+const fbAuth = firebase.auth();
+
+// Correos autorizados y sus roles
+const ROLES = {
+  "herrerajoicer@gmail.com": "director",
+  "josefajsanquez@gmail.com": "secretaria"
+};
 
 const fmt = v => new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(v||0);
 const todayStr = () => new Date().toISOString().split("T")[0];
@@ -227,31 +235,46 @@ function renderLogin(){
         <img src="data:image/png;base64,${LOGO}" alt="Logo"/>
         <div><h1>${EMPRESA}</h1><p>${EMPRESA_SUB}</p></div>
       </div>
-      <div style="margin-bottom:1rem">
-        <label class="field-label">Contraseña de acceso</label>
-        <input class="inp" type="password" id="pwd" placeholder="Ingresa la contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div style="display:flex;flex-direction:column;gap:0.85rem">
+        <div>
+          <label class="field-label">Correo electrónico</label>
+          <input class="inp" type="email" id="login-email" placeholder="tucorreo@gmail.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <div>
+          <label class="field-label">Contraseña</label>
+          <input class="inp" type="password" id="login-pwd" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
       </div>
-      <div id="login-err"></div>
-      <button class="btn btn-primary btn-full" style="margin-top:0.75rem" onclick="doLogin()">🔐 Entrar al Sistema</button>
+      <div id="login-err" style="margin-top:0.5rem"></div>
+      <button class="btn btn-primary btn-full" id="login-btn" style="margin-top:0.85rem" onclick="doLogin()">🔐 Entrar al Sistema</button>
     </div>
   </div>`;
 }
-function bindLogin(){ setTimeout(()=>{ const e=document.getElementById("pwd"); if(e) e.focus(); },100); }
-function doLogin(){
-  const v = document.getElementById("pwd").value;
-  if(v===PASSWORD_DIRECTOR){ 
-    sessionStorage.setItem("uep_auth","1"); 
-    sessionStorage.setItem("uep_rol","director");
-    auth=true; rolUsuario="director"; cargarTodo(); 
-  } else if(v===PASSWORD_SECRETARIA){ 
-    sessionStorage.setItem("uep_auth","1"); 
-    sessionStorage.setItem("uep_rol","secretaria");
-    auth=true; rolUsuario="secretaria"; cargarTodo(); 
-  } else {
-    document.getElementById("login-err").innerHTML='<div class="error-msg">Contraseña incorrecta</div>';
+function bindLogin(){ setTimeout(()=>{ const e=document.getElementById("login-email"); if(e) e.focus(); },100); }
+async function doLogin(){
+  const email = document.getElementById("login-email").value.trim();
+  const pwd = document.getElementById("login-pwd").value;
+  const btn = document.getElementById("login-btn");
+  if(!email||!pwd){ document.getElementById("login-err").innerHTML='<div class="error-msg">Ingresa correo y contraseña</div>'; return; }
+  btn.disabled=true; btn.textContent="Verificando...";
+  try{
+    const cred = await fbAuth.signInWithEmailAndPassword(email, pwd);
+    const userEmail = cred.user.email;
+    rolUsuario = ROLES[userEmail] || "secretaria";
+    auth = true;
+    cargarTodo();
+  }catch(e){
+    let msg = "Correo o contraseña incorrectos";
+    if(e.code==="auth/too-many-requests") msg="Demasiados intentos fallidos. Intenta más tarde.";
+    document.getElementById("login-err").innerHTML=`<div class="error-msg">${msg}</div>`;
+    btn.disabled=false; btn.textContent="🔐 Entrar al Sistema";
   }
 }
-function logout(){ sessionStorage.removeItem("uep_auth"); sessionStorage.removeItem("uep_rol"); auth=false; rolUsuario=""; render(); }
+function logout(){ 
+  fbAuth.signOut(); 
+  auth=false; rolUsuario=""; 
+  render(); 
+}
 
 // ===================== TABS =====================
 function renderTab(){
@@ -956,7 +979,19 @@ async function cargarTodo(){
   }
 }
 
-if(auth){ rolUsuario = sessionStorage.getItem("uep_rol")||"secretaria"; cargarTodo(); } else render();
+// Escuchar cambios de autenticación de Firebase
+fbAuth.onAuthStateChanged(user => {
+  if(user){
+    auth = true;
+    rolUsuario = ROLES[user.email] || "secretaria";
+    if(pagos.length===0 && estudiantes.length===0) cargarTodo();
+    else render();
+  } else {
+    auth = false;
+    rolUsuario = "";
+    render();
+  }
+});
 </script>
 </body>
 </html>
