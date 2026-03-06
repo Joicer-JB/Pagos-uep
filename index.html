@@ -365,6 +365,7 @@ function renderEstudiantes(){
           <div class="item-name">${e.nombre}</div>
           <div class="item-sub">${e.grado||''} ${e.cedula?'· CC '+e.cedula:''}</div>
           <div class="item-sub" style="margin-top:2px">📞 ${e.telefono||'Sin teléfono'}</div>
+          ${e.estado==='mora'&&e.moraMonto?`<div style="font-size:0.75rem;color:#e53e3e;margin-top:2px;font-weight:600">Debe: ${fmt(e.moraMonto)}</div>`:''}
         </div>
         <div class="item-right">
           <span class="badge ${e.estado==='mora'?'badge-red':'badge-green'}">${e.estado==='mora'?'⚠️ Mora':'✅ Al Saldo'}</span>
@@ -617,10 +618,19 @@ function renderModalNuevoEstudiante(m){
               <input class="inp" id="e-mensualidad" placeholder="0" style="padding-left:2rem" value="${m.mensualidad||''}"/>
             </div></div>
           <div class="field"><label class="field-label">Estado de pago</label>
-            <select class="inp" id="e-estado">
+            <select class="inp" id="e-estado" onchange="toggleMoraFields()">
               <option value="alsaldo" ${(m.estado||'alsaldo')==='alsaldo'?'selected':''}>✅ Al Saldo</option>
               <option value="mora" ${m.estado==='mora'?'selected':''}>⚠️ En Mora</option>
             </select></div>
+          <div id="mora-fields" style="display:${m.estado==='mora'?'flex':'none'};flex-direction:column;gap:0.8rem;background:#fff5f5;border-radius:10px;padding:0.9rem;border-left:4px solid #e53e3e">
+            <div class="field"><label class="field-label" style="color:#e53e3e">⚠️ Concepto de Mora (¿por qué debe?)</label>
+              <textarea class="inp" id="e-mora-concepto" rows="2" placeholder="Ej: Mensualidad Enero y Febrero 2025 sin cancelar">${m.moraConcepto||''}</textarea></div>
+            <div class="field"><label class="field-label" style="color:#e53e3e">💰 Monto que debe</label>
+              <div style="position:relative">
+                <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#e53e3e;font-weight:700">$</span>
+                <input class="inp" id="e-mora-monto" placeholder="0" style="padding-left:2rem;border-color:#ffcccc" value="${m.moraMonto||''}"/>
+              </div></div>
+          </div>
           <div id="modal-err"></div>
         </div>
       </div>
@@ -664,6 +674,15 @@ function renderModalVerEstudiante(m){
             <div style="font-weight:800;color:#1a9e5c">${fmt(totalPagado)}</div>
           </div>
         </div>
+        ${e.estado==='mora' && (e.moraConcepto||e.moraMonto) ? `
+        <div style="background:#fff5f5;border-radius:10px;padding:0.9rem;margin-bottom:1rem;border-left:4px solid #e53e3e">
+          <div style="font-size:0.62rem;color:#e53e3e;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px">⚠️ Detalle de Mora</div>
+          ${e.moraConcepto?`<div style="font-size:0.88rem;color:#333;margin-bottom:6px">📋 <strong>Concepto:</strong> ${e.moraConcepto}</div>`:''}
+          ${e.moraMonto?`<div style="display:flex;justify-content:space-between;align-items:center;background:#ffe0e0;border-radius:8px;padding:0.6rem 0.85rem;margin-top:4px">
+            <span style="font-size:0.82rem;color:#c0392b;font-weight:600">💰 Monto adeudado</span>
+            <span style="font-size:1.1rem;font-weight:800;color:#e53e3e">${fmt(e.moraMonto)}</span>
+          </div>`:''}
+        </div>`:'' }
         <div style="font-size:0.78rem;color:#888;margin-bottom:0.5rem">Últimos pagos registrados (${pagosEst.length})</div>
         ${pagosEst.slice(0,5).map(p=>`
           <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px dashed #eee;font-size:0.82rem">
@@ -768,6 +787,12 @@ function renderModalVerTrabajador(m){
 // ===================== ACTIONS =====================
 function cerrarModal(){ modalActual=null; render(); }
 
+function toggleMoraFields(){
+  const estado = document.getElementById('e-estado').value;
+  const fields = document.getElementById('mora-fields');
+  if(fields) fields.style.display = estado==='mora' ? 'flex' : 'none';
+}
+
 function abrirModalNuevoPago(nombre='',cedula='',telefono=''){
   modalActual={tipo:'nuevo-pago',nombre,cedula,telefono,metodo:'Efectivo'};
   render();
@@ -809,11 +834,14 @@ function abrirModalNuevoEstudiante(){ modalActual={tipo:'nuevo-estudiante'}; ren
 async function guardarEstudiante(editId){
   const nombre=document.getElementById('e-nombre').value.trim();
   if(!nombre){ document.getElementById('modal-err').innerHTML='<div class="error-msg">El nombre es requerido</div>'; return; }
+  const estado = document.getElementById('e-estado').value;
   const datos={nombre,cedula:document.getElementById('e-cedula').value.trim(),
     grado:document.getElementById('e-grado').value.trim(),
     telefono:document.getElementById('e-telefono').value.trim(),
     mensualidad:parseFloat(document.getElementById('e-mensualidad').value.replace(/\D/g,'')||0),
-    estado:document.getElementById('e-estado').value};
+    estado,
+    moraConcepto: estado==='mora' ? (document.getElementById('e-mora-concepto').value.trim()) : '',
+    moraMonto: estado==='mora' ? parseFloat(document.getElementById('e-mora-monto').value.replace(/\D/g,'')||0) : 0};
   try{
     if(editId){ await db.collection('estudiantes').doc(editId).update(datos); const i=estudiantes.findIndex(e=>e.id===editId); if(i>=0) estudiantes[i]={...estudiantes[i],...datos}; }
     else{ const ref=await db.collection('estudiantes').add(datos); datos.id=ref.id; estudiantes.push(datos); }
