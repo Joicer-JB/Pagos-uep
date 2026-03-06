@@ -187,7 +187,7 @@ let auth = sessionStorage.getItem("uep_auth")==="1";
 let tabActual = "pagos";
 let pagos = [], estudiantes = [], trabajadores = [];
 let modalActual = null;
-let filtroFecha = "", filtroBusqueda = "", filtroMetodo = "";
+let filtroFecha = "", filtroBusqueda = "", filtroMetodo = "", filtroEstado = "";
 
 // ===================== RENDER PRINCIPAL =====================
 function render() {
@@ -217,7 +217,7 @@ function render() {
   if(badge) badge.textContent = rolUsuario==='director'?'👑 Director':'✏️ Secretaria';
 }
 
-function setTab(t){ tabActual=t; filtroFecha=""; filtroBusqueda=""; filtroMetodo=""; render(); }
+function setTab(t){ tabActual=t; filtroFecha=""; filtroBusqueda=""; filtroMetodo=""; filtroEstado=""; render(); }
 
 // ===================== LOGIN =====================
 function renderLogin(){
@@ -332,7 +332,9 @@ function renderEstudiantes(){
   const mora = estudiantes.filter(e=>e.estado==='mora');
   const alsaldo = estudiantes.filter(e=>e.estado!=='mora');
   let filtrados = estudiantes.filter(e=>{
-    return !filtroBusqueda || e.nombre.toLowerCase().includes(filtroBusqueda.toLowerCase()) || (e.cedula||"").includes(filtroBusqueda);
+    const matchBusq = !filtroBusqueda || e.nombre.toLowerCase().includes(filtroBusqueda.toLowerCase()) || (e.cedula||"").includes(filtroBusqueda);
+    const matchEstado = !filtroEstado || e.estado === filtroEstado || (!e.estado && filtroEstado==='alsaldo');
+    return matchBusq && matchEstado;
   });
 
   return `
@@ -348,9 +350,10 @@ function renderEstudiantes(){
   <div class="search-bar">
     <input class="inp" style="padding:0.6rem 0.8rem;font-size:0.85rem" placeholder="🔍 Buscar estudiante..."
       value="${filtroBusqueda}" oninput="filtroBusqueda=this.value;renderTabContent()"/>
-    <select class="inp" style="padding:0.6rem 0.8rem;font-size:0.85rem;width:auto" onchange="filtroBusqueda=this.value==='todos'?'':this.value">
-      <option value="todos">Todos</option>
-      <option value="">Al Saldo</option>
+    <select class="inp" style="padding:0.6rem 0.8rem;font-size:0.85rem;width:auto" onchange="filtroEstado=this.value;renderTabContent()" id="filtro-estado-sel">
+      <option value="">Todos</option>
+      <option value="alsaldo">✅ Al Saldo</option>
+      <option value="mora">⚠️ En Mora</option>
     </select>
   </div>
 
