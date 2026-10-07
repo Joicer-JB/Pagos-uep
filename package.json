@@ -1,0 +1,33 @@
+{
+  "name": "pagos-uep",
+  "private": true,
+  "description": "Sistema de gestión escolar de la U.E.P. Josefa Joaquina Sánchez",
+  "scripts": {
+    "test": "npm run test:unidad && npm run test:e2e",
+    "test:unidad": "node --test \"tests/unidad/**/*.test.js\"",
+    "test:e2e": "node --test tests/e2e/app.test.js",
+    "test:reglas": "firebase emulators:exec --only firestore --project demo-pagos-uep \"node --test tests/reglas/reglas.test.js\"",
+    "test:todo": "npm run revisar && npm test && npm run test:reglas",
+    "revisar": "prettier --check . && eslint .",
+    "formato": "prettier --write .",
+    "lint": "eslint .",
+    "servir": "node herramientas/servir.js",
+    "recorrido": "node tests/e2e/recorrido.js",
+    "comparar": "node tests/e2e/comparar.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@firebase/rules-unit-testing": "5.0.2",
+    "chart.js": "4.4.1",
+    "eslint": "9.39.5",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.32.1",
+    "globals": "16.5.0",
+    "playwright": "1.56.1",
+    "prettier": "3.8.1",
+    "xlsx": "0.18.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

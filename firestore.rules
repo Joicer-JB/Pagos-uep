@@ -1,0 +1,94 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para el proyecto "pagos-jjs".
+//
+// IMPORTANTE: este archivo NO se aplica solo. Para que tenga efecto hay que copiarlo en
+// Firebase Console → Firestore Database → Reglas → Publicar  (ver README, sección "Reglas de Firestore").
+//
+// Los correos de director y administradora deben coincidir con la lista ROLES de js/config.js.
+//
+// Cambios respecto a la versión anterior:
+//   1. Borrar estudiantes, pagos, finanzas y trabajadores: solo el director (antes también la
+//      administradora, aunque la app no le muestra esos botones).
+//   2. Un pago (recibo) ya registrado no se puede modificar; solo crear o, el director, borrar.
+//      La app nunca edita un pago, así que esto no cambia nada del uso normal y protege la contabilidad.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ───────────── Quién es quién ─────────────
+    // Director y administradora se reconocen por su correo (los mismos de la lista ROLES de la plataforma).
+    // Los docentes: el correo fijo de notas, o un perfil activo en la colección "usuarios" con rol "docente".
+    function signedIn() { return request.auth != null; }
+    function mail() { return request.auth.token.email.lower(); }
+    function isDirector() { return signedIn() && mail() == 'herrerajoicer@gmail.com'; }
+    function isAdmin()    { return signedIn() && mail() == 'josefajsanquez@gmail.com'; }
+    function isStaff()    { return isDirector() || isAdmin(); }
+    function perfilPath() { return /databases/$(database)/documents/usuarios/$(request.auth.uid); }
+    function isDocente() {
+      return signedIn() && (
+        mail() == 'notasjjs@gmail.com' ||
+        (exists(perfilPath())
+          && get(perfilPath()).data.get('rol', '') == 'docente'
+          && get(perfilPath()).data.get('activo', true) != false)
+      );
+    }
+
+    // ───────────── Perfiles de usuario (docentes) ─────────────
+    // Cada quien puede leer solo su propio perfil. Solo el director crea, edita o elimina perfiles,
+    // así un docente no puede cambiarse el rol a sí mismo.
+    match /usuarios/{uid} {
+      allow read:  if isDirector() || (signedIn() && request.auth.uid == uid);
+      allow write: if isDirector();
+    }
+
+    // ───────────── Estudiantes ─────────────
+    // Director y administradora registran y editan (al cobrar se actualiza la deuda del estudiante).
+    // Los docentes solo leen (para cargar notas). Borrar: solo el director.
+    match /estudiantes/{id} {
+      allow read:           if isStaff() || isDocente();
+      allow create, update: if isStaff();
+      allow delete:         if isDirector();
+    }
+
+    // ───────────── Dinero y personal: solo director y administradora ─────────────
+    // Pagos: se registran y se consultan, pero no se modifican. Borrar un recibo: solo el director.
+    match /pagos/{id} {
+      allow read, create: if isStaff();
+      allow update:       if false;
+      allow delete:       if isDirector();
+    }
+    match /finanzas/{id} {
+      allow read, create, update: if isStaff();
+      allow delete:               if isDirector();
+    }
+    match /trabajadores/{id} {
+      allow read, create, update: if isStaff();
+      allow delete:               if isDirector();
+    }
+
+    // ───────────── Notas ─────────────
+    // Los docentes cargan notas. Solo el director puede borrar (lo usa el cierre de año).
+    match /notas/{id} {
+      allow read, create, update: if isStaff() || isDocente();
+      allow delete:               if isDirector();
+    }
+    match /notas_historial/{id} {
+      allow read:  if isStaff();
+      allow write: if isDirector();
+    }
+
+    // ───────────── Configuración ─────────────
+    // Todos los roles la leen (materias, indicadores, datos de la institución, tasa BCV...).
+    // La tasa BCV la puede cargar también la administradora; el resto de la configuración, solo el director.
+    match /config/{docId} {
+      allow read:  if isStaff() || isDocente();
+      allow write: if isDirector() || (docId == 'tasasBCV' && isStaff());
+    }
+
+    // ───────────── Todo lo demás: cerrado ─────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,4 @@
+node_modules/
+*-debug.log
+recorrido.json
+.DS_Store

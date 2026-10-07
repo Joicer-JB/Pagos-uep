@@ -1,0 +1,5 @@
+{
+  "printWidth": 120,
+  "trailingComma": "es5",
+  "overrides": [{ "files": "js/logo.js", "options": { "printWidth": 100000 } }]
+}

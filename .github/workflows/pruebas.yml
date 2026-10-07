@@ -1,0 +1,54 @@
+# Revisión automática en cada cambio que se sube a GitHub.
+# Si algo falla, GitHub muestra una ❌ junto al commit y en el pull request.
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  codigo:
+    name: Formato, revisión y pruebas de funciones
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run revisar
+      - run: npm run test:unidad
+
+  navegador:
+    name: App completa en el navegador
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  reglas:
+    name: Reglas de Firestore (emulador)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: emulador-firestore-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run test:reglas
