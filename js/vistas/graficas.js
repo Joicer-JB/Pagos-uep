@@ -61,7 +61,7 @@ function renderGraficas(){
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
           <div style="font-size:0.6rem;color:#003366;font-weight:700;writing-mode:horizontal-tb">${m.total>0?fmt(m.total).replace("$ ",""):"—"}</div>
           <div style="width:100%;background:linear-gradient(180deg,#00509e,#003366);border-radius:4px 4px 0 0;height:${Math.max(4,Math.round(m.total/maxRec*90))}px;min-height:4px;transition:height 0.5s"></div>
-          <div style="font-size:0.62rem;color:#888;text-align:center">${m.mes}</div>
+          <div style="font-size:0.62rem;color:#888;text-align:center">${escHtml(m.mes)}</div>
         </div>`).join("")}
       </div>
     </div>
@@ -88,7 +88,7 @@ function renderGraficas(){
       ${gradosData.map((g,i)=>`
       <div style="margin-bottom:0.45rem">
         <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px">
-          <span style="color:#444">${g.grado}</span>
+          <span style="color:#444">${escHtml(g.grado)}</span>
           <span style="font-weight:700;color:#003366">${g.cant}</span>
         </div>
         <div style="background:#eef2f9;border-radius:10px;height:8px;overflow:hidden">
@@ -111,7 +111,7 @@ function renderGraficas(){
       ${Object.entries(porConcepto).sort((a,b)=>b[1]-a[1]).map(([c,v],i)=>`
       <div style="margin-bottom:0.45rem">
         <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px">
-          <span style="color:#444">${c}</span>
+          <span style="color:#444">${escHtml(c)}</span>
           <span style="font-weight:700;color:${COLORS[i%COLORS.length]}">${fmt(v)}</span>
         </div>
         <div style="background:#eef2f9;border-radius:10px;height:8px;overflow:hidden">

@@ -28,10 +28,10 @@ async function cargarTodo(){
     estudiantes=se.docs.map(d=>({id:d.id,...d.data()}));
     notas={};
     sn.docs.forEach(d=>{const x=d.data();const k=(soloLectura()&&x.clave)?x.clave:d.id;notas[k]={...x};});
-    if(rolUsuario==="director") await cargarConfig();
+    await cargarConfig();
     render();
   }catch(e){
-    document.getElementById("app").innerHTML=`<div class="loading">❌ Error: ${e.message}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;
+    document.getElementById("app").innerHTML=`<div class="loading">❌ Error: ${escHtml(e.message)}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;
   }
 }
 const porTimestampDesc=(a,b)=>((b.timestamp&&b.timestamp.seconds)||0)-((a.timestamp&&a.timestamp.seconds)||0);

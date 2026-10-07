@@ -151,7 +151,7 @@ function renderConfigAnio(){
   const hist=escCfg?escCfg.anteriores.slice().reverse():[];
   return `
   ${escCfg&&escCfg.pendienteLimpieza?`<div class="mora-box"><strong>⚠️ El cambio de año quedó a medias.</strong><div style="font-size:0.78rem;margin:4px 0 8px">El año nuevo se creó pero no terminó el reinicio de estudiantes y notas.</div><button class="btn btn-danger btn-sm" onclick="reintentarLimpieza()">Completar reinicio</button></div>`:""}
-  <div class="info-row"><span>Año escolar actual</span><strong>${nombreAct||"Sin definir"}</strong></div>
+  <div class="info-row"><span>Año escolar actual</span><strong>${escHtml(nombreAct)||"Sin definir"}</strong></div>
   ${escCfg?`<div class="info-row"><span>Inició el</span><strong>${fechaCorta(escCfg.actual.inicio)}</strong></div>`
     :`<div class="info-row"><span>Estado</span><span style="font-size:0.75rem;color:#888;text-align:right">Aún no se separa por años:<br>todo el historial aparece junto</span></div>`}
   <div class="info-row"><span>Estudiantes activos</span><strong>${activos}</strong></div>
@@ -162,7 +162,7 @@ function renderConfigAnio(){
   </div>
   <div class="form-grid">
     ${escCfg?"":`<div class="form-row">
-      <div class="field"><label class="field-label">Año que se cierra</label><input class="inp" id="ea-old-nombre" value="${nombreAct||"2025-2026"}"/></div>
+      <div class="field"><label class="field-label">Año que se cierra</label><input class="inp" id="ea-old-nombre" value="${escHtml(nombreAct)||"2025-2026"}"/></div>
       <div class="field"><label class="field-label">Inició el (opcional)</label><input class="inp" type="date" id="ea-old-inicio"/></div>
     </div>`}
     <div class="form-row">
@@ -184,7 +184,7 @@ function renderConfigAnio(){
   ${renderPromocion()}
   ${hist.length?`<hr class="divider"/><div class="section-title">Historial de años</div>
   ${hist.map(a=>{const r=a.resumen||{};return `<details class="card" style="padding:0.75rem;margin-bottom:0.5rem">
-    <summary style="cursor:pointer;font-weight:700;color:#003366">📚 ${a.nombre} <span style="font-weight:400;font-size:0.72rem;color:#888">(${a.inicio?fechaCorta(a.inicio):"…"} – ${fechaCorta(a.fin)})</span></summary>
+    <summary style="cursor:pointer;font-weight:700;color:#003366">📚 ${escHtml(a.nombre)} <span style="font-weight:400;font-size:0.72rem;color:#888">(${a.inicio?fechaCorta(a.inicio):"…"} – ${fechaCorta(a.fin)})</span></summary>
     <div style="margin-top:0.6rem">
       <div class="info-row"><span>Pagos registrados</span><strong>${r.pagos||0}</strong></div>
       <div class="info-row"><span>Total cobrado</span><strong style="color:#1a9e5c">${fmtUSD(r.cobrado)}</strong></div>
@@ -194,7 +194,7 @@ function renderConfigAnio(){
       <div class="info-row"><span>Estudiantes activos al cierre</span><strong>${r.estudiantesActivos||0}</strong></div>
       <div class="info-row"><span>Deudas pendientes al cierre</span><strong style="color:#e53e3e">${r.enMora||0} · ${fmtUSD(r.deudaTotal)}</strong></div>
       ${(a.deudas||[]).length?`<div class="section-title" style="margin-top:0.6rem">Quiénes debían</div>
-      ${a.deudas.map(d=>`<div class="info-row"><span>${d.nombre}${d.grado?" · "+d.grado:""}<div style="font-size:0.7rem;color:#888">${d.concepto||""}</div></span><strong>${fmtUSD(d.monto)}</strong></div>`).join("")}`:""}
+      ${a.deudas.map(d=>`<div class="info-row"><span>${escHtml(d.nombre)}${d.grado?" · "+escHtml(d.grado):""}<div style="font-size:0.7rem;color:#888">${escHtml(d.concepto)||""}</div></span><strong>${fmtUSD(d.monto)}</strong></div>`).join("")}`:""}
       <button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="cambiarAnioVista('${a.id}')">👁 Ver todos los datos de este año</button>
     </div></details>`;}).join("")}`:""}`;
 }

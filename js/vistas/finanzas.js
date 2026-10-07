@@ -41,7 +41,7 @@ function renderFinanzas(){
 
   ${st==="resumen"?`
   <div style="background:linear-gradient(135deg,#003366,#00509e);border-radius:14px;padding:1.1rem 1.25rem;color:#fff;margin-bottom:0.85rem">
-    <div style="font-size:0.62rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">${filtros.mes||MESES[mesActual()]} ${anio}</div>
+    <div style="font-size:0.62rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">${escHtml(filtros.mes)||MESES[mesActual()]} ${anio}</div>
     <div class="stats-grid-3" style="margin-top:0.75rem;margin-bottom:0">
       <div style="text-align:center"><div style="font-size:0.6rem;color:#adc8ff">Ingresos</div><div style="font-weight:800;color:#7fff9f;font-size:0.95rem">${fmt(totalIng)}</div></div>
       <div style="text-align:center"><div style="font-size:0.6rem;color:#adc8ff">Gastos</div><div style="font-weight:800;color:#ffaaaa;font-size:0.95rem">${fmt(totalGas)}</div></div>
@@ -70,13 +70,13 @@ function renderFinanzas(){
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>Desglose de Gastos</h2></div>
     ${Object.entries(gasMes.reduce((acc,f)=>{acc[f.categoria||"Otros"]=(acc[f.categoria||"Otros"]||0)+f.monto;return acc;},{})).map(([k,v])=>`
-    <div class="info-row"><span style="color:#555">📌 ${k}</span><span style="font-weight:700;color:#e53e3e">${fmt(v)}</span></div>`).join("")||'<p style="font-size:0.82rem;color:#aaa">Sin gastos</p>'}
+    <div class="info-row"><span style="color:#555">📌 ${escHtml(k)}</span><span style="font-weight:700;color:#e53e3e">${fmt(v)}</span></div>`).join("")||'<p style="font-size:0.82rem;color:#aaa">Sin gastos</p>'}
   </div>`:""}
 
   ${st==="gastos"?`
   <button class="btn btn-danger btn-full" style="margin-bottom:0.75rem" onclick="abrirModal({tipo:'nuevo-finanza',subtipo:'gasto'})">📉 Registrar Gasto</button>
   <div class="list">
-    ${gasMes.map(f=>`<div class="list-item gasto" onclick="abrirModal({tipo:'ver-finanza',id:'${f.id}'})"><div class="item-row"><div style="flex:1"><div class="item-name">${f.descripcion}</div><div class="item-sub">${f.categoria||"Gasto"} · ${f.fecha} ${f.responsable?"· "+f.responsable:""}</div></div><div class="item-right"><div class="item-amount" style="color:#e53e3e">${fmt(f.monto)}</div>${(()=>{const b=bsDe(f,f.monto);return b.bs!=null?`<div style="font-size:0.68rem;color:#888">${fmtBs(b.bs)}</div>`:"";})()}</div></div></div>`).join("")}
+    ${gasMes.map(f=>`<div class="list-item gasto" onclick="abrirModal({tipo:'ver-finanza',id:'${f.id}'})"><div class="item-row"><div style="flex:1"><div class="item-name">${escHtml(f.descripcion)}</div><div class="item-sub">${escHtml(f.categoria)||"Gasto"} · ${escHtml(f.fecha)} ${f.responsable?"· "+escHtml(f.responsable):""}</div></div><div class="item-right"><div class="item-amount" style="color:#e53e3e">${fmt(f.monto)}</div>${(()=>{const b=bsDe(f,f.monto);return b.bs!=null?`<div style="font-size:0.68rem;color:#888">${fmtBs(b.bs)}</div>`:"";})()}</div></div></div>`).join("")}
     ${gasMes.length===0?`<div class="empty"><div class="empty-icon">📉</div><p>Sin gastos este mes</p></div>`:""}
   </div>`:""}
 
@@ -91,7 +91,7 @@ function renderFinanzas(){
     ${flujoPorMes.map((m,i)=>`
     <div style="margin-bottom:0.75rem;background:#f8faff;border-radius:10px;padding:0.65rem 0.85rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-weight:700;color:#003366;font-size:0.85rem">${m.mes} ${anio}</span>
+        <span style="font-weight:700;color:#003366;font-size:0.85rem">${escHtml(m.mes)} ${anio}</span>
         <div style="display:flex;align-items:center;gap:0.5rem">
           <span style="color:${m.balBs>=0?"#1a9e5c":"#e53e3e"};font-weight:700;font-size:0.85rem">${fmtBs(m.balBs)} <span style="font-weight:400;font-size:0.68rem;color:#888">(${fmt(m.bal)})</span></span>
           <div style="display:flex;gap:0.3rem">
@@ -152,12 +152,12 @@ function renderModalVerFinanza(m){
   return`<div class="modal-bg" onclick="if(event.target.classList.contains('modal-bg'))cerrarModal()">
     <div class="modal">
       <div class="modal-header" style="background:${f.tipo==="ingreso"?"linear-gradient(135deg,#1a9e5c,#27ae60)":"linear-gradient(135deg,#c0392b,#e53e3e)"}">
-        <div><h3>${f.tipo==="ingreso"?"📈":"📉"} ${f.descripcion}</h3><p>${f.categoria||""} · ${f.fecha}</p></div>
+        <div><h3>${f.tipo==="ingreso"?"📈":"📉"} ${escHtml(f.descripcion)}</h3><p>${escHtml(f.categoria)||""} · ${escHtml(f.fecha)}</p></div>
         <button class="modal-close-x" onclick="cerrarModal()">✕</button>
       </div>
       <div class="modal-body">
         ${[["Descripción",f.descripcion],["Fecha",f.fecha],["Categoría",f.categoria||"N/A"],["Responsable",f.responsable||"N/A"],["Observaciones",f.observaciones||"N/A"]].map(([l,v])=>`
-        <div class="info-row"><span style="color:#888;font-size:0.8rem">${l}</span><span style="font-weight:600;font-size:0.82rem">${v}</span></div>`).join("")}
+        <div class="info-row"><span style="color:#888;font-size:0.8rem">${l}</span><span style="font-weight:600;font-size:0.82rem">${escHtml(v)}</span></div>`).join("")}
         <div style="margin-top:0.85rem;padding:0.85rem 1rem;background:${f.tipo==="ingreso"?"#e6f7ef":"#fff5f5"};border-radius:10px;display:flex;justify-content:space-between">
           <span style="font-weight:700;color:${f.tipo==="ingreso"?"#1a9e5c":"#e53e3e"}">Monto</span>
           <span style="font-size:1.2rem;font-weight:800;color:${f.tipo==="ingreso"?"#1a9e5c":"#e53e3e"}">${fmt(f.monto)}</span>
@@ -185,14 +185,14 @@ function imprimirFlujoCaja(anio, mesIdx, detallado=false){
   const T=sel.reduce((a,m)=>({ib:a.ib+m.di.bs,iu:a.iu+m.di.usd,gb:a.gb+m.dg.bs,gu:a.gu+m.dg.usd,sin:a.sin+m.di.sinTasa+m.dg.sinTasa,est:a.est+m.di.estim+m.dg.estim}),{ib:0,iu:0,gb:0,gu:0,sin:0,est:0});
   const celdas=(d,esIng,bsTxt)=>esIng?`<td class="r">${bsTxt}</td><td class="r">${fmt(d)}</td><td></td><td></td><td></td><td></td>`:`<td></td><td></td><td class="r">${bsTxt}</td><td class="r">${fmt(d)}</td><td></td><td></td>`;
   const filaDet=(d,esIng)=>{const b=bsDe(d.rec,d.usd);const t=b.bs!=null?fmtBs(b.bs)+(b.estimada?" *":""):"—";
-    return `<tr class="${esIng?"di":"dg"}"><td class="sub">↳ ${d.desc} <span class="f">${fechaCorta(d.fecha)}${b.tasa?" · tasa "+fmtTasa(b.tasa):""}</span></td>${celdas(d.usd,esIng,t)}</tr>`;};
-  const filaGrp=(nombre,items,esIng)=>{const t=totalesDual(items);return `<tr class="${esIng?"di":"dg"}"><td class="sub">↳ ${nombre}</td>${celdas(t.usd,esIng,fmtBs(t.bs))}</tr>`;};
+    return `<tr class="${esIng?"di":"dg"}"><td class="sub">↳ ${escHtml(d.desc)} <span class="f">${fechaCorta(d.fecha)}${b.tasa?" · tasa "+fmtTasa(b.tasa):""}</span></td>${celdas(d.usd,esIng,t)}</tr>`;};
+  const filaGrp=(nombre,items,esIng)=>{const t=totalesDual(items);return `<tr class="${esIng?"di":"dg"}"><td class="sub">↳ ${escHtml(nombre)}</td>${celdas(t.usd,esIng,fmtBs(t.bs))}</tr>`;};
   const grupos=arr=>{const g={};arr.forEach(d=>{(g[d.grupo]=g[d.grupo]||[]).push(d);});return g;};
   const filas=sel.map(m=>{
     let det="";
     if(detallado){det=m.ing.map(d=>filaDet(d,true)).join("")+m.gas.map(d=>filaDet(d,false)).join("");}
     else{const gi=grupos(m.ing),gg=grupos(m.gas);det=Object.entries(gi).map(([k,a])=>filaGrp(k,a,true)).join("")+Object.entries(gg).map(([k,a])=>filaGrp(k,a,false)).join("");}
-    return `<tr class="m"><td>${m.mes}</td><td class="r in">${fmtBs(m.di.bs)}</td><td class="r in">${fmt(m.di.usd)}</td><td class="r out">${fmtBs(m.dg.bs)}</td><td class="r out">${fmt(m.dg.usd)}</td><td class="r b">${fmtBs(r2(m.di.bs-m.dg.bs))}</td><td class="r b">${fmt(r2(m.di.usd-m.dg.usd))}</td></tr>${det}`;
+    return `<tr class="m"><td>${escHtml(m.mes)}</td><td class="r in">${fmtBs(m.di.bs)}</td><td class="r in">${fmt(m.di.usd)}</td><td class="r out">${fmtBs(m.dg.bs)}</td><td class="r out">${fmt(m.dg.usd)}</td><td class="r b">${fmtBs(r2(m.di.bs-m.dg.bs))}</td><td class="r b">${fmt(r2(m.di.usd-m.dg.usd))}</td></tr>${det}`;
   }).join("");
   const w=window.open("","_blank");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">

@@ -114,12 +114,12 @@ function filaGrupoPromo(k,g){
     :`<span style="color:#c0392b">⚠️ elige a qué grado equivale</span>`;
   const opts=`<option value="-1" ${!(idx>=0)?"selected":""}>— No cambiar / elegir —</option>`+ESCALERA.map((x,i)=>`<option value="${i}" ${idx===i?"selected":""}>${x}</option>`).join("");
   return `<details class="card" ${promoAbiertos.has(k)?"open":""} ontoggle="promoToggle('${k}',this.open)" style="padding:0.7rem 0.85rem;margin-bottom:0.45rem">
-    <summary style="cursor:pointer;font-size:0.85rem"><strong style="color:#003366">${g.texto}</strong> · ${g.items.length} estudiante${g.items.length!==1?"s":""} &nbsp;${dest}</summary>
+    <summary style="cursor:pointer;font-size:0.85rem"><strong style="color:#003366">${escHtml(g.texto)}</strong> · ${g.items.length} estudiante${g.items.length!==1?"s":""} &nbsp;${dest}</summary>
     <div style="margin-top:0.6rem">
       <div style="font-size:0.74rem;color:#666;margin-bottom:0.3rem">Este grado equivale a:</div>
       <select class="inp" style="padding:0.45rem 0.6rem;font-size:0.8rem;margin-bottom:0.5rem" onchange="promoMapear('${k}',this.value)">${opts}</select>
       <div style="font-size:0.74rem;color:#666;margin:0.2rem 0">Marca a los que <strong>repiten</strong> el grado:</div>
-      ${g.items.map(p=>`<label style="display:flex;gap:0.5rem;align-items:center;font-size:0.8rem;padding:0.15rem 0"><input type="checkbox" ${promoRepite.has(p.e.id)?"checked":""} ${p.accion==="hecho"?"disabled":""} onchange="promoRepetir('${p.e.id}',this.checked)"/> ${p.e.nombre}${p.accion==="hecho"?` <small style="color:#888">(ya promovido)</small>`:""}</label>`).join("")}
+      ${g.items.map(p=>`<label style="display:flex;gap:0.5rem;align-items:center;font-size:0.8rem;padding:0.15rem 0"><input type="checkbox" ${promoRepite.has(p.e.id)?"checked":""} ${p.accion==="hecho"?"disabled":""} onchange="promoRepetir('${p.e.id}',this.checked)"/> ${escHtml(p.e.nombre)}${p.accion==="hecho"?` <small style="color:#888">(ya promovido)</small>`:""}</label>`).join("")}
     </div></details>`;
 }
 function cuerpoPromo(){
@@ -129,7 +129,7 @@ function cuerpoPromo(){
   plan.forEach(p=>{const k=gradoKey(p.e.grado);if(!grupos.has(k))grupos.set(k,{texto:p.e.grado||"(sin grado)",items:[]});grupos.get(k).items.push(p);});
   const orden=[...grupos.entries()].sort((a,b)=>{const ia=promoIndice(a[1].items[0].e),ib=promoIndice(b[1].items[0].e);return ((ia>=0?ia:99)-(ib>=0?ib:99))||a[1].texto.localeCompare(b[1].texto);});
   const hayHechos=estudiantes.some(e=>e.ultimaPromocion===escCfg.actual.id);
-  return `<div class="section-title">🎓 Pase de grado${termina?" · "+termina+" → "+escCfg.actual.nombre:""}</div>
+  return `<div class="section-title">🎓 Pase de grado${termina?" · "+termina+" → "+escHtml(escCfg.actual.nombre):""}</div>
   <div style="font-size:0.78rem;color:#555;margin-bottom:0.7rem;line-height:1.45">
     Pasa a todos los estudiantes al grado siguiente de una sola vez: <strong>6to Grado → 1er Año</strong> (bachillerato) y <strong>5to Año → Graduado</strong>.
     Revisa la lista, marca a quienes repiten y pulsa el botón. Antes de empezar se descarga un respaldo, y se puede deshacer.

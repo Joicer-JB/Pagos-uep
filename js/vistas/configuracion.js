@@ -4,20 +4,22 @@ let configDocentes = [];
 let configMaterias = {}; // {grado: [materias]}
 let configIndicadores = {}; // {grado_materia: [indicadores]}
 let configInst = {};
+// Materias, indicadores y datos de la institución los usan todos los roles (notas, boletines, recibos).
+// La lista de docentes solo la carga el director: las reglas de Firestore no dejan leer "usuarios" a los demás.
 async function cargarConfig(){
   try {
-    const [docsSnap, instSnap] = await Promise.all([
-      db.collection("usuarios").where("rol","==","docente").get(),
-      db.collection("config").doc("institucion").get()
+    const [instSnap, matSnap, indSnap] = await Promise.all([
+      db.collection("config").doc("institucion").get(),
+      db.collection("config").doc("materias").get(),
+      db.collection("config").doc("indicadores").get()
     ]);
-    configDocentes = docsSnap.docs.map(d=>({id:d.id,...d.data()}));
     if(instSnap.exists) configInst = instSnap.data();
-
-    // Cargar materias e indicadores
-    const matSnap = await db.collection("config").doc("materias").get();
     if(matSnap.exists) configMaterias = matSnap.data();
-    const indSnap = await db.collection("config").doc("indicadores").get();
     if(indSnap.exists) configIndicadores = indSnap.data();
+    if(rolUsuario==="director"){
+      const docsSnap = await db.collection("usuarios").where("rol","==","docente").get();
+      configDocentes = docsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    }
   } catch(e){ console.error(e); }
 }
 function renderConfig(){
@@ -47,8 +49,8 @@ function buscarTrabajadorDoc(val){
   box.style.display="block";
   box.innerHTML = matches.slice(0,6).map(t=>`
     <div onclick="seleccionarTrabajadorDoc('${t.id}')" style="padding:0.65rem 1rem;cursor:pointer;border-bottom:1px solid #eef2f9;font-size:0.85rem;transition:background .15s" onmouseover="this.style.background='#e8f0fe'" onmouseout="this.style.background='#fff'">
-      <div style="font-weight:700;color:#003366">${t.nombre}</div>
-      <div style="font-size:0.72rem;color:#888">${t.cargo||"Sin cargo"} ${t.cedula?"· CC "+t.cedula:""}</div>
+      <div style="font-weight:700;color:#003366">${escHtml(t.nombre)}</div>
+      <div style="font-size:0.72rem;color:#888">${escHtml(t.cargo)||"Sin cargo"} ${t.cedula?"· CC "+escHtml(t.cedula):""}</div>
     </div>`).join("");
 }
 function seleccionarTrabajadorDoc(trabId){
@@ -82,13 +84,13 @@ function renderConfigDocentes(){
     <div style="background:${d.activo===false?"#f5f5f5":"#f8faff"};border-radius:12px;padding:0.85rem 1rem;border-left:4px solid ${d.activo===false?"#ccc":d.jornada==="mañana"?"#f6ad55":d.jornada==="tarde"?"#667eea":"#003366"};opacity:${d.activo===false?"0.6":"1"}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <div style="font-weight:700;color:#003366;font-size:0.92rem">${d.nombre}</div>
-          <div style="font-size:0.75rem;color:#666;margin-top:2px">${d.correo}${d.cedula?" · CC "+d.cedula:""}</div>
+          <div style="font-weight:700;color:#003366;font-size:0.92rem">${escHtml(d.nombre)}</div>
+          <div style="font-size:0.75rem;color:#666;margin-top:2px">${escHtml(d.correo)}${d.cedula?" · CC "+escHtml(d.cedula):""}</div>
           ${d.trabajadorId?`<div style="font-size:0.7rem;color:#1a9e5c;margin-top:1px">🔗 Vinculado a nómina</div>`:""}
           <div style="display:flex;gap:0.4rem;margin-top:5px;flex-wrap:wrap">
             <span style="background:${d.jornada==="mañana"?"#fff3e0":d.jornada==="tarde"?"#ede7f6":"#e3f2fd"};color:${d.jornada==="mañana"?"#e65100":d.jornada==="tarde"?"#4527a0":"#0d47a1"};padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600">${d.jornada==="mañana"?"🌅 Mañana":d.jornada==="tarde"?"🌆 Tarde":"🌓 Ambas"}</span>
-            ${d.grado?`<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600">📚 ${d.grado}</span>`:""}
-            ${(d.materias||[]).map(m=>`<span style="background:#e3f2fd;color:#0d47a1;padding:2px 8px;border-radius:20px;font-size:0.7rem">${m}</span>`).join("")}
+            ${d.grado?`<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600">📚 ${escHtml(d.grado)}</span>`:""}
+            ${(d.materias||[]).map(m=>`<span style="background:#e3f2fd;color:#0d47a1;padding:2px 8px;border-radius:20px;font-size:0.7rem">${escHtml(m)}</span>`).join("")}
           </div>
         </div>
         <div style="display:flex;gap:0.4rem;flex-shrink:0">
@@ -116,7 +118,7 @@ function renderConfigMaterias(){
     <div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.75rem">
       ${mats.map((m,i)=>`
       <div style="display:flex;align-items:center;gap:0.5rem;background:#fff;border-radius:8px;padding:0.5rem 0.75rem;border:1px solid #e0e8f0">
-        <span style="font-size:0.82rem;color:#333;flex:1">${m}</span>
+        <span style="font-size:0.82rem;color:#333;flex:1">${escHtml(m)}</span>
         <button onclick="moverMateria('${grado}',${i},-1)" style="padding:0.15rem 0.4rem;border:none;background:#f0f4ff;border-radius:4px;cursor:pointer;font-size:0.75rem" ${i===0?"disabled":""}>▲</button>
         <button onclick="moverMateria('${grado}',${i},1)" style="padding:0.15rem 0.4rem;border:none;background:#f0f4ff;border-radius:4px;cursor:pointer;font-size:0.75rem" ${i===mats.length-1?"disabled":""}>▼</button>
         <button onclick="eliminarMateria('${grado}',${i})" style="padding:0.15rem 0.5rem;border:none;background:#fef0f0;color:#e53e3e;border-radius:4px;cursor:pointer;font-size:0.75rem">✕</button>
@@ -155,7 +157,7 @@ function renderConfigIndicadores(){
       ${inds.map((ind,i)=>`
       <div style="display:flex;align-items:center;gap:0.5rem;background:#fff;border-radius:8px;padding:0.5rem 0.75rem;border:1px solid #e0e8f0">
         <span style="font-size:0.75rem;font-weight:700;color:#888;min-width:20px">${i+1}.</span>
-        <span style="font-size:0.82rem;color:#333;flex:1">${ind}</span>
+        <span style="font-size:0.82rem;color:#333;flex:1">${escHtml(ind)}</span>
         <button onclick="eliminarIndicador('${key}',${i})" style="padding:0.15rem 0.5rem;border:none;background:#fef0f0;color:#e53e3e;border-radius:4px;cursor:pointer;font-size:0.75rem">✕</button>
       </div>`).join("")}
     </div>
@@ -172,19 +174,19 @@ function renderConfigInstitucion(){
   return `
   <div class="form-grid">
     <div class="field"><label class="field-label">Código del plantel</label>
-      <input class="inp" id="inst-codigo" value="${inst.codigo||'PD13831519'}" placeholder="PD13831519"/></div>
+      <input class="inp" id="inst-codigo" value="${escHtml(inst.codigo)||'PD13831519'}" placeholder="PD13831519"/></div>
     <div class="field"><label class="field-label">Nombre del plantel</label>
-      <input class="inp" id="inst-nombre" value="${inst.nombre||'U.E.P. Josefa Joaquina Sánchez'}" placeholder="Nombre del plantel"/></div>
+      <input class="inp" id="inst-nombre" value="${escHtml(inst.nombre)||'U.E.P. Josefa Joaquina Sánchez'}" placeholder="Nombre del plantel"/></div>
     <div class="field"><label class="field-label">Dirección</label>
-      <input class="inp" id="inst-direccion" value="${inst.direccion||'Turumo - Caucagüita, Estado Miranda'}" placeholder="Dirección"/></div>
+      <input class="inp" id="inst-direccion" value="${escHtml(inst.direccion)||'Turumo - Caucagüita, Estado Miranda'}" placeholder="Dirección"/></div>
     <div class="field"><label class="field-label">Directora</label>
-      <input class="inp" id="inst-directora" value="${inst.directora||'Lic. Ligia Herrera'}" placeholder="Nombre y título"/></div>
+      <input class="inp" id="inst-directora" value="${escHtml(inst.directora)||'Lic. Ligia Herrera'}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Coordinador/a de Media General</label>
-      <input class="inp" id="inst-coordinador" value="${inst.coordinador||'Lic. Carlos Carrascal'}" placeholder="Nombre y título"/></div>
+      <input class="inp" id="inst-coordinador" value="${escHtml(inst.coordinador)||'Lic. Carlos Carrascal'}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Coordinador/a de Primaria</label>
-      <input class="inp" id="inst-coordinador-prim" value="${inst.coordinadorPrimaria||''}" placeholder="Nombre y título"/></div>
+      <input class="inp" id="inst-coordinador-prim" value="${escHtml(inst.coordinadorPrimaria)||''}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Año escolar actual</label>
-      <input class="inp" id="inst-anio" value="${inst.anioEscolar||'2025-2026'}" placeholder="2025-2026"/></div>
+      <input class="inp" id="inst-anio" value="${escHtml(inst.anioEscolar)||'2025-2026'}" placeholder="2025-2026"/></div>
   </div>
   <div style="margin-top:1rem">
     <button class="btn btn-primary" onclick="guardarInstitucion()">💾 Guardar datos institucionales</button>
@@ -297,17 +299,17 @@ function renderModalDocente(docenteId){
       <div class="form-grid">
         <div class="field"><label class="field-label">Nombre completo *</label>
           <div style="position:relative">
-            <input class="inp" id="doc-nombre" value="${d.nombre||''}" placeholder="Escribe el nombre o selecciona de nómina..." oninput="buscarTrabajadorDoc(this.value)" autocomplete="off"/>
+            <input class="inp" id="doc-nombre" value="${escHtml(d.nombre)||''}" placeholder="Escribe el nombre o selecciona de nómina..." oninput="buscarTrabajadorDoc(this.value)" autocomplete="off"/>
             <div id="doc-trab-sugerencias" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #003366;border-radius:0 0 10px 10px;z-index:99;display:none;max-height:180px;overflow-y:auto;box-shadow:0 8px 20px rgba(0,51,102,0.15)"></div>
           </div>
           <div style="font-size:0.72rem;color:#888;margin-top:3px">💡 Escribe el nombre para buscar en el personal de nómina</div>
         </div>
         <div class="field"><label class="field-label">Cédula</label>
-          <input class="inp" id="doc-cedula" value="${d.cedula||''}" placeholder="Se rellena automáticamente" readonly style="background:#f0f4ff;color:#003366"/></div>
+          <input class="inp" id="doc-cedula" value="${escHtml(d.cedula)||''}" placeholder="Se rellena automáticamente" readonly style="background:#f0f4ff;color:#003366"/></div>
         <div class="field"><label class="field-label">Cargo</label>
-          <input class="inp" id="doc-cargo" value="${d.cargo||''}" placeholder="Se rellena automáticamente" readonly style="background:#f0f4ff;color:#003366"/></div>
+          <input class="inp" id="doc-cargo" value="${escHtml(d.cargo)||''}" placeholder="Se rellena automáticamente" readonly style="background:#f0f4ff;color:#003366"/></div>
         <div class="field"><label class="field-label">Correo electrónico *</label>
-          <input class="inp" id="doc-correo" type="email" value="${d.correo||''}" placeholder="correo@ejemplo.com" ${isEdit?"readonly style='background:#f0f4ff'":""}/></div>
+          <input class="inp" id="doc-correo" type="email" value="${escHtml(d.correo)||''}" placeholder="correo@ejemplo.com" ${isEdit?"readonly style='background:#f0f4ff'":""}/></div>
         ${!isEdit?`<div class="field"><label class="field-label">Contraseña temporal *</label>
           <input class="inp" id="doc-pass" type="password" placeholder="Mínimo 6 caracteres"/></div>`:""}
         <div class="field" style="grid-column:1/-1"><label class="field-label">Jornada *</label>
@@ -329,7 +331,7 @@ function renderModalDocente(docenteId){
             ${Object.entries(configMaterias).map(([grado,mats])=>mats.map(m=>{
               const key=grado+"::"+m;
               const sel=(d.materias||[]).some(x=>x===key);
-              return `<button onclick="toggleMatDoc('${key}',this)" style="padding:0.3rem 0.65rem;border-radius:20px;border:2px solid ${sel?"#003366":"#dde3f0"};background:${sel?"#003366":"#f8faff"};color:${sel?"#fff":"#555"};font-size:0.72rem;cursor:pointer;font-family:inherit;font-weight:600" data-sel="${sel}">${grado}: ${m}</button>`;
+              return `<button onclick="toggleMatDoc('${escJs(key)}',this)" style="padding:0.3rem 0.65rem;border-radius:20px;border:2px solid ${sel?"#003366":"#dde3f0"};background:${sel?"#003366":"#f8faff"};color:${sel?"#fff":"#555"};font-size:0.72rem;cursor:pointer;font-family:inherit;font-weight:600" data-sel="${sel}">${grado}: ${escHtml(m)}</button>`;
             }).join("")).join("")}
           </div>
           ${Object.keys(configMaterias).length===0?`<div style="font-size:0.78rem;color:#888">Primero configura las materias en la pestaña Materias</div>`:""}
@@ -382,14 +384,14 @@ async function guardarNuevoDocente(){
   const datos={nombre,correo,cedula,cargo,rol:"docente",jornada,grado,materias,activo:true,uid:cred.user.uid,trabajadorId};
   window._docTrabId=null;
     try{await db.collection("usuarios").doc(cred.user.uid).set(datos);}
-    catch(e2){document.getElementById("doc-err").innerHTML=`<div class="error-msg">La cuenta se creó pero no se pudo guardar su perfil (${e2.message}). Revisa las reglas de Firestore.</div>`;return;}
+    catch(e2){document.getElementById("doc-err").innerHTML=`<div class="error-msg">La cuenta se creó pero no se pudo guardar su perfil (${escHtml(e2.message)}). Revisa las reglas de Firestore.</div>`;return;}
     configDocentes.push({id:cred.user.uid,...datos});
     cerrarModal();
     renderTabContent();
     mostrarToast("✅ Docente "+nombre+" creado exitosamente");
   }catch(e){
     const yaExiste=e&&e.code==="auth/email-already-in-use";
-    document.getElementById("doc-err").innerHTML=`<div class="error-msg">${yaExiste?"Ese correo ya tiene una cuenta. Si el docente no aparece en la lista, elimina esa cuenta en Firebase → Authentication y vuelve a crearlo.":e.message}</div>`;
+    document.getElementById("doc-err").innerHTML=`<div class="error-msg">${yaExiste?"Ese correo ya tiene una cuenta. Si el docente no aparece en la lista, elimina esa cuenta en Firebase → Authentication y vuelve a crearlo.":escHtml(e.message)}</div>`;
   }
 }
 async function guardarEditarDocente(id){
@@ -408,5 +410,5 @@ async function guardarEditarDocente(id){
     cerrarModal();
     renderTabContent();
     mostrarToast("✅ Docente actualizado");
-  }catch(e){document.getElementById("doc-err").innerHTML=`<div class="error-msg">${e.message}</div>`;}
+  }catch(e){document.getElementById("doc-err").innerHTML=`<div class="error-msg">${escHtml(e.message)}</div>`;}
 }

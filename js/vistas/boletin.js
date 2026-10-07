@@ -29,7 +29,7 @@ function imprimirBoletinMedia(est){
     const color=n=>n===null?"#999":n>=18?"#1a6e3c":n>=14?"#7a6000":"#b91c1c";
     const aprobada = nf!==null&&nf>=10;
     return `<tr>
-      <td style="padding:5px 8px;font-weight:600;border:1px solid #ccc;font-size:0.8rem">${m}</td>
+      <td style="padding:5px 8px;font-weight:600;border:1px solid #ccc;font-size:0.8rem">${escHtml(m)}</td>
       `+promLapsos.map((p,i)=>'<td style="text-align:center;padding:4px;border:1px solid #ccc;color:'+color(p)+';font-weight:700;font-size:0.8rem">'+( p!==null?p:"-")+'</td><td style="text-align:center;padding:4px;border:1px solid #ccc;color:#888;font-size:0.75rem">'+( inaLapsos[i]||"-")+'</td>').join("")+`
       <td style="text-align:center;padding:4px;border:1px solid #ccc">
         <span style="background:${nf===null?"#f1f3f5":nf>=10?"#dcfce7":"#fee2e2"};color:${color(nf)};padding:1px 6px;border-radius:4px;font-weight:800;font-size:0.8rem">${nf!==null?nf:"-"}</span>
@@ -53,7 +53,7 @@ function imprimirBoletinMedia(est){
 
   const w = window.open("","_blank");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Boletín ${est.nombre}</title>
+  <title>Boletín ${escHtml(est.nombre)}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;padding:16px;font-size:12px;color:#111}
@@ -78,22 +78,22 @@ function imprimirBoletinMedia(est){
     <div style="text-align:center;min-width:60px"><div style="font-size:1.5rem">🏫</div></div>
     <div class="header-text">
       <p style="font-size:0.68rem;color:#666">REPÚBLICA BOLIVARIANA DE VENEZUELA · MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</p>
-      <h2>${inst.nombre||"U.E.P. Josefa Joaquina Sánchez"}</h2>
-      <p>${inst.direccion||"Turumo - Caucagüita, Estado Miranda"}</p>
+      <h2>${escHtml(inst.nombre)||"U.E.P. Josefa Joaquina Sánchez"}</h2>
+      <p>${escHtml(inst.direccion)||"Turumo - Caucagüita, Estado Miranda"}</p>
       <p style="font-weight:700;font-size:0.8rem;color:#003366;margin-top:3px">BOLETÍN DE CALIFICACIONES</p>
     </div>
     <div style="text-align:center;min-width:60px"><div style="font-size:1.5rem">🏫</div></div>
   </div>
 
   <div class="datos-grid">
-    <div class="dato"><label>Estudiante:</label><span style="font-weight:700">${est.nombre}</span></div>
-    <div class="dato"><label>Código:</label><span>${inst.codigo||"PD13831519"}</span></div>
-    <div class="dato"><label>Cédula:</label><span>${est.cedula||"N/A"}</span></div>
-    <div class="dato"><label>Curso:</label><span>${est.grado}</span></div>
-    <div class="dato"><label>Sección:</label><span>${est.seccion||"U"}</span></div>
-    <div class="dato"><label>Año escolar:</label><span>${est.anioEscolar||inst.anioEscolar||"2025-2026"}</span></div>
-    <div class="dato"><label>F. Nacimiento:</label><span>${est.fechaNac||"N/A"}</span></div>
-    <div class="dato"><label>Representante:</label><span>${est.acudiente||"N/A"}</span></div>
+    <div class="dato"><label>Estudiante:</label><span style="font-weight:700">${escHtml(est.nombre)}</span></div>
+    <div class="dato"><label>Código:</label><span>${escHtml(inst.codigo)||"PD13831519"}</span></div>
+    <div class="dato"><label>Cédula:</label><span>${escHtml(est.cedula)||"N/A"}</span></div>
+    <div class="dato"><label>Curso:</label><span>${escHtml(est.grado)}</span></div>
+    <div class="dato"><label>Sección:</label><span>${escHtml(est.seccion)||"U"}</span></div>
+    <div class="dato"><label>Año escolar:</label><span>${escHtml(est.anioEscolar)||escHtml(inst.anioEscolar)||"2025-2026"}</span></div>
+    <div class="dato"><label>F. Nacimiento:</label><span>${escHtml(est.fechaNac)||"N/A"}</span></div>
+    <div class="dato"><label>Representante:</label><span>${escHtml(est.acudiente)||"N/A"}</span></div>
   </div>
 
   <table>
@@ -111,15 +111,15 @@ function imprimirBoletinMedia(est){
     <tbody>${buildRows()}</tbody>
   </table>
 
-  `+(materiasPendientes.length>0?'<div style="margin-bottom:8px;padding:6px 10px;background:#fff3e0;border-radius:6px;border-left:3px solid #e65100;font-size:0.78rem"><strong style="color:#e65100">⚠️ Materias pendientes:</strong> '+materiasPendientes.join(", ")+'</div>':"")+`
+  `+(materiasPendientes.length>0?'<div style="margin-bottom:8px;padding:6px 10px;background:#fff3e0;border-radius:6px;border-left:3px solid #e65100;font-size:0.78rem"><strong style="color:#e65100">⚠️ Materias pendientes:</strong> '+materiasPendientes.map(escHtml).join(", ")+'</div>':"")+`
 
   <div style="font-size:0.72rem;color:#555;margin-bottom:10px;padding:8px;background:#f8faff;border-radius:6px">
     <strong>Observaciones:</strong> _______________________________________________________________________________________________________________
   </div>
 
   <div class="firma-row">
-    <div class="firma"><div class="firma-line">${inst.directora||"Lic. Ligia Herrera"}<br/>Directora</div></div>
-    <div class="firma"><div class="firma-line">${inst.coordinador||"Lic. Carlos Carrascal"}<br/>Coordinador(a) Media General</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.directora)||"Lic. Ligia Herrera"}<br/>Directora</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.coordinador)||"Lic. Carlos Carrascal"}<br/>Coordinador(a) Media General</div></div>
     <div class="firma"><div class="firma-line">___________________<br/>Docente</div></div>
   </div>
   <div style="text-align:center;margin-top:16px;font-size:0.7rem;color:#aaa">Sello del Plantel</div>
@@ -158,7 +158,7 @@ function imprimirBoletinPrimaria(est){
       const inds = getIndicadores(est.grado, area);
       if(!inds||inds.length===0){
         return `<tr>
-          <td style="writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:700;font-size:0.7rem;padding:4px;border:1px solid #ccc;background:#f0f4ff;color:#003366" rowspan="1">${area}</td>
+          <td style="writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:700;font-size:0.7rem;padding:4px;border:1px solid #ccc;background:#f0f4ff;color:#003366" rowspan="1">${escHtml(area)}</td>
           <td style="padding:5px 8px;border:1px solid #ccc;font-size:0.75rem;color:#aaa" colspan="6">Sin indicadores configurados</td>
         </tr>`;
       }
@@ -166,8 +166,8 @@ function imprimirBoletinPrimaria(est){
         const fieldKey = area+"_ind_"+i;
         const val = nd[fieldKey]||"";
         return `<tr>
-          `+(i===0?'<td style="writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:700;font-size:0.7rem;padding:4px;border:1px solid #ccc;background:#f0f4ff;color:#003366" rowspan="'+inds.length+'">'+area+'</td>':"")+`
-          <td style="padding:4px 8px;border:1px solid #ccc;font-size:0.75rem">${ind}</td>
+          `+(i===0?'<td style="writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:700;font-size:0.7rem;padding:4px;border:1px solid #ccc;background:#f0f4ff;color:#003366" rowspan="'+inds.length+'">'+escHtml(area)+'</td>':"")+`
+          <td style="padding:4px 8px;border:1px solid #ccc;font-size:0.75rem">${escHtml(ind)}</td>
           ${["A","B","C","D","E"].map(l=>`<td style="text-align:center;border:1px solid #ccc;padding:3px;font-weight:700;color:${val===l?"#003366":"#ccc"}">${val===l?"✓":""}</td>`).join("")}
         </tr>`;
       }).join("");
@@ -185,7 +185,7 @@ function imprimirBoletinPrimaria(est){
 
   const w = window.open("","_blank");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Boletín Primaria ${est.nombre}</title>
+  <title>Boletín Primaria ${escHtml(est.nombre)}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;padding:14px;font-size:11px;color:#111}
@@ -210,22 +210,22 @@ function imprimirBoletinPrimaria(est){
     <div style="font-size:1.4rem">🏫</div>
     <div class="header-text">
       <p style="font-size:0.65rem;color:#666">REPÚBLICA BOLIVARIANA DE VENEZUELA · MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</p>
-      <h2>${inst.nombre||"U.E.P. Josefa Joaquina Sánchez"}</h2>
-      <p style="font-size:0.7rem">${inst.direccion||"Turumo - Caucagüita, Estado Miranda"}</p>
+      <h2>${escHtml(inst.nombre)||"U.E.P. Josefa Joaquina Sánchez"}</h2>
+      <p style="font-size:0.7rem">${escHtml(inst.direccion)||"Turumo - Caucagüita, Estado Miranda"}</p>
       <p style="font-weight:700;font-size:0.78rem;color:#003366;margin-top:2px">BOLETÍN DE CALIFICACIONES — ${esPreescolar?"EDUCACIÓN INICIAL":"EDUCACIÓN PRIMARIA"}</p>
     </div>
     <div style="font-size:1.4rem">🏫</div>
   </div>
 
   <div class="datos-grid">
-    <div class="dato"><label>Estudiante:</label><span style="font-weight:700">${est.nombre}</span></div>
-    <div class="dato"><label>Código plantel:</label><span>${inst.codigo||"PD13831519"}</span></div>
-    <div class="dato"><label>Cédula:</label><span>${est.cedula||"N/A"}</span></div>
-    <div class="dato"><label>Grado:</label><span>${est.grado}</span></div>
-    <div class="dato"><label>Sección:</label><span>${est.seccion||"U"}</span></div>
-    <div class="dato"><label>Año escolar:</label><span>${est.anioEscolar||inst.anioEscolar||"2025-2026"}</span></div>
-    <div class="dato"><label>F. Nacimiento:</label><span>${est.fechaNac||"N/A"}</span></div>
-    <div class="dato"><label>Representante:</label><span>${est.acudiente||"N/A"}</span></div>
+    <div class="dato"><label>Estudiante:</label><span style="font-weight:700">${escHtml(est.nombre)}</span></div>
+    <div class="dato"><label>Código plantel:</label><span>${escHtml(inst.codigo)||"PD13831519"}</span></div>
+    <div class="dato"><label>Cédula:</label><span>${escHtml(est.cedula)||"N/A"}</span></div>
+    <div class="dato"><label>Grado:</label><span>${escHtml(est.grado)}</span></div>
+    <div class="dato"><label>Sección:</label><span>${escHtml(est.seccion)||"U"}</span></div>
+    <div class="dato"><label>Año escolar:</label><span>${escHtml(est.anioEscolar)||escHtml(inst.anioEscolar)||"2025-2026"}</span></div>
+    <div class="dato"><label>F. Nacimiento:</label><span>${escHtml(est.fechaNac)||"N/A"}</span></div>
+    <div class="dato"><label>Representante:</label><span>${escHtml(est.acudiente)||"N/A"}</span></div>
   </div>
 
   ${LAPSOS.map((lapso,li)=>`
@@ -270,8 +270,8 @@ function imprimirBoletinPrimaria(est){
 
   <div class="firma-row">
     <div class="firma"><div class="firma-line">___________________<br/>Docente</div></div>
-    <div class="firma"><div class="firma-line">${inst.coordinadorPrimaria||"___________________"}<br/>Coordinadora</div></div>
-    <div class="firma"><div class="firma-line">${inst.directora||"Lic. Ligia Herrera"}<br/>Directora</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.coordinadorPrimaria)||"___________________"}<br/>Coordinadora</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.directora)||"Lic. Ligia Herrera"}<br/>Directora</div></div>
   </div>
   <div style="text-align:center;margin-top:16px;font-size:0.7rem;color:#aaa">Sello del Plantel</div>
   </body></html>`);

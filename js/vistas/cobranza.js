@@ -362,7 +362,7 @@ function renderCobranza(){
       <input class="inp" id="cob-search" style="flex:2;min-width:150px;padding:0.55rem 0.75rem;font-size:0.82rem" placeholder="🔍 Estudiante, cédula o representante..." value="${cobF.busq}" oninput="onCobBusq(this.value)"/>
       <select class="inp" style="flex:1;min-width:110px;padding:0.55rem 0.75rem;font-size:0.82rem" onchange="cobSet('grado',this.value)">
         <option value="">Todos los grados</option>
-        ${grados.map(g=>`<option value="${g}" ${cobF.grado===g?"selected":""}>${g}</option>`).join("")}
+        ${grados.map(g=>`<option value="${escHtml(g)}" ${cobF.grado===g?"selected":""}>${escHtml(g)}</option>`).join("")}
       </select>
       <select class="inp" style="flex:1;min-width:110px;padding:0.55rem 0.75rem;font-size:0.82rem" onchange="cobSet('orden',this.value)">
         ${[["monto","Mayor deuda"],["dias","Más días sin pagar"],["norec","Sin avisar primero"],["nombre","Nombre A-Z"]].map(([k,l])=>`<option value="${k}" ${cobF.orden===k?"selected":""}>${l}</option>`).join("")}
@@ -380,18 +380,18 @@ function renderCobranza(){
   ${filas.length===0?`<div class="empty"><div class="empty-icon">✅</div><p>No hay estudiantes en esta lista</p></div>`:
   `<div class="list">${filas.map(r=>{
     const e=r.e;
-    const ult=r.ultimo?`Último pago: ${r.ultimo.fecha}${r.diasSin!==null?" (hace "+r.diasSin+" días)":""}`:(baseAnio()?"Sin pagos este año escolar (desde "+fechaCorta(baseAnio())+")":"Nunca ha pagado");
+    const ult=r.ultimo?`Último pago: ${escHtml(r.ultimo.fecha)}${r.diasSin!==null?" (hace "+r.diasSin+" días)":""}`:(baseAnio()?"Sin pagos este año escolar (desde "+fechaCorta(baseAnio())+")":"Nunca ha pagado");
     const bRec=r.diasRec===null?`<span class="badge badge-red">Sin avisar</span>`
       :`<span class="badge ${r.diasRec<7?"badge-green":"badge-gold"}">Avisado ${r.diasRec===0?"hoy":"hace "+r.diasRec+" d"} · ${r.nRec}×</span>`;
     return `<div class="list-item ${r.enMora?"mora":""}" style="cursor:default">
       <div class="item-row">
         <div style="flex:1;min-width:0">
-          <div class="item-name">${e.nombre}</div>
-          <div class="item-sub">${e.grado||"Sin grado"}${e.acudiente?" · 👤 "+e.acudiente:""}</div>
-          <div class="item-sub">📞 ${r.telWa?fmtTelVE(r.telWa)+(r.telFijo?` <span style="color:#b8860b">⚠️ fijo (WhatsApp suele no encontrarlo)</span>`:""):r.tel?`<span style="color:#c0392b">⚠️ Número inválido: ${r.tel}</span>`:"Sin teléfono"} <a href="#" onclick="corregirTelefono('${e.id}');return false" style="text-decoration:none" title="Corregir teléfono">✏️</a></div>
+          <div class="item-name">${escHtml(e.nombre)}</div>
+          <div class="item-sub">${escHtml(e.grado)||"Sin grado"}${e.acudiente?" · 👤 "+escHtml(e.acudiente):""}</div>
+          <div class="item-sub">📞 ${r.telWa?fmtTelVE(r.telWa)+(r.telFijo?` <span style="color:#b8860b">⚠️ fijo (WhatsApp suele no encontrarlo)</span>`:""):r.tel?`<span style="color:#c0392b">⚠️ Número inválido: ${escHtml(r.tel)}</span>`:"Sin teléfono"} <a href="#" onclick="corregirTelefono('${e.id}');return false" style="text-decoration:none" title="Corregir teléfono">✏️</a></div>
           <div class="item-sub">✉️ ${e.correoAcudiente?escHtml(e.correoAcudiente):"Sin correo"} <a href="#" onclick="corregirCorreo('${e.id}');return false" style="text-decoration:none" title="Corregir correo">✏️</a></div>
           ${r.meses.length?`<div class="item-sub" style="color:#c0392b">📅 Mensualidad: ${r.meses.join(", ")}</div>`:""}
-          ${r.manual>0||(e.estado==="mora"&&e.moraConcepto)?`<div class="item-sub" style="color:#c0392b">📋 ${e.moraConcepto||"Deuda anterior"}${r.manual>0?" · "+fmt(r.manual):""}</div>`:""}
+          ${r.manual>0||(e.estado==="mora"&&e.moraConcepto)?`<div class="item-sub" style="color:#c0392b">📋 ${escHtml(e.moraConcepto)||"Deuda anterior"}${r.manual>0?" · "+fmt(r.manual):""}</div>`:""}
           <div class="item-sub">${ult}</div>
           <div style="margin-top:4px">${bRec}</div>
         </div>
@@ -425,7 +425,7 @@ function renderRecordatoriosPagos(){
     </div>
     <div class="alert-item alert-info" style="justify-content:space-between"><span>Total adeudado</span><strong>${dual(total)}</strong></div>
     ${filas.slice(0,5).map(r=>`<div class="alert-item alert-mora" style="justify-content:space-between">
-      <div><strong>${r.e.nombre}</strong> — ${r.e.grado||"Sin grado"}
+      <div><strong>${escHtml(r.e.nombre)}</strong> — ${escHtml(r.e.grado)||"Sin grado"}
       <div style="font-size:0.7rem;margin-top:1px">${r.meses.length?r.meses.length+" cuota"+(r.meses.length>1?"s":"")+" · ":""}${r.diasRec===null?"Sin avisar":"Avisado hace "+r.diasRec+" días"}</div></div>
       <span style="font-weight:800;font-size:0.82rem">${fmt(r.deuda)}</span></div>`).join("")}
     ${filas.length>5?`<div style="font-size:0.75rem;color:#888;text-align:center;margin-top:0.3rem">+${filas.length-5} más</div>`:""}
@@ -443,7 +443,7 @@ function imprimirCobranza(){
   td{padding:0.4rem;border-bottom:1px solid #ddd}.r{text-align:right}tfoot td{font-weight:800;border-top:2px solid #003366}</style></head><body>
   <h2>${EMPRESA}</h2><div>Listado de cobranza · ${new Date().toLocaleDateString("es-CO")} · ${filas.length} estudiante(s)${t?" · Tasa BCV "+fechaCorta(tv.fecha)+": Bs. "+fmtTasa(tv.valor)+" por $":""}</div>
   <table><thead><tr><th>#</th><th>Estudiante</th><th>Grado</th><th>Representante</th><th>Teléfono</th><th>Concepto</th><th>Último pago</th><th class="r">Adeuda ($)</th>${t?'<th class="r">Adeuda (Bs.)</th>':""}</tr></thead><tbody>
-  ${filas.map((r,i)=>`<tr><td>${i+1}</td><td>${r.e.nombre}</td><td>${r.e.grado||""}</td><td>${r.e.acudiente||""}</td><td>${r.tel||""}</td><td>${conceptoDeE(r.e)||(r.enMora?"":"Sin pago reciente")}</td><td>${r.ultimo?r.ultimo.fecha:(baseAnio()?"Sin pagos este año":"Nunca")}</td><td class="r">${r.enMora?fmt(r.deuda):"—"}</td>${t?`<td class="r">${r.enMora?fmtBs(aBs(r.deuda)):"—"}</td>`:""}</tr>`).join("")}
+  ${filas.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.e.nombre)}</td><td>${escHtml(r.e.grado)||""}</td><td>${escHtml(r.e.acudiente)||""}</td><td>${escHtml(r.tel)}</td><td>${escHtml(conceptoDeE(r.e))||(r.enMora?"":"Sin pago reciente")}</td><td>${r.ultimo?escHtml(r.ultimo.fecha):(baseAnio()?"Sin pagos este año":"Nunca")}</td><td class="r">${r.enMora?fmt(r.deuda):"—"}</td>${t?`<td class="r">${r.enMora?fmtBs(aBs(r.deuda)):"—"}</td>`:""}</tr>`).join("")}
   </tbody><tfoot><tr><td colspan="7">TOTAL ADEUDADO</td><td class="r">${fmt(total)}</td>${t?`<td class="r">${fmtBs(aBs(total))}</td>`:""}</tr></tfoot></table></body></html>`);
   w.document.close();
   setTimeout(()=>w.print(),500);

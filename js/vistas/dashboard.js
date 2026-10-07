@@ -36,7 +36,7 @@ function renderDashboard(){
     ${mora.slice(0,4).map(e=>`
     <div class="alert-item alert-mora" onclick="setTab('estudiantes')" style="cursor:pointer">
       <span>⚠️</span>
-      <div style="flex:1"><strong>${e.nombre}</strong> — ${conceptoDeE(e)||"Sin especificar"}</div>
+      <div style="flex:1"><strong>${escHtml(e.nombre)}</strong> — ${escHtml(conceptoDeE(e))||"Sin especificar"}</div>
       ${deudaDe(e)>0?`<span style="font-weight:800">${fmt(deudaDe(e))}</span>`:""}
     </div>`).join("")}
     ${mora.length>4?`<div style="font-size:0.75rem;color:#888;text-align:center;margin-top:0.3rem">+${mora.length-4} más</div>`:""}
@@ -55,8 +55,8 @@ function renderDashboard(){
     <div class="card-title"><div class="card-bar"></div><h2>💰 Últimos Pagos</h2></div>
     ${pagos.slice(0,4).map(p=>`
     <div class="info-row">
-      <span style="color:#333">${p.nombre}</span>
-      <div style="text-align:right"><div style="font-weight:700;color:#003366;font-size:0.85rem">${fmt(p.total)}</div><div style="font-size:0.68rem;color:#888">${p.fecha}</div></div>
+      <span style="color:#333">${escHtml(p.nombre)}</span>
+      <div style="text-align:right"><div style="font-weight:700;color:#003366;font-size:0.85rem">${fmt(p.total)}</div><div style="font-size:0.68rem;color:#888">${escHtml(p.fecha)}</div></div>
     </div>`).join("")}
     ${pagos.length===0?'<p style="color:#aaa;font-size:0.82rem">Sin pagos registrados</p>':""}
   </div>

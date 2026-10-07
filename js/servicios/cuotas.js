@@ -94,7 +94,7 @@ function htmlEstadoCuenta(e){
     <div style="font-size:0.62rem;color:#003366;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px">📅 Estado de cuenta · mensualidades</div>
     ${!(e.mensualidad>0)?`<div style="font-size:0.8rem;color:#888">Sin mensualidad asignada (no se generan cuotas)</div>`:c.lista.map(q=>`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px dashed #eee;font-size:0.8rem">
-      <div><strong>${q.mes}</strong><div style="font-size:0.65rem;color:#888">vence ${fechaCorta(q.vence)}</div></div>
+      <div><strong>${escHtml(q.mes)}</strong><div style="font-size:0.65rem;color:#888">vence ${fechaCorta(q.vence)}</div></div>
       <div style="text-align:right">${fmt(q.monto)}${bsl(q.monto)}${est(q)}${q.recargo>0?`<div style="font-size:0.65rem;color:#c0392b;font-weight:700">+ recargo ${fmt(q.recargo)}</div>`:""}</div></div>`).join("")}
     <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.8rem"><span>Pagado en mensualidades</span><strong style="color:#1a9e5c">${fmt(c.pagado)}</strong></div>
     <div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Saldo vencido</span><strong style="color:${c.saldo>0?"#e53e3e":"#1a9e5c"}">${fmt(c.saldo)}${tv&&c.saldo>0?" · "+fmtBs(r2(c.saldo*tv)):""}</strong></div>

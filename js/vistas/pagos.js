@@ -25,7 +25,7 @@ function renderPagos(){
   <div class="card" style="padding:0.85rem">
     <div style="display:flex;gap:0.4rem;margin-bottom:0.5rem;flex-wrap:wrap">
       <input class="inp" id="search-input" style="flex:1;min-width:130px;padding:0.55rem 0.75rem;font-size:0.82rem" placeholder="🔍 Nombre, cédula, recibo..." value="${filtros.busq}" oninput="onBusqInput(this.value)"/>
-      <input class="inp" type="date" style="padding:0.55rem 0.75rem;font-size:0.82rem" value="${filtros.fecha}" onchange="filtros.fecha=this.value;renderTabContent()"/>
+      <input class="inp" type="date" style="padding:0.55rem 0.75rem;font-size:0.82rem" value="${escHtml(filtros.fecha)}" onchange="filtros.fecha=this.value;renderTabContent()"/>
     </div>
     <div style="display:flex;gap:0.4rem">
       ${["","Dólares Efectivo","Transferencia Bs","Bs Efectivo","Punto"].map(m=>`<button onclick="filtros.metodo='${m}';renderTabContent()" style="flex:1;padding:0.4rem;border-radius:8px;border:1.5px solid ${filtros.metodo===m?"#003366":"#dde3f0"};background:${filtros.metodo===m?"#e8f0fe":"#f8faff"};color:${filtros.metodo===m?"#003366":"#888"};cursor:pointer;font-size:0.75rem;font-weight:600;font-family:inherit">${m||"Todos"}</button>`).join("")}
@@ -35,7 +35,7 @@ function renderPagos(){
   ${filtrados.length>0&&rolUsuario==="director"?`
   <div class="recaudo-box">
     <div>
-      <div style="font-size:0.65rem;color:#adc8ff">${filtros.fecha?"Recaudo del "+filtros.fecha:filtros.metodo?"Recaudo - "+filtros.metodo:"Recaudo Total"}</div>
+      <div style="font-size:0.65rem;color:#adc8ff">${filtros.fecha?"Recaudo del "+escHtml(filtros.fecha):filtros.metodo?"Recaudo - "+escHtml(filtros.metodo):"Recaudo Total"}</div>
       <div style="font-size:1.3rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(totalFiltrado)}</div>
       <div style="font-size:0.68rem;color:#adc8ff">${filtrados.length} recibo${filtrados.length!==1?"s":""}</div>
     </div>
@@ -50,11 +50,11 @@ function renderPagos(){
     <div class="list-item" onclick="abrirModal({tipo:'recibo',pago:pagos.find(x=>x.id==='${p.id}')})">
       <div class="item-row">
         <div style="flex:1;min-width:0">
-          <div class="item-name">${p.nombre}</div>
-          <div class="item-sub">${p.factura||""} · ${p.fecha}</div>
+          <div class="item-name">${escHtml(p.nombre)}</div>
+          <div class="item-sub">${escHtml(p.factura)||""} · ${escHtml(p.fecha)}</div>
           <div style="margin-top:3px;display:flex;gap:0.35rem;flex-wrap:wrap">
-            <span class="badge ${p.metodo==="Dólares Efectivo"?"badge-gold":p.metodo==="Transferencia Bs"?"badge-blue":p.metodo==="Bs Efectivo"?"badge-green":"badge-blue"}">${p.metodo||"Dólares Efectivo"}</span>
-            ${p.concepto?`<span class="badge badge-gray">${p.concepto}</span>`:""}
+            <span class="badge ${p.metodo==="Dólares Efectivo"?"badge-gold":p.metodo==="Transferencia Bs"?"badge-blue":p.metodo==="Bs Efectivo"?"badge-green":"badge-blue"}">${escHtml(p.metodo)||"Dólares Efectivo"}</span>
+            ${p.concepto?`<span class="badge badge-gray">${escHtml(p.concepto)}</span>`:""}
           </div>
         </div>
         <div class="item-right"><div class="item-amount">${fmt(p.total)}</div>${(()=>{const b=bsDe(p,p.total);return b.bs!=null?`<div style="font-size:0.68rem;color:#888">${fmtBs(b.bs)}</div>`:"";})()}<div class="item-hint">Ver →</div></div>
@@ -68,24 +68,24 @@ function renderFormPago(data={}){
     <div class="form-grid">
       <div class="field" style="grid-column:1/-1"><label class="field-label">🔍 Buscar Estudiante *</label>
         <div style="position:relative">
-          <input class="inp" id="p-buscar" placeholder="Escribe el nombre o la cédula del estudiante..." oninput="buscarEstudiantePorCedula(this.value)" autocomplete="off" value="${data.nombre||data.cedula||''}"/>
+          <input class="inp" id="p-buscar" placeholder="Escribe el nombre o la cédula del estudiante..." oninput="buscarEstudiantePorCedula(this.value)" autocomplete="off" value="${escHtml(data.nombre)||escHtml(data.cedula)||''}"/>
           <div id="p-sugerencias" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #003366;border-radius:0 0 10px 10px;z-index:99;display:none;max-height:200px;overflow-y:auto;box-shadow:0 8px 20px rgba(0,51,102,0.15)"></div>
         </div>
         <div id="p-est-badge" style="display:${data.nombre?'flex':'none'};align-items:center;gap:0.6rem;margin-top:0.4rem;background:#e8f0fe;border-radius:8px;padding:0.5rem 0.85rem;border-left:3px solid #003366">
           <span style="font-size:1rem">👤</span>
-          <span style="font-weight:700;color:#003366;font-size:0.9rem" id="p-badge-nombre">${data.nombre||''}</span>
-          <span style="font-size:0.78rem;color:#666;background:#fff;padding:2px 8px;border-radius:20px" id="p-badge-cedula">${data.cedula?'CC '+data.cedula:''}</span>
+          <span style="font-weight:700;color:#003366;font-size:0.9rem" id="p-badge-nombre">${escHtml(data.nombre)||''}</span>
+          <span style="font-size:0.78rem;color:#666;background:#fff;padding:2px 8px;border-radius:20px" id="p-badge-cedula">${data.cedula?'CC '+escHtml(data.cedula):''}</span>
           <span onclick="limpiarSeleccionPago()" style="margin-left:auto;cursor:pointer;color:#e53e3e;font-weight:700;font-size:1.1rem;line-height:1" title="Cambiar estudiante">✕</span>
         </div>
-        <input type="hidden" id="p-cedula" value="${data.cedula||''}"/>
-        <input type="hidden" id="p-nombre" value="${data.nombre||''}"/>
+        <input type="hidden" id="p-cedula" value="${escHtml(data.cedula)||''}"/>
+        <input type="hidden" id="p-nombre" value="${escHtml(data.nombre)||''}"/>
       </div>
       <div class="form-row">
-        <div class="field" style="display:none"><label class="field-label">Cédula</label><input class="inp" id="p-cedula-hidden" value="${data.cedula||""}"/></div>
-        <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="p-tel" placeholder="Teléfono" value="${data.telefono||""}"/></div>
+        <div class="field" style="display:none"><label class="field-label">Cédula</label><input class="inp" id="p-cedula-hidden" value="${escHtml(data.cedula)||""}"/></div>
+        <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="p-tel" placeholder="Teléfono" value="${escHtml(data.telefono)||""}"/></div>
       </div>
       <div class="form-row">
-        <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="p-fecha" value="${data.fecha||todayStr()}" onchange="actualizarTasaCampo('p',calcBsPago)"/></div>
+        <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="p-fecha" value="${escHtml(data.fecha)||todayStr()}" onchange="actualizarTasaCampo('p',calcBsPago)"/></div>
         <div class="field"><label class="field-label">Concepto *</label>
           <select class="inp" id="p-concepto">
             <option value="">Seleccionar...</option>
@@ -99,7 +99,7 @@ function renderFormPago(data={}){
           ${MESES.map((m,i)=>`<option value="${m}" ${data.mes===m?"selected":""}>${m}</option>`).join("")}
         </select>
       </div>
-      <div class="field"><label class="field-label">Descripción</label><textarea class="inp" id="p-desc" rows="2" placeholder="Detalles adicionales">${data.desc||""}</textarea></div>
+      <div class="field"><label class="field-label">Descripción</label><textarea class="inp" id="p-desc" rows="2" placeholder="Detalles adicionales">${escHtml(data.desc)||""}</textarea></div>
       <div class="field"><label class="field-label">Método de Pago *</label>
         <div class="metodo-row" style="flex-wrap:wrap;gap:0.4rem">
           <button class="metodo-btn ${!data.metodo||data.metodo==="Dólares Efectivo"?"selected":""}" id="m-def" onclick="selMetodoPago('Dólares Efectivo')">💵 Dólares Efectivo</button>
@@ -132,8 +132,8 @@ function buscarEstudiantePorCedula(val){
   box.innerHTML = matches.slice(0,6).map(e=>`
     <div onclick="seleccionarEstudiantePago('${e.id}')" style="padding:0.65rem 1rem;cursor:pointer;border-bottom:1px solid #eef2f9;font-size:0.85rem;transition:background .15s"
       onmouseover="this.style.background='#e8f0fe'" onmouseout="this.style.background='#fff'">
-      <div style="font-weight:700;color:#003366">${e.nombre}</div>
-      <div style="font-size:0.7rem;color:#888">CC ${e.cedula} · ${e.grado||"Sin grado"}</div>
+      <div style="font-weight:700;color:#003366">${escHtml(e.nombre)}</div>
+      <div style="font-size:0.7rem;color:#888">CC ${escHtml(e.cedula)} · ${escHtml(e.grado)||"Sin grado"}</div>
     </div>`).join("");
 }
 function seleccionarEstudiantePago(estId){
@@ -247,7 +247,7 @@ async function guardarPago(){
     }
     window._pagoEstId=null;window._pagoCedula=null;
     subTab.pagos="lista";modalActual={tipo:"recibo",pago};render();
-  }catch(e){errBox.innerHTML=`<div class="error-msg">${e.message}</div>`;if(btn){btn.disabled=false;btn.textContent="✓ Registrar Pago";}}
+  }catch(e){errBox.innerHTML=`<div class="error-msg">${escHtml(e.message)}</div>`;if(btn){btn.disabled=false;btn.textContent="✓ Registrar Pago";}}
 }
 function renderModalNuevoPago(){
   return`<div class="modal-bg"><div class="modal">
@@ -278,20 +278,20 @@ function renderModalRecibo(m){
             <div style="font-size:0.67rem;color:#adc8ff">${EMPRESA_SUB}</div></div>
         </div>
         <div class="recibo-nums">
-          <div><div style="font-size:0.58rem;color:#adc8ff">N° Recibo</div><div style="font-weight:800;color:#ffd700;font-size:0.9rem">${p.factura||""}</div></div>
-          <div style="text-align:center"><div style="font-size:0.58rem;color:#adc8ff">Método</div><div style="font-weight:700;font-size:0.82rem">${p.metodo||"Efectivo"}</div></div>
-          <div style="text-align:right"><div style="font-size:0.58rem;color:#adc8ff">Fecha</div><div style="font-weight:700;font-size:0.82rem">${p.fecha}</div></div>
+          <div><div style="font-size:0.58rem;color:#adc8ff">N° Recibo</div><div style="font-weight:800;color:#ffd700;font-size:0.9rem">${escHtml(p.factura)||""}</div></div>
+          <div style="text-align:center"><div style="font-size:0.58rem;color:#adc8ff">Método</div><div style="font-weight:700;font-size:0.82rem">${escHtml(p.metodo)||"Efectivo"}</div></div>
+          <div style="text-align:right"><div style="font-size:0.58rem;color:#adc8ff">Fecha</div><div style="font-weight:700;font-size:0.82rem">${escHtml(p.fecha)}</div></div>
         </div>
       </div>
       <div style="padding:1.1rem">
         <div style="background:#f0f4ff;border-radius:10px;padding:0.85rem;margin-bottom:0.85rem;border-left:4px solid #003366">
           <div style="font-size:0.6rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Cliente</div>
-          <div style="font-weight:700;font-size:1rem;color:#003366">${p.nombre}</div>
-          <div style="color:#555;font-size:0.8rem;margin-top:2px">CC ${p.cedula||"N/A"} · 📞 ${p.telefono||"N/A"}</div>
-          ${p.mes?`<div style="font-size:0.78rem;color:#555;margin-top:2px">📅 Mes: <strong>${p.mes}</strong></div>`:""}
+          <div style="font-weight:700;font-size:1rem;color:#003366">${escHtml(p.nombre)}</div>
+          <div style="color:#555;font-size:0.8rem;margin-top:2px">CC ${escHtml(p.cedula)||"N/A"} · 📞 ${escHtml(p.telefono)||"N/A"}</div>
+          ${p.mes?`<div style="font-size:0.78rem;color:#555;margin-top:2px">📅 Mes: <strong>${escHtml(p.mes)}</strong></div>`:""}
         </div>
-        ${p.concepto?`<div style="margin-bottom:6px"><span class="badge badge-blue">${p.concepto}</span></div>`:""}
-        ${lines.map(l=>`<div style="display:flex;gap:0.4rem;padding:0.4rem 0;border-bottom:1px dashed #eee;font-size:0.85rem"><span style="color:#003366">✦</span>${l}</div>`).join("")}
+        ${p.concepto?`<div style="margin-bottom:6px"><span class="badge badge-blue">${escHtml(p.concepto)}</span></div>`:""}
+        ${lines.map(l=>`<div style="display:flex;gap:0.4rem;padding:0.4rem 0;border-bottom:1px dashed #eee;font-size:0.85rem"><span style="color:#003366">✦</span>${escHtml(l)}</div>`).join("")}
         ${totalesRecibo(p)}
         <p style="text-align:center;font-size:0.65rem;color:#aaa;margin-top:0.55rem">Este recibo es válido como comprobante de pago</p>
       </div>
@@ -327,7 +327,7 @@ function imprimirRecibo(){
   const p=modalActual.pago;if(!p)return;
   const lines=(p.descripcion||"").split("\n").filter(Boolean);
   const w=window.open("","_blank","width=600,height=800");
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Recibo ${p.factura}</title>
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Recibo ${escHtml(p.factura)}</title>
   <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',sans-serif;padding:1.5rem;max-width:480px;margin:0 auto}
   .hdr{background:linear-gradient(135deg,#003366,#00509e);color:#fff;padding:1.1rem;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:1rem}
   .bdy{border:1px solid #dde3f0;border-top:none;border-radius:0 0 10px 10px;padding:1.1rem}
@@ -341,17 +341,17 @@ function imprimirRecibo(){
     <div><small style="font-size:0.55rem;letter-spacing:2px;color:#ffd700;text-transform:uppercase">Recibo de Pago</small>
     <div style="font-size:0.85rem;font-family:Georgia,serif">${EMPRESA}</div><div style="font-size:0.65rem;color:#adc8ff">${EMPRESA_SUB}</div>
     <div class="nums">
-      <div><div style="font-size:0.55rem;color:#adc8ff">Recibo</div><div style="font-weight:800;color:#ffd700;font-size:0.85rem">${p.factura}</div></div>
-      <div style="text-align:center"><div style="font-size:0.55rem;color:#adc8ff">Método</div><div style="font-weight:700;font-size:0.78rem">${p.metodo||"Efectivo"}</div></div>
-      <div style="text-align:right"><div style="font-size:0.55rem;color:#adc8ff">Fecha</div><div style="font-weight:700;font-size:0.78rem">${p.fecha}</div></div>
+      <div><div style="font-size:0.55rem;color:#adc8ff">Recibo</div><div style="font-weight:800;color:#ffd700;font-size:0.85rem">${escHtml(p.factura)}</div></div>
+      <div style="text-align:center"><div style="font-size:0.55rem;color:#adc8ff">Método</div><div style="font-weight:700;font-size:0.78rem">${escHtml(p.metodo)||"Efectivo"}</div></div>
+      <div style="text-align:right"><div style="font-size:0.55rem;color:#adc8ff">Fecha</div><div style="font-weight:700;font-size:0.78rem">${escHtml(p.fecha)}</div></div>
     </div></div></div>
   <div class="bdy">
     <div class="cbox"><div style="font-size:0.58rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Cliente</div>
-      <div style="font-weight:700;font-size:0.95rem;color:#003366">${p.nombre}</div>
-      <div style="font-size:0.78rem;color:#555;margin-top:2px">CC ${p.cedula||"N/A"} · Tel: ${p.telefono||"N/A"}</div>
-      ${p.mes?`<div style="font-size:0.75rem;color:#555;margin-top:2px">Mes: ${p.mes}</div>`:""}</div>
-    ${p.concepto?`<div style="display:inline-block;padding:0.2rem 0.55rem;border-radius:20px;font-size:0.65rem;font-weight:700;background:#e8f0fe;color:#003366;margin-bottom:6px">${p.concepto}</div>`:""}
-    ${lines.map(l=>`<div style="display:flex;gap:0.4rem;padding:0.38rem 0;border-bottom:1px dashed #eee;font-size:0.82rem"><span style="color:#003366">✦</span>${l}</div>`).join("")}
+      <div style="font-weight:700;font-size:0.95rem;color:#003366">${escHtml(p.nombre)}</div>
+      <div style="font-size:0.78rem;color:#555;margin-top:2px">CC ${escHtml(p.cedula)||"N/A"} · Tel: ${escHtml(p.telefono)||"N/A"}</div>
+      ${p.mes?`<div style="font-size:0.75rem;color:#555;margin-top:2px">Mes: ${escHtml(p.mes)}</div>`:""}</div>
+    ${p.concepto?`<div style="display:inline-block;padding:0.2rem 0.55rem;border-radius:20px;font-size:0.65rem;font-weight:700;background:#e8f0fe;color:#003366;margin-bottom:6px">${escHtml(p.concepto)}</div>`:""}
+    ${lines.map(l=>`<div style="display:flex;gap:0.4rem;padding:0.38rem 0;border-bottom:1px dashed #eee;font-size:0.82rem"><span style="color:#003366">✦</span>${escHtml(l)}</div>`).join("")}
     ${totalesRecibo(p)}
     <p style="text-align:center;font-size:0.63rem;color:#aaa;margin-top:0.5rem">Este recibo es válido como comprobante de pago</p>
     <div class="firma">

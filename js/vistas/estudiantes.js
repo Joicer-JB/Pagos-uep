@@ -73,25 +73,25 @@ function renderEstudiantes(){
     </select>
     <select class="inp" style="flex:1;padding:0.6rem 0.85rem;font-size:0.82rem" onchange="filtros.anioEst=this.value;renderTabContent()">
       <option value="">Todos los años</option>
-      ${[...new Set([...estudiantes.map(e=>e.anioEscolar),escCfg&&escCfg.actual.nombre].filter(Boolean))].sort().map(a=>`<option value="${a}" ${filtros.anioEst===a?"selected":""}>${a}</option>`).join("")}
+      ${[...new Set([...estudiantes.map(e=>e.anioEscolar),escCfg&&escCfg.actual.nombre].filter(Boolean))].sort().map(a=>`<option value="${escHtml(a)}" ${filtros.anioEst===a?"selected":""}>${escHtml(a)}</option>`).join("")}
     </select>
     <select class="inp" style="flex:1;padding:0.6rem 0.85rem;font-size:0.82rem" onchange="filtros.gradoEst=this.value;renderTabContent()">
       <option value="">Todos los grados</option>
-      ${[...new Set(estudiantes.map(e=>e.grado).filter(Boolean))].sort(ordenGrados).map(g=>`<option value="${g}" ${filtros.gradoEst===g?"selected":""}>${g}</option>`).join("")}
+      ${[...new Set(estudiantes.map(e=>e.grado).filter(Boolean))].sort(ordenGrados).map(g=>`<option value="${escHtml(g)}" ${filtros.gradoEst===g?"selected":""}>${escHtml(g)}</option>`).join("")}
     </select>
   </div>
   <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;padding:0.5rem 0.75rem;background:#e8f0fe;border-radius:8px">
     <span style="font-size:1.2rem;font-weight:800;color:#003366;min-width:32px;text-align:center">${filtrados.length}</span>
-    <span style="font-size:0.78rem;color:#555">${filtrados.length===1?"estudiante":"estudiantes"}${filtros.gradoEst?" en "+filtros.gradoEst:filtros.estado?" con estado "+filtros.estado:filtros.busq?" encontrados":""}</span>
+    <span style="font-size:0.78rem;color:#555">${filtrados.length===1?"estudiante":"estudiantes"}${filtros.gradoEst?" en "+escHtml(filtros.gradoEst):filtros.estado?" con estado "+escHtml(filtros.estado):filtros.busq?" encontrados":""}</span>
   </div>
   ${filtrados.length===0?`<div class="empty"><div class="empty-icon">👨‍🎓</div><p>No hay estudiantes</p></div>`:
   `<div class="list">${filtrados.map(e=>`
     <div class="list-item ${enMora(e)?"mora":e.estado==="retirado"?"":"alsaldo"}" onclick="abrirModal({tipo:'ver-estudiante',id:'${e.id}'})">
       <div class="item-row">
         <div style="flex:1;min-width:0">
-          <div class="item-name">${e.nombre}</div>
-          <div class="item-sub">${e.grado||""} ${e.cedula?"· CC "+e.cedula:""}</div>
-          <div class="item-sub">📞 ${e.telefono||"Sin teléfono"} ${e.acudiente?"· 👤 "+e.acudiente:""}</div>
+          <div class="item-name">${escHtml(e.nombre)}</div>
+          <div class="item-sub">${escHtml(e.grado)||""} ${e.cedula?"· CC "+escHtml(e.cedula):""}</div>
+          <div class="item-sub">📞 ${escHtml(e.telefono)||"Sin teléfono"} ${e.acudiente?"· 👤 "+escHtml(e.acudiente):""}</div>
           ${datosFaltantes(e).length&&activo(e)?`<div class="item-sub" style="color:#b7791f">⚠️ Falta: ${datosFaltantes(e).join(", ")}</div>`:""}
           ${deudaDe(e)>0?`<div style="font-size:0.72rem;color:#e53e3e;font-weight:700;margin-top:2px">Debe: ${fmt(deudaDe(e))}${tasaHoy()?" · "+fmtBs(aBs(deudaDe(e))):""}</div>`:""}
         </div>
@@ -108,10 +108,10 @@ function renderModalEstudiante(e){
     <div class="modal-header"><div><h3>👨‍🎓 ${isEdit?"Editar":"Nuevo"} Estudiante</h3></div><button class="modal-close-x" onclick="cerrarModal()">✕</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field"><label class="field-label">Nombre completo *</label><input class="inp" id="e-nombre" value="${e.nombre||""}"/></div>
+        <div class="field"><label class="field-label">Nombre completo *</label><input class="inp" id="e-nombre" value="${escHtml(e.nombre)||""}"/></div>
         <div class="form-row">
-          <div class="field"><label class="field-label">Cédula</label><input class="inp" id="e-cedula" value="${e.cedula||""}"/></div>
-          <div class="field"><label class="field-label">Fecha Nacimiento</label><input class="inp" type="date" id="e-fn" value="${e.fechaNac||""}"/></div>
+          <div class="field"><label class="field-label">Cédula</label><input class="inp" id="e-cedula" value="${escHtml(e.cedula)||""}"/></div>
+          <div class="field"><label class="field-label">Fecha Nacimiento</label><input class="inp" type="date" id="e-fn" value="${escHtml(e.fechaNac)||""}"/></div>
         </div>
         <div class="form-row">
           <div class="field"><label class="field-label">Grado *</label>
@@ -124,7 +124,7 @@ function renderModalEstudiante(e){
           </div>
         </div>
         <div class="form-row">
-          <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="e-tel" value="${e.telefono||""}"/></div>
+          <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="e-tel" value="${escHtml(e.telefono)||""}"/></div>
           </div>
         <div class="form-row">
           <div class="field"><label class="field-label">Acudiente</label><input class="inp" id="e-acud" placeholder="Nombre del acudiente" value="${escHtml(e.acudiente||"")}"/></div>
@@ -137,12 +137,12 @@ function renderModalEstudiante(e){
         </div>
         <div class="field"><label class="field-label">Observaciones médicas (alergias, condiciones)</label>
           <textarea class="inp" id="e-med" rows="2" placeholder="Vacío = no padece">${escHtml(e.observacionesMedicas||"")}</textarea></div>
-            <div class="field"><label class="field-label">Correo del acudiente (opcional)</label><input class="inp" id="e-correo-acud" type="email" placeholder="nombre@gmail.com" value="${e.correoAcudiente||""}"/></div>
+            <div class="field"><label class="field-label">Correo del acudiente (opcional)</label><input class="inp" id="e-correo-acud" type="email" placeholder="nombre@gmail.com" value="${escHtml(e.correoAcudiente)||""}"/></div>
         <div class="field"><label class="field-label">Mensualidad ($)</label>
           <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#003366;font-weight:700">$</span>
           <input class="inp" id="e-mens" placeholder="0,00" style="padding-left:2rem" value="${e.mensualidad?String(e.mensualidad).replace('.',','):''}" oninput="fmtInput(this)"/></div></div>
         <div class="field"><label class="field-label">Paga cuotas desde (opcional)</label>
-          <input class="inp" type="month" id="e-cuota-desde" value="${e.cuotaDesde||""}"/>
+          <input class="inp" type="month" id="e-cuota-desde" value="${escHtml(e.cuotaDesde)||""}"/>
           <div style="font-size:0.68rem;color:#888;margin-top:2px">Déjalo vacío si paga desde la primera cuota. Úsalo para quien entró después de que empezó el año.</div></div>
         <div class="form-row">
           <div class="field"><label class="field-label">Estado</label>
@@ -152,13 +152,13 @@ function renderModalEstudiante(e){
               <option value="retirado" ${e.estado==="retirado"?"selected":""}>🚪 Retirado</option>
             </select>
           </div>
-          <div class="field"><label class="field-label">Año Escolar</label><input class="inp" id="e-anio" value="${e.anioEscolar||(escCfg?escCfg.actual.nombre:String(anioActual()))}"/></div>
+          <div class="field"><label class="field-label">Año Escolar</label><input class="inp" id="e-anio" value="${escHtml(e.anioEscolar)||(escCfg?escHtml(escCfg.actual.nombre):String(anioActual()))}"/></div>
         </div>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-graduado" ${e.graduado?"checked":""}/> 🎓 Graduado (egresado)</label>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinrec" ${e.sinRecargo?"checked":""}/> 🤝 Exonerado de recargos por mora</label>
         <div id="mora-fields" style="display:${e.estado==="mora"?"flex":"none"};flex-direction:column;gap:0.75rem;background:#fff5f5;border-radius:10px;padding:0.85rem;border-left:4px solid #e53e3e">
           <div class="field"><label class="field-label" style="color:#e53e3e">⚠️ Concepto de Mora</label>
-            <textarea class="inp" id="e-mora-concepto" rows="2" placeholder="Ej: Mensualidad Enero y Febrero sin cancelar">${e.moraConcepto||""}</textarea></div>
+            <textarea class="inp" id="e-mora-concepto" rows="2" placeholder="Ej: Mensualidad Enero y Febrero sin cancelar">${escHtml(e.moraConcepto)||""}</textarea></div>
           <div class="field"><label class="field-label" style="color:#e53e3e">💰 Monto que debe</label>
             <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#e53e3e;font-weight:700">$</span>
             <input class="inp" id="e-mora-monto" placeholder="0,00" style="padding-left:2rem;border-color:#ffcccc" value="${e.moraMonto?String(e.moraMonto).replace('.',','):''}" oninput="fmtInput(this)"/></div></div>
@@ -186,16 +186,16 @@ function renderModalVerEstudiante(m){
   return`<div class="modal-bg" onclick="if(event.target.classList.contains('modal-bg'))cerrarModal()">
     <div class="modal">
       <div class="modal-header">
-        <div><h3>👨‍🎓 ${e.nombre}</h3><p>${e.grado||""} ${e.jornada?"· "+e.jornada:""}</p></div>
+        <div><h3>👨‍🎓 ${escHtml(e.nombre)}</h3><p>${escHtml(e.grado)||""} ${e.jornada?"· "+escHtml(e.jornada):""}</p></div>
         <button class="modal-close-x" onclick="cerrarModal()">✕</button>
       </div>
       <div class="modal-body">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
-          <span class="badge ${enMora(e)?"badge-red":e.estado==="retirado"?"badge-gray":e.graduado?"badge-gold":"badge-green"} " style="font-size:0.8rem;padding:0.3rem 0.75rem">${enMora(e)?"⚠️ En Mora":e.estado==="retirado"?"🚪 Retirado":e.graduado?"🎓 Graduado"+(e.graduadoEn?" · "+e.graduadoEn:""):"✅ Al Saldo"}</span>
-          <span style="font-size:0.75rem;color:#888">Año: ${e.anioEscolar||anioActual()}</span>
+          <span class="badge ${enMora(e)?"badge-red":e.estado==="retirado"?"badge-gray":e.graduado?"badge-gold":"badge-green"} " style="font-size:0.8rem;padding:0.3rem 0.75rem">${enMora(e)?"⚠️ En Mora":e.estado==="retirado"?"🚪 Retirado":e.graduado?"🎓 Graduado"+(e.graduadoEn?" · "+escHtml(e.graduadoEn):""):"✅ Al Saldo"}</span>
+          <span style="font-size:0.75rem;color:#888">Año: ${escHtml(e.anioEscolar)||anioActual()}</span>
         </div>
         ${[["📛 Cédula",e.cedula||"N/A"],["🎂 Edad",edad?edad+" años":"N/A"],["📞 Teléfono",e.telefono||"N/A"],["🏠 Dirección",e.direccion||"N/A"],["👤 Acudiente",e.acudiente||"N/A"],["📞 Tel. Acudiente",e.telefonoAcudiente||"N/A"]].map(([l,v])=>`
-        <div class="info-row"><span style="color:#888;font-size:0.8rem">${l}</span><span style="font-weight:600;font-size:0.82rem;color:#333">${v}</span></div>`).join("")}
+        <div class="info-row"><span style="color:#888;font-size:0.8rem">${l}</span><span style="font-weight:600;font-size:0.82rem;color:#333">${escHtml(v)}</span></div>`).join("")}
         <hr class="divider"/>
         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
           <div style="flex:1;background:#f0f4ff;border-radius:10px;padding:0.75rem;text-align:center">
@@ -211,15 +211,15 @@ function renderModalVerEstudiante(m){
         ${e.estado==="mora"&&(e.moraConcepto||e.moraMonto)?`
         <div class="mora-box">
           <div style="font-size:0.62rem;color:#e53e3e;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:5px">⚠️ Detalle de Mora</div>
-          ${e.moraConcepto?`<div style="font-size:0.85rem;color:#333;margin-bottom:4px">📋 ${e.moraConcepto}</div>`:""}
+          ${e.moraConcepto?`<div style="font-size:0.85rem;color:#333;margin-bottom:4px">📋 ${escHtml(e.moraConcepto)}</div>`:""}
           ${e.moraMonto?`<div style="display:flex;justify-content:space-between;background:#ffe0e0;border-radius:8px;padding:0.5rem 0.75rem;margin-top:3px"><span style="font-size:0.8rem;color:#c0392b;font-weight:600">Adeuda</span><span style="font-weight:800;color:#e53e3e">${fmt(e.moraMonto)}</span></div>`:""}
         </div>`:""}
         <div style="font-size:0.72rem;color:#888;margin-bottom:0.4rem">Últimos pagos (${pagosEst.length})</div>
-        ${pagosEst.slice(0,4).map(p=>`<div class="info-row"><span style="color:#555;font-size:0.8rem">${p.fecha} · ${p.concepto||"Pago"} ${p.mes?"("+p.mes+")":""}</span><span style="font-weight:700;color:#003366;font-size:0.82rem">${fmt(p.total)}</span></div>`).join("")}
+        ${pagosEst.slice(0,4).map(p=>`<div class="info-row"><span style="color:#555;font-size:0.8rem">${escHtml(p.fecha)} · ${escHtml(p.concepto)||"Pago"} ${p.mes?"("+escHtml(p.mes)+")":""}</span><span style="font-weight:700;color:#003366;font-size:0.82rem">${fmt(p.total)}</span></div>`).join("")}
         ${pagosEst.length===0?'<p style="font-size:0.78rem;color:#aaa">Sin pagos registrados</p>':""}
       </div>
       <div class="modal-actions">
-        <button class="btn btn-primary" style="flex:1" onclick="cerrarModal();subTab.pagos='nuevo';tabActual='pagos';_metodoPago='Dólares Efectivo';window._pagoEstId='${e.id}';window._pagoCedula='${e.cedula||''}';render();setTimeout(()=>{const n=document.getElementById('p-nombre');if(n)n.value='${e.nombre}';const c=document.getElementById('p-cedula');if(c)c.value='${e.cedula||''}';const t=document.getElementById('p-tel');if(t)t.value='${e.telefono||''}';},150)">💰 Registrar Pago</button>
+        <button class="btn btn-primary" style="flex:1" onclick="cerrarModal();subTab.pagos='nuevo';tabActual='pagos';_metodoPago='Dólares Efectivo';window._pagoEstId='${e.id}';window._pagoCedula='${escJs(e.cedula)||''}';render();setTimeout(()=>{const n=document.getElementById('p-nombre');if(n)n.value='${escJs(e.nombre)}';const c=document.getElementById('p-cedula');if(c)c.value='${escJs(e.cedula)||''}';const t=document.getElementById('p-tel');if(t)t.value='${escJs(e.telefono)||''}';},150)">💰 Registrar Pago</button>
         <button class="btn btn-print btn-sm" onclick="imprimirConstancia('${e.id}')">📄 Constancia</button>
         <button class="btn btn-gray btn-sm" onclick="abrirModal({tipo:'editar-estudiante',id:'${e.id}'})">✏️</button>
         <button class="btn btn-gray" onclick="cerrarModal()">Cerrar</button>
@@ -238,7 +238,7 @@ function imprimirConstancia(estId){
 
   const w = window.open("","_blank","width=720,height:1000");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-  <title>Constancia - ${e.nombre}</title>
+  <title>Constancia - ${escHtml(e.nombre)}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Times New Roman',serif;background:#fff;color:#222;padding:2.5rem;max-width:720px;margin:0 auto;font-size:12pt;line-height:1.6}
@@ -284,16 +284,16 @@ function imprimirConstancia(estId){
   </div>
 
   <div class="cuerpo">
-    &nbsp;&nbsp;&nbsp;&nbsp;Quien suscribe, Director(a) de la <strong>${EMPRESA}</strong>, ubicada en ${EMPRESA_SUB}, hace constar por medio de la presente que el/la estudiante <span class="nombre-est">${e.nombre}</span>${edad?`, de <strong>${edad} años</strong> de edad,`:","} titular de la cédula escolar N° <strong>${e.cedula||"_____________"}</strong>, se encuentra debidamente inscrito(a) y cursando estudios regulares en esta institución en el <strong>${e.grado||"_____________"}</strong>, jornada <strong>${e.jornada||"_____________"}</strong>, correspondiente al año escolar <strong>${e.anioEscolar||anioActual()}</strong>.
+    &nbsp;&nbsp;&nbsp;&nbsp;Quien suscribe, Director(a) de la <strong>${EMPRESA}</strong>, ubicada en ${EMPRESA_SUB}, hace constar por medio de la presente que el/la estudiante <span class="nombre-est">${escHtml(e.nombre)}</span>${edad?`, de <strong>${edad} años</strong> de edad,`:","} titular de la cédula escolar N° <strong>${escHtml(e.cedula)||"_____________"}</strong>, se encuentra debidamente inscrito(a) y cursando estudios regulares en esta institución en el <strong>${escHtml(e.grado)||"_____________"}</strong>, jornada <strong>${escHtml(e.jornada)||"_____________"}</strong>, correspondiente al año escolar <strong>${escHtml(e.anioEscolar)||anioActual()}</strong>.
   </div>
 
   <div class="datos-box">
-    <div class="dato"><span>Estudiante</span>${e.nombre}</div>
-    <div class="dato"><span>Cédula Escolar</span>${e.cedula||"N/A"}</div>
-    <div class="dato"><span>Grado / Sección</span>${e.grado||"N/A"}</div>
-    <div class="dato"><span>Jornada</span>${e.jornada||"N/A"}</div>
-    <div class="dato"><span>Año Escolar</span>${e.anioEscolar||anioActual()}</div>
-    <div class="dato"><span>Representante</span>${e.acudiente||"N/A"}</div>
+    <div class="dato"><span>Estudiante</span>${escHtml(e.nombre)}</div>
+    <div class="dato"><span>Cédula Escolar</span>${escHtml(e.cedula)||"N/A"}</div>
+    <div class="dato"><span>Grado / Sección</span>${escHtml(e.grado)||"N/A"}</div>
+    <div class="dato"><span>Jornada</span>${escHtml(e.jornada)||"N/A"}</div>
+    <div class="dato"><span>Año Escolar</span>${escHtml(e.anioEscolar)||anioActual()}</div>
+    <div class="dato"><span>Representante</span>${escHtml(e.acudiente)||"N/A"}</div>
   </div>
 
   <div class="cuerpo">
@@ -361,7 +361,7 @@ async function guardarEstudiante(editId){
     if(editId){await db.collection("estudiantes").doc(editId).update(datos);const i=estudiantes.findIndex(e=>e.id===editId);if(i>=0)estudiantes[i]={...estudiantes[i],...datos};alertaEstudiante(datos,"✏️ Actualizado");}
     else{const ref=await db.collection("estudiantes").add(datos);datos.id=ref.id;estudiantes.push(datos);alertaEstudiante(datos,"➕ Registrado");}
     cerrarModal();
-  }catch(e){document.getElementById("modal-err").innerHTML=`<div class="error-msg">${e.message}</div>`;}
+  }catch(e){document.getElementById("modal-err").innerHTML=`<div class="error-msg">${escHtml(e.message)}</div>`;}
 }
 async function eliminarEstudiante(id){
   if(!confirm("¿Eliminar este estudiante?"))return;

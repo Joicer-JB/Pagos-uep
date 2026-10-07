@@ -24,7 +24,7 @@ function renderReportes(){
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>⚠️ Estudiantes en Mora (${mora.length})</h2></div>
     ${mora.length===0?'<p style="font-size:0.82rem;color:#aaa">Sin estudiantes en mora ✅</p>':
-    mora.map(e=>`<div class="info-row"><div><span style="font-weight:700;color:#e53e3e">${e.nombre}</span><div style="font-size:0.72rem;color:#888">${e.moraConcepto||"Sin detalle"}</div></div><span style="font-weight:800;color:#e53e3e">${fmt(deudaDe(e))}</span></div>`).join("")}
+    mora.map(e=>`<div class="info-row"><div><span style="font-weight:700;color:#e53e3e">${escHtml(e.nombre)}</span><div style="font-size:0.72rem;color:#888">${escHtml(e.moraConcepto)||"Sin detalle"}</div></div><span style="font-weight:800;color:#e53e3e">${fmt(deudaDe(e))}</span></div>`).join("")}
     ${mora.length>0?`<div style="margin-top:0.5rem;padding:0.6rem 0.85rem;background:#fff5f5;border-radius:8px;display:flex;justify-content:space-between"><span style="font-size:0.82rem;color:#e53e3e;font-weight:700">Total en mora:</span><span style="font-weight:800;color:#e53e3e">${fmt(mora.reduce((s,e)=>s+deudaDe(e),0))}</span></div>`:""}
   </div>
   <div class="card">
@@ -32,7 +32,7 @@ function renderReportes(){
     ${Object.entries(porConcepto).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
     <div style="margin-bottom:0.6rem">
       <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:3px">
-        <span style="color:#333">📌 ${k}</span><span style="font-weight:700;color:#003366">${fmt(v)}</span>
+        <span style="color:#333">📌 ${escHtml(k)}</span><span style="font-weight:700;color:#003366">${fmt(v)}</span>
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${totalPagos>0?Math.round(v/totalPagos*100):0}%"></div></div>
     </div>`).join("")||'<p style="font-size:0.82rem;color:#aaa">Sin datos</p>'}

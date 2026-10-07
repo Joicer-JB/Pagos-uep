@@ -13,7 +13,7 @@ function render(){
         <div class="header-name">${EMPRESA}</div>
       </div>
       ${rolUsuario!=="docente"?`<button class="logout-btn" style="margin-left:auto;${tasaHoy()?"":"background:#c0392b;color:#fff"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día">${chipTasaTxt()}</button>`:""}
-      ${escCfg&&rolUsuario!=="docente"?`<select onchange="cambiarAnioVista(this.value)" style="margin-left:0.4rem;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:0.28rem 0.4rem;font-size:0.7rem;max-width:130px">${[escCfg.actual,...escCfg.anteriores.slice().reverse()].map(a=>`<option value="${a.id}" style="color:#000" ${a.id===anioVista?"selected":""}>${a.nombre}${a.id===escCfg.actual.id?" (actual)":""}</option>`).join("")}</select>`:""}
+      ${escCfg&&rolUsuario!=="docente"?`<select onchange="cambiarAnioVista(this.value)" style="margin-left:0.4rem;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:0.28rem 0.4rem;font-size:0.7rem;max-width:130px">${[escCfg.actual,...escCfg.anteriores.slice().reverse()].map(a=>`<option value="${a.id}" style="color:#000" ${a.id===anioVista?"selected":""}>${escHtml(a.nombre)}${a.id===escCfg.actual.id?" (actual)":""}</option>`).join("")}</select>`:""}
 <button class="logout-btn" style="${rolUsuario!=="docente"?"margin-left:0.4rem":""}" onclick="logout()">Salir</button>
     </div>
     <div class="tabs">
@@ -24,7 +24,7 @@ function render(){
     </div>
     </div>
   </div>
-  ${soloLectura()?`<div style="background:#fff8e1;border-bottom:2px solid #b8860b;color:#7a5c00;padding:0.55rem 1rem;font-size:0.8rem;text-align:center">📚 Estás viendo el año escolar <strong>${anioVistaObj().nombre}</strong> (solo consulta). <a href="#" onclick="cambiarAnioVista('${escCfg.actual.id}');return false" style="color:#003366;font-weight:700">Volver al año actual</a></div>`:""}
+  ${soloLectura()?`<div style="background:#fff8e1;border-bottom:2px solid #b8860b;color:#7a5c00;padding:0.55rem 1rem;font-size:0.8rem;text-align:center">📚 Estás viendo el año escolar <strong>${escHtml(anioVistaObj().nombre)}</strong> (solo consulta). <a href="#" onclick="cambiarAnioVista('${escCfg.actual.id}');return false" style="color:#003366;font-weight:700">Volver al año actual</a></div>`:""}
 ${bannerTasa()}
 <div class="content" id="tab-content">${renderTab()}</div>
   ${modalActual?renderModal():""}`;
