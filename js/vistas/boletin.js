@@ -1,58 +1,80 @@
 // Boletín de calificaciones para imprimir (media general y preescolar/primaria).
 
-function imprimirBoletin(estId){
-  const est = estudiantes.find(e=>e.id===estId);
-  if(!est){alert("Estudiante no encontrado");return;}
+function imprimirBoletin(estId) {
+  const est = estudiantes.find((e) => e.id === estId);
+  if (!est) {
+    alert("Estudiante no encontrado");
+    return;
+  }
   const nivel = getNivel(est.grado);
-  if(nivel==="primaria"||nivel==="preescolar"){
+  if (nivel === "primaria" || nivel === "preescolar") {
     imprimirBoletinPrimaria(est);
   } else {
     imprimirBoletinMedia(est);
   }
 }
-function imprimirBoletinMedia(est){
+function imprimirBoletinMedia(est) {
   const estId = est.id;
-  const inst = configInst||{};
-  const buildRows = () => getAreas(est.grado).map(m=>{
-    const promLapsos = LAPSOS.map(lapso=>{
-      const k=`${estId}_${lapso}`;
-      const n=notas[k]||{};
-      const vals=[n[m+"_1"],n[m+"_2"],n[m+"_3"]].filter(v=>v!==undefined&&v!=="");
-      return vals.length?Math.round(vals.reduce((a,b)=>a+parseFloat(b),0)/vals.length*10)/10:null;
-    });
-    const validos=promLapsos.filter(v=>v!==null);
-    const nf=validos.length?Math.round(validos.reduce((a,b)=>a+b,0)/validos.length*10)/10:null;
-    const inaLapsos = LAPSOS.map(lapso=>{
-      const k=`${estId}_${lapso}`;
-      return (notas[k]||{})[m+"_ina"]||0;
-    });
-    const color=n=>n===null?"#999":n>=18?"#1a6e3c":n>=14?"#7a6000":"#b91c1c";
-    const aprobada = nf!==null&&nf>=10;
-    return `<tr>
+  const inst = configInst || {};
+  const buildRows = () =>
+    getAreas(est.grado)
+      .map((m) => {
+        const promLapsos = LAPSOS.map((lapso) => {
+          const k = `${estId}_${lapso}`;
+          const n = notas[k] || {};
+          const vals = [n[m + "_1"], n[m + "_2"], n[m + "_3"]].filter((v) => v !== undefined && v !== "");
+          return vals.length ? Math.round((vals.reduce((a, b) => a + parseFloat(b), 0) / vals.length) * 10) / 10 : null;
+        });
+        const validos = promLapsos.filter((v) => v !== null);
+        const nf = validos.length ? Math.round((validos.reduce((a, b) => a + b, 0) / validos.length) * 10) / 10 : null;
+        const inaLapsos = LAPSOS.map((lapso) => {
+          const k = `${estId}_${lapso}`;
+          return (notas[k] || {})[m + "_ina"] || 0;
+        });
+        const color = (n) => (n === null ? "#999" : n >= 18 ? "#1a6e3c" : n >= 14 ? "#7a6000" : "#b91c1c");
+        const aprobada = nf !== null && nf >= 10;
+        return (
+          `<tr>
       <td style="padding:5px 8px;font-weight:600;border:1px solid #ccc;font-size:0.8rem">${escHtml(m)}</td>
-      `+promLapsos.map((p,i)=>'<td style="text-align:center;padding:4px;border:1px solid #ccc;color:'+color(p)+';font-weight:700;font-size:0.8rem">'+( p!==null?p:"-")+'</td><td style="text-align:center;padding:4px;border:1px solid #ccc;color:#888;font-size:0.75rem">'+( inaLapsos[i]||"-")+'</td>').join("")+`
+      ` +
+          promLapsos
+            .map(
+              (p, i) =>
+                '<td style="text-align:center;padding:4px;border:1px solid #ccc;color:' +
+                color(p) +
+                ';font-weight:700;font-size:0.8rem">' +
+                (p !== null ? p : "-") +
+                '</td><td style="text-align:center;padding:4px;border:1px solid #ccc;color:#888;font-size:0.75rem">' +
+                (inaLapsos[i] || "-") +
+                "</td>"
+            )
+            .join("") +
+          `
       <td style="text-align:center;padding:4px;border:1px solid #ccc">
-        <span style="background:${nf===null?"#f1f3f5":nf>=10?"#dcfce7":"#fee2e2"};color:${color(nf)};padding:1px 6px;border-radius:4px;font-weight:800;font-size:0.8rem">${nf!==null?nf:"-"}</span>
+        <span style="background:${nf === null ? "#f1f3f5" : nf >= 10 ? "#dcfce7" : "#fee2e2"};color:${color(nf)};padding:1px 6px;border-radius:4px;font-weight:800;font-size:0.8rem">${nf !== null ? nf : "-"}</span>
       </td>
       <td style="text-align:center;padding:4px;border:1px solid #ccc;font-size:0.75rem;color:#888"></td>
-      <td style="text-align:center;padding:4px;border:1px solid #ccc;font-size:0.75rem;color:${aprobada?"#1a6e3c":"#b91c1c"}">${nf!==null?(aprobada?"✓":"✗"):""}</td>
+      <td style="text-align:center;padding:4px;border:1px solid #ccc;font-size:0.75rem;color:${aprobada ? "#1a6e3c" : "#b91c1c"}">${nf !== null ? (aprobada ? "✓" : "✗") : ""}</td>
       <td style="padding:4px;border:1px solid #ccc"></td>
-    </tr>`;
-  }).join("");
+    </tr>`
+        );
+      })
+      .join("");
 
-  const materiasPendientes = getAreas(est.grado).filter(m=>{
-    const validos = LAPSOS.map(lapso=>{
-      const k=`${estId}_${lapso}`;
-      const n=notas[k]||{};
-      const vals=[n[m+"_1"],n[m+"_2"],n[m+"_3"]].filter(v=>v!==undefined&&v!=="");
-      return vals.length?vals.reduce((a,b)=>a+parseFloat(b),0)/vals.length:null;
-    }).filter(v=>v!==null);
-    const nf = validos.length?validos.reduce((a,b)=>a+b,0)/validos.length:null;
-    return nf!==null&&nf<10;
+  const materiasPendientes = getAreas(est.grado).filter((m) => {
+    const validos = LAPSOS.map((lapso) => {
+      const k = `${estId}_${lapso}`;
+      const n = notas[k] || {};
+      const vals = [n[m + "_1"], n[m + "_2"], n[m + "_3"]].filter((v) => v !== undefined && v !== "");
+      return vals.length ? vals.reduce((a, b) => a + parseFloat(b), 0) / vals.length : null;
+    }).filter((v) => v !== null);
+    const nf = validos.length ? validos.reduce((a, b) => a + b, 0) / validos.length : null;
+    return nf !== null && nf < 10;
   });
 
-  const w = window.open("","_blank");
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  const w = window.open("", "_blank");
+  w.document.write(
+    `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Boletín ${escHtml(est.nombre)}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -78,8 +100,8 @@ function imprimirBoletinMedia(est){
     <div style="text-align:center;min-width:60px"><div style="font-size:1.5rem">🏫</div></div>
     <div class="header-text">
       <p style="font-size:0.68rem;color:#666">REPÚBLICA BOLIVARIANA DE VENEZUELA · MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</p>
-      <h2>${escHtml(inst.nombre)||"U.E.P. Josefa Joaquina Sánchez"}</h2>
-      <p>${escHtml(inst.direccion)||"Turumo - Caucagüita, Estado Miranda"}</p>
+      <h2>${escHtml(inst.nombre) || "U.E.P. Josefa Joaquina Sánchez"}</h2>
+      <p>${escHtml(inst.direccion) || "Turumo - Caucagüita, Estado Miranda"}</p>
       <p style="font-weight:700;font-size:0.8rem;color:#003366;margin-top:3px">BOLETÍN DE CALIFICACIONES</p>
     </div>
     <div style="text-align:center;min-width:60px"><div style="font-size:1.5rem">🏫</div></div>
@@ -87,103 +109,138 @@ function imprimirBoletinMedia(est){
 
   <div class="datos-grid">
     <div class="dato"><label>Estudiante:</label><span style="font-weight:700">${escHtml(est.nombre)}</span></div>
-    <div class="dato"><label>Código:</label><span>${escHtml(inst.codigo)||"PD13831519"}</span></div>
-    <div class="dato"><label>Cédula:</label><span>${escHtml(est.cedula)||"N/A"}</span></div>
+    <div class="dato"><label>Código:</label><span>${escHtml(inst.codigo) || "PD13831519"}</span></div>
+    <div class="dato"><label>Cédula:</label><span>${escHtml(est.cedula) || "N/A"}</span></div>
     <div class="dato"><label>Curso:</label><span>${escHtml(est.grado)}</span></div>
-    <div class="dato"><label>Sección:</label><span>${escHtml(est.seccion)||"U"}</span></div>
-    <div class="dato"><label>Año escolar:</label><span>${escHtml(est.anioEscolar)||escHtml(inst.anioEscolar)||"2025-2026"}</span></div>
-    <div class="dato"><label>F. Nacimiento:</label><span>${escHtml(est.fechaNac)||"N/A"}</span></div>
-    <div class="dato"><label>Representante:</label><span>${escHtml(est.acudiente)||"N/A"}</span></div>
+    <div class="dato"><label>Sección:</label><span>${escHtml(est.seccion) || "U"}</span></div>
+    <div class="dato"><label>Año escolar:</label><span>${escHtml(est.anioEscolar) || escHtml(inst.anioEscolar) || "2025-2026"}</span></div>
+    <div class="dato"><label>F. Nacimiento:</label><span>${escHtml(est.fechaNac) || "N/A"}</span></div>
+    <div class="dato"><label>Representante:</label><span>${escHtml(est.acudiente) || "N/A"}</span></div>
   </div>
 
   <table>
     <thead>
       <tr>
         <th class="area-col" rowspan="2">ÁREA DE FORMACIÓN</th>
-        `+LAPSOS.map(l=>"<th colspan='2'>"+l+"</th>").join("")+`
+        ` +
+      LAPSOS.map((l) => "<th colspan='2'>" + l + "</th>").join("") +
+      `
         <th rowspan="2">DEFINITIVA</th>
         <th rowspan="2">ÁREA A REVISAR</th>
         <th rowspan="2">CALIFICACIÓN</th>
         <th rowspan="2">PROCESO DE REVISIÓN</th>
       </tr>
-      <tr>`+LAPSOS.map(()=>"<th>Nota</th><th>INA</th>").join("")+`</tr>
+      <tr>` +
+      LAPSOS.map(() => "<th>Nota</th><th>INA</th>").join("") +
+      `</tr>
     </thead>
     <tbody>${buildRows()}</tbody>
   </table>
 
-  `+(materiasPendientes.length>0?'<div style="margin-bottom:8px;padding:6px 10px;background:#fff3e0;border-radius:6px;border-left:3px solid #e65100;font-size:0.78rem"><strong style="color:#e65100">⚠️ Materias pendientes:</strong> '+materiasPendientes.map(escHtml).join(", ")+'</div>':"")+`
+  ` +
+      (materiasPendientes.length > 0
+        ? '<div style="margin-bottom:8px;padding:6px 10px;background:#fff3e0;border-radius:6px;border-left:3px solid #e65100;font-size:0.78rem"><strong style="color:#e65100">⚠️ Materias pendientes:</strong> ' +
+          materiasPendientes.map(escHtml).join(", ") +
+          "</div>"
+        : "") +
+      `
 
   <div style="font-size:0.72rem;color:#555;margin-bottom:10px;padding:8px;background:#f8faff;border-radius:6px">
     <strong>Observaciones:</strong> _______________________________________________________________________________________________________________
   </div>
 
   <div class="firma-row">
-    <div class="firma"><div class="firma-line">${escHtml(inst.directora)||"Lic. Ligia Herrera"}<br/>Directora</div></div>
-    <div class="firma"><div class="firma-line">${escHtml(inst.coordinador)||"Lic. Carlos Carrascal"}<br/>Coordinador(a) Media General</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.directora) || "Lic. Ligia Herrera"}<br/>Directora</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.coordinador) || "Lic. Carlos Carrascal"}<br/>Coordinador(a) Media General</div></div>
     <div class="firma"><div class="firma-line">___________________<br/>Docente</div></div>
   </div>
   <div style="text-align:center;margin-top:16px;font-size:0.7rem;color:#aaa">Sello del Plantel</div>
-  </body></html>`);
+  </body></html>`
+  );
   w.document.close();
-  setTimeout(()=>w.print(),500);
+  setTimeout(() => w.print(), 500);
 }
-function imprimirBoletinPrimaria(est){
+function imprimirBoletinPrimaria(est) {
   const estId = est.id;
-  const inst = configInst||{};
-  const esPreescolar = getNivel(est.grado)==="preescolar";
+  const inst = configInst || {};
+  const esPreescolar = getNivel(est.grado) === "preescolar";
   const areas = esPreescolar ? AREAS_MATERNAL : AREAS_PRIMARIA;
 
   const LETRAS_LEGEND = [
-    ["A","El alumno alcanzó todas las competencias y en algunos casos superó las expectativas previstas para el grado."],
-    ["B","El alumno alcanzó todas las competencias previstas para el grado."],
-    ["C","El alumno alcanzó la mayoría de las competencias previstas para el grado."],
-    ["D","El alumno alcanzó algunas de las competencias previstas para el grado, pero requiere de un proceso de nivelación."],
-    ["E","El alumno no logró adquirir las competencias mínimas requeridas para ser promovido al grado superior inmediato."],
+    [
+      "A",
+      "El alumno alcanzó todas las competencias y en algunos casos superó las expectativas previstas para el grado.",
+    ],
+    ["B", "El alumno alcanzó todas las competencias previstas para el grado."],
+    ["C", "El alumno alcanzó la mayoría de las competencias previstas para el grado."],
+    [
+      "D",
+      "El alumno alcanzó algunas de las competencias previstas para el grado, pero requiere de un proceso de nivelación.",
+    ],
+    [
+      "E",
+      "El alumno no logró adquirir las competencias mínimas requeridas para ser promovido al grado superior inmediato.",
+    ],
   ];
 
   // Count total asistencia e inasistencia
-  let totalAsist = 0, totalInasist = 0;
-  LAPSOS.forEach(lapso=>{
-    const k=`${estId}_${lapso}`;
-    const nd = notas[k]||{};
-    totalAsist += parseInt(nd._asistencia||0);
-    totalInasist += parseInt(nd._inasistencia||0);
+  let totalAsist = 0,
+    totalInasist = 0;
+  LAPSOS.forEach((lapso) => {
+    const k = `${estId}_${lapso}`;
+    const nd = notas[k] || {};
+    totalAsist += parseInt(nd._asistencia || 0);
+    totalInasist += parseInt(nd._inasistencia || 0);
   });
 
   // Build rows for each lapso
   const buildRowsPrimaria = (lapso) => {
-    const k=`${estId}_${lapso}`;
-    const nd=notas[k]||{};
-    return areas.map(area=>{
-      const inds = getIndicadores(est.grado, area);
-      if(!inds||inds.length===0){
-        return `<tr>
+    const k = `${estId}_${lapso}`;
+    const nd = notas[k] || {};
+    return areas
+      .map((area) => {
+        const inds = getIndicadores(est.grado, area);
+        if (!inds || inds.length === 0) {
+          return `<tr>
           <td style="writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:700;font-size:0.7rem;padding:4px;border:1px solid #ccc;background:#f0f4ff;color:#003366" rowspan="1">${escHtml(area)}</td>
           <td style="padding:5px 8px;border:1px solid #ccc;font-size:0.75rem;color:#aaa" colspan="6">Sin indicadores configurados</td>
         </tr>`;
-      }
-      return inds.map((ind,i)=>{
-        const fieldKey = area+"_ind_"+i;
-        const val = nd[fieldKey]||"";
-        return `<tr>
-          `+(i===0?'<td style="writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:700;font-size:0.7rem;padding:4px;border:1px solid #ccc;background:#f0f4ff;color:#003366" rowspan="'+inds.length+'">'+escHtml(area)+'</td>':"")+`
+        }
+        return inds
+          .map((ind, i) => {
+            const fieldKey = area + "_ind_" + i;
+            const val = nd[fieldKey] || "";
+            return (
+              `<tr>
+          ` +
+              (i === 0
+                ? '<td style="writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:700;font-size:0.7rem;padding:4px;border:1px solid #ccc;background:#f0f4ff;color:#003366" rowspan="' +
+                  inds.length +
+                  '">' +
+                  escHtml(area) +
+                  "</td>"
+                : "") +
+              `
           <td style="padding:4px 8px;border:1px solid #ccc;font-size:0.75rem">${escHtml(ind)}</td>
-          ${["A","B","C","D","E"].map(l=>`<td style="text-align:center;border:1px solid #ccc;padding:3px;font-weight:700;color:${val===l?"#003366":"#ccc"}">${val===l?"✓":""}</td>`).join("")}
-        </tr>`;
-      }).join("");
-    }).join("");
+          ${["A", "B", "C", "D", "E"].map((l) => `<td style="text-align:center;border:1px solid #ccc;padding:3px;font-weight:700;color:${val === l ? "#003366" : "#ccc"}">${val === l ? "✓" : ""}</td>`).join("")}
+        </tr>`
+            );
+          })
+          .join("");
+      })
+      .join("");
   };
 
   // Determine if promovido
-  const tieneE = areas.some(area=>{
-    const inds = getIndicadores(est.grado,area)||[];
-    return inds.some((_,i)=>{
-      const fieldKey=area+"_ind_"+i;
-      return LAPSOS.some(lapso=>(notas[`${estId}_${lapso}`]||{})[fieldKey]==="E");
+  const tieneE = areas.some((area) => {
+    const inds = getIndicadores(est.grado, area) || [];
+    return inds.some((_, i) => {
+      const fieldKey = area + "_ind_" + i;
+      return LAPSOS.some((lapso) => (notas[`${estId}_${lapso}`] || {})[fieldKey] === "E");
     });
   });
 
-  const w = window.open("","_blank");
+  const w = window.open("", "_blank");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Boletín Primaria ${escHtml(est.nombre)}</title>
   <style>
@@ -210,26 +267,27 @@ function imprimirBoletinPrimaria(est){
     <div style="font-size:1.4rem">🏫</div>
     <div class="header-text">
       <p style="font-size:0.65rem;color:#666">REPÚBLICA BOLIVARIANA DE VENEZUELA · MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</p>
-      <h2>${escHtml(inst.nombre)||"U.E.P. Josefa Joaquina Sánchez"}</h2>
-      <p style="font-size:0.7rem">${escHtml(inst.direccion)||"Turumo - Caucagüita, Estado Miranda"}</p>
-      <p style="font-weight:700;font-size:0.78rem;color:#003366;margin-top:2px">BOLETÍN DE CALIFICACIONES — ${esPreescolar?"EDUCACIÓN INICIAL":"EDUCACIÓN PRIMARIA"}</p>
+      <h2>${escHtml(inst.nombre) || "U.E.P. Josefa Joaquina Sánchez"}</h2>
+      <p style="font-size:0.7rem">${escHtml(inst.direccion) || "Turumo - Caucagüita, Estado Miranda"}</p>
+      <p style="font-weight:700;font-size:0.78rem;color:#003366;margin-top:2px">BOLETÍN DE CALIFICACIONES — ${esPreescolar ? "EDUCACIÓN INICIAL" : "EDUCACIÓN PRIMARIA"}</p>
     </div>
     <div style="font-size:1.4rem">🏫</div>
   </div>
 
   <div class="datos-grid">
     <div class="dato"><label>Estudiante:</label><span style="font-weight:700">${escHtml(est.nombre)}</span></div>
-    <div class="dato"><label>Código plantel:</label><span>${escHtml(inst.codigo)||"PD13831519"}</span></div>
-    <div class="dato"><label>Cédula:</label><span>${escHtml(est.cedula)||"N/A"}</span></div>
+    <div class="dato"><label>Código plantel:</label><span>${escHtml(inst.codigo) || "PD13831519"}</span></div>
+    <div class="dato"><label>Cédula:</label><span>${escHtml(est.cedula) || "N/A"}</span></div>
     <div class="dato"><label>Grado:</label><span>${escHtml(est.grado)}</span></div>
-    <div class="dato"><label>Sección:</label><span>${escHtml(est.seccion)||"U"}</span></div>
-    <div class="dato"><label>Año escolar:</label><span>${escHtml(est.anioEscolar)||escHtml(inst.anioEscolar)||"2025-2026"}</span></div>
-    <div class="dato"><label>F. Nacimiento:</label><span>${escHtml(est.fechaNac)||"N/A"}</span></div>
-    <div class="dato"><label>Representante:</label><span>${escHtml(est.acudiente)||"N/A"}</span></div>
+    <div class="dato"><label>Sección:</label><span>${escHtml(est.seccion) || "U"}</span></div>
+    <div class="dato"><label>Año escolar:</label><span>${escHtml(est.anioEscolar) || escHtml(inst.anioEscolar) || "2025-2026"}</span></div>
+    <div class="dato"><label>F. Nacimiento:</label><span>${escHtml(est.fechaNac) || "N/A"}</span></div>
+    <div class="dato"><label>Representante:</label><span>${escHtml(est.acudiente) || "N/A"}</span></div>
   </div>
 
-  ${LAPSOS.map((lapso,li)=>`
-    ${li>0?'<div class="page-break"></div>':""}
+  ${LAPSOS.map(
+    (lapso, li) => `
+    ${li > 0 ? '<div class="page-break"></div>' : ""}
     <div class="lapso-title">📋 ${lapso} — Escala alfabética para evaluar los indicadores</div>
     <table>
       <thead><tr>
@@ -243,7 +301,8 @@ function imprimirBoletinPrimaria(est){
       </tr></thead>
       <tbody>${buildRowsPrimaria(lapso)}</tbody>
     </table>
-  `).join("")}
+  `
+  ).join("")}
 
   <div style="margin-top:10px">
     <p style="font-weight:700;font-size:0.75rem">OBSERVACIONES GENERALES:</p>
@@ -253,13 +312,13 @@ function imprimirBoletinPrimaria(est){
   </div>
 
   <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:0.75rem">
-    <span><strong>Cantidad de asistencia:</strong> ${totalAsist||"___"}</span>
-    <span><strong>Cantidad de inasistencia:</strong> ${totalInasist||"___"}</span>
+    <span><strong>Cantidad de asistencia:</strong> ${totalAsist || "___"}</span>
+    <span><strong>Cantidad de inasistencia:</strong> ${totalInasist || "___"}</span>
   </div>
 
   <div class="leyenda">
     <strong>Leyenda:</strong>
-    ${LETRAS_LEGEND.map(([l,d])=>`<div style="margin-top:3px"><strong>${l}:</strong> ${d}</div>`).join("")}
+    ${LETRAS_LEGEND.map(([l, d]) => `<div style="margin-top:3px"><strong>${l}:</strong> ${d}</div>`).join("")}
   </div>
 
   <div style="margin-top:10px;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:0.75rem">
@@ -270,11 +329,11 @@ function imprimirBoletinPrimaria(est){
 
   <div class="firma-row">
     <div class="firma"><div class="firma-line">___________________<br/>Docente</div></div>
-    <div class="firma"><div class="firma-line">${escHtml(inst.coordinadorPrimaria)||"___________________"}<br/>Coordinadora</div></div>
-    <div class="firma"><div class="firma-line">${escHtml(inst.directora)||"Lic. Ligia Herrera"}<br/>Directora</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.coordinadorPrimaria) || "___________________"}<br/>Coordinadora</div></div>
+    <div class="firma"><div class="firma-line">${escHtml(inst.directora) || "Lic. Ligia Herrera"}<br/>Directora</div></div>
   </div>
   <div style="text-align:center;margin-top:16px;font-size:0.7rem;color:#aaa">Sello del Plantel</div>
   </body></html>`);
   w.document.close();
-  setTimeout(()=>w.print(),600);
+  setTimeout(() => w.print(), 600);
 }
