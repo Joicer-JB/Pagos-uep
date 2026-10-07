@@ -1,5 +1,15 @@
 # Historial de cambios
 
+## Octubre 2026 — Limpieza de estudiantes repetidos
+
+- Nuevo aviso en Estudiantes (solo director) que detecta fichas repetidas aunque el nombre esté con el apellido
+  primero, con coma, sin tildes o en mayúsculas, o con la misma cédula, y permite eliminar las copias en bloque
+  (`js/vistas/duplicados.js`). Copia a la ficha conservada los datos que le faltaban, descarga un respaldo antes
+  y no borra fichas con pagos que se perderían.
+- El importador de Excel ahora también reconoce como repetido a un estudiante cuyo nombre viene con el
+  apellido primero o con coma (antes solo comparaba tildes y mayúsculas).
+- Pruebas nuevas: 16 de funciones y 6 en el navegador.
+
 ## Octubre 2026 — Reorganización, seguridad y pruebas
 
 ### Organización del código

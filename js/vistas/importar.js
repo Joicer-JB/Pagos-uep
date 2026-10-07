@@ -100,7 +100,7 @@ function construirImportacion(filas, mapa, op, existentes) {
   const porNombre = new Map(),
     porCed = new Map();
   (existentes || []).forEach((e) => {
-    if (e.nombre) porNombre.set(claveNombre(e.nombre), e);
+    if (e.nombre) porNombre.set(claveNombreSinOrden(e.nombre), e);
     if (e.cedula) porCed.set(String(e.cedula).trim(), e);
   });
   const vistoNom = new Map(),
@@ -129,7 +129,7 @@ function construirImportacion(filas, mapa, op, existentes) {
     if (!g("rep")) it.avisos.push("Sin representante");
     if (sexo !== "M" && sexo !== "F") it.avisos.push("Sin sexo");
     if (!it.errores.length) {
-      const ck = claveNombre(nombre);
+      const ck = claveNombreSinOrden(nombre);
       const ex = porNombre.get(ck);
       if (ex) {
         it.estado = "duplicado";

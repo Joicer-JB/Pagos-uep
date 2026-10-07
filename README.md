@@ -82,7 +82,7 @@ js/
   vistas/                  Una pantalla por archivo
     dashboard.js  caja.js  pagos.js  cobranza.js  estudiantes.js  finanzas.js  nomina.js
     reportes.js  graficas.js  notas.js  boletin.js  configuracion.js  anio-escolar.js
-    promocion.js  importar.js
+    promocion.js  importar.js  duplicados.js
   app.js                   Arranque: si ya hay una sesión abierta, entra directo
 firestore.rules            Reglas de seguridad de la base de datos (ver abajo)
 tests/                     Pruebas automáticas (no se publican ni afectan a la app)

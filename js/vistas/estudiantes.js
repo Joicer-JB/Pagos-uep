@@ -102,6 +102,7 @@ function renderEstudiantes() {
     <div class="stat-card gold"><div class="stat-val">${fmt(mora.reduce((s, e) => s + deudaDe(e), 0))}</div><div class="stat-label">Total Mora</div></div>
   </div>
   ${htmlAvisoGrados()}
+  ${htmlAvisoDuplicados()}
   <button class="btn btn-primary btn-full" style="margin-bottom:0.75rem" onclick="abrirModal({tipo:'nuevo-estudiante'})">➕ Agregar Estudiante</button>
   <div class="search-bar">
     <input class="inp" id="search-input" placeholder="🔍 Buscar estudiante..." value="${filtros.busq}" oninput="onBusqInput(this.value)"/>

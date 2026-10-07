@@ -5,7 +5,7 @@
   "scripts": {
     "test": "npm run test:unidad && npm run test:e2e",
     "test:unidad": "node --test \"tests/unidad/**/*.test.js\"",
-    "test:e2e": "node --test tests/e2e/app.test.js",
+    "test:e2e": "node --test tests/e2e/app.test.js tests/e2e/duplicados.test.js",
     "test:reglas": "firebase emulators:exec --only firestore --project demo-pagos-uep \"node --test tests/reglas/reglas.test.js\"",
     "test:todo": "npm run revisar && npm test && npm run test:reglas",
     "revisar": "prettier --check . && eslint .",

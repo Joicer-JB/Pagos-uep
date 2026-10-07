@@ -20,6 +20,20 @@ inicio y cierre de año. El trabajo diario de cobros y pagos está en la
 6. **⚙️ Configuración → 🏫 Institución:** nombre, código, dirección, director y coordinadores. Salen en
    los boletines y las constancias.
 
+## Estudiantes repetidos
+
+Si un estudiante quedó dos o más veces (por ejemplo «Pérez, Ana» y «Ana Pérez», con o sin tilde), en la
+pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos** (solo lo ve el director):
+
+1. Pulsa **Revisar y limpiar**. Cada grupo muestra las fichas encontradas y cuál se conserva (la que tiene
+   más pagos y datos). Puedes elegir otra con el círculo de la izquierda.
+2. **Eliminar copias de una vez** borra todos los grupos «seguros» (mismo nombre, grado y fecha de
+   nacimiento, sin pagos en las copias). También puedes limpiar un grupo a la vez.
+3. Los datos que falten en la ficha que se conserva (representante, teléfono, dirección…) se copian desde
+   las copias antes de borrarlas. Antes de borrar se descarga un respaldo.
+4. Nunca se borra una ficha con pagos que la ficha conservada no pueda ver: aparece como 🔒 y hay que elegir
+   otra ficha para conservar. Dos niños con el mismo nombre y cédulas distintas no se consideran repetidos.
+
 ## Docentes
 
 **⚙️ Configuración → 👨‍🏫 Docentes → Nuevo docente**:

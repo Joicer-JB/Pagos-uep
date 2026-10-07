@@ -130,6 +130,7 @@ function renderModal() {
   if (m.tipo === "nuevo-estudiante") return renderModalEstudiante({});
   if (m.tipo === "ver-estudiante") return renderModalVerEstudiante(m);
   if (m.tipo === "editar-estudiante") return renderModalEstudiante(estudiantes.find((e) => e.id === m.id) || {});
+  if (m.tipo === "duplicados") return renderModalDuplicados();
   if (m.tipo === "nuevo-finanza") return renderModalFinanza(m);
   if (m.tipo === "ver-finanza") return renderModalVerFinanza(m);
   if (m.tipo === "ver-trabajador") return renderModalVerTrabajador(m);

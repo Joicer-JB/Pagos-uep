@@ -12,6 +12,15 @@ const claveNombre = (s) =>
     .replace(/[^a-z0-9 ]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+// Igual que claveNombre, pero no importa el orden de las palabras ni las partículas (de, del, la, y…):
+// «Pérez López, José» y «Jose Perez Lopez» dan la misma clave. Sirve para detectar al mismo estudiante escrito de otra forma.
+const PARTICULAS_NOMBRE = ["de", "del", "la", "las", "los", "y", "e"];
+const claveNombreSinOrden = (s) =>
+  claveNombre(s)
+    .split(" ")
+    .filter((t) => t && !PARTICULAS_NOMBRE.includes(t))
+    .sort()
+    .join(" ");
 // ---- Teléfonos de Venezuela para WhatsApp
 // Acepta 0412-1234567, +58 412 123 4567, 58 0412 1234567, 0058 412..., 4121234567. Devuelve 58 + 10 dígitos, o "" si no es válido.
 function normalizarTelVE(t) {
