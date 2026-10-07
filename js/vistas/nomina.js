@@ -4,7 +4,7 @@ function imprimirReciboNomina(trabId, pagoId) {
   let t = trabId ? trabajadores.find((x) => x.id === trabId) : null;
   let pago = pagoId ? finanzas.find((x) => x.id === pagoId) : null;
 
-  // If from historial, find worker by name
+  // Si viene del historial, busca al trabajador por su nombre
   if (pago && !t) {
     const nombreTrab = pago.responsable || "";
     t = trabajadores.find((x) => x.nombre === nombreTrab) || {
@@ -236,7 +236,7 @@ function renderHistorialNomina() {
 async function guardarTrabajador(editId) {
   const nombre = document.getElementById("t-nombre").value.trim();
   if (!nombre) {
-    document.getElementById("t-err").innerHTML = '<div class="error-msg">El nombre es requerido</div>';
+    mostrarError("t-err", "El nombre es requerido");
     return;
   }
   const datos = {
@@ -267,7 +267,7 @@ async function guardarTrabajador(editId) {
     cerrarModal();
     renderTabContent();
   } catch (e) {
-    document.getElementById("t-err").innerHTML = `<div class="error-msg">${escHtml(e.message)}</div>`;
+    mostrarError("t-err", e.message);
   }
 }
 function renderModalVerTrabajador(m) {
@@ -528,7 +528,7 @@ async function guardarPagoNomina() {
   const monto = parseFmt(document.getElementById("pn-monto").value);
   const tasa = parseTasa(document.getElementById("pn-tasa") ? document.getElementById("pn-tasa").value : "0");
   const err = (m) => {
-    document.getElementById("pn-err").innerHTML = `<div class="error-msg">${m}</div>`;
+    mostrarError("pn-err", m);
   };
   const { lista, error: errOtros } = leerOtrosConceptos();
   if (errOtros) {

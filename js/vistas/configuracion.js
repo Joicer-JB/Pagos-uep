@@ -95,7 +95,7 @@ function seleccionarTrabajadorDoc(trabId) {
     cargo.style.background = "#e8f0fe";
   }
   if (box) box.style.display = "none";
-  // Store trabajadorId for linking
+  // Guarda el trabajador elegido para vincularlo al docente
   window._docTrabId = trabId;
 }
 function renderConfigDocentes() {
@@ -239,9 +239,7 @@ function renderConfigInstitucion() {
     <button class="btn btn-primary" onclick="guardarInstitucion()">💾 Guardar datos institucionales</button>
   </div>`;
 }
-// ══════════════════════════
-// FUNCIONES DE ACCIÓN
-// ══════════════════════════
+// ── Acciones de configuración: materias, indicadores, institución y docentes ──
 
 function agregarMateria(grado) {
   const inp = document.getElementById("nueva-materia");
@@ -345,18 +343,6 @@ function renderModalDocente(docenteId) {
   const d = isEdit ? configDocentes.find((x) => x.id === docenteId) || {} : {};
   const jornada = d.jornada || "mañana";
   const grados_mg = ["1er Año", "2do Año", "3er Año", "4to Año", "5to Año"];
-  const grados_prim = [
-    "Maternal",
-    "Nivel I",
-    "Nivel II",
-    "Nivel III",
-    "1er Grado",
-    "2do Grado",
-    "3er Grado",
-    "4to Grado",
-    "5to Grado",
-    "6to Grado",
-  ];
 
   return `<div class="modal-bg"><div class="modal">
     <div class="modal-header">
@@ -402,7 +388,7 @@ function renderModalDocente(docenteId) {
           <label class="field-label">Grado asignado (Primaria)</label>
           <select class="inp" id="doc-grado">
             <option value="">Sin grado específico</option>
-            ${grados_prim.map((g) => `<option value="${g}" ${d.grado === g ? "selected" : ""}>${g}</option>`).join("")}
+            ${GRADOS_PRIM.map((g) => `<option value="${g}" ${d.grado === g ? "selected" : ""}>${g}</option>`).join("")}
           </select>
         </div>
         <div class="field" style="grid-column:1/-1" id="doc-mats-box">
@@ -465,12 +451,11 @@ async function guardarNuevoDocente() {
     .map((b) => b.getAttribute("onclick").match(/'([^']+)'/)[1]);
 
   if (!nombre || !correo || !pass) {
-    document.getElementById("doc-err").innerHTML = '<div class="error-msg">Completa nombre, correo y contraseña</div>';
+    mostrarError("doc-err", "Completa nombre, correo y contraseña");
     return;
   }
   if (pass.length < 6) {
-    document.getElementById("doc-err").innerHTML =
-      '<div class="error-msg">La contraseña debe tener al menos 6 caracteres</div>';
+    mostrarError("doc-err", "La contraseña debe tener al menos 6 caracteres");
     return;
   }
 
@@ -504,8 +489,10 @@ async function guardarNuevoDocente() {
     try {
       await db.collection("usuarios").doc(cred.user.uid).set(datos);
     } catch (e2) {
-      document.getElementById("doc-err").innerHTML =
-        `<div class="error-msg">La cuenta se creó pero no se pudo guardar su perfil (${escHtml(e2.message)}). Revisa las reglas de Firestore.</div>`;
+      mostrarError(
+        "doc-err",
+        `La cuenta se creó pero no se pudo guardar su perfil (${e2.message}). Revisa las reglas de Firestore.`
+      );
       return;
     }
     configDocentes.push({ id: cred.user.uid, ...datos });
@@ -514,8 +501,12 @@ async function guardarNuevoDocente() {
     mostrarToast("✅ Docente " + nombre + " creado exitosamente");
   } catch (e) {
     const yaExiste = e && e.code === "auth/email-already-in-use";
-    document.getElementById("doc-err").innerHTML =
-      `<div class="error-msg">${yaExiste ? "Ese correo ya tiene una cuenta. Si el docente no aparece en la lista, elimina esa cuenta en Firebase → Authentication y vuelve a crearlo." : escHtml(e.message)}</div>`;
+    mostrarError(
+      "doc-err",
+      yaExiste
+        ? "Ese correo ya tiene una cuenta. Si el docente no aparece en la lista, elimina esa cuenta en Firebase → Authentication y vuelve a crearlo."
+        : e.message
+    );
   }
 }
 async function guardarEditarDocente(id) {
@@ -535,7 +526,7 @@ async function guardarEditarDocente(id) {
     .map((b) => b.getAttribute("onclick").match(/'([^']+)'/)[1]);
 
   if (!nombre) {
-    document.getElementById("doc-err").innerHTML = '<div class="error-msg">El nombre es obligatorio</div>';
+    mostrarError("doc-err", "El nombre es obligatorio");
     return;
   }
   try {
@@ -551,6 +542,6 @@ async function guardarEditarDocente(id) {
     renderTabContent();
     mostrarToast("✅ Docente actualizado");
   } catch (e) {
-    document.getElementById("doc-err").innerHTML = `<div class="error-msg">${escHtml(e.message)}</div>`;
+    mostrarError("doc-err", e.message);
   }
 }

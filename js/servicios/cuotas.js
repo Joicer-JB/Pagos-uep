@@ -8,6 +8,7 @@
 // config.recargoDesde = fecha; solo cuotas que vencen desde ese día generan recargo (evita cobrar con efecto retroactivo).
 // El estudiante marcado «sinRecargo» (exonerado) nunca lo genera.
 let cobCfg = null;
+// Lee config/cobranza (cuotas, día de vencimiento y recargo). Sin configuración no hay mora automática
 async function cargarCobCfg() {
   cobCfg = null;
   try {
@@ -27,6 +28,7 @@ async function cargarCobCfg() {
     console.warn("cobranza cfg:", e.message);
   }
 }
+// La mora automática solo aplica al año actual (en años anteriores se ve el historial tal cual)
 const cobCfgActiva = () => !!cobCfg && !soloLectura();
 // Índice de pagos por estudiante (id, cédula, nombre) para no recorrer todos los pagos por cada estudiante
 let _pagoIdx = { ref: null, n: -1 };
@@ -49,6 +51,7 @@ function idxPagos() {
   });
   return (_pagoIdx = I);
 }
+// Pagos de un estudiante, buscados por id, cédula o nombre (los pagos viejos no tenían id)
 function pagosDeEstudiante(e) {
   const I = idxPagos(),
     set = new Set();
@@ -59,6 +62,9 @@ function pagosDeEstudiante(e) {
   );
   return [...set];
 }
+// Estado de cuenta de un estudiante: cuotas del año, cuánto se pagó de cada una, cuáles vencieron,
+// recargos y saldo a favor. Los pagos de «Mensualidad» se reparten desde la cuota más antigua.
+// Devuelve null si no hay mora automática o el estudiante no está activo.
 function calcCuotas(e, hoy) {
   hoy = hoy || todayStr();
   if (!cobCfgActiva() || !activo(e)) return null;
@@ -124,12 +130,16 @@ function calcCuotas(e, hoy) {
     proxima: lista.find((c) => !c.vencida && c.pendiente > 0.004) || null,
   };
 }
+// Deuda anterior escrita a mano en la ficha (estado «mora» + monto)
 const deudaManual = (e) => (e.estado === "mora" ? e.moraMonto || 0 : 0);
+// Deuda total de un estudiante: cuotas vencidas + recargos pendientes + deuda anterior
 function deudaDe(e) {
   const c = calcCuotas(e);
   return r2((c ? c.total : 0) + deudaManual(e));
 }
+// ¿El estudiante debe algo? (los retirados no cuentan)
 const enMora = (e) => e.estado !== "retirado" && (deudaDe(e) > 0 || e.estado === "mora");
+// Texto que explica qué debe un estudiante: «Mensualidad: Septiembre 2026 · Recargo …»
 function conceptoDeE(e) {
   const c = calcCuotas(e),
     p = [];
@@ -139,6 +149,7 @@ function conceptoDeE(e) {
   if (deudaManual(e) > 0 || (e.estado === "mora" && e.moraConcepto)) p.push(e.moraConcepto || "Deuda anterior");
   return p.join(" · ");
 }
+// Tabla del estado de cuenta (cuota por cuota) que se muestra en la ficha del estudiante
 function htmlEstadoCuenta(e) {
   const c = calcCuotas(e);
   if (!c) return "";
@@ -177,6 +188,7 @@ function htmlEstadoCuenta(e) {
     ${c.aFavor > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.8rem"><span>Saldo a favor</span><strong style="color:#1a9e5c">${fmt(c.aFavor)}</strong></div>` : ""}
   </div>`;
 }
+// Guarda la configuración de cuotas y recargo (solo el director)
 async function guardarCobCfg() {
   if (rolUsuario !== "director") {
     alert("Solo el director puede cambiar las cuotas");
@@ -217,6 +229,7 @@ async function guardarCobCfg() {
     alert("No se pudo guardar: " + e.message);
   }
 }
+// Panel de configuración de cuotas (el director lo edita; los demás ven un resumen)
 function htmlCfgCuotas() {
   const c = cobCfg;
   if (rolUsuario !== "director")
@@ -244,4 +257,5 @@ function htmlCfgCuotas() {
   </details>`;
 }
 const activo = (e) => e.estado !== "retirado" && !e.graduado; // inscrito este año (ni retirado ni graduado)
+// Fecha de inicio del año escolar actual ("" si se está viendo un año anterior)
 const baseAnio = () => (escCfg && !soloLectura() ? escCfg.actual.inicio : "");

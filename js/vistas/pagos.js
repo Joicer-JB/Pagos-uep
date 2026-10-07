@@ -196,7 +196,7 @@ function buscarEstudiantePorCedula(val) {
 function seleccionarEstudiantePago(estId) {
   const est = estudiantes.find((e) => e.id === estId);
   if (!est) return;
-  // Update hidden fields
+  // Actualiza los campos ocultos
   const cedInput = document.getElementById("p-cedula");
   const nomInput = document.getElementById("p-nombre");
   const telInput = document.getElementById("p-tel");
@@ -292,12 +292,11 @@ async function guardarPago() {
   const tasa = parseTasa(document.getElementById("p-tasa") ? document.getElementById("p-tasa").value : "0");
   const errBox = document.getElementById("p-err");
   if (!nombre || !cedula || !total || !fecha) {
-    errBox.innerHTML = '<div class="error-msg">Selecciona un estudiante por cédula, completa fecha y total</div>';
+    mostrarError(errBox, "Selecciona un estudiante por cédula, completa fecha y total");
     return;
   }
   if (!(tasa > 0)) {
-    errBox.innerHTML =
-      '<div class="error-msg">Falta la tasa BCV del día: cárgala con 💱 (arriba) o escríbela en el formulario</div>';
+    mostrarError(errBox, "Falta la tasa BCV del día: cárgala con 💱 (arriba) o escríbela en el formulario");
     return;
   }
   const btn = document.querySelector('button[onclick="guardarPago()"]');
@@ -349,7 +348,7 @@ async function guardarPago() {
     modalActual = { tipo: "recibo", pago };
     render();
   } catch (e) {
-    errBox.innerHTML = `<div class="error-msg">${escHtml(e.message)}</div>`;
+    mostrarError(errBox, e.message);
     if (btn) {
       btn.disabled = false;
       btn.textContent = "✓ Registrar Pago";

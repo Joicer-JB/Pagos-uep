@@ -154,15 +154,13 @@ async function iniciarNuevoAnio() {
       const snap = await db.collection("notas").get();
       for (let i = 0; i < snap.docs.length; i += 400) {
         const b = db.batch();
-        snap.docs
-          .slice(i, i + 400)
-          .forEach((d) =>
-            b.set(db.collection("notas_historial").doc(idAnio(viejoNombre) + "__" + d.id), {
-              ...d.data(),
-              clave: d.id,
-              anioArchivo: idAnio(viejoNombre),
-            })
-          );
+        snap.docs.slice(i, i + 400).forEach((d) =>
+          b.set(db.collection("notas_historial").doc(idAnio(viejoNombre) + "__" + d.id), {
+            ...d.data(),
+            clave: d.id,
+            anioArchivo: idAnio(viejoNombre),
+          })
+        );
         await b.commit();
       }
     }
@@ -230,7 +228,7 @@ async function iniciarNuevoAnio() {
       "❌ Falló en el paso «" +
         fase +
         "»: " +
-        e.message +
+        escHtml(e.message) +
         (permiso
           ? "<br>Parece un tema de permisos de Firestore (colecciones <b>notas_historial</b> o <b>config</b>). Revisa las reglas de Firestore."
           : fase === "limpieza"

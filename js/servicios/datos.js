@@ -1,5 +1,8 @@
 // Carga de datos desde Firestore y protección de solo lectura para años escolares anteriores.
 
+// Carga de Firestore todo lo que necesita el rol actual y dibuja la pantalla.
+// Los docentes solo cargan estudiantes y notas; director y administradora cargan además pagos,
+// finanzas y nómina del año escolar que están viendo.
 async function cargarTodo() {
   document.getElementById("app").innerHTML = '<div class="loading">⏳ Cargando datos del sistema...</div>';
   try {
@@ -43,6 +46,7 @@ async function cargarTodo() {
       `<div class="loading">❌ Error: ${escHtml(e.message)}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;
   }
 }
+// Para ordenar del más reciente al más antiguo según la marca de tiempo de Firestore
 const porTimestampDesc = (a, b) =>
   ((b.timestamp && b.timestamp.seconds) || 0) - ((a.timestamp && a.timestamp.seconds) || 0);
 // Consulta pagos/finanzas del año que se está viendo (filtra por fecha; sin config = todo, como antes)

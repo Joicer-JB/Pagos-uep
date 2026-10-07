@@ -1,5 +1,6 @@
 // Estructura de la pantalla: cabecera, pestañas, enrutador de modales, búsqueda en vivo y avisos (toast).
 
+// Dibuja toda la pantalla: el login si no hay sesión, o cabecera + pestañas + contenido + modal abierto
 function render() {
   const app = document.getElementById("app");
   if (!auth) {
@@ -66,6 +67,7 @@ ${bannerTasa()}
     rl.textContent =
       rolUsuario === "director" ? "👑 Director" : rolUsuario === "docente" ? "📝 Docente" : "✏️ Administradora";
 }
+// Cambia de pestaña (los docentes solo pueden estar en Notas) y limpia los filtros
 function setTab(t) {
   if (rolUsuario === "docente" && t !== "notas") return;
   tabActual = t;
@@ -73,6 +75,7 @@ function setTab(t) {
   modalActual = null;
   render();
 }
+// HTML de la pestaña actual
 function renderTab() {
   if (tabActual === "dashboard") return renderDashboard();
   if (tabActual === "caja") return renderCaja();
@@ -88,11 +91,13 @@ function renderTab() {
   if (tabActual === "config") return renderConfig();
   return "";
 }
+// Redibuja solo el contenido de la pestaña (más rápido que render())
 function renderTabContent() {
   const tc = document.getElementById("tab-content");
   if (tc) tc.innerHTML = renderTab();
 }
 let _searchTimer = null;
+// Búsqueda en vivo: espera 200 ms después de la última tecla antes de redibujar la lista
 function onBusqInput(val) {
   filtros.busq = val;
   clearTimeout(_searchTimer);
@@ -100,11 +105,12 @@ function onBusqInput(val) {
     renderListOnly();
   }, 200);
 }
+// Redibuja la lista sin perder el foco ni la posición del cursor en el buscador
 function renderListOnly() {
   const tc = document.getElementById("tab-content");
   if (tc) {
     tc.innerHTML = renderTab();
-    // Restore focus to search input
+    // Devuelve el foco al buscador con el cursor al final
     const inp = document.getElementById("search-input");
     if (inp) {
       inp.focus();
@@ -113,6 +119,7 @@ function renderListOnly() {
     }
   }
 }
+// HTML del modal abierto (según modalActual.tipo)
 function renderModal() {
   const m = modalActual;
   if (!m) return "";
@@ -130,6 +137,7 @@ function renderModal() {
   if (m.tipo === "editar-docente") return renderModalDocente(m.id);
   return "";
 }
+// Abre un modal. En un año escolar anterior no deja abrir los de registrar o editar
 function abrirModal(m) {
   if (soloLectura() && m && /^(nuevo|editar)/.test(m.tipo || "")) {
     alert("Estás viendo un año escolar anterior (solo consulta). Vuelve al año actual para registrar o editar.");
@@ -138,6 +146,7 @@ function abrirModal(m) {
   modalActual = m;
   render();
 }
+// Cierra el modal; en la Caja devuelve el foco al buscador
 function cerrarModal() {
   modalActual = null;
   render();
@@ -146,6 +155,12 @@ function cerrarModal() {
     if (q) q.focus();
   }
 }
+// Muestra un mensaje de error dentro de un contenedor (su id o el elemento). El texto se escapa.
+function mostrarError(donde, texto) {
+  const el = typeof donde === "string" ? document.getElementById(donde) : donde;
+  if (el) el.innerHTML = texto ? `<div class="error-msg">${escHtml(texto)}</div>` : "";
+}
+// Aviso breve en la parte inferior de la pantalla (desaparece solo a los 3 segundos)
 function mostrarToast(msg) {
   let t = document.getElementById("toast-msg");
   if (!t) {

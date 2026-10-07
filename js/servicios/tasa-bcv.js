@@ -3,6 +3,7 @@
 // Todos los montos del sistema están en $ de referencia. Cada operación guarda además la tasa BCV usada
 // y su valor real en bolívares, para que el flujo de caja pueda mostrarse en Bs. con la referencia en $.
 let tasas = {}; // {"YYYY-MM-DD": Bs. por $1}  (compartidas: config/tasasBCV)
+// Lee una tasa escrita a mano: acepta "396,3674", "396.3674" y "1.396,36"
 function parseTasa(s) {
   s = String(s || "")
     .trim()
@@ -11,6 +12,7 @@ function parseTasa(s) {
   if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
   return parseFloat(s) || 0;
 }
+// Carga las tasas guardadas (más las que quedaron solo en este equipo si falló la nube)
 async function cargarTasas() {
   tasas = {};
   try {
@@ -35,13 +37,18 @@ function tasaDe(fecha) {
   if (mejor && diasEntre(mejor, fecha) <= 10) return { valor: tasas[mejor], fecha: mejor, exacta: false };
   return null;
 }
+// Tasa de HOY (0 si no se ha cargado; no usa la de días anteriores)
 const tasaHoyValor = () => {
   const t = tasaDe(todayStr());
   return t && t.exacta ? t.valor : 0;
 };
+// ¿Ya se cargó la tasa de hoy?
 const tasaHoy = () => tasaHoyValor() > 0;
+// Convierte $ a Bs. con la tasa de hoy
 const aBs = (usd) => r2((usd || 0) * tasaHoyValor());
+// Monto en $ y, si hay tasa de hoy, también en Bs.: "$ 45,00 (Bs. 8.253,00)"
 const dual = (usd) => (tasaHoy() ? `${fmt(usd)} (${fmtBs(aBs(usd))})` : fmt(usd));
+// Guarda la tasa de una fecha en Firestore (compartida); si falla, la guarda solo en este equipo
 async function guardarTasaDia(fecha, valor) {
   tasas[fecha] = valor;
   try {
@@ -93,6 +100,7 @@ const METODOS = [
   ["Bs Efectivo", "💵 Bs Efectivo", true],
   ["Punto", "💳 Punto", true],
 ];
+// Totales por método de pago para una lista de pagos
 function totalesMetodo(lista) {
   const r = {};
   METODOS.forEach(([m, , enBs]) => {
@@ -101,6 +109,7 @@ function totalesMetodo(lista) {
   });
   return r;
 }
+// Texto de un total por método: Bs. (y $ de referencia) o solo $; ⚠️ si faltan tasas
 const txtMetodo = (t) => (t.bs != null ? fmtBs(t.bs) + " (" + fmt(t.usd) + ")" : fmt(t.usd)) + (t.sinTasa ? " ⚠️" : "");
 // Campo "tasa BCV" reutilizable en los formularios (pref = p, fin, pn)
 const notaTasa = (t) =>
@@ -109,12 +118,14 @@ const notaTasa = (t) =>
       ? "Tasa BCV del " + fechaCorta(t.fecha)
       : "⚠️ Última tasa registrada: " + fechaCorta(t.fecha) + " (no hay de ese día; verifícala)"
     : "⚠️ No hay tasa registrada: escríbela (bcv.org.ve) o usa 💱 arriba";
+// Campo «Tasa BCV» de los formularios, ya lleno con la tasa de la fecha
 function campoTasaHTML(pref, fecha, onInput) {
   const t = tasaDe(fecha || todayStr());
   return `<div class="field"><label class="field-label">💱 Tasa BCV (Bs. por $1) *</label>
     <input class="inp" id="${pref}-tasa" inputmode="decimal" autocomplete="off" placeholder="Ej: 396,3674" value="${t ? String(t.valor).replace(".", ",") : ""}" oninput="${onInput}"/>
     <div id="${pref}-tasa-nota" style="font-size:0.7rem;color:${t && t.exacta ? "#1a9e5c" : "#b8860b"};margin-top:2px">${notaTasa(t)}</div></div>`;
 }
+// Al cambiar la fecha del formulario, pone la tasa de esa fecha
 function actualizarTasaCampo(pref, fn) {
   const f = document.getElementById(pref + "-fecha"),
     t = tasaDe(f && f.value);
@@ -140,12 +151,14 @@ function chipTasaTxt() {
       ? "⚠️ Bs " + fmtTasa(t.valor) + " (" + fechaCorta(t.fecha).slice(0, 5) + ")"
       : "⚠️ Sin tasa hoy";
 }
+// Aviso amarillo bajo la cabecera cuando falta la tasa de hoy
 function bannerTasa() {
   if (rolUsuario === "docente" || soloLectura()) return "";
   const t = tasaDe(todayStr());
   if (t && t.exacta) return "";
   return `<div style="background:#fff3cd;border-bottom:2px solid #b8860b;color:#7a5c00;padding:0.5rem 1rem;font-size:0.8rem;text-align:center">💱 Falta la tasa BCV de hoy. <a href="#" onclick="abrirModal({tipo:'tasa'});return false" style="color:#003366;font-weight:700">Cargarla</a> para que los pagos y recibos salgan con su valor en Bs.</div>`;
 }
+// Ventana para cargar o corregir la tasa BCV de un día
 function renderModalTasa() {
   const hoy = todayStr();
   const lista = Object.keys(tasas).sort().reverse().slice(0, 15);
@@ -166,6 +179,7 @@ function renderModalTasa() {
       }
     </div></div></div></div>`;
 }
+// Botón «Traer del BCV»: consulta ve.dolarapi.com (hay que verificarla antes de guardar)
 async function traerTasaAPI() {
   const msg = document.getElementById("tz-msg");
   if (msg) msg.innerHTML = "⏳ Consultando...";
@@ -182,6 +196,7 @@ async function traerTasaAPI() {
     if (msg) msg.innerHTML = `⚠️ No se pudo traer la tasa automática (${e.message}). Escríbela desde bcv.org.ve.`;
   }
 }
+// Guarda la tasa de la ventana; pide confirmación si cambió más de 20%
 async function guardarTasaModal() {
   const fecha = document.getElementById("tz-fecha").value,
     v = parseTasa(document.getElementById("tz-valor").value);

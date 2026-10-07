@@ -1,37 +1,16 @@
 // Pestaña Notas: carga de notas por lapso (literales en preescolar/primaria, numéricas en media) y nota final.
 
+// Áreas o materias que se evalúan en un grado. En media general salen de Configuración → Materias.
 function getAreas(grado) {
   const nivel = getNivel(grado);
-  if (nivel === "preescolar")
-    return [
-      "Lengua y Comunicación",
-      "Pensamiento Matemático",
-      "Exploración y Conocimiento del Mundo",
-      "Desarrollo Personal y Social",
-      "Educación Física",
-      "Inglés",
-      "Educación Estética",
-    ];
-  if (nivel === "primaria")
-    return [
-      "Lengua y Literatura",
-      "Matemáticas",
-      "Ciencias Naturales y Tecnología",
-      "Ciencias Sociales",
-      "Educación Física",
-      "Educación Estética",
-      "Inglés",
-    ];
-  // Media General: from configMaterias
+  if (nivel === "preescolar") return [...AREAS_MATERNAL];
+  if (nivel === "primaria") return [...AREAS_PRIMARIA];
   return configMaterias[grado] || MATERIAS;
 }
 function getIndicadores(grado, area) {
   const key = grado + "__" + area;
   return configIndicadores[key] || [];
 }
-// ══════════════════════════════════════════════════════════
-// RENDER NOTAS
-// ══════════════════════════════════════════════════════════
 function renderNotas() {
   const estSelId = filtros.estSelId || "";
   const estSel = estudiantes.find((e) => e.id === estSelId);
@@ -255,7 +234,7 @@ function renderNotaFinal(est) {
       </div>
     </div>`;
   } else {
-    // Primaria/Preescolar: show letter summary
+    // Preescolar y primaria: resumen de letras por área
     const resumen = areas.map((area) => {
       const inds = getIndicadores(est.grado, area);
       const letrasCount = { A: 0, B: 0, C: 0, D: 0, E: 0, total: 0 };

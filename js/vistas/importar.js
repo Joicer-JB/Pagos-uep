@@ -2,25 +2,8 @@
 
 // Una sola hoja con TODOS los grados, una fila por estudiante. Los encabezados se leen por nombre,
 // así que el orden de las columnas no importa. Nunca se suben datos hasta que se revisa la vista previa.
-const GRADOS_IMP = [
-  "Maternal",
-  "Nivel I",
-  "Nivel II",
-  "Nivel III",
-  "1er Grado",
-  "2do Grado",
-  "3er Grado",
-  "4to Grado",
-  "5to Grado",
-  "6to Grado",
-  "1er Año",
-  "2do Año",
-  "3er Año",
-  "4to Año",
-  "5to Año",
-];
 const nivelDeGrado = (g) => {
-  const i = GRADOS_IMP.indexOf(g);
+  const i = ESCALERA.indexOf(g);
   return i < 4 ? "inicial" : i < 10 ? "primaria" : "media";
 };
 const MENS_DEF = { inicial: 45, primaria: 45, media: 55 };
@@ -254,15 +237,17 @@ function previsualizarExcel(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onerror = () => {
-    box.innerHTML = '<div class="error-msg">No se pudo leer el archivo</div>';
+    mostrarError(box, "No se pudo leer el archivo");
   };
   reader.onload = (e) => {
     try {
       const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array", cellDates: true });
       const t = localizarTabla(wb);
       if (!t) {
-        box.innerHTML =
-          '<div class="error-msg">No encontré las columnas «Nombres y apellidos» y «Grado». Descarga la plantilla y usa esos encabezados.</div>';
+        mostrarError(
+          box,
+          "No encontré las columnas «Nombres y apellidos» y «Grado». Descarga la plantilla y usa esos encabezados."
+        );
         importRaw = null;
         importPreview = [];
         return;
@@ -270,7 +255,7 @@ function previsualizarExcel(input) {
       importRaw = t;
       dibujarImportacion();
     } catch (err) {
-      box.innerHTML = `<div class="error-msg">Error leyendo el archivo: ${escHtml(err.message)}</div>`;
+      mostrarError(box, `Error leyendo el archivo: ${err.message}`);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -300,7 +285,7 @@ function dibujarImportacion() {
     nDup = importFilas.filter((x) => x.estado === "duplicado").length,
     nErr = importFilas.filter((x) => x.estado === "error").length;
   const nAviso = importFilas.filter((x) => x.estado === "nuevo" && x.avisos.length).length;
-  const porGrado = GRADOS_IMP.map((g) => [g, importPreview.filter((d) => d.grado === g).length]).filter((x) => x[1]);
+  const porGrado = ESCALERA.map((g) => [g, importPreview.filter((d) => d.grado === g).length]).filter((x) => x[1]);
   const lista = importFilas.filter((x) => !importSoloAvisos || x.estado !== "nuevo" || x.avisos.length);
   const badge = {
     nuevo: '<span style="color:#1a9e5c;font-weight:700">✅ Nuevo</span>',

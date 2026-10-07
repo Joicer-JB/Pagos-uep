@@ -1,5 +1,6 @@
 // Avisos internos por correo (EmailJS) cuando se registran estudiantes, finanzas, nómina o notas.
 
+// Envía un aviso al correo del colegio con la plantilla general de EmailJS (si falla, solo queda en la consola)
 function enviarNotificacion(asunto, mensaje) {
   emailjs.init(EJS_KEY);
   emailjs
@@ -14,6 +15,7 @@ function enviarNotificacion(asunto, mensaje) {
       console.warn("⚠️ Error notificación:", err);
     });
 }
+// Aviso de estudiante registrado o actualizado
 function alertaEstudiante(est, accion) {
   const asunto = accion + " Estudiante: " + est.nombre;
   const msg =
@@ -48,6 +50,7 @@ function alertaEstudiante(est, accion) {
     new Date().toLocaleString("es-CO");
   enviarNotificacion(asunto, msg);
 }
+// Aviso de ingreso o gasto registrado
 function alertaFinanza(f) {
   const tipo = f.tipo === "ingreso" ? "📈 Nuevo Ingreso" : "📉 Nuevo Gasto";
   const asunto = tipo + ": " + f.descripcion + " - " + fmt(f.monto);
@@ -76,6 +79,7 @@ function alertaFinanza(f) {
     new Date().toLocaleString("es-CO");
   enviarNotificacion(asunto, msg);
 }
+// Aviso de trabajador registrado o actualizado
 function alertaNomina(t, accion) {
   const total = (t.salario || 0) + (t.bonoAlimentacion || 0) + (t.bonoProductividad || 0) - (t.descuento || 0);
   const asunto = accion + " Nómina: " + t.nombre;
@@ -111,6 +115,7 @@ function alertaNomina(t, accion) {
     new Date().toLocaleString("es-CO");
   enviarNotificacion(asunto, msg);
 }
+// Aviso de notas guardadas
 function alertaNotas(est, lapso) {
   const asunto = "📝 Notas actualizadas: " + est.nombre + " - " + lapso;
   const msg =
@@ -131,6 +136,7 @@ function alertaNotas(est, lapso) {
     new Date().toLocaleString("es-CO");
   enviarNotificacion(asunto, msg);
 }
+// Aviso de pago de nómina registrado
 function alertaPagoNomina(desc, monto, trab) {
   const asunto = "💳 Pago Nómina: " + desc;
   const msg =

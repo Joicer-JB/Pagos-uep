@@ -1,9 +1,11 @@
 // Utilidades de texto: escapar HTML, quitar acentos, validar correos y normalizar teléfonos de Venezuela.
 
+// Quita tildes y diéresis: "Pérez" → "Perez"
 const sinAcento = (s) =>
   String(s == null ? "" : s)
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
+// Nombre normalizado para comparar (sin tildes, minúsculas, sin signos): sirve para detectar duplicados
 const claveNombre = (s) =>
   sinAcento(s)
     .toLowerCase()
@@ -19,7 +21,9 @@ function normalizarTelVE(t) {
   d = d.startsWith("58") ? "58" + d.slice(2).replace(/^0+/, "") : "58" + d.replace(/^0+/, "");
   return /^58[24]\d{9}$/.test(d) ? d : "";
 }
+// "584121234567" → "+58 412 123 4567"
 const fmtTelVE = (wa) => (wa ? "+58 " + wa.slice(2, 5) + " " + wa.slice(5, 8) + " " + wa.slice(8) : "");
+// ¿Tiene forma de correo electrónico? (algo@dominio.ext)
 const correoValido = (c) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(c || "").trim());
 // Escapa un texto para mostrarlo dentro de HTML (evita que un nombre con < > " ' & rompa la página o ejecute código).
 const escHtml = (t) =>

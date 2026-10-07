@@ -432,13 +432,11 @@ async function guardarEstudiante(editId) {
   // Obligatorios: lo mínimo para identificarlo y cobrarle. Cédula, fecha, teléfonos y acudiente pueden completarse después
   // (los estudiantes importados llegan con algunos vacíos y se marcan como «datos incompletos»).
   if (!nombre || !grado || !anioEscolar) {
-    document.getElementById("modal-err").innerHTML =
-      '<div class="error-msg">⚠️ Nombre, grado y año escolar son obligatorios</div>';
+    mostrarError("modal-err", "⚠️ Nombre, grado y año escolar son obligatorios");
     return;
   }
   if (correoAcud && !correoValido(correoAcud)) {
-    document.getElementById("modal-err").innerHTML =
-      '<div class="error-msg">⚠️ El correo del acudiente no es válido (ejemplo: nombre@gmail.com)</div>';
+    mostrarError("modal-err", "⚠️ El correo del acudiente no es válido (ejemplo: nombre@gmail.com)");
     return;
   }
   const estado = document.getElementById("e-estado").value;
@@ -478,7 +476,7 @@ async function guardarEstudiante(editId) {
     }
     cerrarModal();
   } catch (e) {
-    document.getElementById("modal-err").innerHTML = `<div class="error-msg">${escHtml(e.message)}</div>`;
+    mostrarError("modal-err", e.message);
   }
 }
 async function eliminarEstudiante(id) {

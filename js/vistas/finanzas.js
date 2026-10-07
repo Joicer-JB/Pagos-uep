@@ -432,7 +432,7 @@ async function guardarFinanza(tipo) {
   const fecha = document.getElementById("fin-fecha").value;
   const c = calcFinValores();
   const err = (m) => {
-    document.getElementById("fin-err").innerHTML = `<div class="error-msg">${m}</div>`;
+    mostrarError("fin-err", m);
   };
   if (!desc || !c.v || !fecha) {
     err("Completa descripción, fecha y monto");

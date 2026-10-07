@@ -183,7 +183,7 @@ function imprimirBoletinPrimaria(est) {
     ],
   ];
 
-  // Count total asistencia e inasistencia
+  // Total de asistencias e inasistencias del año
   let totalAsist = 0,
     totalInasist = 0;
   LAPSOS.forEach((lapso) => {
@@ -193,7 +193,7 @@ function imprimirBoletinPrimaria(est) {
     totalInasist += parseInt(nd._inasistencia || 0);
   });
 
-  // Build rows for each lapso
+  // Filas de cada lapso
   const buildRowsPrimaria = (lapso) => {
     const k = `${estId}_${lapso}`;
     const nd = notas[k] || {};
@@ -231,7 +231,7 @@ function imprimirBoletinPrimaria(est) {
       .join("");
   };
 
-  // Determine if promovido
+  // ¿Es promovido?
   const tieneE = areas.some((area) => {
     const inds = getIndicadores(est.grado, area) || [];
     return inds.some((_, i) => {

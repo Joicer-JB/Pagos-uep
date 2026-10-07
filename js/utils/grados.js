@@ -19,6 +19,7 @@ const ESCALERA = [
   "4to Año",
   "5to Año",
 ];
+// Grado normalizado para compararlo: sin tildes, minúsculas, sin º ni puntos
 const normGrado = (g) =>
   String(g == null ? "" : g)
     .normalize("NFD")
@@ -75,13 +76,14 @@ const ordenGrados = (a, b) => {
     y = posEscalera(b);
   return (x < 0 ? 99 : x) - (y < 0 ? 99 : y) || String(a).localeCompare(String(b));
 };
-// ══════════════════════════════════════════════════════════
-// HELPERS DE NIVEL
-// ══════════════════════════════════════════════════════════
-const GRADOS_PREESCOLAR = ["Maternal", "Nivel I", "Nivel II", "Nivel III"];
-const GRADOS_PRIMARIA_LIST = ["1er Grado", "2do Grado", "3er Grado", "4to Grado", "5to Grado", "6to Grado"];
-const GRADOS_MEDIA_LIST = ["1er Año", "2do Año", "3er Año", "4to Año", "5to Año"];
-const LETRAS = ["A", "B", "C", "D", "E"];
+// ── Listas de grados por nivel (todas salen de ESCALERA) ──
+const GRADOS_PREESCOLAR = ESCALERA.slice(0, 4); // Maternal … Nivel III
+const GRADOS_PRIMARIA_LIST = ESCALERA.slice(4, 10); // 1er Grado … 6to Grado
+const GRADOS_MG = ESCALERA.slice(10); // Media General (1er Año … 5to Año): materias configurables y notas numéricas
+const GRADOS_PRIM = ESCALERA.slice(0, 10); // Preescolar y primaria: se evalúan por indicadores con letras
+const LETRAS = ["A", "B", "C", "D", "E"]; // escala literal de preescolar y primaria
+
+// Nivel de un grado: "preescolar", "primaria" o "media" (lo que no se reconoce se trata como media)
 function getNivel(grado) {
   if (!grado) return "media";
   grado = gradoCanon(grado) || grado; // «Preescolar I» y «Nivel I» son el mismo grado
@@ -89,21 +91,8 @@ function getNivel(grado) {
   if (GRADOS_PRIMARIA_LIST.includes(grado)) return "primaria";
   return "media";
 }
-// ── MATERIAS ──
-const GRADOS_MG = ["1er Año", "2do Año", "3er Año", "4to Año", "5to Año"];
-// ── INDICADORES ──
-const GRADOS_PRIM = [
-  "Maternal",
-  "Nivel I",
-  "Nivel II",
-  "Nivel III",
-  "1er Grado",
-  "2do Grado",
-  "3er Grado",
-  "4to Grado",
-  "5to Grado",
-  "6to Grado",
-];
+
+// Áreas de aprendizaje fijas de preescolar y de primaria (las de media general se configuran por grado)
 const AREAS_MATERNAL = [
   "Lengua y Comunicación",
   "Pensamiento Matemático",
