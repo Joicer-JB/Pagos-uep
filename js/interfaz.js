@@ -77,6 +77,7 @@ function setTab(t) {
 }
 // HTML de la pestaña actual
 function renderTab() {
+  if (rolUsuario === "docente" && tabActual !== "notas") tabActual = "notas"; // los docentes solo ven Notas
   if (tabActual === "dashboard") return renderDashboard();
   if (tabActual === "caja") return renderCaja();
   if (tabActual === "pagos") return renderPagos();

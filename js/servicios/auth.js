@@ -29,6 +29,8 @@ function iniciarSesion({ rol, perfil }) {
   if (auth) return;
   rolUsuario = rol;
   if (perfil) usuarioActual = perfil;
+  // Cada sesión empieza en su pantalla inicial (si no, heredaría la pestaña del usuario anterior en este equipo)
+  tabActual = rol === "docente" ? "notas" : "dashboard";
   auth = true;
   cargarTodo();
 }
