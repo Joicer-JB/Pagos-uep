@@ -66,6 +66,7 @@ ${bannerTasa()}
   if (rl)
     rl.textContent =
       rolUsuario === "director" ? "👑 Director" : rolUsuario === "docente" ? "📝 Docente" : "✏️ Administradora";
+  animarModalSiEsNuevo();
 }
 // Cambia de pestaña (los docentes solo pueden estar en Notas) y limpia los filtros
 function setTab(t) {
@@ -74,6 +75,7 @@ function setTab(t) {
   filtros = { busq: "", fecha: "", metodo: "", estado: "", lapso: LAPSOS[0], anio: String(anioActual()) };
   modalActual = null;
   render();
+  animarEntradaPestana();
 }
 // HTML de la pestaña actual
 function renderTab() {

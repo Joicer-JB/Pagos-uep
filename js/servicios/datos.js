@@ -2,9 +2,11 @@
 
 // Carga de Firestore todo lo que necesita el rol actual y dibuja la pantalla.
 // Los docentes solo cargan estudiantes y notas; director y administradora cargan además pagos,
-// finanzas y nómina del año escolar que están viendo.
+// finanzas y nómina del año escolar que están viendo. En el año actual, pagos, estudiantes y finanzas
+// quedan en tiempo real (ver servicios/tiempo-real.js).
 async function cargarTodo() {
   document.getElementById("app").innerHTML = '<div class="loading">⏳ Cargando datos del sistema...</div>';
+  detenerTiempoReal();
   try {
     let sp, se, st, sf, sn;
     if (rolUsuario === "docente") {
@@ -21,11 +23,13 @@ async function cargarTodo() {
       const notasQ = soloLectura()
         ? db.collection("notas_historial").where("anioArchivo", "==", anioVista).get()
         : db.collection("notas").get();
+      const vivo = !soloLectura(); // los años anteriores no cambian: se leen una sola vez
+      const leer = (q, aplicar) => (vivo ? escucharEnVivo(q, aplicar) : q.get());
       [sp, se, st, sf, sn] = await Promise.all([
-        qRango("pagos", av).get(),
-        db.collection("estudiantes").orderBy("nombre").get(),
+        leer(qRango("pagos", av), aplicarPagos),
+        leer(db.collection("estudiantes").orderBy("nombre"), aplicarEstudiantes),
         db.collection("trabajadores").orderBy("nombre").get(),
-        qRango("finanzas", av).get(),
+        leer(qRango("finanzas", av), aplicarFinanzas),
         notasQ,
       ]);
       pagos = sp.docs.map((d) => ({ id: d.id, ...d.data() })).sort(porTimestampDesc);
@@ -41,14 +45,18 @@ async function cargarTodo() {
     });
     await cargarConfig();
     render();
+    animarEntradaPestana();
   } catch (e) {
     document.getElementById("app").innerHTML =
       `<div class="loading">❌ Error: ${escHtml(e.message)}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;
   }
 }
 // Para ordenar del más reciente al más antiguo según la marca de tiempo de Firestore
-const porTimestampDesc = (a, b) =>
-  ((b.timestamp && b.timestamp.seconds) || 0) - ((a.timestamp && a.timestamp.seconds) || 0);
+// (con la fracción de segundo: dos pagos guardados en el mismo segundo quedan en el orden en que se hicieron)
+const porTimestampDesc = (a, b) => {
+  const t = (x) => x.timestamp || {};
+  return (t(b).seconds || 0) - (t(a).seconds || 0) || (t(b).nanoseconds || 0) - (t(a).nanoseconds || 0);
+};
 // Consulta pagos/finanzas del año que se está viendo (filtra por fecha; sin config = todo, como antes)
 function qRango(col, a) {
   const base = db.collection(col);

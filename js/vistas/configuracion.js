@@ -4,6 +4,7 @@ let configDocentes = [];
 let configMaterias = {}; // {grado: [materias]}
 let configIndicadores = {}; // {grado_materia: [indicadores]}
 let configInst = {};
+let configRespaldo = null; // { ultimo: "YYYY-MM-DD" } — fecha del último respaldo descargado (solo la ve el director)
 // Materias, indicadores y datos de la institución los usan todos los roles (notas, boletines, recibos).
 // La lista de docentes solo la carga el director: las reglas de Firestore no dejan leer "usuarios" a los demás.
 async function cargarConfig() {
@@ -17,8 +18,12 @@ async function cargarConfig() {
     if (matSnap.exists) configMaterias = matSnap.data();
     if (indSnap.exists) configIndicadores = indSnap.data();
     if (rolUsuario === "director") {
-      const docsSnap = await db.collection("usuarios").where("rol", "==", "docente").get();
+      const [docsSnap, respSnap] = await Promise.all([
+        db.collection("usuarios").where("rol", "==", "docente").get(),
+        db.collection("config").doc("respaldo").get(),
+      ]);
       configDocentes = docsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      configRespaldo = respSnap.exists ? respSnap.data() : { ultimo: "" };
     }
   } catch (e) {
     console.error(e);

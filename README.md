@@ -54,6 +54,14 @@ Guías de uso por rol: [Director](docs/guia-director.md) · [Administradora](doc
 **Moneda:** todos los montos se guardan en **$ de referencia**. Cada pago y cada gasto guarda además la
 **tasa BCV** de su día y su valor en bolívares. La tasa del día se carga con el botón 💱 de la cabecera.
 
+**Recibos:** se numeran en orden (`FAC-000001`, `FAC-000002`…) con un contador en Firestore, así dos equipos
+que cobran al mismo tiempo nunca reciben el mismo número. Los recibos de antes de este cambio conservan su
+número anterior (`FAC-` + 7 cifras).
+
+**Varios equipos a la vez:** pagos, estudiantes y finanzas se actualizan solos en todas las pantallas
+abiertas. Si alguien cobra en otra computadora, la tuya lo muestra sin recargar; si estabas llenando un
+formulario, aparece el aviso «🔄 Hay cambios nuevos» para actualizar cuando termines.
+
 ---
 
 ## Cómo está organizado el código
@@ -63,12 +71,14 @@ No hay que instalar ni compilar nada. Son archivos HTML, CSS y JavaScript que el
 ```
 index.html                 La página: carga los estilos y los scripts en orden
 css/estilos.css            Todos los estilos de pantalla
+css/animaciones.css        Animaciones y transiciones (se apagan con «reducir movimiento»)
 assets/logo.png            Logo (para el README y el ícono de la pestaña)
 js/
   logo.js                  Logo en base64 (para recibos y constancias impresas)
   config.js                ⚙️ Datos del colegio, ROLES, Firebase y EmailJS  ← lo que más se edita
   estado.js                Variables globales: sesión, datos cargados, pestaña y filtros
   interfaz.js              Cabecera, pestañas, modales, mensajes de error y avisos
+  animaciones.js           Animaciones (pestañas, ventanas y «¡Pago realizado con éxito!»)
   utils/
     formato.js             Montos ($ y Bs.), números venezolanos (1.234,56) y fechas
     texto.js               escHtml/escJs (seguridad), acentos, correos y teléfonos de Venezuela
@@ -76,8 +86,10 @@ js/
   servicios/
     auth.js                Inicio y cierre de sesión, roles
     datos.js               Carga de datos desde Firestore
+    tiempo-real.js         Mantiene pagos, estudiantes y finanzas al día entre varios equipos
     tasa-bcv.js            Tasa BCV y conversión $ ↔ Bs.
     cuotas.js              Mora automática: cuotas mensuales, recargos y deuda de cada estudiante
+    cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día
     notificaciones.js      Avisos por correo al colegio (EmailJS)
   vistas/                  Una pantalla por archivo
     dashboard.js  caja.js  pagos.js  cobranza.js  estudiantes.js  finanzas.js  nomina.js
@@ -100,9 +112,15 @@ variables globales: una función definida en `pagos.js` se puede usar desde `caj
 
 ## Publicar la app
 
-La app es un sitio estático. Si está publicada con **GitHub Pages**, basta con subir los cambios a la
-rama `main`. Si usas otro hospedaje (Firebase Hosting, Netlify…), sube **todo el contenido** del
-repositorio: `index.html`, `css/`, `js/` y `assets/`.
+La app es un sitio estático publicado con **GitHub Pages**.
+
+**Recomendado — publicar solo si pasan las pruebas.** En GitHub: **Settings → Pages → Build and
+deployment → Source: «GitHub Actions»**. Desde entonces, cada cambio en `main` se publica únicamente
+cuando todas las pruebas automáticas salen bien, y solo se publican los archivos de la app (`index.html`,
+`css/`, `js/`, `assets/`), sin pruebas ni herramientas. Mientras esté en «Deploy from a branch», GitHub
+publica cualquier cambio de inmediato, aunque esté roto.
+
+Si usas otro hospedaje (Firebase Hosting, Netlify…), sube `index.html`, `css/`, `js/` y `assets/`.
 
 > ⚠️ **Ya no basta con subir solo `index.html`.** Desde la reorganización, el código vive en las carpetas
 > `css/` y `js/`. Si borras y vuelves a subir un `index.html` "todo en uno", se pierden todas las
@@ -133,6 +151,8 @@ Las reglas están en [`firestore.rules`](firestore.rules), con comentarios. Resu
   director lo desactiva, pierde el acceso.
 - **Un pago ya registrado no se puede modificar**, ni siquiera por el director. Solo el director puede
   borrarlo.
+- **Contador de recibos** (`config/contadores`): director y administradora lo avanzan al cobrar, solo de
+  1 en 1. Mientras no publiques las reglas nuevas, la app sigue cobrando con la numeración anterior.
 
 ### Cómo publicarlas (cada vez que cambie `firestore.rules`)
 
@@ -194,12 +214,15 @@ npm run revisar        # formato (Prettier) y errores comunes (ESLint)
 npm run formato        # corrige el formato automáticamente
 ```
 
-| Prueba                   | Qué comprueba                                                                                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/unidad/`          | Cálculos de dinero (tasa BCV, Bs., cuotas, mora, recargos), formatos, grados, escape de HTML y que `index.html` cargue todo en orden.                      |
-| `tests/e2e/app.test.js`  | Abre la app en Chromium con una **base de datos falsa**, entra con cada rol y recorre todas las pestañas, cobros, pagos, notas, importación e impresiones. |
-| `tests/e2e/seguridad.js` | Llena los datos con HTML malicioso y verifica que nada se ejecute en ninguna pantalla ni impresión.                                                        |
-| `tests/reglas/`          | Qué puede leer, crear, editar y borrar cada rol, según `firestore.rules`.                                                                                  |
+| Prueba                          | Qué comprueba                                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/unidad/`                 | Cálculos de dinero (tasa BCV, Bs., cuotas, mora, recargos), formatos, grados, escape de HTML y que `index.html` cargue todo en orden.                      |
+| `tests/e2e/app.test.js`         | Abre la app en Chromium con una **base de datos falsa**, entra con cada rol y recorre todas las pestañas, cobros, pagos, notas, importación e impresiones. |
+| `tests/e2e/seguridad.js`        | Llena los datos con HTML malicioso y verifica que nada se ejecute en ninguna pantalla ni impresión.                                                        |
+| `tests/e2e/cobros.test.js`      | Recibos correlativos, deuda leída al momento de cobrar, devolución de la deuda al borrar un recibo y recordatorio de respaldo.                             |
+| `tests/e2e/tiempo-real.test.js` | Lo que registra «otro equipo» aparece solo, sin interrumpir a quien está escribiendo.                                                                      |
+| `tests/e2e/duplicados.test.js`  | Limpieza de estudiantes repetidos: no se pierden pagos, notas ni datos.                                                                                    |
+| `tests/reglas/`                 | Qué puede leer, crear, editar y borrar cada rol, según `firestore.rules`.                                                                                  |
 
 Las pruebas **nunca tocan los datos reales**: usan una base de datos falsa en memoria o el emulador de
 Firebase.
@@ -219,6 +242,8 @@ npm run comparar -- antes.json despues.json
 - **⚙️ Configuración → Año escolar → Descargar respaldo** baja un archivo `.json` con estudiantes, pagos,
   finanzas, nómina y notas del año que estás viendo. Hazlo con frecuencia y guárdalo fuera de la
   computadora (Drive, correo, pendrive).
+- Si pasan **más de 14 días** sin respaldo, al director le aparece un aviso en 🏠 Inicio con el botón para
+  descargarlo.
 - Al **cerrar el año escolar** se descarga un respaldo automático antes de cambiar nada.
 - Firebase también permite exportaciones programadas desde la consola de Google Cloud (plan Blaze).
 
@@ -233,3 +258,4 @@ npm run comparar -- antes.json despues.json
 | «Usuario no autorizado o desactivado»                   | El correo no está en `ROLES` y no tiene perfil de docente activo. El director debe crearlo o reactivarlo en Configuración → Docentes. |
 | Los pagos salen sin bolívares                           | Falta la tasa BCV del día: botón 💱 de la cabecera.                                                                                   |
 | Cambié algo y en otra computadora sigue igual           | El navegador guardó la versión anterior. Recarga con Ctrl+Shift+R (o borra la caché).                                                 |
+| Los recibos siguen saliendo con 7 cifras (FAC-1234567)  | Faltan publicar las reglas nuevas de Firestore (contador de recibos). Ver [Reglas de Firestore](#reglas-de-firestore-seguridad).      |

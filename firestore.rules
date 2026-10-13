@@ -12,6 +12,8 @@ rules_version = '2';
 //      administradora, aunque la app no le muestra esos botones).
 //   2. Un pago (recibo) ya registrado no se puede modificar; solo crear o, el director, borrar.
 //      La app nunca edita un pago, así que esto no cambia nada del uso normal y protege la contabilidad.
+//   3. (Octubre 2026) Contador de recibos correlativos: config/contadores, que la administradora también
+//      puede avanzar (solo de 1 en 1).
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -81,9 +83,18 @@ service cloud.firestore {
     // ───────────── Configuración ─────────────
     // Todos los roles la leen (materias, indicadores, datos de la institución, tasa BCV...).
     // La tasa BCV la puede cargar también la administradora; el resto de la configuración, solo el director.
+    // El contador de recibos (config/contadores) lo usan director y administradora al cobrar: solo puede
+    // avanzar de 1 en 1, así nadie puede retroceder o repetir números de recibo.
+    function siguienteRecibo() {
+      return request.resource.data.keys().hasOnly(['recibo'])
+        && request.resource.data.recibo is int
+        && request.resource.data.recibo == (resource == null ? 0 : resource.data.get('recibo', 0)) + 1;
+    }
     match /config/{docId} {
       allow read:  if isStaff() || isDocente();
-      allow write: if isDirector() || (docId == 'tasasBCV' && isStaff());
+      allow write: if isDirector()
+        || (docId == 'tasasBCV' && isStaff())
+        || (docId == 'contadores' && isStaff() && siguienteRecibo());
     }
 
     // ───────────── Todo lo demás: cerrado ─────────────

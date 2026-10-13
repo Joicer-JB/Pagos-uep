@@ -782,3 +782,23 @@ textarea.inp {
     padding: 2rem 3rem;
   }
 }
+
+/* Aviso de cambios hechos en otro equipo (servicios/tiempo-real.js) */
+.aviso-cambios {
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: #fff8e1;
+  color: #7a5c00;
+  border: 2px solid #b8860b;
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}

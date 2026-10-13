@@ -24,9 +24,11 @@
       this.tipo = tipo;
     }
   }
+  // Las pruebas congelan el reloj: la fracción de segundo avanza con cada escritura para conservar el orden
+  let nanos = 0;
   const marcaDeTiempo = () => {
     const ms = Date.now();
-    return { seconds: Math.floor(ms / 1000), nanoseconds: 0 };
+    return { seconds: Math.floor(ms / 1000), nanoseconds: ++nanos };
   };
   function resolver(valor) {
     if (valor instanceof Centinela) return valor.tipo === "serverTimestamp" ? marcaDeTiempo() : valor;
@@ -71,6 +73,7 @@
       this.ref = ref;
       this.id = ref.id;
       this.exists = valor !== undefined;
+      this.metadata = { hasPendingWrites: false };
       this._valor = valor;
     }
     data() {
@@ -106,16 +109,19 @@
       const base = fusionar && actual ? actual : {};
       coleccion(this._col).set(this.id, aplicar(base, valor, fusionar));
       escrituras.push({ op: fusionar ? "set-merge" : "set", ruta: this.path, datos: clonar(resolver(valor)) });
+      avisarCambio(this._col, true, this.id);
     }
     _update(cambios) {
       const actual = coleccion(this._col).get(this.id);
       if (!actual) throw Object.assign(new Error("No document to update: " + this.path), { code: "not-found" });
       aplicar(actual, cambios, false);
       escrituras.push({ op: "update", ruta: this.path, datos: clonar(resolver(cambios)) });
+      avisarCambio(this._col, true, this.id);
     }
     _delete() {
       coleccion(this._col).delete(this.id);
       escrituras.push({ op: "delete", ruta: this.path });
+      avisarCambio(this._col, true, this.id);
     }
   }
 
@@ -157,6 +163,9 @@
       return new Query(this._col, this._filtros, this._orden, n);
     }
     async get() {
+      return this._resultado();
+    }
+    _resultado() {
       let filas = [...coleccion(this._col).entries()];
       for (const [campo, op, valor] of this._filtros) filas = filas.filter(([, d]) => operadores[op](d[campo], valor));
       // Firestore excluye los documentos que no tienen el campo de orden
@@ -175,6 +184,70 @@
       return { docs, size: docs.length, empty: docs.length === 0, forEach: (fn) => docs.forEach(fn) };
     }
   }
+
+  // ---------- Escuchas en tiempo real (onSnapshot) ----------
+  // Como Firestore: lo que escribe esta app se avisa AL INSTANTE (antes de que termine el await del código),
+  // marcado como pendiente (hasPendingWrites); luego llega la confirmación del servidor. Lo que escribe
+  // «otro equipo» llega un momento después, sin marca.
+  const oyentes = [];
+  const acuses = new Map(); // colección → ids escritos por esta app que falta confirmar
+  function avisarCambio(col, local, id) {
+    const de = () => oyentes.filter((o) => o.query._col === col);
+    if (!local) return setTimeout(() => de().forEach((o) => notificar(o)), 0);
+    de().forEach((o) => notificar(o, new Set([id])));
+    if (!acuses.has(col)) {
+      acuses.set(col, new Set());
+      setTimeout(() => {
+        const ids = acuses.get(col);
+        acuses.delete(col);
+        de().forEach((o) => notificar(o, new Set(), ids));
+      }, 0);
+    }
+    acuses.get(col).add(id);
+  }
+  function notificar(o, pendientes = new Set(), confirmados = new Set()) {
+    const snap = o.query._resultado();
+    const ahora = new Map(snap.docs.map((d) => [d.id, JSON.stringify(d._valor)]));
+    const cambios = [];
+    snap.docs.forEach((d) => {
+      d.metadata = { hasPendingWrites: pendientes.has(d.id) };
+      if (!o.ultimo || !o.ultimo.has(d.id)) cambios.push({ type: "added", doc: d });
+      else if (o.ultimo.get(d.id) !== ahora.get(d.id) || confirmados.has(d.id))
+        cambios.push({ type: "modified", doc: d });
+    });
+    if (o.ultimo)
+      o.ultimo.forEach((_, id) => {
+        if (!ahora.has(id))
+          cambios.push({
+            type: "removed",
+            doc: new DocumentSnapshot(new DocumentReference(o.query._col, id), undefined),
+          });
+      });
+    const primera = !o.ultimo;
+    o.ultimo = ahora;
+    if (primera || cambios.length) o.cb({ ...snap, docChanges: () => cambios });
+  }
+  Query.prototype.onSnapshot = function (cb) {
+    const o = { query: this, cb, ultimo: null };
+    oyentes.push(o);
+    setTimeout(() => notificar(o), 0);
+    return () => {
+      const i = oyentes.indexOf(o);
+      if (i >= 0) oyentes.splice(i, 1);
+    };
+  };
+  // Para las pruebas: cambios hechos «desde otro equipo» (no quedan en __ESCRITURAS__, que es lo que hizo esta app)
+  window.__OTRO_EQUIPO__ = {
+    escribir(col, id, valor) {
+      coleccion(col).set(id, aplicar(coleccion(col).get(id) || {}, valor, true));
+      avisarCambio(col, false);
+    },
+    borrar(col, id) {
+      coleccion(col).delete(id);
+      avisarCambio(col, false);
+    },
+    oyentes: () => oyentes.length,
+  };
 
   class CollectionReference extends Query {
     constructor(col) {
@@ -213,9 +286,42 @@
     }
   }
 
+  // Las pruebas pueden simular reglas de Firestore que niegan una ruta: window.__DENEGAR__ = ["config/contadores"]
+  const revisarPermiso = (ref) => {
+    if ((window.__DENEGAR__ || []).includes(ref.path))
+      throw Object.assign(new Error("Missing or insufficient permissions."), { code: "permission-denied" });
+  };
+  // Transacción: lee el estado actual y aplica todas las escrituras juntas al final (como Firestore)
+  async function runTransaction(fn) {
+    const ops = [];
+    const tx = {
+      get: async (ref) => {
+        revisarPermiso(ref);
+        return new DocumentSnapshot(ref, coleccion(ref._col).get(ref.id));
+      },
+      set(ref, valor, opciones) {
+        revisarPermiso(ref);
+        ops.push(() => ref._set(valor, opciones));
+        return tx;
+      },
+      update(ref, cambios) {
+        ops.push(() => ref._update(cambios));
+        return tx;
+      },
+      delete(ref) {
+        ops.push(() => ref._delete());
+        return tx;
+      },
+    };
+    const resultado = await fn(tx);
+    ops.forEach((op) => op());
+    return resultado;
+  }
+
   const firestoreInstancia = {
     collection: (nombre) => new CollectionReference(nombre),
     batch: () => new WriteBatch(),
+    runTransaction,
   };
 
   // ---------- Autenticación ----------

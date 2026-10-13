@@ -368,7 +368,7 @@ async function ejecutarImportacion() {
         nuevos.push({ ...d, id: ref.id, importado: true });
       });
       await b.commit();
-      nuevos.forEach((n) => estudiantes.push(n));
+      nuevos.forEach((n) => ponerEnLista(estudiantes, n));
       ok += trozo.length;
       log.innerHTML += `<div style="color:#1a9e5c">✅ ${trozo.length} estudiantes subidos</div>`;
     } catch (ex) {

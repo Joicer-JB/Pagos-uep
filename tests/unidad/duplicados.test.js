@@ -197,3 +197,55 @@ test("rendimiento: 3000 estudiantes con 1000 repetidos se agrupan en una fracci�
   assert.equal(g.length, 1000);
   assert.ok(Date.now() - t0 < 2000);
 });
+
+test("planDeGrupo: si las dos fichas tienen deuda anotada, avisa y el grupo deja de ser «seguro»", () => {
+  const lista = [
+    est("a", "Ana Pérez", { estado: "mora", moraMonto: 10, moraConcepto: "Uniforme" }),
+    est("b", "Pérez Ana", { estado: "mora", moraMonto: 30, moraConcepto: "Deuda 2025" }),
+  ];
+  const [g] = app.evaluar("agruparDuplicados")(lista, sinPagos);
+  const plan = app.evaluar("planDeGrupo")(g, "a", sinPagos);
+  assert.equal(plan.seguro, false);
+  igual(
+    plan.deudasSinPasar.map((d) => [d.e.id, d.monto, d.concepto]),
+    [["b", 30, "Deuda 2025"]]
+  );
+});
+
+test("planDeGrupo: la exoneración del recargo y el historial de grados pasan a la ficha conservada", () => {
+  const h2025 = { anio: "2025-2026", grado: "Nivel III", resultado: "Promovido" };
+  const h2024 = { anio: "2024-2025", grado: "Nivel II", resultado: "Promovido" };
+  const lista = [
+    est("a", "Ana Pérez", { historialGrados: [h2025] }),
+    est("b", "Pérez Ana", { sinRecargo: true, historialGrados: [h2024, h2025] }),
+  ];
+  const [g] = app.evaluar("agruparDuplicados")(lista, sinPagos);
+  const plan = app.evaluar("planDeGrupo")(g, "a", sinPagos);
+  assert.equal(plan.campos.sinRecargo, true);
+  igual(plan.campos.historialGrados, [h2025, h2024]);
+});
+
+test("planDeGrupo: la ficha conservada hereda los ids de las copias (sus pagos siguen contando)", () => {
+  const lista = [est("a", "Ana Pérez", { fusionados: ["viejo"] }), est("b", "Pérez Ana"), est("c", "ANA PEREZ")];
+  const [g] = app.evaluar("agruparDuplicados")(lista, sinPagos);
+  igual(app.evaluar("planDeGrupo")(g, "a", sinPagos).fusionados, ["b", "c", "viejo"]);
+});
+
+test("notasDeFusion: las notas de la copia pasan a la ficha conservada sin pisar las que ya tiene", () => {
+  const plan = { conservar: { id: "a" }, borrar: [{ id: "b" }] };
+  const notas = {
+    "a_Lapso 1": { estId: "a", lapso: "Lapso 1", Matemáticas_1: "18", Inglés_1: "" },
+    "b_Lapso 1": { estId: "b", lapso: "Lapso 1", Matemáticas_1: "12", Inglés_1: "15" },
+    "b_Lapso 2": { estId: "b", lapso: "Lapso 2", Matemáticas_1: "16" },
+    "otro_Lapso 1": { estId: "otro", lapso: "Lapso 1", Matemáticas_1: "10" },
+  };
+  const ops = JSON.parse(JSON.stringify(app.evaluar("notasDeFusion")(plan, notas)));
+  assert.deepEqual(ops, [
+    {
+      viejaK: "b_Lapso 1",
+      nuevaK: "a_Lapso 1",
+      datos: { estId: "a", lapso: "Lapso 1", Matemáticas_1: "18", Inglés_1: "15" },
+    },
+    { viejaK: "b_Lapso 2", nuevaK: "a_Lapso 2", datos: { estId: "a", lapso: "Lapso 2", Matemáticas_1: "16" } },
+  ]);
+});

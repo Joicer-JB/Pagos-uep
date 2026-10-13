@@ -438,7 +438,7 @@ function renderModalPagoNomina() {
       <div class="form-grid">
         <div class="field"><label class="field-label">Descripción *</label><input class="inp" id="pn-desc" placeholder="Ej: Pago nómina Enero 2025"/></div>
         <div class="form-row">
-          <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="pn-fecha" value="${todayStr()}" onchange="actualizarTasaCampo('pn',calcNetoNomina)"/></div>
+          <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="pn-fecha" max="${todayStr()}" value="${todayStr()}" onchange="actualizarTasaCampo('pn',calcNetoNomina)"/></div>
           <div class="field"><label class="field-label">Trabajador</label>
             <select class="inp" id="pn-trab" onchange="autoFillMontoNomina(this.value)">
               <option value="Todos">-- Seleccionar --</option>
@@ -548,6 +548,9 @@ async function guardarPagoNomina() {
     err("Falta la tasa BCV: cárgala con 💱 (arriba) o escríbela en el formulario");
     return;
   }
+  const errFecha = revisarFechaMovimiento(fecha);
+  if (errFecha === "cancelado") return;
+  if (errFecha) return err(errFecha);
   const neto = Math.max(0, r2(monto + totalOtros - descuento));
   if (neto <= 0) {
     err("El total a entregar debe ser mayor que 0");
@@ -573,10 +576,11 @@ async function guardarPagoNomina() {
   try {
     const ref = await db.collection("finanzas").add(datos);
     datos.id = ref.id;
-    finanzas.push(datos);
-    recordarTasa(fecha, tasa);
+    ponerEnLista(finanzas, datos);
+    aplicarTasaEditada("pn", fecha, tasa);
     alertaPagoNomina(datos.descripcion, datos.monto, datos.responsable);
     cerrarModal();
+    mostrarExito("¡Pago de nómina registrado!", fmt(datos.monto) + " · " + (datos.responsable || ""));
     imprimirReciboNominaPago(datos, trab);
   } catch (e) {
     err(e.message);

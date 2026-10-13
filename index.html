@@ -6,14 +6,28 @@
     <title>Sistema de Gestión - U.E.P Josefa Joaquina Sánchez</title>
     <link rel="icon" type="image/png" href="assets/logo.png" />
     <link rel="stylesheet" href="css/estilos.css" />
+    <link rel="stylesheet" href="css/animaciones.css" />
 
-    <!-- Bibliotecas externas -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Bibliotecas externas. Las de jsDelivr llevan versión exacta y huella (integrity): si el archivo del CDN
+         cambiara, el navegador no lo ejecuta. tests/unidad/estructura.test.js comprueba las huellas. -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"
+      integrity="sha384-SALc35EccAf6RzGw4iNsyj7kTPr33K7RoGzYu+7heZhT8s0GZouafRiCg1qy44AS"
+      crossorigin="anonymous"
+    ></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+      integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
+      integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <div class="app" id="app"><div class="loading">⏳ Iniciando sistema...</div></div>
@@ -26,10 +40,13 @@
     <script src="js/utils/grados.js"></script>
     <script src="js/estado.js"></script>
     <script src="js/interfaz.js"></script>
+    <script src="js/animaciones.js"></script>
     <script src="js/servicios/auth.js"></script>
     <script src="js/servicios/datos.js"></script>
+    <script src="js/servicios/tiempo-real.js"></script>
     <script src="js/servicios/tasa-bcv.js"></script>
     <script src="js/servicios/cuotas.js"></script>
+    <script src="js/servicios/cobros.js"></script>
     <script src="js/servicios/notificaciones.js"></script>
     <script src="js/vistas/dashboard.js"></script>
     <script src="js/vistas/caja.js"></script>

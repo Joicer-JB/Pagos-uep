@@ -1,0 +1,232 @@
+/* Animaciones y transiciones (ver js/animaciones.js). Todo se apaga si el dispositivo pide «reducir movimiento». */
+
+/* ---------- Botones, pestañas y campos: respuesta al tocar ---------- */
+.btn,
+.metodo-btn,
+.stab {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease,
+    background 0.2s ease;
+}
+.btn:hover:not(:disabled),
+.metodo-btn:hover {
+  filter: brightness(1.06);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(0, 51, 102, 0.38);
+}
+.btn:active:not(:disabled),
+.metodo-btn:active,
+.stab:active,
+.tab:active {
+  transform: scale(0.96);
+}
+.tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+.inp {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.inp:focus {
+  box-shadow: 0 0 0 3px rgba(0, 80, 158, 0.12);
+}
+
+/* ---------- Tarjetas ---------- */
+.card {
+  transition: box-shadow 0.25s ease;
+}
+.stat-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(0, 51, 102, 0.14);
+}
+
+/* ---------- Inicio de sesión ---------- */
+.login-card {
+  animation: entrar-arriba 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes entrar-arriba {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Cargando: círculo que gira ---------- */
+.loading::before {
+  content: "";
+  display: block;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  border: 3px solid #dde3f0;
+  border-top-color: #003366;
+  animation: girar 0.8s linear infinite;
+}
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Aviso «Hay cambios nuevos» ---------- */
+.aviso-cambios {
+  animation: bajar 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes bajar {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ---------- ¡Pago realizado con éxito! ---------- */
+.exito-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 30, 60, 0.35);
+  pointer-events: none; /* no bloquea: se puede seguir usando la pantalla */
+  animation: aparecer 0.2s ease;
+}
+.exito-overlay.saliendo {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.exito-caja {
+  background: #fff;
+  border-radius: 22px;
+  padding: 1.6rem 2rem 1.4rem;
+  min-width: 260px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  animation: rebotar 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.exito-icono {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 0.85rem;
+}
+.exito-icono svg {
+  width: 96px;
+  height: 96px;
+  display: block;
+}
+.exito-circulo {
+  fill: #e6f7ef;
+  stroke: #1a9e5c;
+  stroke-width: 3;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: dibujar 0.55s ease-out 0.1s forwards;
+}
+.exito-chulito {
+  fill: none;
+  stroke: #1a9e5c;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: dibujar 0.35s ease-out 0.6s forwards;
+}
+.exito-chispa {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  border-radius: 50%;
+  background: #ffd700;
+  opacity: 0;
+  transform: rotate(var(--giro)) translateY(0);
+  animation: chispa 0.6s ease-out 0.75s forwards;
+}
+.exito-chispa:nth-child(even) {
+  background: #1a9e5c;
+}
+.exito-titulo {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1a7a4a;
+  animation: aparecer 0.3s ease 0.7s backwards;
+}
+.exito-detalle {
+  margin-top: 0.3rem;
+  font-size: 0.85rem;
+  color: #555;
+  animation: aparecer 0.3s ease 0.8s backwards;
+}
+@keyframes dibujar {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes chispa {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--giro)) translateY(-30px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--giro)) translateY(-62px) scale(0.4);
+  }
+}
+@keyframes rebotar {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+/* Sin movimiento: el chulito aparece ya dibujado */
+.exito-overlay.quieto .exito-circulo,
+.exito-overlay.quieto .exito-chulito {
+  stroke-dashoffset: 0;
+}
+
+/* ---------- Accesibilidad: «reducir movimiento» ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .loading::before {
+    animation: none;
+  }
+}

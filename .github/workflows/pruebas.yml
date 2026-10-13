@@ -1,18 +1,31 @@
-# Revisión automática en cada cambio que se sube a GitHub.
-# Si algo falla, GitHub muestra una ❌ junto al commit y en el pull request.
+# Revisión automática en cada cambio que se sube a GitHub, y publicación de la app en GitHub Pages
+# SOLO si todas las pruebas pasan. Si algo falla, GitHub muestra una ❌ junto al commit y no se publica.
+#
+# Para que la publicación la haga este flujo (y no GitHub directamente desde la rama):
+#   Settings → Pages → Build and deployment → Source: «GitHub Actions».
+# Mientras siga en «Deploy from a branch», el paso «Publicar» se salta con un aviso y GitHub sigue publicando como antes.
 name: Pruebas
 
 on:
   push:
   pull_request:
 
+# Si llega un cambio nuevo a la misma rama, se cancela la revisión anterior (ya no hace falta)
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   codigo:
     name: Formato, revisión y pruebas de funciones
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -23,26 +36,30 @@ jobs:
   navegador:
     name: App completa en el navegador
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Imagen oficial de Playwright (misma versión que package.json): ya trae Chromium y sus dependencias,
+    # así no hay que descargar paquetes de Ubuntu (eso fue lo que se colgó 6 horas en octubre de 2026).
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    env:
+      HOME: /root
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+      - uses: actions/checkout@v5
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
 
   reglas:
     name: Reglas de Firestore (emulador)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -52,3 +69,47 @@ jobs:
           key: emulador-firestore-${{ hashFiles('package-lock.json') }}
       - run: npm ci
       - run: npm run test:reglas
+
+  publicar:
+    name: Publicar en GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [codigo, navegador, reglas]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: ¿Pages publica desde este flujo?
+        id: modo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tipo=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type 2>/dev/null || echo "")
+          echo "tipo=$tipo" >> "$GITHUB_OUTPUT"
+          if [ "$tipo" != "workflow" ]; then
+            echo "::notice::GitHub Pages todavía publica directo desde la rama. Para publicar solo cuando pasen las pruebas: Settings → Pages → Source: GitHub Actions."
+          fi
+      - if: steps.modo.outputs.tipo == 'workflow'
+        uses: actions/checkout@v5
+      - name: Preparar el sitio (solo los archivos de la app, sin pruebas ni herramientas)
+        if: steps.modo.outputs.tipo == 'workflow'
+        run: |
+          mkdir _sitio
+          cp -r index.html css js assets _sitio/
+      - if: steps.modo.outputs.tipo == 'workflow'
+        uses: actions/configure-pages@v5
+      - if: steps.modo.outputs.tipo == 'workflow'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _sitio
+      - id: deploy
+        if: steps.modo.outputs.tipo == 'workflow'
+        uses: actions/deploy-pages@v4

@@ -105,9 +105,14 @@ function elegirConservar(miembros, pagosDe) {
 //   bloqueados: fichas con pagos que la ficha conservada no vería (no se borran; hay que elegir otra o resolverlo a mano)
 //   campos:     datos que se copian a la ficha conservada porque ahí estaban vacíos
 //   seguro:     mismo nombre, mismo grado y misma fecha de nacimiento, sin pagos en riesgo → se puede limpiar en bloque
+//   fusionados: ids que la ficha conservada hereda (sus pagos registrados con esos ids pasan a contar para ella)
 function planDeGrupo(g, conservarId, pagosDe) {
   const conservar = g.miembros.find((e) => e.id === conservarId) || g.miembros.find((e) => e.id === g.conservar);
-  const visibles = new Set(pagosDe(conservar));
+  const idsDe = (e) => [e.id, ...(e.fusionados || [])];
+  const otros = g.miembros.filter((e) => e !== conservar);
+  // Cómo vería los pagos la ficha conservada después de fusionar: también los registrados con el id de cada copia
+  const fusion = { ...conservar, fusionados: [...(conservar.fusionados || []), ...otros.flatMap(idsDe)] };
+  const visibles = new Set(pagosDe(fusion));
   const borrar = [],
     bloqueados = [];
   g.miembros.forEach((e) => {
@@ -117,20 +122,38 @@ function planDeGrupo(g, conservarId, pagosDe) {
     else borrar.push(e);
   });
   const campos = {};
+  const deudasSinPasar = []; // deudas anotadas en copias que no se pueden pasar solas (la ficha ya tiene una)
+  const textoGrado = (h) => JSON.stringify(h);
   borrar.forEach((e) => {
     DUP_CAMPOS_FUSION.forEach((k) => {
       const actual = k in campos ? campos[k] : conservar[k];
       if (dupVacio(actual) && !dupVacio(e[k])) campos[k] = e[k];
     });
+    // La exoneración del recargo no se pierde
+    if (e.sinRecargo && !conservar.sinRecargo) campos.sinRecargo = true;
+    // Historial de grados: se juntan los dos sin repetir
+    if (Array.isArray(e.historialGrados) && e.historialGrados.length) {
+      const base = campos.historialGrados || conservar.historialGrados || [];
+      const vistos = new Set(base.map(textoGrado));
+      const extra = e.historialGrados.filter((h) => !vistos.has(textoGrado(h)));
+      if (extra.length) campos.historialGrados = [...base, ...extra];
+    }
     // Una deuda anotada a mano en la copia no se pierde si la ficha conservada no tiene ninguna
+    const copiaDebe = e.estado === "mora" && e.moraMonto > 0;
     const sinDeuda = !(conservar.estado === "mora" && conservar.moraMonto > 0) && !("moraMonto" in campos);
     const sinEstadoEspecial = !conservar.estado || conservar.estado === "alsaldo";
-    if (sinDeuda && sinEstadoEspecial && e.estado === "mora" && e.moraMonto > 0) {
+    if (sinDeuda && sinEstadoEspecial && copiaDebe) {
       campos.estado = "mora";
       campos.moraMonto = e.moraMonto;
       campos.moraConcepto = e.moraConcepto || "";
+    } else if (copiaDebe) {
+      // Las dos fichas tienen deuda: puede ser la misma anotada dos veces o dos deudas distintas. Lo decide el director.
+      deudasSinPasar.push({ e, monto: e.moraMonto, concepto: e.moraConcepto || "" });
     }
   });
+  const fusionados = borrar.length
+    ? [...new Set([...(conservar.fusionados || []), ...borrar.flatMap(idsDe)])].sort()
+    : [];
   const gradoDe = (e) => gradoCanon(e.grado) || e.grado || "";
   const mismoGrado = (e) => !gradoDe(e) || !gradoDe(conservar) || gradoDe(e) === gradoDe(conservar);
   const mismaFecha = (e) => !e.fechaNac || !conservar.fechaNac || e.fechaNac === conservar.fechaNac;
@@ -138,8 +161,33 @@ function planDeGrupo(g, conservarId, pagosDe) {
     g.motivo === "nombre" &&
     borrar.length > 0 &&
     bloqueados.length === 0 &&
+    deudasSinPasar.length === 0 &&
     borrar.every((e) => mismoGrado(e) && mismaFecha(e));
-  return { conservar, borrar, bloqueados, campos, seguro };
+  return { conservar, borrar, bloqueados, campos, fusionados, deudasSinPasar, seguro };
+}
+
+// Notas de las copias que pasan a la ficha conservada. todas = notas cargadas ({ "estId_Lapso N": {...} }).
+// Si la ficha conservada ya tiene una nota en ese campo, se queda la suya. Devuelve [{viejaK, nuevaK, datos}].
+function notasDeFusion(p, todas) {
+  const ops = [];
+  p.borrar.forEach((e) => {
+    Object.keys(todas).forEach((k) => {
+      const n = todas[k];
+      if (!n || !(n.estId === e.id || k.startsWith(e.id + "_"))) return;
+      const lapso = n.lapso || k.slice(e.id.length + 1);
+      const nuevaK = p.conservar.id + "_" + lapso;
+      const previa = ops.filter((o) => o.nuevaK === nuevaK).pop();
+      const destino = previa ? previa.datos : todas[nuevaK] || {};
+      const datos = { ...n };
+      Object.entries(destino).forEach(([c, v]) => {
+        if (!dupVacio(v)) datos[c] = v;
+      });
+      datos.estId = p.conservar.id;
+      datos.lapso = lapso;
+      ops.push({ viejaK: k, nuevaK, datos });
+    });
+  });
+  return ops;
 }
 
 // ================= Pantalla =================
@@ -227,12 +275,19 @@ function htmlGrupoDuplicado(g, p) {
         </div></label>`;
     })
     .join("");
+  const avisoDeuda = (p.deudasSinPasar || [])
+    .map(
+      (d) =>
+        `<div style="font-size:0.74rem;color:#c0392b;margin-bottom:4px">⚠️ ${escHtml(d.e.nombre)} tiene una deuda anotada de ${fmt(d.monto)}${d.concepto ? " (" + escHtml(d.concepto) + ")" : ""} y la ficha que se conserva ya tiene otra: esa deuda no se pasa sola. Si es una deuda distinta, súmala a mano en la ficha.</div>`
+    )
+    .join("");
   const aviso =
-    g.motivo === "cedula"
+    avisoDeuda +
+    (g.motivo === "cedula"
       ? `<div style="font-size:0.74rem;color:#b7791f;margin-bottom:4px">⚠️ Misma cédula pero nombres distintos: confirma que es la misma persona.</div>`
       : !p.seguro && p.borrar.length
         ? `<div style="font-size:0.74rem;color:#b7791f;margin-bottom:4px">⚠️ El grado o la fecha de nacimiento no coinciden: revisa antes de borrar.</div>`
-        : "";
+        : "");
   const boton = p.borrar.length
     ? `<button class="btn btn-danger btn-sm" style="margin-top:6px" onclick="dupEliminar('${gid}')">🗑️ Eliminar ${p.borrar.length} copia${p.borrar.length === 1 ? "" : "s"}</button>`
     : `<div style="font-size:0.74rem;color:#888;margin-top:6px">No hay copias que se puedan borrar sin perder pagos. Elige otra ficha para conservar.</div>`;
@@ -259,6 +314,12 @@ async function dupEliminar(gid) {
     "\n" +
     p.borrar.map((e) => "• " + e.nombre).join("\n") +
     (Object.keys(p.campos).length ? "\n\nLos datos que falten se copiarán a la ficha que se conserva." : "") +
+    (p.deudasSinPasar.length
+      ? "\n\n⚠️ " +
+        p.deudasSinPasar.map((d) => d.e.nombre + " tiene una deuda anotada de " + fmt(d.monto)).join("; ") +
+        " que NO se pasará (la ficha conservada ya tiene una deuda)."
+      : "") +
+    "\n\nLas notas de las copias pasan a la ficha que se conserva." +
     "\n\nEsto no se puede deshacer. ¿Continuar?";
   if (!confirm(msg)) return;
   await ejecutarFusion([p]);
@@ -286,6 +347,9 @@ async function dupLimpiarSeguros() {
     return;
   await ejecutarFusion(planes);
 }
+// Lo que se guarda en la ficha conservada: los datos que le faltaban y los ids de las copias (para que sus pagos sigan contando)
+const cambiosDe = (p) =>
+  p.fusionados && p.fusionados.length ? { ...p.campos, fusionados: p.fusionados } : { ...p.campos };
 // Aplica los planes en Firestore (en lotes de hasta 400 operaciones: copia datos a la ficha que se conserva y borra las demás).
 // Devuelve cuántas fichas se eliminaron. Si algo falla a la mitad, lo ya confirmado queda reflejado en pantalla.
 async function ejecutarFusion(planes) {
@@ -307,9 +371,11 @@ async function ejecutarFusion(planes) {
       if (!confirm("No se pudo descargar el respaldo (" + e.message + "). ¿Continuar sin respaldo?")) return 0;
     }
   }
-  const col = db.collection("estudiantes");
+  const col = db.collection("estudiantes"),
+    colNotas = db.collection("notas");
   const borrados = new Set(),
-    cambios = new Map();
+    cambios = new Map(),
+    notasMovidas = [];
   let lote = db.batch(),
     nOps = 0,
     pendientes = [],
@@ -319,7 +385,9 @@ async function ejecutarFusion(planes) {
     await lote.commit();
     pendientes.forEach((p) => {
       p.borrar.forEach((e) => borrados.add(e.id));
-      if (Object.keys(p.campos).length) cambios.set(p.conservar.id, p.campos);
+      const upd = cambiosDe(p);
+      if (Object.keys(upd).length) cambios.set(p.conservar.id, upd);
+      notasMovidas.push(...p.notasOps);
     });
     lote = db.batch();
     nOps = 0;
@@ -327,10 +395,16 @@ async function ejecutarFusion(planes) {
   };
   try {
     for (const p of planes) {
-      const hayCampos = Object.keys(p.campos).length > 0;
-      const ops = (hayCampos ? 1 : 0) + p.borrar.length;
+      const upd = cambiosDe(p);
+      const hayCampos = Object.keys(upd).length > 0;
+      p.notasOps = notasDeFusion(p, notas);
+      const ops = (hayCampos ? 1 : 0) + p.borrar.length + p.notasOps.length * 2;
       if (nOps + ops > 400) await confirmarLote();
-      if (hayCampos) lote.update(col.doc(p.conservar.id), p.campos);
+      if (hayCampos) lote.update(col.doc(p.conservar.id), upd);
+      p.notasOps.forEach((o) => {
+        lote.set(colNotas.doc(o.nuevaK), { ...o.datos, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        lote.delete(colNotas.doc(o.viejaK));
+      });
       p.borrar.forEach((e) => lote.delete(col.doc(e.id)));
       nOps += ops;
       pendientes.push(p);
@@ -340,6 +414,10 @@ async function ejecutarFusion(planes) {
     error = e;
   }
   // Lo confirmado en Firestore se refleja en la memoria de la app (también si hubo un error a mitad de camino)
+  notasMovidas.forEach((o) => {
+    delete notas[o.viejaK];
+    notas[o.nuevaK] = o.datos;
+  });
   estudiantes = estudiantes
     .filter((e) => !borrados.has(e.id))
     .map((e) => (cambios.has(e.id) ? { ...e, ...cambios.get(e.id) } : e));

@@ -62,6 +62,11 @@ commit):
 - **No declares dos veces el mismo nombre** (función o constante) en archivos distintos. Todos comparten
   el mismo espacio y el segundo archivo dejaría de cargar. La prueba de estructura también lo detecta.
 - **Errores de formularios → `mostrarError("id-del-contenedor", "mensaje")`.**
+- **Para cobrar usa `registrarCobro(...)`** (`js/servicios/cobros.js`), nunca un `add` suelto a `pagos`: así el
+  recibo es correlativo y la deuda anterior se descuenta en la misma transacción.
+- **Para agregar un registro a `pagos`, `estudiantes` o `finanzas` en memoria usa `ponerEnLista(lista, obj)`**,
+  no `push`: con el tiempo real, Firestore puede haberlo traído ya y quedaría repetido.
+- **Pagos de un estudiante → `pagosDeEstudiante(e)`**. No los busques por nombre: hay homónimos.
 
 ## 5. En tu computadora (opcional)
 

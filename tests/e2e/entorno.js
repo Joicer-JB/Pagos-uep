@@ -24,7 +24,7 @@ const BIBLIOTECAS = [
   [/firebase-(firestore|auth)-compat\.js$/, () => "/* incluido en firebase-falso.js */"],
   [/@emailjs\/browser/, () => leer("tests/e2e/falsos/emailjs-falso.js")],
   [/xlsx\.full\.min\.js$/, () => leer("node_modules/xlsx/dist/xlsx.full.min.js")],
-  [/chart\.umd\.min\.js$/, () => leer("node_modules/chart.js/dist/chart.umd.js")],
+  [/chart\.umd(\.min)?\.js$/, () => leer("node_modules/chart.js/dist/chart.umd.js")],
 ];
 
 function iniciarServidor(raiz = RAIZ) {
@@ -36,6 +36,12 @@ function iniciarServidor(raiz = RAIZ) {
       return res.end("no encontrado");
     }
     res.writeHead(200, { "Content-Type": TIPOS[path.extname(archivo)] || "application/octet-stream" });
+    if (archivo.endsWith("index.html")) {
+      // EmailJS se reemplaza por uno falso: su huella (integrity) no coincidiría. Las demás bibliotecas se sirven
+      // tal cual vienen en npm, así que su huella sí se comprueba en el navegador.
+      const html = fs.readFileSync(archivo, "utf8").replace(/(@emailjs\/browser[^"]*"\s*)integrity="[^"]*"/, "$1");
+      return res.end(html);
+    }
     fs.createReadStream(archivo).pipe(res);
   });
   return new Promise((ok) => servidor.listen(0, "127.0.0.1", () => ok(servidor)));
@@ -78,7 +84,13 @@ async function abrirNavegador({ datos = semilla } = {}) {
         const url = ruta.request().url();
         if (url.startsWith(base)) return ruta.continue();
         const lib = BIBLIOTECAS.find(([re]) => re.test(url));
-        if (lib) return ruta.fulfill({ status: 200, contentType: "text/javascript", body: lib[1]() });
+        if (lib)
+          return ruta.fulfill({
+            status: 200,
+            contentType: "text/javascript",
+            headers: { "Access-Control-Allow-Origin": "*" }, // necesario para scripts con integrity + crossorigin
+            body: lib[1](),
+          });
         if (url.includes("dolarapi.com"))
           return ruta.fulfill({
             status: 200,
