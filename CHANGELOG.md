@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Octubre 2026 — Imprimir y compartir en el teléfono
+
+- «🖨️ Imprimir» se lanza directo desde el toque. Si el teléfono no abre la impresión (por ejemplo, el iPhone con la
+  app instalada), aparece un aviso que sugiere **«📤 Compartir»**: convierte el documento en una imagen para
+  enviarla por WhatsApp o imprimirla desde la galería (en la computadora, se descarga).
+- En el teléfono la cabecera ya no se sale de la pantalla (el nombre arriba; tasa, año y «Salir» debajo), y el
+  recibo se ajusta a pantallas angostas.
+
 ## Octubre 2026 — Imprimir en el teléfono
 
 - En el teléfono (y en la app instalada), recibos, cierres, boletines y reportes ya no se abren en una ventana nueva

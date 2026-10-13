@@ -471,6 +471,7 @@ function imprimirRecibo() {
   .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;background:rgba(0,0,0,0.2);padding:0.55rem 0.85rem;border-radius:6px;margin-top:0.85rem}
   .nums .c{text-align:center}.nums .d{text-align:right}
   .lbl{font-size:0.58rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}.val{font-weight:700;font-size:0.82rem;white-space:nowrap}
+  @media (max-width:420px){body{padding:0.6rem}.nums{gap:0.4rem;padding:0.5rem 0.6rem}.val{font-size:0.74rem;white-space:normal}}
   .firma{display:flex;justify-content:space-between;margin-top:1.5rem;padding-top:0.85rem;border-top:1px dashed #ccc}
   .fbox{text-align:center;width:45%}.fline{border-top:1px solid #333;margin-bottom:4px;margin-top:1.5rem}.flabel{font-size:0.7rem;color:#555}
   </style></head><body>

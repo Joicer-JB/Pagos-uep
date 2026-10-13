@@ -96,9 +96,11 @@ test("estudiante nuevo sin datos: muestra el error y no guarda", () => {
 
 test("importar Excel: crea los nuevos y no duplica a los que ya existen", () => {
   const f = paso("director › importación ejecutada");
-  assert.deepEqual(rutas(f), ["set estudiantes/id00004", "set estudiantes/id00005"]);
+  // Las fichas de los docentes se escriben un momento después (privacidad.test.js las prueba): no cuentan aquí
+  const propias = f.escrituras.filter((e) => !e.ruta.startsWith("estudiantes_docentes/"));
+  assert.deepEqual(rutas({ escrituras: propias }), ["set estudiantes/id00004", "set estudiantes/id00005"]);
   assert.deepEqual(
-    f.escrituras.map((e) => e.datos.nombre),
+    propias.map((e) => e.datos.nombre),
     ["Pedro Pablo Ruiz", "Lucía Fernanda Mora"]
   );
 });
