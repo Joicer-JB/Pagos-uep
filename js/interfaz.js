@@ -18,7 +18,7 @@ function render() {
       </div>
       ${rolUsuario !== "docente" ? `<button class="logout-btn" style="margin-left:auto;${tasaHoy() ? "" : "background:#c0392b;color:#fff"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día">${chipTasaTxt()}</button>` : ""}
       ${escCfg && rolUsuario !== "docente" ? `<select onchange="cambiarAnioVista(this.value)" style="margin-left:0.4rem;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:0.28rem 0.4rem;font-size:0.7rem;max-width:130px">${[escCfg.actual, ...escCfg.anteriores.slice().reverse()].map((a) => `<option value="${a.id}" style="color:#000" ${a.id === anioVista ? "selected" : ""}>${escHtml(a.nombre)}${a.id === escCfg.actual.id ? " (actual)" : ""}</option>`).join("")}</select>` : ""}
-<button class="logout-btn" style="${rolUsuario !== "docente" ? "margin-left:0.4rem" : ""}" onclick="logout()">Salir</button>
+${eventoInstalar ? `<button class="logout-btn" style="margin-left:0.4rem" onclick="instalarApp()" title="Instalar la plataforma en este equipo">📲 Instalar</button>` : ""}<button class="logout-btn" style="${rolUsuario !== "docente" ? "margin-left:0.4rem" : ""}" onclick="logout()">Salir</button>
     </div>
     <div class="tabs">
       ${(rolUsuario === "docente"

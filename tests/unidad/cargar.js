@@ -9,7 +9,7 @@ const RAIZ = path.resolve(__dirname, "../..");
 // Firebase de mentira: config.js lo llama al cargarse, pero estas pruebas no usan la base de datos
 const firebaseVacio = {
   initializeApp() {},
-  firestore: Object.assign(() => ({}), { FieldValue: {} }),
+  firestore: Object.assign(() => ({ enablePersistence: () => Promise.resolve() }), { FieldValue: {} }),
   auth: () => ({ onAuthStateChanged() {} }),
 };
 

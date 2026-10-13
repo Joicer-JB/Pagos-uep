@@ -236,6 +236,7 @@ function renderModalVerFinanza(m) {
           ["Categoría", f.categoria || "N/A"],
           ["Responsable", f.responsable || "N/A"],
           ["Observaciones", f.observaciones || "N/A"],
+          ...(f.registradoPor ? [["Registrado por", nombreUsuario(f.registradoPor)]] : []),
         ]
           .map(
             ([l, v]) => `
@@ -460,6 +461,7 @@ async function guardarFinanza(tipo) {
     moneda: c.mon,
     responsable: document.getElementById("fin-resp").value.trim(),
     observaciones: document.getElementById("fin-obs").value.trim(),
+    registradoPor: correoUsuario(),
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
   };
   try {
@@ -480,7 +482,11 @@ async function eliminarFinanza(id) {
   }
   if (!confirm("¿Eliminar este registro?")) return;
   try {
-    await db.collection("finanzas").doc(id).delete();
+    await borrarConBitacora(
+      "finanzas",
+      id,
+      finanzas.find((f) => f.id === id)
+    );
     finanzas = finanzas.filter((f) => f.id !== id);
     cerrarModal();
   } catch (e) {

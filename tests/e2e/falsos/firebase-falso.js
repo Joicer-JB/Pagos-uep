@@ -67,6 +67,16 @@
     return v;
   }
 
+  // ---------- Sin conexión ----------
+  // Como Firestore con persistencia: sin internet (navigator.onLine === false, p. ej. context.setOffline(true) en
+  // Playwright) cada escritura se aplica al instante en el equipo, pero su promesa y la confirmación del servidor
+  // esperan a que vuelva la conexión. Las transacciones fallan («unavailable»): necesitan al servidor.
+  const conectado = () => navigator.onLine !== false;
+  const colaSinConexion = [];
+  window.addEventListener("online", () => colaSinConexion.splice(0).forEach((fn) => setTimeout(fn, 0)));
+  const alServidor = (fn) => (conectado() ? setTimeout(fn, 0) : colaSinConexion.push(fn));
+  const confirmacion = () => new Promise((ok) => alServidor(ok));
+
   // ---------- Documentos ----------
   class DocumentSnapshot {
     constructor(ref, valor) {
@@ -96,12 +106,15 @@
     }
     async set(valor, opciones) {
       this._set(valor, opciones);
+      return confirmacion();
     }
     async update(cambios) {
       this._update(cambios);
+      return confirmacion();
     }
     async delete() {
       this._delete();
+      return confirmacion();
     }
     _set(valor, opciones) {
       const fusionar = !!(opciones && opciones.merge);
@@ -198,11 +211,11 @@
     de().forEach((o) => notificar(o, new Set([id])));
     if (!acuses.has(col)) {
       acuses.set(col, new Set());
-      setTimeout(() => {
+      alServidor(() => {
         const ids = acuses.get(col);
         acuses.delete(col);
         de().forEach((o) => notificar(o, new Set(), ids));
-      }, 0);
+      });
     }
     acuses.get(col).add(id);
   }
@@ -262,6 +275,7 @@
     async add(valor) {
       const ref = this.doc();
       ref._set(valor);
+      await confirmacion();
       return ref;
     }
   }
@@ -285,6 +299,7 @@
     async commit() {
       this._ops.forEach(([ref]) => revisarPermiso(ref)); // todo o nada, como Firestore
       this._ops.forEach(([, op]) => op());
+      return confirmacion();
     }
   }
 
@@ -297,6 +312,8 @@
   };
   // Transacción: lee el estado actual y aplica todas las escrituras juntas al final (como Firestore)
   async function runTransaction(fn) {
+    if (!conectado())
+      throw Object.assign(new Error("Failed to get document because the client is offline."), { code: "unavailable" });
     const ops = [];
     const tx = {
       get: async (ref) => {
@@ -326,6 +343,8 @@
     collection: (nombre) => new CollectionReference(nombre),
     batch: () => new WriteBatch(),
     runTransaction,
+    enablePersistence: async () => {},
+    waitForPendingWrites: () => confirmacion(),
   };
 
   // ---------- Autenticación ----------

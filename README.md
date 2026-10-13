@@ -90,13 +90,19 @@ js/
     fichas-docentes.js     Fichas de estudiantes sin datos privados para los docentes (se mantienen solas)
     tasa-bcv.js            Tasa BCV, conversión $ ↔ Bs. e importación del Excel de tasas del BCV
     cuotas.js              Mora automática: cuotas mensuales, recargos y deuda de cada estudiante
-    cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día
+    cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día;
+                           sin internet, recibo provisional que luego recibe su número
+    bitacora.js            Quién registró cada pago y bitácora de lo que se borra (la ve el director)
+    conexion.js            Trabajo sin internet: escrituras sin esperar al servidor y aviso de conexión
+    app-instalable.js      Registra sw.js y muestra el botón «📲 Instalar»
     notificaciones.js      Avisos por correo al colegio (EmailJS)
   vistas/                  Una pantalla por archivo
     dashboard.js  caja.js  pagos.js  cobranza.js  estudiantes.js  finanzas.js  nomina.js
     reportes.js  graficas.js  notas.js  boletin.js  configuracion.js  anio-escolar.js
     promocion.js  importar.js  duplicados.js
   app.js                   Arranque: si ya hay una sesión abierta, entra directo
+sw.js                      Service worker: guarda la app para abrirla sin internet (app instalable)
+manifest.webmanifest       Nombre, colores e íconos de la app instalada (íconos en assets/iconos/)
 firestore.rules            Reglas de seguridad de la base de datos (ver abajo)
 tests/                     Pruebas automáticas (no se publican ni afectan a la app)
 ```
@@ -156,6 +162,11 @@ Las reglas están en [`firestore.rules`](firestore.rules), con comentarios. Resu
   sola, al entrar y cada vez que cambia un estudiante. Las reglas solo aceptan los campos de la ficha.
 - **Un pago ya registrado no se puede modificar**, ni siquiera por el director. Solo el director puede
   borrarlo.
+- **Auditoría:** cada pago e ingreso/gasto nuevo debe llevar la firma de quien lo registra (`registradoPor`, su
+  propio correo). Borrar un pago, un ingreso/gasto o un estudiante exige dejar, en la misma escritura, su copia en
+  la `bitacora`, que solo lee el director y nadie puede cambiar ni borrar.
+- **Recibos cobrados sin internet** (`pendiente: true`, número `PROV-…`): lo único que se les puede cambiar es
+  ponerles su número correlativo, en la misma transacción que avanza el contador.
 - **Contador de recibos** (`config/contadores`): director y administradora lo avanzan al cobrar, solo de
   1 en 1. Mientras no publiques las reglas nuevas, la app sigue cobrando con la numeración anterior.
 
@@ -256,12 +267,13 @@ npm run comparar -- antes.json despues.json
 
 ## Problemas comunes
 
-| Síntoma                                                       | Causa probable y solución                                                                                                             |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Pantalla en blanco o «Iniciando sistema…» que no avanza       | Falta un archivo de `js/` o `css/` en el sitio publicado. Sube todas las carpetas. En el navegador, F12 → Consola muestra cuál falta. |
-| «Missing or insufficient permissions»                         | Las reglas de Firestore no coinciden con el rol o el correo. Revisa `ROLES` y `firestore.rules`, y vuelve a publicar las reglas.      |
-| «Usuario no autorizado o desactivado»                         | El correo no está en `ROLES` y no tiene perfil de docente activo. El director debe crearlo o reactivarlo en Configuración → Docentes. |
-| Los pagos salen sin bolívares                                 | Falta la tasa BCV del día: botón 💱 de la cabecera.                                                                                   |
-| Cambié algo y en otra computadora sigue igual                 | El navegador guardó la versión anterior. Recarga con Ctrl+Shift+R (o borra la caché).                                                 |
-| Un docente ve «La lista de estudiantes todavía no está lista» | Las fichas se preparan cuando entra el director o la administradora: que uno de los dos entre una vez y el docente vuelva a entrar.   |
-| Los recibos siguen saliendo con 7 cifras (FAC-1234567)        | Faltan publicar las reglas nuevas de Firestore (contador de recibos). Ver [Reglas de Firestore](#reglas-de-firestore-seguridad).      |
+| Síntoma                                                       | Causa probable y solución                                                                                                                            |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pantalla en blanco o «Iniciando sistema…» que no avanza       | Falta un archivo de `js/` o `css/` en el sitio publicado. Sube todas las carpetas. En el navegador, F12 → Consola muestra cuál falta.                |
+| «Missing or insufficient permissions»                         | Las reglas de Firestore no coinciden con el rol o el correo. Revisa `ROLES` y `firestore.rules`, y vuelve a publicar las reglas.                     |
+| «Usuario no autorizado o desactivado»                         | El correo no está en `ROLES` y no tiene perfil de docente activo. El director debe crearlo o reactivarlo en Configuración → Docentes.                |
+| Los pagos salen sin bolívares                                 | Falta la tasa BCV del día: botón 💱 de la cabecera.                                                                                                  |
+| Cambié algo y en otra computadora sigue igual                 | El navegador guardó la versión anterior. Recarga con Ctrl+Shift+R (o borra la caché).                                                                |
+| Al cobrar o borrar sale «Missing or insufficient permissions» | Ese equipo tiene abierta una versión vieja de la app: recárgala (Ctrl+F5). Si sigue, revisa que las reglas publicadas sean las de `firestore.rules`. |
+| Un docente ve «La lista de estudiantes todavía no está lista» | Las fichas se preparan cuando entra el director o la administradora: que uno de los dos entre una vez y el docente vuelva a entrar.                  |
+| Los recibos siguen saliendo con 7 cifras (FAC-1234567)        | Faltan publicar las reglas nuevas de Firestore (contador de recibos). Ver [Reglas de Firestore](#reglas-de-firestore-seguridad).                     |

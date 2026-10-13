@@ -398,14 +398,23 @@ async function ejecutarFusion(planes) {
       const upd = cambiosDe(p);
       const hayCampos = Object.keys(upd).length > 0;
       p.notasOps = notasDeFusion(p, notas);
-      const ops = (hayCampos ? 1 : 0) + p.borrar.length + p.notasOps.length * 2;
+      const ops = (hayCampos ? 1 : 0) + p.borrar.length * 2 + p.notasOps.length * 2; // cada borrado lleva su anotación
       if (nOps + ops > 400) await confirmarLote();
       if (hayCampos) lote.update(col.doc(p.conservar.id), upd);
       p.notasOps.forEach((o) => {
         lote.set(colNotas.doc(o.nuevaK), { ...o.datos, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
         lote.delete(colNotas.doc(o.viejaK));
       });
-      p.borrar.forEach((e) => lote.delete(col.doc(e.id)));
+      p.borrar.forEach((e) => {
+        anotarBorrado(
+          lote,
+          "estudiantes",
+          e.id,
+          e,
+          "Ficha repetida: se unió a " + (p.conservar.nombre || p.conservar.id)
+        );
+        lote.delete(col.doc(e.id));
+      });
       nOps += ops;
       pendientes.push(p);
     }

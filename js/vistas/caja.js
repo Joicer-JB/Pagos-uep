@@ -557,7 +557,7 @@ async function cajaCobrar() {
     cajaReset();
     modalActual = { tipo: "recibo", pago: virtual };
     render();
-    mostrarExito("¡Pago realizado con éxito!", fmt(total) + " · Recibo " + r.factura);
+    mostrarExito("¡Pago realizado con éxito!", fmt(total) + " · " + textoRecibo(r));
   } catch (ex) {
     caja.guardando = false;
     cajaActualizarTotal();
