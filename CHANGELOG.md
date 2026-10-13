@@ -16,6 +16,14 @@
   cobró, no se sobrescribe con un valor viejo).
 - **Borrar un recibo devuelve la deuda anterior** que ese pago había descontado (para los recibos nuevos).
 
+### Pagos con fecha pasada y tasa BCV
+
+- Al elegir la fecha en Pagos, Finanzas o Nómina se carga la tasa guardada de ese día (o la del último día con
+  tasa, con aviso). Si se escribe otra, el registro usa la escrita y aparece la opción **«Corregir también la
+  tasa guardada de ese día (para todos)»**.
+- Una fecha de un año escolar anterior pide confirmación (no aparecerá en las listas del año actual) y no se
+  aceptan fechas futuras.
+
 ### Varios equipos a la vez
 
 - **Tiempo real**: pagos, estudiantes y finanzas del año actual se actualizan solos en todas las pantallas

@@ -115,15 +115,68 @@ const txtMetodo = (t) => (t.bs != null ? fmtBs(t.bs) + " (" + fmt(t.usd) + ")" :
 const notaTasa = (t) =>
   t
     ? t.exacta
-      ? "Tasa BCV del " + fechaCorta(t.fecha)
-      : "⚠️ Última tasa registrada: " + fechaCorta(t.fecha) + " (no hay de ese día; verifícala)"
-    : "⚠️ No hay tasa registrada: escríbela (bcv.org.ve) o usa 💱 arriba";
+      ? "✅ Tasa BCV guardada del " + fechaCorta(t.fecha) + ". Si no es la correcta, cámbiala aquí."
+      : "⚠️ No hay tasa de ese día: se usa la del " +
+        fechaCorta(t.fecha) +
+        " (último día con tasa). Verifícala en bcv.org.ve."
+    : "⚠️ No hay tasa guardada de esa fecha: búscala en bcv.org.ve y escríbela aquí.";
 // Campo «Tasa BCV» de los formularios, ya lleno con la tasa de la fecha
+// Si se escribe una tasa distinta a la guardada de ese día, aparece la opción de corregir la guardada para todos.
 function campoTasaHTML(pref, fecha, onInput) {
   const t = tasaDe(fecha || todayStr());
   return `<div class="field"><label class="field-label">💱 Tasa BCV (Bs. por $1) *</label>
-    <input class="inp" id="${pref}-tasa" inputmode="decimal" autocomplete="off" placeholder="Ej: 396,3674" value="${t ? String(t.valor).replace(".", ",") : ""}" oninput="${onInput}"/>
-    <div id="${pref}-tasa-nota" style="font-size:0.7rem;color:${t && t.exacta ? "#1a9e5c" : "#b8860b"};margin-top:2px">${notaTasa(t)}</div></div>`;
+    <input class="inp" id="${pref}-tasa" inputmode="decimal" autocomplete="off" placeholder="Ej: 396,3674" value="${t ? String(t.valor).replace(".", ",") : ""}" oninput="${onInput};revisarTasaCampo('${pref}')"/>
+    <div id="${pref}-tasa-nota" style="font-size:0.7rem;color:${t && t.exacta ? "#1a9e5c" : "#b8860b"};margin-top:2px">${notaTasa(t)}</div>
+    <label id="${pref}-tasa-corr" style="display:none;gap:0.4rem;align-items:center;font-size:0.72rem;color:#7a5c00;margin-top:4px"><input type="checkbox" id="${pref}-tasa-corregir"/> <span></span></label></div>`;
+}
+// Fecha del formulario (si no tiene campo de fecha, hoy)
+const fechaCampo = (pref) => {
+  const f = document.getElementById(pref + "-fecha");
+  return (f && f.value) || todayStr();
+};
+// Compara la tasa escrita con la guardada de esa fecha y explica qué se va a usar
+function revisarTasaCampo(pref) {
+  const fecha = fechaCampo(pref),
+    t = tasaDe(fecha);
+  const el = document.getElementById(pref + "-tasa"),
+    nota = document.getElementById(pref + "-tasa-nota"),
+    corr = document.getElementById(pref + "-tasa-corr");
+  if (!el || !nota || !corr) return;
+  const v = parseTasa(el.value);
+  const distinta = t && t.exacta && v > 0 && Math.abs(v - t.valor) > 0.00005;
+  corr.style.display = distinta ? "flex" : "none";
+  if (!distinta) {
+    corr.querySelector("input").checked = false;
+    nota.textContent = notaTasa(t);
+    nota.style.color = t && t.exacta ? "#1a9e5c" : "#b8860b";
+    return;
+  }
+  nota.textContent = `✏️ Este registro usará ${fmtTasa(v)}. La tasa guardada del ${fechaCorta(fecha)} es ${fmtTasa(t.valor)}.`;
+  nota.style.color = "#7a5c00";
+  corr.querySelector("span").textContent = `Corregir también la tasa guardada del ${fechaCorta(fecha)} (para todos)`;
+}
+// Al guardar: si se marcó «corregir», la tasa escrita reemplaza la guardada de ese día; si ese día no tenía tasa,
+// queda guardada para los demás (como antes).
+function aplicarTasaEditada(pref, fecha, valor) {
+  const corregir = document.getElementById(pref + "-tasa-corregir");
+  if (corregir && corregir.checked && valor > 0) return guardarTasaDia(fecha, valor);
+  recordarTasa(fecha, valor);
+}
+// Revisa la fecha de un pago o movimiento. No puede ser futura; si es de un año escolar anterior, pide confirmación
+// (quedará en el historial de ese año y no en las listas del actual). Devuelve un texto de error, "cancelado" o "".
+function revisarFechaMovimiento(fecha) {
+  if (fecha > todayStr()) return "La fecha no puede ser futura";
+  const inicio = baseAnio();
+  if (
+    inicio &&
+    fecha < inicio &&
+    !confirm(
+      `La fecha ${fechaCorta(fecha)} es anterior al inicio del año escolar actual (${fechaCorta(inicio)}).\n\n` +
+        "Se guardará en el historial del año anterior y no aparecerá en las listas de este año.\n¿Continuar?"
+    )
+  )
+    return "cancelado";
+  return "";
 }
 // Al cambiar la fecha del formulario, pone la tasa de esa fecha
 function actualizarTasaCampo(pref, fn) {
@@ -136,6 +189,7 @@ function actualizarTasaCampo(pref, fn) {
     n.textContent = notaTasa(t);
     n.style.color = t && t.exacta ? "#1a9e5c" : "#b8860b";
   }
+  revisarTasaCampo(pref);
   if (fn) fn();
 }
 // Si la fecha del movimiento no tenía tasa guardada, la que se escribió queda disponible para los demás

@@ -38,6 +38,25 @@ que estás haciendo y pulsa **Actualizar**.
 - Un pago registrado **no se puede modificar**. Si hay un error, pídele al director que lo borre y
   regístralo de nuevo.
 
+## Registrar un pago viejo (con otra fecha)
+
+La 💳 Caja siempre cobra con la fecha y la tasa de hoy. Para un pago de otro día usa **💰 Pagos → ➕ Nuevo
+Pago**:
+
+1. Elige al estudiante y pon la **fecha real del pago**. El campo **Tasa BCV** se llena solo:
+   - ✅ con la tasa guardada de ese día;
+   - ⚠️ si ese día no tiene tasa (fin de semana o feriado), con la del último día que sí tenía, y te avisa;
+   - si no hay ninguna tasa cercana, queda vacío: búscala en bcv.org.ve y escríbela. Quedará guardada para
+     ese día.
+2. **Si la tasa no es la correcta, escribe la correcta.** Ese pago usará la que escribiste. Debajo aparece la
+   casilla **«Corregir también la tasa guardada de ese día (para todos)»**: márcala solo si la tasa guardada
+   estaba mal, así los demás pagos y reportes de ese día la usarán también.
+3. Si la fecha es de un **año escolar anterior**, la app te pide confirmar: el pago quedará en el historial de
+   ese año y no aparecerá en las listas del año actual. No se aceptan fechas futuras.
+
+Lo mismo funciona en 📒 Finanzas (ingresos y gastos) y en 👷 Nómina. Para revisar o corregir las tasas de varios
+días también puedes usar el botón 💱 de la cabecera.
+
 ## 🔔 Cobranza
 
 - **Con deuda / Sin pago reciente / Todos:** quién debe, cuánto y desde cuándo.

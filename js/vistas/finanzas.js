@@ -193,7 +193,7 @@ function renderModalFinanza(m) {
       <div class="form-grid">
         <div class="field"><label class="field-label">Descripción *</label><input class="inp" id="fin-desc" placeholder="${isIng ? "Ej: Donación institución" : "Ej: Pago de agua"}"/></div>
         <div class="form-row">
-          <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="fin-fecha" value="${todayStr()}" onchange="actualizarTasaCampo('fin',calcFin)"/></div>
+          <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="fin-fecha" max="${todayStr()}" value="${todayStr()}" onchange="actualizarTasaCampo('fin',calcFin)"/></div>
           <div class="field"><label class="field-label">Categoría</label>
             <select class="inp" id="fin-cat">
               ${(isIng ? categoriasIng : categoriasGasto).map((c) => `<option value="${c}">${c}</option>`).join("")}
@@ -446,6 +446,9 @@ async function guardarFinanza(tipo) {
     err("El monto es muy pequeño para la tasa indicada");
     return;
   }
+  const errFecha = revisarFechaMovimiento(fecha);
+  if (errFecha === "cancelado") return;
+  if (errFecha) return err(errFecha);
   const datos = {
     tipo,
     descripcion: desc,
@@ -463,7 +466,7 @@ async function guardarFinanza(tipo) {
     const ref = await db.collection("finanzas").add(datos);
     datos.id = ref.id;
     ponerEnLista(finanzas, datos);
-    recordarTasa(fecha, c.tasa);
+    aplicarTasaEditada("fin", fecha, c.tasa);
     alertaFinanza(datos);
     cerrarModal();
   } catch (e) {

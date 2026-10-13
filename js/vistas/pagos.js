@@ -126,7 +126,7 @@ function renderFormPago(data = {}) {
         <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="p-tel" placeholder="Teléfono" value="${escHtml(data.telefono) || ""}"/></div>
       </div>
       <div class="form-row">
-        <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="p-fecha" value="${escHtml(data.fecha) || todayStr()}" onchange="actualizarTasaCampo('p',calcBsPago)"/></div>
+        <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="p-fecha" max="${todayStr()}" value="${escHtml(data.fecha) || todayStr()}" onchange="actualizarTasaCampo('p',calcBsPago)"/></div>
         <div class="field"><label class="field-label">Concepto *</label>
           <select class="inp" id="p-concepto">
             <option value="">Seleccionar...</option>
@@ -299,6 +299,9 @@ async function guardarPago() {
     mostrarError(errBox, "Falta la tasa BCV del día: cárgala con 💱 (arriba) o escríbela en el formulario");
     return;
   }
+  const errFecha = revisarFechaMovimiento(fecha);
+  if (errFecha === "cancelado") return;
+  if (errFecha) return mostrarError(errBox, errFecha);
   const btn = document.querySelector('button[onclick="guardarPago()"]');
   if (btn) {
     btn.disabled = true;
@@ -326,7 +329,7 @@ async function guardarPago() {
       aplicaDeuda: (d) => !cobCfgActiva() || d.concepto === "Deuda anterior",
     });
     reflejarCobro(pago.estId, r);
-    recordarTasa(fecha, tasa);
+    aplicarTasaEditada("p", fecha, tasa);
     window._pagoEstId = null;
     window._pagoCedula = null;
     subTab.pagos = "lista";
