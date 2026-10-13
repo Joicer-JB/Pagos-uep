@@ -71,3 +71,27 @@ test("todos los archivos se cargan sin errores en el orden de index.html", () =>
     );
   }
 });
+
+test("las bibliotecas de jsDelivr tienen versión exacta y su huella coincide con el paquete oficial de npm", () => {
+  const crypto = require("crypto");
+  const huella = (archivo) =>
+    "sha384-" +
+    crypto
+      .createHash("sha384")
+      .update(fs.readFileSync(path.join(RAIZ, "node_modules", archivo)))
+      .digest("base64");
+  const scripts = [
+    ...html.matchAll(/<script\s+src="(https:\/\/cdn\.jsdelivr\.net\/npm\/[^"]+)"\s+integrity="([^"]+)"/g),
+  ];
+  const esperado = {
+    "@emailjs/browser@4.4.1/dist/email.min.js": "@emailjs/browser/dist/email.min.js",
+    "xlsx@0.18.5/dist/xlsx.full.min.js": "xlsx/dist/xlsx.full.min.js",
+    "chart.js@4.4.1/dist/chart.umd.js": "chart.js/dist/chart.umd.js",
+  };
+  assert.deepEqual(scripts.map((m) => m[1].split("/npm/")[1]).sort(), Object.keys(esperado).sort());
+  for (const [url, sri] of scripts.map((m) => [m[1], m[2]])) {
+    assert.equal(sri, huella(esperado[url.split("/npm/")[1]]), url);
+  }
+  // ninguna biblioteca de jsDelivr sin versión exacta ni huella
+  assert.doesNotMatch(html, /cdn\.jsdelivr\.net\/npm\/[^"@]+@\d+\//);
+});
