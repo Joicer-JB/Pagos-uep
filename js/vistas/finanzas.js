@@ -386,7 +386,7 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
   ${T.sin ? `<br/><strong>⚠️ ${T.sin} registro(s) no tienen tasa BCV: están en la columna $ ref. pero no se incluyen en las columnas en Bs.</strong>` : ""}</p>
   <div class="footer">
     <div class="firma"><div class="firma-line">Directora<br/>Ligia Herrera</div></div>
-    <div class="firma"><div class="firma-line">Administradora<br/>${EMPRESA}</div></div>
+    <div class="firma"><div class="firma-line">Administrador<br/>${EMPRESA}</div></div>
     <div class="firma"><div class="firma-line">Contador<br/>Firma y Sello</div></div>
   </div>
   </body></html>`);

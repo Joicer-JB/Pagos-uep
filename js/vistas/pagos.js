@@ -389,7 +389,7 @@ function renderModalRecibo(m) {
       </div>
       <div style="padding:1.1rem">
         <div style="background:#f0f4ff;border-radius:10px;padding:0.85rem;margin-bottom:0.85rem;border-left:4px solid #003366">
-          <div style="font-size:0.6rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Cliente</div>
+          <div style="font-size:0.6rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Estudiante</div>
           <div style="font-weight:700;font-size:1rem;color:#003366">${escHtml(p.nombre)}</div>
           <div style="color:#555;font-size:0.8rem;margin-top:2px">CC ${escHtml(p.cedula) || "N/A"} · 📞 ${escHtml(p.telefono) || "N/A"}</div>
           ${p.mes ? `<div style="font-size:0.78rem;color:#555;margin-top:2px">📅 Mes: <strong>${escHtml(p.mes)}</strong></div>` : ""}
@@ -445,7 +445,7 @@ function enviarWhatsApp() {
     bb.bs != null
       ? `\n💱 Tasa BCV ${fechaCorta(bb.fecha)}: Bs. ${fmtTasa(bb.tasa)}\n🇻🇪 *TOTAL EN Bs: ${fmtBs(bb.bs)}*`
       : "";
-  const msg = `🏫 *${EMPRESA}*\n📍 ${EMPRESA_SUB}\n━━━━━━━━━━━━━━━━━━\n🧾 *RECIBO: ${p.factura}*\n📅 *Fecha:* ${p.fecha}\n💳 *Método:* ${p.metodo || "Efectivo"}\n${p.mes ? "📅 *Mes:* " + p.mes + "\n" : ""}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n👤 *Cliente:* ${p.nombre}\n🪪 *Cédula:* ${p.cedula || "N/A"}\n📞 *Teléfono:* ${p.telefono || "N/A"}\n━━━━━━━━━━━━━━━━━━\n${lines.map((l) => "• " + l).join("\n")}\n━━━━━━━━━━━━━━━━━━\n💰 *TOTAL REF: ${fmt(p.total)}*${bsTxt}\n━━━━━━━━━━━━━━━━━━\n✅ Pago registrado. ¡Gracias!`;
+  const msg = `🏫 *${EMPRESA}*\n📍 ${EMPRESA_SUB}\n━━━━━━━━━━━━━━━━━━\n🧾 *RECIBO: ${p.factura}*\n📅 *Fecha:* ${p.fecha}\n💳 *Método:* ${p.metodo || "Efectivo"}\n${p.mes ? "📅 *Mes:* " + p.mes + "\n" : ""}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n👤 *Estudiante:* ${p.nombre}\n🪪 *Cédula:* ${p.cedula || "N/A"}\n📞 *Teléfono:* ${p.telefono || "N/A"}\n━━━━━━━━━━━━━━━━━━\n${lines.map((l) => "• " + l).join("\n")}\n━━━━━━━━━━━━━━━━━━\n💰 *TOTAL REF: ${fmt(p.total)}*${bsTxt}\n━━━━━━━━━━━━━━━━━━\n✅ Pago registrado. ¡Gracias!`;
   const telWa = normalizarTelVE(p.telefono);
   if (!telWa) {
     alert("Este pago no tiene teléfono registrado");
@@ -459,25 +459,31 @@ function imprimirRecibo() {
   const lines = (p.descripcion || "").split("\n").filter(Boolean);
   const w = window.open("", "_blank", "width=600,height=800");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Recibo ${escHtml(p.factura)}</title>
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',sans-serif;padding:1.5rem;max-width:480px;margin:0 auto}
-  .hdr{background:linear-gradient(135deg,#003366,#00509e);color:#fff;padding:1.1rem;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:1rem}
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',sans-serif;padding:1.5rem;max-width:480px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hdr{background:linear-gradient(135deg,#003366,#00509e);color:#fff;padding:1.1rem;border-radius:10px 10px 0 0}
+  .hdr-top{display:flex;align-items:center;gap:1rem}
   .bdy{border:1px solid #dde3f0;border-top:none;border-radius:0 0 10px 10px;padding:1.1rem}
   .cbox{background:#f0f4ff;border-radius:8px;padding:0.75rem;margin-bottom:0.85rem;border-left:4px solid #003366}
   .tbox{background:linear-gradient(135deg,#003366,#00509e);color:#fff;border-radius:8px;padding:0.75rem 0.9rem;display:flex;justify-content:space-between;margin-top:0.85rem}
-  .nums{display:flex;justify-content:space-between;background:rgba(0,0,0,0.2);padding:0.45rem 0.75rem;border-radius:6px;margin-top:0.65rem}
+  .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;background:rgba(0,0,0,0.2);padding:0.55rem 0.85rem;border-radius:6px;margin-top:0.85rem}
+  .nums .c{text-align:center}.nums .d{text-align:right}
+  .lbl{font-size:0.58rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}.val{font-weight:700;font-size:0.82rem;white-space:nowrap}
   .firma{display:flex;justify-content:space-between;margin-top:1.5rem;padding-top:0.85rem;border-top:1px dashed #ccc}
   .fbox{text-align:center;width:45%}.fline{border-top:1px solid #333;margin-bottom:4px;margin-top:1.5rem}.flabel{font-size:0.7rem;color:#555}
   </style></head><body>
-  <div class="hdr"><img src="data:image/png;base64,${LOGO}" style="width:55px;height:55px;object-fit:contain;border-radius:7px;background:#fff;padding:2px" alt="Logo"/>
-    <div><small style="font-size:0.55rem;letter-spacing:2px;color:#ffd700;text-transform:uppercase">Recibo de Pago</small>
-    <div style="font-size:0.85rem;font-family:Georgia,serif">${EMPRESA}</div><div style="font-size:0.65rem;color:#adc8ff">${EMPRESA_SUB}</div>
+  <div class="hdr">
+    <div class="hdr-top"><img src="data:image/png;base64,${LOGO}" style="width:55px;height:55px;object-fit:contain;border-radius:7px;background:#fff;padding:2px" alt="Logo"/>
+      <div><small style="font-size:0.55rem;letter-spacing:2px;color:#ffd700;text-transform:uppercase">Recibo de Pago</small>
+      <div style="font-size:0.85rem;font-family:Georgia,serif">${EMPRESA}</div><div style="font-size:0.65rem;color:#adc8ff">${EMPRESA_SUB}</div></div>
+    </div>
     <div class="nums">
-      <div><div style="font-size:0.55rem;color:#adc8ff">Recibo${p.pendiente ? " provisional" : ""}</div><div style="font-weight:800;color:#ffd700;font-size:0.85rem">${escHtml(p.factura)}</div></div>
-      <div style="text-align:center"><div style="font-size:0.55rem;color:#adc8ff">Método</div><div style="font-weight:700;font-size:0.78rem">${escHtml(p.metodo) || "Efectivo"}</div></div>
-      <div style="text-align:right"><div style="font-size:0.55rem;color:#adc8ff">Fecha</div><div style="font-weight:700;font-size:0.78rem">${escHtml(p.fecha)}</div></div>
-    </div></div></div>
+      <div><div class="lbl">Recibo${p.pendiente ? " provisional" : ""}</div><div class="val" style="font-weight:800;color:#ffd700">${escHtml(p.factura)}</div></div>
+      <div class="c"><div class="lbl">Método</div><div class="val">${escHtml(p.metodo) || "Efectivo"}</div></div>
+      <div class="d"><div class="lbl">Fecha</div><div class="val">${escHtml(fechaCorta(p.fecha || ""))}</div></div>
+    </div>
+  </div>
   <div class="bdy">
-    <div class="cbox"><div style="font-size:0.58rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Cliente</div>
+    <div class="cbox"><div style="font-size:0.58rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Estudiante</div>
       <div style="font-weight:700;font-size:0.95rem;color:#003366">${escHtml(p.nombre)}</div>
       <div style="font-size:0.78rem;color:#555;margin-top:2px">CC ${escHtml(p.cedula) || "N/A"} · Tel: ${escHtml(p.telefono) || "N/A"}</div>
       ${p.mes ? `<div style="font-size:0.75rem;color:#555;margin-top:2px">Mes: ${escHtml(p.mes)}</div>` : ""}</div>
@@ -486,8 +492,8 @@ function imprimirRecibo() {
     ${totalesRecibo(p)}
     <p style="text-align:center;font-size:0.63rem;color:#aaa;margin-top:0.5rem">Este recibo es válido como comprobante de pago</p>
     <div class="firma">
-      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Administradora</div></div>
-      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Cliente</div></div>
+      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Administrador</div></div>
+      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Estudiante</div></div>
     </div>
   </div>
   </body></html>`);
