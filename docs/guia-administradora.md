@@ -24,6 +24,21 @@ Todos los montos están en **$ de referencia**. Cada pago guarda la tasa de su d
 
 En pantallas táctiles, al tocar un monto o la referencia aparece un teclado numérico grande.
 
+### Abonos (cuando no paga el mes completo)
+
+1. Toca **➕ Otro monto** y deja el concepto **«Abono / adelanto de mensualidad»**.
+2. En **«¿A qué mes abona?»** elige el mes. La lista muestra cuánto se debe de cada mes; por defecto sale el más
+   antiguo.
+3. Escribe el monto y cobra. El abono se resta de **ese mes** y le queda el saldo pendiente. Por ejemplo, si
+   diciembre es de 55 $ y abona 30 $, diciembre queda debiendo 25 $.
+4. El recibo dice para qué fue: **«Abono a la mensualidad de Diciembre 2026 — $ 30,00»**. Si el monto completa el
+   mes, dice **«Mensualidad Diciembre 2026»**.
+
+Con otro concepto (inscripción, uniformes…) puedes escribir **«¿Para qué es?»**. Con el concepto **«Otro»** es
+obligatorio, para que el recibo diga qué se pagó.
+
+En **💰 Pagos → Nuevo pago**, el campo **«Mes que cancela»** funciona igual: la mensualidad se resta de ese mes.
+
 ## Varias computadoras a la vez
 
 Si el director u otra persona cobra en otra computadora, tu pantalla se actualiza sola. Si en ese momento

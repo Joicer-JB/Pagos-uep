@@ -1,11 +1,22 @@
 # Historial de cambios
 
+## Octubre 2026 — Abonos a un mes
+
+- En la 💳 Caja, al abonar a la mensualidad se elige **«¿A qué mes abona?»** (con lo que se debe de cada mes). El
+  abono se resta de ese mes y le queda el saldo pendiente; el recibo dice «Abono a la mensualidad de Diciembre 2026»
+  (o «Mensualidad …» si lo completa). Antes siempre se descontaba del mes más antiguo y el recibo no decía de cuál.
+- Con los demás conceptos se puede escribir **«¿Para qué es?»** (obligatorio con «Otro»).
+- En 💰 Pagos, «Mes que cancela» también descuenta de ese mes. Los pagos viejos no cambian.
+- Cada pago de mensualidad guarda a qué meses fue (`cuotas`); lo que pase de lo que se debe de ese mes va al más
+  antiguo.
+- El recibo impreso dice «Firma Representante».
+
 ## Octubre 2026 — Recibo impreso
 
 - En el recibo impreso, **Recibo, Método y Fecha** quedan en tres columnas separadas (antes salían pegados) y la
   fecha sale como dd/mm/aaaa. Los colores también se imprimen.
-- «Cliente» pasa a **«Estudiante»** (recibo en pantalla, impreso y por WhatsApp) y las firmas dicen **«Firma
-  Administrador»** y **«Firma Docente»**. En el flujo de caja impreso, «Administradora» pasa a **«Administrador»**.
+- «Cliente» pasa a **«Estudiante»** (recibo en pantalla, impreso y por WhatsApp) y la firma dice **«Firma
+  Administrador»**. En el flujo de caja impreso, «Administradora» pasa a **«Administrador»**.
 
 ## Octubre 2026 — Auditoría, app instalable y trabajo sin internet
 
