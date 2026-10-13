@@ -802,3 +802,33 @@ textarea.inp {
   gap: 0.6rem;
   align-items: center;
 }
+
+/* Aviso de conexión (sin internet / subiendo cambios), abajo de la pantalla */
+.aviso-conexion {
+  position: fixed;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: max-content;
+  max-width: calc(100vw - 1.5rem);
+  border-radius: 12px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.8rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.aviso-conexion.sin-conexion {
+  background: #fff3cd;
+  color: #7a5c00;
+  border: 2px solid #b8860b;
+}
+.aviso-conexion.subiendo {
+  background: #e8f0fe;
+  color: #003366;
+  border: 2px solid #00509e;
+}
+.aviso-conexion.al-dia {
+  background: #e6f7ef;
+  color: #1a7a4a;
+  border: 2px solid #1a9e5c;
+}

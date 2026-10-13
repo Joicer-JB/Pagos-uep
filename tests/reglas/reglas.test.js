@@ -15,6 +15,7 @@ const {
   collection,
   getDocs,
   runTransaction,
+  writeBatch,
 } = require("firebase/firestore");
 
 let entorno;
@@ -26,6 +27,15 @@ const CUENTAS = {
   docenteInactivo: { uid: "uid-inactivo", email: "inactivo@example.com" },
   desconocido: { uid: "uid-intruso", email: "intruso@example.com" },
 };
+const firma = (rol) => ({ registradoPor: CUENTAS[rol].email });
+// Borra un documento como lo hace la app: en el mismo lote que su anotación en la bitácora
+function borrarConBitacora(db, rol, col, id, { anotar = true, por = CUENTAS[rol].email } = {}) {
+  const b = writeBatch(db);
+  if (anotar)
+    b.set(doc(db, "bitacora/" + col + "_" + id), { accion: "borrar", coleccion: col, docId: id, por, resumen: "x" });
+  b.delete(doc(db, col + "/" + id));
+  return b.commit();
+}
 // Base de datos vista por cada rol (o sin sesión)
 const como = (rol) =>
   rol === "anonimo"
@@ -78,10 +88,10 @@ test("una cuenta sin rol (registrada por su cuenta) no ve nada", async () => {
 test("director: acceso total, incluido borrar", async () => {
   const db = como("director");
   await assertSucceeds(getDocs(collection(db, "pagos")));
-  await assertSucceeds(setDoc(doc(db, "pagos/nuevo"), { total: 10 }));
-  await assertSucceeds(deleteDoc(doc(db, "pagos/pag1")));
-  await assertSucceeds(deleteDoc(doc(db, "estudiantes/est1")));
-  await assertSucceeds(deleteDoc(doc(db, "finanzas/fin1")));
+  await assertSucceeds(setDoc(doc(db, "pagos/nuevo"), { total: 10, ...firma("director") }));
+  await assertSucceeds(borrarConBitacora(db, "director", "pagos", "pag1"));
+  await assertSucceeds(borrarConBitacora(db, "director", "estudiantes", "est1"));
+  await assertSucceeds(borrarConBitacora(db, "director", "finanzas", "fin1"));
   await assertSucceeds(deleteDoc(doc(db, "trabajadores/trab1")));
   await assertSucceeds(deleteDoc(doc(db, "notas/est1_Lapso 1")));
   await assertSucceeds(setDoc(doc(db, "config/materias"), { "1er Año": ["Matemáticas"] }));
@@ -99,14 +109,14 @@ test("nadie puede modificar un pago ya registrado (ni el director)", async () =>
 test("administradora: registra y edita, pero no borra", async () => {
   const db = como("administradora");
   await assertSucceeds(getDocs(collection(db, "pagos")));
-  await assertSucceeds(setDoc(doc(db, "pagos/nuevo"), { total: 10 }));
+  await assertSucceeds(setDoc(doc(db, "pagos/nuevo"), { total: 10, ...firma("administradora") }));
   await assertSucceeds(setDoc(doc(db, "estudiantes/est2"), { nombre: "Luis" }));
   await assertSucceeds(updateDoc(doc(db, "estudiantes/est1"), { moraMonto: 0 }));
-  await assertSucceeds(setDoc(doc(db, "finanzas/nuevo"), { monto: 5 }));
+  await assertSucceeds(setDoc(doc(db, "finanzas/nuevo"), { monto: 5, ...firma("administradora") }));
   await assertSucceeds(updateDoc(doc(db, "trabajadores/trab1"), { salario: 170 }));
-  await assertFails(deleteDoc(doc(db, "pagos/pag1")));
-  await assertFails(deleteDoc(doc(db, "estudiantes/est1")));
-  await assertFails(deleteDoc(doc(db, "finanzas/fin1")));
+  await assertFails(borrarConBitacora(db, "administradora", "pagos", "pag1"));
+  await assertFails(borrarConBitacora(db, "administradora", "estudiantes", "est1"));
+  await assertFails(borrarConBitacora(db, "administradora", "finanzas", "fin1"));
   await assertFails(deleteDoc(doc(db, "trabajadores/trab1")));
 });
 
@@ -210,7 +220,7 @@ test("cobro completo en una transacción (como lo hace la app): contador + pago 
       const e = await tx.get(doc(db, "estudiantes/est1"));
       const n = ((c.exists() && c.data().recibo) || 0) + 1;
       tx.set(doc(db, "config/contadores"), { recibo: n }, { merge: true });
-      tx.set(doc(db, "pagos/nuevo"), { total: 30, factura: "FAC-" + n, deudaAplicada: 30 });
+      tx.set(doc(db, "pagos/nuevo"), { total: 30, factura: "FAC-" + n, deudaAplicada: 30, ...firma("administradora") });
       tx.update(doc(db, "estudiantes/est1"), { moraMonto: e.data().moraMonto - 30, estado: "alsaldo" });
     })
   );
@@ -221,4 +231,74 @@ test("cobro completo en una transacción (como lo hace la app): contador + pago 
       tx.set(doc(dbDocente, "pagos/otro"), { total: 1 });
     })
   );
+});
+
+test("auditoría: cada pago e ingreso/gasto nuevo lleva la firma de quien lo registra (la suya, no la de otro)", async () => {
+  const admin = como("administradora");
+  await assertFails(setDoc(doc(admin, "pagos/sinfirma"), { total: 10 }));
+  await assertFails(setDoc(doc(admin, "pagos/ajena"), { total: 10, ...firma("director") }));
+  await assertSucceeds(setDoc(doc(admin, "pagos/propia"), { total: 10, ...firma("administradora") }));
+  await assertFails(setDoc(doc(admin, "finanzas/sinfirma"), { monto: 5 }));
+  await assertSucceeds(setDoc(doc(admin, "finanzas/propia"), { monto: 5, ...firma("administradora") }));
+  // al editar un ingreso/gasto no se puede cambiar quién lo registró
+  await assertFails(updateDoc(doc(como("director"), "finanzas/propia"), { registradoPor: "herrerajoicer@gmail.com" }));
+  await assertSucceeds(updateDoc(doc(como("director"), "finanzas/propia"), { observaciones: "ok" }));
+});
+
+test("auditoría: no se puede borrar sin dejar la anotación en la bitácora, ni anotar a nombre de otro", async () => {
+  const db = como("director");
+  await assertFails(deleteDoc(doc(db, "pagos/pag1")));
+  await assertFails(borrarConBitacora(db, "director", "pagos", "pag1", { anotar: false }));
+  await assertFails(borrarConBitacora(db, "director", "pagos", "pag1", { por: "josefajsanquez@gmail.com" }));
+  await assertSucceeds(borrarConBitacora(db, "director", "pagos", "pag1"));
+});
+
+test("bitácora: solo el director la lee; nadie la cambia ni la borra", async () => {
+  await borrarConBitacora(como("director"), "director", "finanzas", "fin1");
+  await assertSucceeds(getDoc(doc(como("director"), "bitacora/finanzas_fin1")));
+  await assertFails(getDoc(doc(como("administradora"), "bitacora/finanzas_fin1")));
+  await assertFails(getDoc(doc(como("docente"), "bitacora/finanzas_fin1")));
+  await assertFails(updateDoc(doc(como("director"), "bitacora/finanzas_fin1"), { por: "otro" }));
+  await assertFails(deleteDoc(doc(como("director"), "bitacora/finanzas_fin1")));
+  // una anotación tiene que corresponder a su documento (id = colección_id)
+  await assertFails(
+    setDoc(doc(como("administradora"), "bitacora/pagos_x"), {
+      coleccion: "pagos",
+      docId: "y",
+      por: "josefajsanquez@gmail.com",
+    })
+  );
+});
+
+test("sin conexión: un recibo pendiente recibe su número correlativo, y nada más se puede cambiar", async () => {
+  const admin = como("administradora");
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "config/contadores"), { recibo: 7 });
+    await setDoc(doc(ctx.firestore(), "pagos/prov1"), {
+      total: 45,
+      factura: "PROV-ABC",
+      pendiente: true,
+      ...firma("administradora"),
+    });
+  });
+  const numerar = (db, cambios, n = 8) =>
+    runTransaction(db, async (tx) => {
+      await tx.get(doc(db, "config/contadores"));
+      tx.set(doc(db, "config/contadores"), { recibo: n }, { merge: true });
+      tx.update(doc(db, "pagos/prov1"), cambios);
+    });
+  const bien = {
+    factura: "FAC-000008",
+    pendiente: false,
+    recibo: 8,
+    facturaProvisional: "PROV-ABC",
+    numeradoPor: "josefajsanquez@gmail.com",
+  };
+  await assertFails(numerar(admin, { ...bien, total: 1 })); // no se puede tocar el monto
+  await assertFails(numerar(admin, { ...bien, recibo: 9 })); // el número debe ser el del contador
+  await assertFails(numerar(admin, { ...bien, numeradoPor: "herrerajoicer@gmail.com" }));
+  await assertSucceeds(numerar(admin, bien));
+  // ya numerado: no se puede volver a cambiar
+  await assertFails(numerar(admin, { ...bien, factura: "FAC-000009", recibo: 9 }, 9));
+  await assertFails(updateDoc(doc(admin, "pagos/pag1"), { total: 1 }));
 });

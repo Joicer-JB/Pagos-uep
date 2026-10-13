@@ -1,5 +1,31 @@
 # Historial de cambios
 
+## Octubre 2026 — Auditoría, app instalable y trabajo sin internet
+
+### Auditoría
+
+- Cada pago y cada ingreso o gasto guarda **quién lo registró** (su correo). Se ve en la lista de pagos (👤), en el
+  recibo en pantalla y en el detalle de ingresos y gastos.
+- **Bitácora de borrados** (⚙️ Configuración → 🕵️ Bitácora, solo el director): al borrar un recibo, un ingreso o
+  gasto, o un estudiante (también al unir fichas repetidas), queda una copia con quién lo borró y cuándo. Se
+  escribe junto con el borrado y las reglas no permiten borrar sin ella; nadie puede cambiarla.
+
+### App instalable
+
+- La plataforma se puede **instalar** en el teléfono o la computadora (botón **📲 Instalar**, o «Agregar a inicio»
+  en iPhone): ícono con el escudo del colegio y pantalla completa.
+- Un service worker (`sw.js`) guarda la app y sus bibliotecas para abrirla sin internet. Siempre pide primero la
+  versión nueva, así las actualizaciones llegan solas.
+
+### Sin internet
+
+- Firestore guarda una copia de los datos en el equipo; lo que se hace sin conexión se sube solo al volver.
+- **Se puede cobrar sin internet:** el recibo sale con número provisional (`PROV-…`) y, al volver la conexión,
+  recibe solo su número correlativo (`FAC-…`), en orden. Aviso abajo: «📴 Sin internet» → «🔄 Subiendo…» →
+  «✅ Todo está al día».
+- Los formularios ya no se quedan «guardando» sin conexión.
+- **Requiere publicar las reglas nuevas** (firma de quien registra, bitácora y numeración de recibos pendientes).
+
 ## Octubre 2026 — SheetJS 0.20.3
 
 - La biblioteca de Excel (importar estudiantes y tasas, plantilla de matrícula) pasa de la 0.18.5 a la **0.20.3**,

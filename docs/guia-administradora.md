@@ -30,6 +30,27 @@ Si el director u otra persona cobra en otra computadora, tu pantalla se actualiz
 estás llenando un formulario, aparece arriba el aviso **«🔄 Hay cambios nuevos de otro equipo»**: termina lo
 que estás haciendo y pulsa **Actualizar**.
 
+## Sin internet
+
+Si se va el internet puedes **seguir cobrando**. Abajo aparece el aviso **«📴 Sin internet»**:
+
+- Los cobros se guardan en el equipo con un **número de recibo provisional** (`PROV-…`). En la lista de pagos
+  salen con «⏳ Cobrado sin internet».
+- Al volver la conexión aparece **«🔄 Subiendo los cambios…»** y luego **«✅ Todo está al día»**. Cada recibo
+  provisional recibe solo su número correlativo (`FAC-…`). Si imprimes o reenvías el recibo después, ya sale con
+  el número definitivo.
+- Ingresos, gastos y cambios de estudiantes también se guardan y se suben solos.
+- Lo único que necesita internet es borrar un recibo que descontó deuda anterior (eso lo hace el director).
+- La **primera vez** que entras en un equipo sí necesitas internet. Después, la app abre aunque no haya conexión.
+
+## Instalar la app en el teléfono o la computadora
+
+- **Android o computadora (Chrome/Edge):** entra a la plataforma y pulsa **📲 Instalar** en la cabecera (o, en el
+  menú del navegador, «Instalar aplicación»). Queda un ícono con el escudo del colegio.
+- **iPhone (Safari):** botón **Compartir** → **Agregar a inicio**.
+
+La app instalada es la misma plataforma: se actualiza sola y usa tu misma cuenta.
+
 ## 💰 Pagos
 
 - **➕ Nuevo Pago:** busca al estudiante por cédula, elige el concepto, el mes y el método, y escribe el

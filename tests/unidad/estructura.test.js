@@ -51,11 +51,12 @@ test("todos los archivos se cargan sin errores en el orden de index.html", () =>
   const contexto = vm.createContext({
     console,
     document: { addEventListener: nada, getElementById: () => null, createElement: () => elemento, body: elemento },
-    window: {},
+    window: { addEventListener: nada },
+    navigator: { onLine: true },
     localStorage: { getItem: () => null, setItem: nada },
     firebase: {
       initializeApp: nada,
-      firestore: Object.assign(() => ({}), {
+      firestore: Object.assign(() => ({ enablePersistence: () => Promise.resolve() }), {
         FieldValue: {},
         DocumentReference: function () {},
         CollectionReference: function () {},

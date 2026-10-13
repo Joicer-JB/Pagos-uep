@@ -67,6 +67,13 @@ commit):
 - **Para agregar un registro a `pagos`, `estudiantes` o `finanzas` en memoria usa `ponerEnLista(lista, obj)`**,
   no `push`: con el tiempo real, Firestore puede haberlo traído ya y quedaría repetido.
 - **Pagos de un estudiante → `pagosDeEstudiante(e)`**. No los busques por nombre: hay homónimos.
+- **Ingresos y gastos nuevos llevan `registradoPor: correoUsuario()`**: las reglas rechazan los que no lo tienen.
+- **Para borrar un pago, un ingreso/gasto o un estudiante usa `borrarConBitacora(col, id, datos)`** (o
+  `anotarBorrado(lote, …)` dentro de un lote o transacción). Un `delete()` suelto lo rechazan las reglas.
+- **No esperes la respuesta del servidor para seguir**: sin internet las escrituras se guardan en el equipo y se
+  suben después (`js/servicios/conexion.js`). Las transacciones (`runTransaction`) sí necesitan internet.
+- **Si cambias `sw.js`, sube su `VERSION`** (`v1` → `v2`): así los equipos instalan el nuevo y borran la copia
+  vieja. Los archivos de la app no necesitan esto: el service worker siempre pide primero la versión nueva.
 - **Si el boletín o la pestaña Notas necesitan un dato nuevo del estudiante**, agrégalo a `CAMPOS_FICHA`
   (`js/servicios/fichas-docentes.js`) **y** a la lista de la regla de `estudiantes_docentes` en `firestore.rules`,
   y publica las reglas. Los docentes no leen la colección `estudiantes`, solo esas fichas. Nunca agregues ahí un

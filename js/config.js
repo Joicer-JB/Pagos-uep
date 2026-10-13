@@ -44,6 +44,11 @@ firebase.initializeApp({
   appId: "1:1007197351478:web:3948a2480b9c79a33ab297",
 });
 const db = firebase.firestore();
+// Copia de los datos en el equipo: la app sigue funcionando sin internet (ver servicios/conexion.js).
+// Tiene que activarse antes de cualquier lectura o escritura.
+db.enablePersistence({ synchronizeTabs: true }).catch((e) =>
+  console.warn("Sin copia local de los datos (no se podrá trabajar sin internet):", e.code || e.message)
+);
 const fbAuth = firebase.auth();
 const EJS_SERVICE = "service_jwzro4s";
 const EJS_TEMPLATE = "template_b5uyqpv";

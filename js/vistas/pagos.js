@@ -85,7 +85,8 @@ function renderPagos() {
       <div class="item-row">
         <div style="flex:1;min-width:0">
           <div class="item-name">${escHtml(p.nombre)}</div>
-          <div class="item-sub">${escHtml(p.factura) || ""} · ${escHtml(p.fecha)}</div>
+          <div class="item-sub">${escHtml(p.factura) || ""} · ${escHtml(p.fecha)}${p.registradoPor ? ` · 👤 ${escHtml(nombreUsuario(p.registradoPor))}` : ""}</div>
+          ${p.pendiente ? `<div class="item-sub" style="color:#b8860b">⏳ Cobrado sin internet: recibirá su número al volver la conexión</div>` : ""}
           <div style="margin-top:3px;display:flex;gap:0.35rem;flex-wrap:wrap">
             <span class="badge ${p.metodo === "Dólares Efectivo" ? "badge-gold" : p.metodo === "Transferencia Bs" ? "badge-blue" : p.metodo === "Bs Efectivo" ? "badge-green" : "badge-blue"}">${escHtml(p.metodo) || "Dólares Efectivo"}</span>
             ${p.concepto ? `<span class="badge badge-gray">${escHtml(p.concepto)}</span>` : ""}
@@ -335,7 +336,7 @@ async function guardarPago() {
     subTab.pagos = "lista";
     modalActual = { tipo: "recibo", pago: r.guardados[0] };
     render();
-    mostrarExito("¡Pago realizado con éxito!", fmt(total) + " · Recibo " + r.factura);
+    mostrarExito("¡Pago realizado con éxito!", fmt(total) + " · " + textoRecibo(r));
   } catch (e) {
     mostrarError(errBox, e.message);
     if (btn) {
@@ -381,7 +382,7 @@ function renderModalRecibo(m) {
             <div style="font-size:0.67rem;color:#adc8ff">${EMPRESA_SUB}</div></div>
         </div>
         <div class="recibo-nums">
-          <div><div style="font-size:0.58rem;color:#adc8ff">N° Recibo</div><div style="font-weight:800;color:#ffd700;font-size:0.9rem">${escHtml(p.factura) || ""}</div></div>
+          <div><div style="font-size:0.58rem;color:#adc8ff">N° Recibo${p.pendiente ? " (provisional)" : ""}</div><div style="font-weight:800;color:#ffd700;font-size:0.9rem">${escHtml(p.factura) || ""}</div></div>
           <div style="text-align:center"><div style="font-size:0.58rem;color:#adc8ff">Método</div><div style="font-weight:700;font-size:0.82rem">${escHtml(p.metodo) || "Efectivo"}</div></div>
           <div style="text-align:right"><div style="font-size:0.58rem;color:#adc8ff">Fecha</div><div style="font-weight:700;font-size:0.82rem">${escHtml(p.fecha)}</div></div>
         </div>
@@ -397,6 +398,7 @@ function renderModalRecibo(m) {
         ${lines.map((l) => `<div style="display:flex;gap:0.4rem;padding:0.4rem 0;border-bottom:1px dashed #eee;font-size:0.85rem"><span style="color:#003366">✦</span>${escHtml(l)}</div>`).join("")}
         ${totalesRecibo(p)}
         <p style="text-align:center;font-size:0.65rem;color:#aaa;margin-top:0.55rem">Este recibo es válido como comprobante de pago</p>
+        ${p.registradoPor ? `<p class="recibo-quien" style="text-align:center;font-size:0.68rem;color:#777;margin-top:0.2rem">👤 Registrado por ${escHtml(nombreUsuario(p.registradoPor))}</p>` : ""}
       </div>
       <div class="modal-actions">
         <button class="btn btn-whatsapp" style="flex:1;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="enviarWhatsApp()">
@@ -470,7 +472,7 @@ function imprimirRecibo() {
     <div><small style="font-size:0.55rem;letter-spacing:2px;color:#ffd700;text-transform:uppercase">Recibo de Pago</small>
     <div style="font-size:0.85rem;font-family:Georgia,serif">${EMPRESA}</div><div style="font-size:0.65rem;color:#adc8ff">${EMPRESA_SUB}</div>
     <div class="nums">
-      <div><div style="font-size:0.55rem;color:#adc8ff">Recibo</div><div style="font-weight:800;color:#ffd700;font-size:0.85rem">${escHtml(p.factura)}</div></div>
+      <div><div style="font-size:0.55rem;color:#adc8ff">Recibo${p.pendiente ? " provisional" : ""}</div><div style="font-weight:800;color:#ffd700;font-size:0.85rem">${escHtml(p.factura)}</div></div>
       <div style="text-align:center"><div style="font-size:0.55rem;color:#adc8ff">Método</div><div style="font-weight:700;font-size:0.78rem">${escHtml(p.metodo) || "Efectivo"}</div></div>
       <div style="text-align:right"><div style="font-size:0.55rem;color:#adc8ff">Fecha</div><div style="font-weight:700;font-size:0.78rem">${escHtml(p.fecha)}</div></div>
     </div></div></div>

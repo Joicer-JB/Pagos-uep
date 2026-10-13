@@ -571,6 +571,7 @@ async function guardarPagoNomina() {
     otros,
     responsable: trab ? trab.nombre : trabId,
     trabajadorId: trabId,
+    registradoPor: correoUsuario(),
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
   };
   try {
@@ -603,7 +604,11 @@ async function eliminarPagoNomina(id) {
   }
   if (!confirm("¿Eliminar este pago de nómina?")) return;
   try {
-    await db.collection("finanzas").doc(id).delete();
+    await borrarConBitacora(
+      "finanzas",
+      id,
+      finanzas.find((f) => f.id === id)
+    );
     finanzas = finanzas.filter((f) => f.id !== id);
     renderTabContent();
   } catch (e) {

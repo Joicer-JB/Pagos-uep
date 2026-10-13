@@ -45,6 +45,7 @@ async function cargarTodo() {
     render();
     animarEntradaPestana();
     sincronizarFichasDocentes(); // director y administradora: pone al día las fichas de los docentes
+    numerarRecibosPendientes(); // recibos cobrados sin conexión que aún no tienen su número
   } catch (e) {
     document.getElementById("app").innerHTML =
       `<div class="loading">❌ Error: ${escHtml(e.message)}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;

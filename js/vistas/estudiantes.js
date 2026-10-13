@@ -484,7 +484,11 @@ async function guardarEstudiante(editId) {
 async function eliminarEstudiante(id) {
   if (!confirm("¿Eliminar este estudiante?")) return;
   try {
-    await db.collection("estudiantes").doc(id).delete();
+    await borrarConBitacora(
+      "estudiantes",
+      id,
+      estudiantes.find((e) => e.id === id)
+    );
     estudiantes = estudiantes.filter((e) => e.id !== id);
     cerrarModal();
   } catch (e) {

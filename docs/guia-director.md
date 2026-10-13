@@ -54,6 +54,14 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 - Cambiar la configuración: cuotas, correo, materias, indicadores e institución.
 - Importar matrícula, unificar grados escritos de formas distintas y pasar de grado.
 
+## Bitácora: quién registró y quién borró
+
+- Cada pago y cada ingreso o gasto guarda **quién lo registró**. Se ve en la lista de pagos (👤) y en el recibo
+  en pantalla (no en el impreso).
+- Todo lo que se borra (recibos, ingresos y gastos, estudiantes) queda en **⚙️ Configuración → 🕵️ Bitácora**:
+  qué era, quién lo borró, cuándo y quién lo había registrado. Nadie puede cambiar ni borrar la bitácora, ni
+  siquiera tú.
+
 ## Respaldos
 
 Si pasan más de 14 días sin descargar un respaldo, en 🏠 Inicio aparece un aviso con el botón **Descargar

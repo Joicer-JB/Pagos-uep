@@ -16,6 +16,10 @@ rules_version = '2';
 //      puede avanzar (solo de 1 en 1).
 //   4. (Octubre 2026) Privacidad: los docentes ya no leen "estudiantes"; leen "estudiantes_docentes", una copia
 //      sin datos privados.
+//   5. (Octubre 2026) Auditoría: cada pago e ingreso/gasto nuevo dice quién lo registró (registradoPor), y borrar un
+//      pago, un ingreso/gasto o un estudiante exige dejar su anotación en la "bitacora", que nadie puede cambiar.
+//   6. (Octubre 2026) Sin conexión: un recibo cobrado sin internet (número provisional, pendiente: true) recibe
+//      después su número correlativo; es el único cambio que se permite a un pago ya registrado.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -46,6 +50,21 @@ service cloud.firestore {
       allow write: if isDirector();
     }
 
+    // ───────────── Auditoría ─────────────
+    // Quien registra algo nuevo firma con su propio correo
+    function firmado() { return request.resource.data.get('registradoPor', '') == mail(); }
+    // Borrar exige que en la misma escritura quede la anotación bitacora/<colección>_<id>
+    function conBitacora(col, id) {
+      return existsAfter(/databases/$(database)/documents/bitacora/$(col + '_' + id));
+    }
+    match /bitacora/{id} {
+      allow read:   if isDirector();
+      allow create: if isStaff()
+        && request.resource.data.por == mail()
+        && id == request.resource.data.coleccion + '_' + request.resource.data.docId;
+      allow update, delete: if false;
+    }
+
     // ───────────── Estudiantes ─────────────
     // Director y administradora registran y editan (al cobrar se actualiza la deuda del estudiante).
     // Borrar: solo el director. Los docentes NO leen esta colección (tiene teléfonos, correo, deuda, mensualidad,
@@ -53,7 +72,7 @@ service cloud.firestore {
     match /estudiantes/{id} {
       allow read:           if isStaff();
       allow create, update: if isStaff();
-      allow delete:         if isDirector();
+      allow delete:         if isDirector() && conBitacora('estudiantes', id);
     }
     // Fichas para docentes: copia de cada estudiante con solo lo necesario para notas y boletín.
     // La mantiene la app de director y administradora; no acepta ningún otro campo.
@@ -66,14 +85,29 @@ service cloud.firestore {
 
     // ───────────── Dinero y personal: solo director y administradora ─────────────
     // Pagos: se registran y se consultan, pero no se modifican. Borrar un recibo: solo el director.
+    // Única excepción: a un recibo cobrado sin conexión (pendiente) se le pone su número correlativo, en la misma
+    // transacción que avanza el contador de recibos.
+    function numeraPendiente() {
+      return resource.data.get('pendiente', false) == true
+        && request.resource.data.pendiente == false
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['factura', 'pendiente', 'recibo', 'facturaProvisional', 'numeradoPor'])
+        && request.resource.data.numeradoPor == mail()
+        && request.resource.data.recibo
+             == getAfter(/databases/$(database)/documents/config/contadores).data.recibo;
+    }
     match /pagos/{id} {
-      allow read, create: if isStaff();
-      allow update:       if false;
-      allow delete:       if isDirector();
+      allow read:   if isStaff();
+      allow create: if isStaff() && firmado();
+      allow update: if isStaff() && numeraPendiente();
+      allow delete: if isDirector() && conBitacora('pagos', id);
     }
     match /finanzas/{id} {
-      allow read, create, update: if isStaff();
-      allow delete:               if isDirector();
+      allow read:   if isStaff();
+      allow create: if isStaff() && firmado();
+      allow update: if isStaff()
+        && request.resource.data.get('registradoPor', '') == resource.data.get('registradoPor', '');
+      allow delete: if isDirector() && conBitacora('finanzas', id);
     }
     match /trabajadores/{id} {
       allow read, create, update: if isStaff();

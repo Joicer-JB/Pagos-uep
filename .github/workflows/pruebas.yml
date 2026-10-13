@@ -103,7 +103,7 @@ jobs:
         if: steps.modo.outputs.tipo == 'workflow'
         run: |
           mkdir _sitio
-          cp -r index.html css js assets _sitio/
+          cp -r index.html manifest.webmanifest sw.js css js assets _sitio/
       - if: steps.modo.outputs.tipo == 'workflow'
         uses: actions/configure-pages@v5
       - if: steps.modo.outputs.tipo == 'workflow'
