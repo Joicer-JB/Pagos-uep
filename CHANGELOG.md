@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Octubre 2026 — SheetJS 0.20.3
+
+- La biblioteca de Excel (importar estudiantes y tasas, plantilla de matrícula) pasa de la 0.18.5 a la **0.20.3**,
+  que corrige dos fallas de seguridad al leer archivos (CVE-2023-30533 y CVE-2024-22363). SheetJS ya no publica
+  en npm; se usa la copia `@e965/xlsx@0.20.3`, servida por jsDelivr con versión exacta y huella (SRI).
+
 ## Octubre 2026 — Privacidad de los estudiantes y tasas del BCV desde Excel
 
 ### Privacidad

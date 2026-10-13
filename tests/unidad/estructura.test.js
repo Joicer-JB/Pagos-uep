@@ -85,7 +85,7 @@ test("las bibliotecas de jsDelivr tienen versión exacta y su huella coincide co
   ];
   const esperado = {
     "@emailjs/browser@4.4.1/dist/email.min.js": "@emailjs/browser/dist/email.min.js",
-    "xlsx@0.18.5/dist/xlsx.full.min.js": "xlsx/dist/xlsx.full.min.js",
+    "@e965/xlsx@0.20.3/dist/xlsx.full.min.js": "xlsx/dist/xlsx.full.min.js", // SheetJS 0.20.3 publicado en npm por e965
     "chart.js@4.4.1/dist/chart.umd.js": "chart.js/dist/chart.umd.js",
   };
   assert.deepEqual(scripts.map((m) => m[1].split("/npm/")[1]).sort(), Object.keys(esperado).sort());
@@ -94,4 +94,9 @@ test("las bibliotecas de jsDelivr tienen versión exacta y su huella coincide co
   }
   // ninguna biblioteca de jsDelivr sin versión exacta ni huella
   assert.doesNotMatch(html, /cdn\.jsdelivr\.net\/npm\/[^"@]+@\d+\//);
+});
+
+test("SheetJS (Excel) es 0.20.2 o más nueva: las anteriores tienen fallas de seguridad al leer archivos", () => {
+  const [a, b, c] = require("xlsx").version.split(".").map(Number);
+  assert.ok(a > 0 || b > 20 || (b === 20 && c >= 2), "versión " + require("xlsx").version);
 });
