@@ -31,10 +31,21 @@ async function cargarCobCfg() {
 // La mora automática solo aplica al año actual (en años anteriores se ve el historial tal cual)
 const cobCfgActiva = () => !!cobCfg && !soloLectura();
 // Índice de pagos por estudiante (id, cédula, nombre) para no recorrer todos los pagos por cada estudiante
-let _pagoIdx = { ref: null, n: -1 };
+let _pagoIdx = { ref: null, n: -1, refEst: null, nEst: -1 };
 function idxPagos() {
-  if (_pagoIdx.ref === pagos && _pagoIdx.n === pagos.length) return _pagoIdx;
-  const I = { ref: pagos, n: pagos.length, porId: new Map(), porCed: new Map(), porNom: new Map() };
+  const I0 = _pagoIdx;
+  if (I0.ref === pagos && I0.n === pagos.length && I0.refEst === estudiantes && I0.nEst === estudiantes.length)
+    return I0;
+  const I = {
+    ref: pagos,
+    n: pagos.length,
+    refEst: estudiantes,
+    nEst: estudiantes.length,
+    porId: new Map(),
+    porCed: new Map(),
+    porNom: new Map(),
+  };
+  const existe = new Set(estudiantes.map((e) => e.id));
   const put = (m, k, p) => {
     if (!k) return;
     let a = m.get(k);
@@ -45,21 +56,27 @@ function idxPagos() {
     a.push(p);
   };
   pagos.forEach((p) => {
-    put(I.porId, p.estId, p);
-    put(I.porCed, p.cedula, p);
-    put(I.porNom, (p.nombre || "").toLowerCase(), p);
+    // Un pago con el id de un estudiante que existe es solo de ese estudiante. Los pagos viejos (sin id) o de
+    // fichas que ya no existen se reconocen por cédula o nombre, como antes.
+    if (p.estId && existe.has(p.estId)) put(I.porId, p.estId, p);
+    else {
+      put(I.porId, p.estId, p);
+      put(I.porCed, p.cedula, p);
+      put(I.porNom, (p.nombre || "").toLowerCase(), p);
+    }
   });
   return (_pagoIdx = I);
 }
-// Pagos de un estudiante, buscados por id, cédula o nombre (los pagos viejos no tenían id)
+// Pagos de un estudiante. Cuentan los que traen su id (o el de una copia que se fusionó en su ficha: «fusionados»)
+// y los pagos sin id con su misma cédula o nombre. Así un homónimo o un hermano con la misma cédula no se lleva
+// los pagos de otro.
 function pagosDeEstudiante(e) {
   const I = idxPagos(),
     set = new Set();
-  [I.porId.get(e.id), e.cedula ? I.porCed.get(e.cedula) : null, I.porNom.get((e.nombre || "").toLowerCase())].forEach(
-    (a) => {
-      if (a) a.forEach((p) => set.add(p));
-    }
-  );
+  const agregar = (a) => a && a.forEach((p) => set.add(p));
+  [e.id, ...(e.fusionados || [])].forEach((id) => agregar(I.porId.get(id)));
+  if (e.cedula) agregar(I.porCed.get(e.cedula));
+  agregar(I.porNom.get((e.nombre || "").toLowerCase()));
   return [...set];
 }
 // Estado de cuenta de un estudiante: cuotas del año, cuánto se pagó de cada una, cuáles vencieron,

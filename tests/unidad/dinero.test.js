@@ -24,6 +24,7 @@ const poner = (nombre, valor) => {
 beforeEach(() => {
   poner("tasas", { "2026-10-01": 180.5, "2026-10-02": 181.25, "2026-10-05": 182.1 });
   poner("pagos", []);
+  poner("estudiantes", []);
   poner("escCfg", null);
   poner("anioVista", null);
   poner("cobCfg", { primerMes: "2026-09", cuotas: 10, diaVence: 5, recargo: 0, recargoDesde: "" });
@@ -168,6 +169,72 @@ test("pagosDeEstudiante: encuentra pagos por id, cédula o nombre sin repetirlos
       .sort(),
     [1, 2, 3]
   );
+});
+
+// ---------- Pagos de cada estudiante: homónimos, hermanos y fichas fusionadas ----------
+const jose1 = { id: "j1", nombre: "José Pérez", cedula: "V-11111111", mensualidad: 45, estado: "alsaldo" };
+const jose2 = { id: "j2", nombre: "José Pérez", cedula: "V-22222222", mensualidad: 45, estado: "alsaldo" };
+const saldoDe = (e) => {
+  app.__e = e;
+  return f('calcCuotas(__e, "2026-10-07")').saldo;
+};
+
+test("homónimos: el pago de un José Pérez no cuenta para el otro", () => {
+  poner("estudiantes", [jose1, jose2]);
+  poner("pagos", [
+    {
+      estId: "j1",
+      nombre: "José Pérez",
+      cedula: "V-11111111",
+      fecha: "2026-09-03",
+      total: 90,
+      concepto: "Mensualidad",
+    },
+  ]);
+  assert.equal(saldoDe(jose1), 0);
+  assert.equal(saldoDe(jose2), 90);
+});
+
+test("hermanos con la misma cédula (la del representante): cada uno con sus pagos", () => {
+  const ana = { id: "h1", nombre: "Ana Rojas", cedula: "V-15000000", mensualidad: 45, estado: "alsaldo" };
+  const luis = { id: "h2", nombre: "Luis Rojas", cedula: "V-15000000", mensualidad: 45, estado: "alsaldo" };
+  poner("estudiantes", [ana, luis]);
+  poner("pagos", [
+    { estId: "h1", nombre: "Ana Rojas", cedula: "V-15000000", fecha: "2026-09-03", total: 90, concepto: "Mensualidad" },
+  ]);
+  assert.equal(saldoDe(ana), 0);
+  assert.equal(saldoDe(luis), 90);
+});
+
+test("pagos viejos sin id se siguen reconociendo por cédula o nombre", () => {
+  poner("estudiantes", [jose1]);
+  poner("pagos", [
+    { nombre: "josé pérez", fecha: "2026-09-03", total: 45, concepto: "Mensualidad" },
+    { cedula: "V-11111111", nombre: "J. Pérez", fecha: "2026-10-01", total: 45, concepto: "Mensualidad" },
+  ]);
+  assert.equal(saldoDe(jose1), 0);
+});
+
+test("pagos con el id de una ficha que ya no existe se reconocen por cédula o nombre", () => {
+  poner("estudiantes", [jose1]); // la ficha «viejo» se borró y se volvió a crear como j1
+  poner("pagos", [
+    {
+      estId: "viejo",
+      nombre: "José Pérez",
+      cedula: "V-11111111",
+      fecha: "2026-09-03",
+      total: 90,
+      concepto: "Mensualidad",
+    },
+  ]);
+  assert.equal(saldoDe(jose1), 0);
+});
+
+test("ficha fusionada: los pagos registrados con el id de la copia cuentan para la que se conservó", () => {
+  const conservada = { ...jose1, fusionados: ["copia"] };
+  poner("estudiantes", [conservada, { id: "copia", nombre: "Pérez, José", cedula: "" }]);
+  poner("pagos", [{ estId: "copia", nombre: "Pérez, José", fecha: "2026-09-03", total: 90, concepto: "Mensualidad" }]);
+  assert.equal(saldoDe(conservada), 0);
 });
 
 test("deudaManual y conceptoDeE", () => {

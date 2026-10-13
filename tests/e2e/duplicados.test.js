@@ -16,6 +16,8 @@ est.dupA2 = { ...base, nombre: "PEREZ ANA MARIA", grado: "1er Grado", acudiente:
 est.dupL1 = { ...base, nombre: "Gómez Luis Alberto", grado: est.est2.grado, direccion: "Av. Principal, Turumo" };
 est.homo1 = { ...base, nombre: "José Rojas", grado: "2do Grado", cedula: "V-31000001" };
 est.homo2 = { ...base, nombre: "Rojas José", grado: "2do Grado", cedula: "V-31000002" };
+// Un docente cargó notas en una de las copias de Ana: no se deben perder
+datos.colecciones.notas["dupA1_Lapso 2"] = { estId: "dupA1", lapso: "Lapso 2", Matemáticas__0: "B" };
 
 let nav, sesion;
 const pagina = () => sesion.pagina;
@@ -68,18 +70,29 @@ test("«Eliminar copias de una vez» borra solo las copias, copia los datos que 
   await llamar("dupLimpiarSeguros()");
   await espera();
   const esc = await escrituras();
-  const borradas = esc.filter((e) => e.op === "delete").map((e) => e.ruta);
+  const borradas = esc.filter((e) => e.op === "delete" && e.ruta.startsWith("estudiantes/")).map((e) => e.ruta);
   assert.deepEqual(borradas.sort(), ["estudiantes/dupA1", "estudiantes/dupA2", "estudiantes/dupL1"]);
   const act = esc.filter((e) => e.op === "update");
-  // Ana ya tenía representante: no se pisa (ni siquiera se actualiza su ficha)
-  assert.ok(!act.some((e) => e.ruta === "estudiantes/est1"));
+  // Ana ya tenía representante: no se pisa ningún dato; solo se anotan las copias fusionadas
+  // (así los pagos registrados con el id de una copia siguen contando para su ficha)
+  const deAna = act.find((e) => e.ruta === "estudiantes/est1");
+  assert.deepEqual(JSON.parse(JSON.stringify(deAna.datos)), { fusionados: ["dupA1", "dupA2"] });
   // Luis no tenía dirección: se copia desde la copia que se borra
   const deLuis = act.find((e) => e.ruta === "estudiantes/est2");
-  assert.deepEqual(JSON.parse(JSON.stringify(deLuis.datos)), { direccion: "Av. Principal, Turumo" });
+  assert.deepEqual(JSON.parse(JSON.stringify(deLuis.datos)), {
+    direccion: "Av. Principal, Turumo",
+    fusionados: ["dupL1"],
+  });
   assert.ok(
     esc.every((e) => !/pagos|finanzas/.test(e.ruta)),
     "no se toca ningún pago"
   );
+  // Las notas de la copia pasan a la ficha de Ana
+  const notaNueva = esc.find((e) => e.ruta === "notas/est1_Lapso 2");
+  assert.equal(notaNueva.datos.estId, "est1");
+  assert.equal(notaNueva.datos["Matemáticas__0"], "B");
+  assert.ok(esc.some((e) => e.op === "delete" && e.ruta === "notas/dupA1_Lapso 2"));
+  assert.equal(await llamar(`notas["est1_Lapso 2"]["Matemáticas__0"]`), "B");
   // los homónimos y los demás estudiantes siguen ahí
   const quedan = await llamar("estudiantes.map(e => e.id).sort()");
   for (const id of ["est1", "est2", "est3", "homo1", "homo2"]) assert.ok(quedan.includes(id), id);
