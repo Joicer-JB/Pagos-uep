@@ -71,12 +71,14 @@ No hay que instalar ni compilar nada. Son archivos HTML, CSS y JavaScript que el
 ```
 index.html                 La página: carga los estilos y los scripts en orden
 css/estilos.css            Todos los estilos de pantalla
+css/animaciones.css        Animaciones y transiciones (se apagan con «reducir movimiento»)
 assets/logo.png            Logo (para el README y el ícono de la pestaña)
 js/
   logo.js                  Logo en base64 (para recibos y constancias impresas)
   config.js                ⚙️ Datos del colegio, ROLES, Firebase y EmailJS  ← lo que más se edita
   estado.js                Variables globales: sesión, datos cargados, pestaña y filtros
   interfaz.js              Cabecera, pestañas, modales, mensajes de error y avisos
+  animaciones.js           Animaciones (pestañas, ventanas y «¡Pago realizado con éxito!»)
   utils/
     formato.js             Montos ($ y Bs.), números venezolanos (1.234,56) y fechas
     texto.js               escHtml/escJs (seguridad), acentos, correos y teléfonos de Venezuela

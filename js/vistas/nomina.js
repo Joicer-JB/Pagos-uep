@@ -580,6 +580,7 @@ async function guardarPagoNomina() {
     aplicarTasaEditada("pn", fecha, tasa);
     alertaPagoNomina(datos.descripcion, datos.monto, datos.responsable);
     cerrarModal();
+    mostrarExito("¡Pago de nómina registrado!", fmt(datos.monto) + " · " + (datos.responsable || ""));
     imprimirReciboNominaPago(datos, trab);
   } catch (e) {
     err(e.message);

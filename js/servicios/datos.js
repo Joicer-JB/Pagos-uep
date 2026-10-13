@@ -45,6 +45,7 @@ async function cargarTodo() {
     });
     await cargarConfig();
     render();
+    animarEntradaPestana();
   } catch (e) {
     document.getElementById("app").innerHTML =
       `<div class="loading">❌ Error: ${escHtml(e.message)}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;

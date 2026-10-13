@@ -16,6 +16,15 @@
   cobró, no se sobrescribe con un valor viejo).
 - **Borrar un recibo devuelve la deuda anterior** que ese pago había descontado (para los recibos nuevos).
 
+### Animaciones
+
+- Al registrar un pago (Caja, Pagos o Nómina) aparece un chulito (✓) animado: **«¡Pago realizado con éxito!»** con
+  el monto y el número de recibo. No bloquea la pantalla y se quita solo a los 2 segundos.
+- Las pestañas aparecen con sus tarjetas escalonadas, las ventanas suben suavemente, los botones responden al
+  tocarlos, las tarjetas del Inicio se elevan al pasar el mouse y el «Cargando…» tiene un indicador que gira.
+- Si el teléfono o la computadora tiene activado «reducir movimiento» (accesibilidad), todo se muestra sin
+  animación. Archivos: `js/animaciones.js` y `css/animaciones.css`.
+
 ### Pagos con fecha pasada y tasa BCV
 
 - Al elegir la fecha en Pagos, Finanzas o Nómina se carga la tasa guardada de ese día (o la del último día con

@@ -335,6 +335,7 @@ async function guardarPago() {
     subTab.pagos = "lista";
     modalActual = { tipo: "recibo", pago: r.guardados[0] };
     render();
+    mostrarExito("¡Pago realizado con éxito!", fmt(total) + " · Recibo " + r.factura);
   } catch (e) {
     mostrarError(errBox, e.message);
     if (btn) {
