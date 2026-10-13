@@ -82,6 +82,7 @@ js/
   utils/
     formato.js             Montos ($ y Bs.), números venezolanos (1.234,56) y fechas
     texto.js               escHtml/escJs (seguridad), acentos, correos y teléfonos de Venezuela
+    impresion.js           Ventana para imprimir (en el teléfono, encima de la app con «Volver»)
     grados.js              Grados (Maternal → 5to Año), niveles y áreas
   servicios/
     auth.js                Inicio y cierre de sesión, roles

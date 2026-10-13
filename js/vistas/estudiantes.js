@@ -329,7 +329,7 @@ function imprimirConstancia(estId) {
   const fechaLarga = `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
   const numConst = "CONST-" + Date.now().toString().slice(-6);
 
-  const w = window.open("", "_blank", "width=720,height:1000");
+  const w = abrirVentanaImpresion("width=720,height:1000");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
   <title>Constancia - ${escHtml(e.nombre)}</title>
   <style>

@@ -72,7 +72,7 @@ function imprimirBoletinMedia(est) {
     return nf !== null && nf < 10;
   });
 
-  const w = window.open("", "_blank");
+  const w = abrirVentanaImpresion();
   w.document.write(
     `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Boletín ${escHtml(est.nombre)}</title>
@@ -240,7 +240,7 @@ function imprimirBoletinPrimaria(est) {
     });
   });
 
-  const w = window.open("", "_blank");
+  const w = abrirVentanaImpresion();
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Boletín Primaria ${escHtml(est.nombre)}</title>
   <style>

@@ -25,7 +25,7 @@ function imprimirReciboNomina(trabId, pagoId) {
   const periodo = pago ? pago.descripcion : "Quincena / Mes";
   const numRecibo = "NOM-" + Date.now().toString().slice(-7);
 
-  const w = window.open("", "_blank", "width=680,height=900");
+  const w = abrirVentanaImpresion("width=680,height=900");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
   <title>Recibo Nómina - ${escHtml(t.nombre)}</title>
   <style>
@@ -330,7 +330,7 @@ function imprimirReciboNominaPago(pago, trab) {
   const dz = desgloseRecibo(pago, trab); // conceptos del recibo; el total es lo realmente pagado
   const neto = dz.total;
 
-  const w = window.open("", "_blank");
+  const w = abrirVentanaImpresion();
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Recibo Nómina ${num}</title>
   <style>

@@ -348,7 +348,7 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
       return `<tr class="m"><td>${escHtml(m.mes)}</td><td class="r in">${fmtBs(m.di.bs)}</td><td class="r in">${fmt(m.di.usd)}</td><td class="r out">${fmtBs(m.dg.bs)}</td><td class="r out">${fmt(m.dg.usd)}</td><td class="r b">${fmtBs(r2(m.di.bs - m.dg.bs))}</td><td class="r b">${fmt(r2(m.di.usd - m.dg.usd))}</td></tr>${det}`;
     })
     .join("");
-  const w = window.open("", "_blank");
+  const w = abrirVentanaImpresion();
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Flujo de Caja ${anio}</title>
   <style>

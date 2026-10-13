@@ -67,6 +67,8 @@ commit):
 - **Para agregar un registro a `pagos`, `estudiantes` o `finanzas` en memoria usa `ponerEnLista(lista, obj)`**,
   no `push`: con el tiempo real, Firestore puede haberlo traído ya y quedaría repetido.
 - **Pagos de un estudiante → `pagosDeEstudiante(e)`**. No los busques por nombre: hay homónimos.
+- **Para imprimir un documento usa `abrirVentanaImpresion()`**, no `window.open("", "_blank")`: en el teléfono una
+  ventana nueva no tiene cómo volver a la app.
 - **Ingresos y gastos nuevos llevan `registradoPor: correoUsuario()`**: las reglas rechazan los que no lo tienen.
 - **Para borrar un pago, un ingreso/gasto o un estudiante usa `borrarConBitacora(col, id, datos)`** (o
   `anotarBorrado(lote, …)` dentro de un lote o transacción). Un `delete()` suelto lo rechazan las reglas.
