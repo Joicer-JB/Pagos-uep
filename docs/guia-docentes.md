@@ -18,5 +18,8 @@ Las notas quedan guardadas para el director y la administradora, que pueden impr
 ## Preguntas frecuentes
 
 - **No aparece una materia o un indicador:** el director los configura en ⚙️ Configuración.
+- **No aparece ningún estudiante («La lista de estudiantes todavía no está lista»):** la lista se prepara
+  sola cuando entra el director o la administradora. Pídeles que entren una vez y vuelve a entrar.
+- **Un estudiante cambió de grado y no lo veo:** sal y vuelve a entrar; la lista se actualiza al entrar.
 - **No puedo entrar:** tu cuenta puede estar desactivada. Habla con el director.
 - **¿Puedo borrar notas?** No. Si te equivocaste, corrige el valor y guarda de nuevo.

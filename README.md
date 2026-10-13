@@ -87,7 +87,8 @@ js/
     auth.js                Inicio y cierre de sesión, roles
     datos.js               Carga de datos desde Firestore
     tiempo-real.js         Mantiene pagos, estudiantes y finanzas al día entre varios equipos
-    tasa-bcv.js            Tasa BCV y conversión $ ↔ Bs.
+    fichas-docentes.js     Fichas de estudiantes sin datos privados para los docentes (se mantienen solas)
+    tasa-bcv.js            Tasa BCV, conversión $ ↔ Bs. e importación del Excel de tasas del BCV
     cuotas.js              Mora automática: cuotas mensuales, recargos y deuda de cada estudiante
     cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día
     notificaciones.js      Avisos por correo al colegio (EmailJS)
@@ -147,8 +148,12 @@ Las reglas están en [`firestore.rules`](firestore.rules), con comentarios. Resu
 - **Director:** acceso total.
 - **Administradora:** registra y edita pagos, estudiantes, finanzas y nómina, y carga la tasa BCV. No
   puede borrar, ni cambiar el resto de la configuración.
-- **Docente:** lee estudiantes y configuración, y carga notas. No ve pagos, finanzas ni nómina. Si el
-  director lo desactiva, pierde el acceso.
+- **Docente:** lee las **fichas** de los estudiantes (`estudiantes_docentes`: nombre, cédula, fecha de
+  nacimiento, grado, sección, año escolar y representante) y la configuración, y carga notas. **No** lee la
+  colección `estudiantes` (teléfonos, correo, deuda, mensualidad, observaciones médicas), ni pagos, finanzas o
+  nómina. Si el director lo desactiva, pierde el acceso.
+- **Fichas de docentes** (`estudiantes_docentes`): las escribe la app del director y de la administradora,
+  sola, al entrar y cada vez que cambia un estudiante. Las reglas solo aceptan los campos de la ficha.
 - **Un pago ya registrado no se puede modificar**, ni siquiera por el director. Solo el director puede
   borrarlo.
 - **Contador de recibos** (`config/contadores`): director y administradora lo avanzan al cobrar, solo de
@@ -251,11 +256,12 @@ npm run comparar -- antes.json despues.json
 
 ## Problemas comunes
 
-| Síntoma                                                 | Causa probable y solución                                                                                                             |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Pantalla en blanco o «Iniciando sistema…» que no avanza | Falta un archivo de `js/` o `css/` en el sitio publicado. Sube todas las carpetas. En el navegador, F12 → Consola muestra cuál falta. |
-| «Missing or insufficient permissions»                   | Las reglas de Firestore no coinciden con el rol o el correo. Revisa `ROLES` y `firestore.rules`, y vuelve a publicar las reglas.      |
-| «Usuario no autorizado o desactivado»                   | El correo no está en `ROLES` y no tiene perfil de docente activo. El director debe crearlo o reactivarlo en Configuración → Docentes. |
-| Los pagos salen sin bolívares                           | Falta la tasa BCV del día: botón 💱 de la cabecera.                                                                                   |
-| Cambié algo y en otra computadora sigue igual           | El navegador guardó la versión anterior. Recarga con Ctrl+Shift+R (o borra la caché).                                                 |
-| Los recibos siguen saliendo con 7 cifras (FAC-1234567)  | Faltan publicar las reglas nuevas de Firestore (contador de recibos). Ver [Reglas de Firestore](#reglas-de-firestore-seguridad).      |
+| Síntoma                                                       | Causa probable y solución                                                                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Pantalla en blanco o «Iniciando sistema…» que no avanza       | Falta un archivo de `js/` o `css/` en el sitio publicado. Sube todas las carpetas. En el navegador, F12 → Consola muestra cuál falta. |
+| «Missing or insufficient permissions»                         | Las reglas de Firestore no coinciden con el rol o el correo. Revisa `ROLES` y `firestore.rules`, y vuelve a publicar las reglas.      |
+| «Usuario no autorizado o desactivado»                         | El correo no está en `ROLES` y no tiene perfil de docente activo. El director debe crearlo o reactivarlo en Configuración → Docentes. |
+| Los pagos salen sin bolívares                                 | Falta la tasa BCV del día: botón 💱 de la cabecera.                                                                                   |
+| Cambié algo y en otra computadora sigue igual                 | El navegador guardó la versión anterior. Recarga con Ctrl+Shift+R (o borra la caché).                                                 |
+| Un docente ve «La lista de estudiantes todavía no está lista» | Las fichas se preparan cuando entra el director o la administradora: que uno de los dos entre una vez y el docente vuelva a entrar.   |
+| Los recibos siguen saliendo con 7 cifras (FAC-1234567)        | Faltan publicar las reglas nuevas de Firestore (contador de recibos). Ver [Reglas de Firestore](#reglas-de-firestore-seguridad).      |

@@ -67,6 +67,10 @@ commit):
 - **Para agregar un registro a `pagos`, `estudiantes` o `finanzas` en memoria usa `ponerEnLista(lista, obj)`**,
   no `push`: con el tiempo real, Firestore puede haberlo traído ya y quedaría repetido.
 - **Pagos de un estudiante → `pagosDeEstudiante(e)`**. No los busques por nombre: hay homónimos.
+- **Si el boletín o la pestaña Notas necesitan un dato nuevo del estudiante**, agrégalo a `CAMPOS_FICHA`
+  (`js/servicios/fichas-docentes.js`) **y** a la lista de la regla de `estudiantes_docentes` en `firestore.rules`,
+  y publica las reglas. Los docentes no leen la colección `estudiantes`, solo esas fichas. Nunca agregues ahí un
+  dato privado (teléfonos, correo, deuda, mensualidad, observaciones médicas).
 
 ## 5. En tu computadora (opcional)
 

@@ -70,6 +70,7 @@ async function doLogin() {
 // Cierra la sesión y borra de la memoria los datos cargados
 function logout() {
   detenerTiempoReal();
+  olvidarFichasDocentes();
   fbAuth.signOut();
   auth = false;
   rolUsuario = "";

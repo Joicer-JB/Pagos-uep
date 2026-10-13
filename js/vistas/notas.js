@@ -15,7 +15,12 @@ function renderNotas() {
   const estSelId = filtros.estSelId || "";
   const estSel = estudiantes.find((e) => e.id === estSelId);
   const lapso = filtros.lapso || LAPSOS[0];
-  return `
+  // Las fichas de los docentes las prepara la app cuando entra el director o la administradora
+  const sinFichas =
+    rolUsuario === "docente" && !estudiantes.length
+      ? `<div class="card" style="background:#fff8e1;color:#7a5c00;font-size:0.82rem">⏳ La lista de estudiantes todavía no está lista. Pide al director o a la administradora que entre a la plataforma (se prepara sola) y luego vuelve a entrar.</div>`
+      : "";
+  return `${sinFichas}
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>📝 Consultar Notas</h2></div>
     <div class="form-grid">

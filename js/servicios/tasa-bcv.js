@@ -225,6 +225,12 @@ function renderModalTasa() {
       </div>
       <div id="tz-msg" style="font-size:0.74rem;color:#555">La tasa se comparte con todos los usuarios y queda guardada por fecha.</div>
       <div style="display:flex;gap:0.5rem"><button class="btn btn-gray btn-sm" onclick="traerTasaAPI()">🔄 Traer del BCV</button><button class="btn btn-primary" style="flex:1" onclick="guardarTasaModal()">💾 Guardar tasa</button></div>
+      <div style="border-top:1px dashed #ccd5e3;padding-top:0.6rem">
+        <div class="field-label">📥 Tasas de días anteriores</div>
+        <div style="font-size:0.72rem;color:#555;margin-bottom:0.35rem">Descarga el Excel del BCV (bcv.org.ve → Estadísticas → Tipo de cambio de referencia) y súbelo aquí: se cargan todas las tasas de ese periodo.</div>
+        <input class="inp" type="file" id="tz-archivo" accept=".xls,.xlsx,.csv" onchange="leerArchivoTasas(this)"/>
+        <div id="tz-import" style="font-size:0.78rem"></div>
+      </div>
       ${
         lista.length
           ? `<div class="section-title" style="margin-top:0.5rem">Últimas tasas (toca una para editarla)</div>
@@ -272,4 +278,165 @@ async function guardarTasaModal() {
     return;
   await guardarTasaDia(fecha, v);
   cerrarModal();
+}
+
+// ---- Importar tasas de días anteriores desde el Excel oficial del BCV
+// En bcv.org.ve → Estadísticas → «Tipo de cambio de referencia», el BCV publica un Excel por trimestre con una hoja
+// por día: cada hoja dice «Fecha Valor: dd/mm/aaaa» y tiene una fila «USD» con los bolívares por dólar
+// (compra y venta; se usa la venta). También sirve un Excel o CSV sencillo con dos columnas: fecha y tasa.
+
+const esFechaJS = (v) => Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v);
+// "AAAA-MM-DD" si el año, mes y día forman una fecha real; si no, ""
+function fechaValida(a, m, d) {
+  const f = new Date(Date.UTC(+a, +m - 1, +d));
+  return f.getUTCFullYear() === +a && f.getUTCMonth() === +m - 1 && f.getUTCDate() === +d
+    ? `${a}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`
+    : "";
+}
+// Fecha de una celda de Excel: un valor de fecha, "02/10/2026", "Fecha Valor: 02/10/2026" o "2026-10-02"
+function fechaDeCelda(v) {
+  if (esFechaJS(v)) {
+    const d = new Date(v.getTime() + 12 * 3600e3); // a mediodía: la zona horaria no cambia el día
+    return fechaValida(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  }
+  const s = String(v == null ? "" : v);
+  let m = s.match(/(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})/);
+  if (m) return fechaValida(m[3], m[2], m[1]);
+  m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m ? fechaValida(m[1], m[2], m[3]) : "";
+}
+// Número de una celda (acepta "36,3732" y "1.396,36"); 0 si no es un número
+const numeroDeCelda = (v) =>
+  typeof v === "number" ? v : /^\s*\d[\d.,]*\s*$/.test(String(v == null ? "" : v)) ? parseTasa(v) : 0;
+
+// Hoja con el formato del BCV: fecha valor y fila USD. null si la hoja no tiene ese formato.
+function tasaDeHojaBCV(filas) {
+  let fecha = "",
+    valor = 0;
+  filas.forEach((fila) => {
+    fila.forEach((c, i) => {
+      if (!fecha && /fecha\s*valor/i.test(String(c)))
+        fecha = fechaDeCelda(c) || fechaDeCelda(fila.slice(i + 1).find((x) => x !== "" && x != null));
+    });
+    if (!valor && fila.some((c) => String(c).trim().toUpperCase() === "USD")) {
+      const bs = fila.map(numeroDeCelda).filter((n) => n > 1); // Bs. por dólar (las columnas «por US$» valen 1)
+      valor = bs.length >= 2 ? bs[1] : bs[0] || 0;
+    }
+  });
+  return fecha && valor ? { fecha, valor } : null;
+}
+// Fila de una tabla sencilla: la primera celda con fecha y el primer número después de ella
+function tasaDeFila(fila) {
+  const i = fila.findIndex((c) => fechaDeCelda(c));
+  if (i < 0) return null;
+  const valor = fila
+    .slice(i + 1)
+    .map(numeroDeCelda)
+    .find((n) => n > 0);
+  return valor ? { fecha: fechaDeCelda(fila[i]), valor } : null;
+}
+// Todas las tasas de un libro: [{fecha, valor}] ordenadas por fecha, sin fechas futuras (más de 10 días) ni muy viejas
+function tasasDeHojas(hojas) {
+  const porFecha = {};
+  hojas.forEach(({ filas }) => {
+    const bcv = tasaDeHojaBCV(filas);
+    if (bcv) porFecha[bcv.fecha] = bcv.valor;
+    else
+      filas.forEach((fila) => {
+        const t = tasaDeFila(fila);
+        if (t) porFecha[t.fecha] = t.valor;
+      });
+  });
+  const hasta = new Date(Date.parse(todayStr() + "T12:00:00Z") + 10 * 864e5).toISOString().slice(0, 10);
+  return Object.keys(porFecha)
+    .filter((f) => f >= "2000-01-01" && f <= hasta)
+    .sort()
+    .map((fecha) => ({ fecha, valor: porFecha[fecha] }));
+}
+// Compara lo encontrado con lo guardado: nuevas (sin tasa ese día), iguales y distintas
+function compararTasas(lista) {
+  const r = { nuevas: [], iguales: [], distintas: [] };
+  lista.forEach((t) => {
+    const g = tasas[t.fecha];
+    if (!(g > 0)) r.nuevas.push(t);
+    else if (Math.abs(g - t.valor) <= 0.00005) r.iguales.push(t);
+    else r.distintas.push({ ...t, guardada: g });
+  });
+  return r;
+}
+
+let _tasasArchivo = []; // lo que se leyó del último archivo, esperando «Guardar»
+const cuantas = (n, una, varias) => n + " " + (n === 1 ? una : varias); // «1 tasa», «3 tasas»
+// Lee el archivo elegido y muestra lo que encontró, sin guardar todavía
+function leerArchivoTasas(input) {
+  const archivo = input.files && input.files[0];
+  const caja = document.getElementById("tz-import");
+  if (!archivo || !caja) return;
+  caja.innerHTML = "⏳ Leyendo el archivo...";
+  const lector = new FileReader();
+  lector.onload = (ev) => {
+    try {
+      const libro = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellDates: true });
+      const hojas = libro.SheetNames.map((n) => ({
+        nombre: n,
+        filas: XLSX.utils.sheet_to_json(libro.Sheets[n], { header: 1, raw: true, defval: "" }),
+      }));
+      _tasasArchivo = tasasDeHojas(hojas);
+      mostrarTasasArchivo();
+    } catch (e) {
+      _tasasArchivo = [];
+      caja.innerHTML = `⚠️ No se pudo leer el archivo (${escHtml(e.message)}).`;
+    }
+  };
+  lector.readAsArrayBuffer(archivo);
+}
+// Resumen y lista de las tasas del archivo, con el botón para guardarlas
+function mostrarTasasArchivo() {
+  const caja = document.getElementById("tz-import");
+  if (!caja) return;
+  if (!_tasasArchivo.length) {
+    caja.innerHTML = `<div style="color:#b8860b">⚠️ No se encontraron tasas en el archivo. Usa el Excel del BCV (una hoja por día) o una tabla con dos columnas: fecha y tasa.</div>`;
+    return;
+  }
+  const c = compararTasas(_tasasArchivo);
+  const primera = _tasasArchivo[0].fecha,
+    ultima = _tasasArchivo[_tasasArchivo.length - 1].fecha;
+  const fila = (t) => {
+    const g = tasas[t.fecha],
+      distinta = g > 0 && Math.abs(g - t.valor) > 0.00005;
+    return `<tr${distinta ? ' style="background:#fff3cd"' : ""}><td>${fechaCorta(t.fecha)}</td><td style="text-align:right">${fmtTasa(t.valor)}</td><td style="text-align:right;color:#777">${g > 0 ? fmtTasa(g) : "—"}</td></tr>`;
+  };
+  caja.innerHTML = `<div style="font-size:0.78rem;margin:0.4rem 0">Se encontraron <strong>${cuantas(_tasasArchivo.length, "tasa", "tasas")}</strong> (del ${fechaCorta(primera)} al ${fechaCorta(ultima)}):
+      <strong>${cuantas(c.nuevas.length, "nueva", "nuevas")}</strong>, ${cuantas(c.iguales.length, "igual", "iguales")} a las guardadas${c.distintas.length ? `, <strong style="color:#b8860b">${cuantas(c.distintas.length, "distinta", "distintas")}</strong>` : ""}.</div>
+    <div style="max-height:200px;overflow:auto;border:1px solid #e3e7ef;border-radius:8px">
+      <table style="width:100%;font-size:0.75rem;border-collapse:collapse"><thead><tr style="background:#f4f6fb"><th style="text-align:left">Fecha</th><th style="text-align:right">En el archivo</th><th style="text-align:right">Guardada</th></tr></thead>
+      <tbody>${_tasasArchivo.map(fila).join("")}</tbody></table>
+    </div>
+    ${c.distintas.length ? `<label style="display:flex;gap:0.4rem;align-items:center;font-size:0.74rem;color:#7a5c00;margin-top:0.4rem"><input type="checkbox" id="tz-reemplazar"/> Reemplazar también ${c.distintas.length === 1 ? "la tasa guardada que es distinta" : `las ${c.distintas.length} tasas guardadas que son distintas`}</label>` : ""}
+    <div style="font-size:0.72rem;color:#555;margin-top:0.3rem">Antes de guardar, compara uno o dos días con bcv.org.ve.</div>
+    <button class="btn btn-primary btn-sm" style="margin-top:0.4rem;width:100%" onclick="guardarTasasArchivo()">💾 Guardar tasas del archivo</button>`;
+}
+// Guarda las tasas nuevas del archivo (y las distintas, si se marcó «reemplazar») en una sola escritura
+async function guardarTasasArchivo() {
+  const c = compararTasas(_tasasArchivo);
+  const reemplazar = !!(document.getElementById("tz-reemplazar") || {}).checked;
+  const aGuardar = [...c.nuevas, ...(reemplazar ? c.distintas : [])];
+  const caja = document.getElementById("tz-import");
+  if (!aGuardar.length) {
+    if (caja) caja.innerHTML = "✔️ No hay tasas nuevas que guardar: las del archivo ya estaban guardadas.";
+    return;
+  }
+  const nuevas = Object.fromEntries(aGuardar.map((t) => [t.fecha, t.valor]));
+  try {
+    await db.collection("config").doc("tasasBCV").set({ tasas: nuevas, actualizado: todayStr() }, { merge: true });
+  } catch (e) {
+    if (caja) caja.innerHTML = `⚠️ No se pudieron guardar las tasas (${escHtml(e.message)}).`;
+    return;
+  }
+  Object.assign(tasas, nuevas);
+  _tasasArchivo = [];
+  render(); // la ventana se vuelve a dibujar con las tasas nuevas
+  const msg = document.getElementById("tz-msg");
+  if (msg)
+    msg.innerHTML = `✅ Se ${aGuardar.length === 1 ? "guardó" : "guardaron"} <strong>${cuantas(aGuardar.length, "tasa", "tasas")}</strong> del archivo. Ya se usan en los pagos con esas fechas.`;
 }

@@ -57,6 +57,20 @@ Pago**:
 Lo mismo funciona en 📒 Finanzas (ingresos y gastos) y en 👷 Nómina. Para revisar o corregir las tasas de varios
 días también puedes usar el botón 💱 de la cabecera.
 
+### Cargar de una vez las tasas de muchos días (Excel del BCV)
+
+Si vas a registrar pagos de días en que nadie cargó la tasa, cárgalas todas de una vez:
+
+1. En [bcv.org.ve](https://www.bcv.org.ve) → **Estadísticas → Tipo de cambio de referencia**, descarga el
+   Excel del trimestre que necesitas (tiene una hoja por día).
+2. En la plataforma, botón 💱 de la cabecera → **📥 Tasas de días anteriores** → elige ese archivo.
+3. La app muestra cuántas tasas encontró: **nuevas** (días sin tasa), **iguales** a las guardadas y
+   **distintas**. Compara uno o dos días con la página del BCV.
+4. Pulsa **💾 Guardar tasas del archivo**. Se guardan las nuevas; las distintas solo si marcas
+   «Reemplazar también…».
+
+También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
+
 ## 🔔 Cobranza
 
 - **Con deuda / Sin pago reciente / Todos:** quién debe, cuánto y desde cuándo.

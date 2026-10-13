@@ -163,6 +163,7 @@
       return new Query(this._col, this._filtros, this._orden, n);
     }
     async get() {
+      revisarPermiso({ path: this._col }); // una colección entera también se puede negar
       return this._resultado();
     }
     _resultado() {
@@ -270,25 +271,28 @@
       this._ops = [];
     }
     set(ref, valor, opciones) {
-      this._ops.push(() => ref._set(valor, opciones));
+      this._ops.push([ref, () => ref._set(valor, opciones)]);
       return this;
     }
     update(ref, cambios) {
-      this._ops.push(() => ref._update(cambios));
+      this._ops.push([ref, () => ref._update(cambios)]);
       return this;
     }
     delete(ref) {
-      this._ops.push(() => ref._delete());
+      this._ops.push([ref, () => ref._delete()]);
       return this;
     }
     async commit() {
-      this._ops.forEach((op) => op());
+      this._ops.forEach(([ref]) => revisarPermiso(ref)); // todo o nada, como Firestore
+      this._ops.forEach(([, op]) => op());
     }
   }
 
   // Las pruebas pueden simular reglas de Firestore que niegan una ruta: window.__DENEGAR__ = ["config/contadores"]
+  // (o una colección completa al consultarla: ["estudiantes_docentes"])
   const revisarPermiso = (ref) => {
-    if ((window.__DENEGAR__ || []).includes(ref.path))
+    const negadas = window.__DENEGAR__ || [];
+    if (negadas.includes(ref.path) || (ref._col && negadas.includes(ref._col)))
       throw Object.assign(new Error("Missing or insufficient permissions."), { code: "permission-denied" });
   };
   // Transacción: lee el estado actual y aplica todas las escrituras juntas al final (como Firestore)

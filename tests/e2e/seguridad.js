@@ -29,7 +29,7 @@ function semillaMaliciosa() {
   s.colecciones.config.materias["1er Año"].push(ataque("materia"));
   s.colecciones.config.indicadores["3er Grado__Matemáticas"].push(ataque("indicador"));
   s.colecciones.usuarios["uid-docente"].materias.push(ataque("materia-docente"));
-  return s;
+  return semilla.ponerFichas(s); // los docentes ven estos mismos textos en sus fichas
 }
 
 async function revisar() {

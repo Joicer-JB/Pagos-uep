@@ -1,5 +1,26 @@
 # Historial de cambios
 
+## Octubre 2026 — Privacidad de los estudiantes y tasas del BCV desde Excel
+
+### Privacidad
+
+- **Los docentes ya no leen los datos privados de los estudiantes.** Antes podían leer la ficha completa
+  (teléfonos y correo del representante, deuda, mensualidad, observaciones médicas). Ahora leen
+  `estudiantes_docentes`, una ficha con solo nombre, cédula, fecha de nacimiento, grado, sección, año escolar y
+  representante (lo que necesitan para cargar notas e imprimir el boletín).
+- Las fichas las mantiene la app del director y de la administradora, sola: al entrar crea las que faltan, y
+  cada vez que cambia un estudiante (aquí o en otro equipo) actualiza solo la suya. Un cambio de teléfono o de
+  deuda no escribe nada en las fichas.
+- **Requiere publicar las reglas nuevas.** Mientras tanto todo sigue funcionando como antes: el docente usa la
+  lista completa y la app del director no muestra errores.
+
+### Tasas BCV de días anteriores
+
+- En la ventana 💱 **Tasa BCV** hay una sección nueva, **📥 Tasas de días anteriores**: se sube el Excel del BCV
+  («Tipo de cambio de referencia», una hoja por día) y se cargan de una vez todas las tasas de ese periodo.
+  Antes de guardar muestra cuáles son nuevas, iguales o distintas a las guardadas; las distintas solo se
+  reemplazan si se pide. También acepta una tabla sencilla de fecha y tasa.
+
 ## Octubre 2026 — Correcciones de la auditoría
 
 ### Dinero
