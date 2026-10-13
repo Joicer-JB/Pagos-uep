@@ -322,6 +322,9 @@ async function guardarPago() {
     tasa,
     totalBs: r2(total * tasa),
   };
+  // Mensualidad con «Mes que cancela»: se descuenta de ese mes (no del más antiguo que se deba)
+  const ymPago = pago.concepto === "Mensualidad" ? ymDeMes(pago.mes) : "";
+  if (ymPago) pago.cuotas = { [ymPago]: total };
   try {
     // Deuda manual anterior: con mora automática activa solo la reduce un pago de "Deuda anterior"
     // (las mensualidades se descuentan solas de las cuotas). Sin mora automática se mantiene el comportamiento de siempre.
@@ -493,7 +496,7 @@ function imprimirRecibo() {
     <p style="text-align:center;font-size:0.63rem;color:#aaa;margin-top:0.5rem">Este recibo es válido como comprobante de pago</p>
     <div class="firma">
       <div class="fbox"><div class="fline"></div><div class="flabel">Firma Administrador</div></div>
-      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Estudiante</div></div>
+      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Representante</div></div>
     </div>
   </div>
   </body></html>`);

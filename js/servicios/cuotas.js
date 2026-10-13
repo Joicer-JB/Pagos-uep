@@ -80,7 +80,8 @@ function pagosDeEstudiante(e) {
   return [...set];
 }
 // Estado de cuenta de un estudiante: cuotas del año, cuánto se pagó de cada una, cuáles vencieron,
-// recargos y saldo a favor. Los pagos de «Mensualidad» se reparten desde la cuota más antigua.
+// recargos y saldo a favor. Los pagos de «Mensualidad» se aplican primero a los meses que indican (los cobros de
+// Caja guardan «cuotas»: {"2026-10": 20}) y lo demás se reparte desde la cuota más antigua.
 // Devuelve null si no hay mora automática o el estudiante no está activo.
 function calcCuotas(e, hoy) {
   hoy = hoy || todayStr();
@@ -99,27 +100,36 @@ function calcCuotas(e, hoy) {
     .filter((p) => p.concepto === "Mensualidad")
     .sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
   const pagado = r2(pagosM.reduce((s, p) => s + (p.total || 0), 0));
-  let resto = pagado;
+  // Cada pago, en orden de fecha: primero a los meses que indica y el resto desde la cuota más antigua que se deba.
+  // fechaPago = el día en que la cuota quedó completa (para saber si se pagó a tiempo).
+  const porMes = new Map(lista.map((c) => [c.ym, c]));
   lista.forEach((c) => {
-    const ab = Math.min(c.monto, Math.max(0, resto));
-    c.pagado = r2(ab);
-    c.pendiente = r2(c.monto - ab);
-    resto = r2(resto - ab);
-    c.vencida = c.vence < hoy;
-  });
-  let acum = 0,
-    iP = 0,
-    meta = 0;
-  lista.forEach((c) => {
-    meta = r2(meta + c.monto);
+    c.pagado = 0;
     c.fechaPago = null;
-    if (c.monto > 0) {
-      while (iP < pagosM.length && acum < meta - 0.004) {
-        acum = r2(acum + Math.max(0, pagosM[iP].total || 0));
-        iP++;
-      }
-      if (acum >= meta - 0.004 && iP > 0) c.fechaPago = pagosM[iP - 1].fecha;
+  });
+  const aplicar = (c, monto, fecha) => {
+    const ab = r2(Math.min(monto, c.monto - c.pagado));
+    if (ab <= 0) return 0;
+    c.pagado = r2(c.pagado + ab);
+    if (c.pagado >= c.monto - 0.004) c.fechaPago = fecha;
+    return ab;
+  };
+  let resto = 0; // lo que sobra después de cubrir todas las cuotas (saldo a favor)
+  pagosM.forEach((p) => {
+    let queda = r2(Math.max(0, p.total || 0));
+    Object.entries(p.cuotas || {}).forEach(([ym, m]) => {
+      const c = porMes.get(ym);
+      if (c) queda = r2(queda - aplicar(c, Math.min(Number(m) || 0, queda), p.fecha));
+    });
+    for (const c of lista) {
+      if (queda <= 0.004) break;
+      queda = r2(queda - aplicar(c, queda, p.fecha));
     }
+    resto = r2(resto + queda);
+  });
+  lista.forEach((c) => {
+    c.pendiente = r2(c.monto - c.pagado);
+    c.vencida = c.vence < hoy;
   });
   // Recargo por cuota no pagada a tiempo
   const rec = cobCfg.recargo > 0 && !e.sinRecargo ? cobCfg.recargo : 0;
@@ -146,6 +156,16 @@ function calcCuotas(e, hoy) {
     aFavor: r2(Math.max(0, resto)),
     proxima: lista.find((c) => !c.vencida && c.pendiente > 0.004) || null,
   };
+}
+// Cuota del año escolar que corresponde a un mes por su nombre («Diciembre» → "2026-12"); "" si no hay
+function ymDeMes(nombreMes) {
+  const i = MESES.indexOf(nombreMes) + 1;
+  if (!i || !cobCfgActiva()) return "";
+  for (let k = 0; k < cobCfg.cuotas; k++) {
+    const ym = sumarMeses(cobCfg.primerMes, k);
+    if (Number(ym.slice(5, 7)) === i) return ym;
+  }
+  return "";
 }
 // Deuda anterior escrita a mano en la ficha (estado «mora» + monto)
 const deudaManual = (e) => (e.estado === "mora" ? e.moraMonto || 0 : 0);

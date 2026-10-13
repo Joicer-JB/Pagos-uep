@@ -109,6 +109,30 @@ test("calcCuotas: los pagos se aplican desde la cuota más antigua, con abonos",
   assert.equal(c.saldo, 25);
 });
 
+test("calcCuotas: un abono con mes indicado (Caja) se descuenta de ese mes, no del más antiguo", () => {
+  poner("pagos", [{ ...pago("2026-10-06", 20), cuotas: { "2026-10": 20 } }]);
+  const c = cuotas("2026-10-07");
+  assert.equal(c.lista[0].pendiente, 45); // septiembre sigue debiéndose completa
+  assert.equal(c.lista[1].pagado, 20); // octubre recibió el abono
+  assert.equal(c.lista[1].pendiente, 25);
+  assert.equal(c.saldo, 70);
+});
+
+test("calcCuotas: si el abono a un mes es más de lo que se debe de ese mes, el resto va al más antiguo", () => {
+  poner("pagos", [pago("2026-09-03", 30), { ...pago("2026-10-06", 30), cuotas: { "2026-09": 30 } }]);
+  const c = cuotas("2026-10-07");
+  assert.equal(c.lista[0].pendiente, 0); // a septiembre solo le faltaban 15
+  assert.equal(c.lista[1].pagado, 15); // los otros 15 van a octubre
+  assert.equal(c.lista[0].fechaPago, "2026-10-06");
+});
+
+test("ymDeMes: el nombre del mes se convierte en la cuota del año escolar", () => {
+  assert.equal(f('ymDeMes("Diciembre")'), "2026-12");
+  assert.equal(f('ymDeMes("Enero")'), "2027-01");
+  assert.equal(f('ymDeMes("Agosto")'), ""); // fuera de las 10 cuotas (septiembre a junio)
+  assert.equal(f('ymDeMes("")'), "");
+});
+
 test("calcCuotas: lo pagado de más queda como saldo a favor", () => {
   poner("pagos", [pago("2026-09-03", 500)]);
   const c = cuotas("2026-10-07");

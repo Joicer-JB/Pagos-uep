@@ -217,17 +217,35 @@ function cajaLineas() {
   cajaItems(e)
     .items.filter((i) => caja.sel[i.key])
     .forEach((i) =>
-      L.push({ concepto: i.concepto, monto: i.monto, desc: i.label + " — " + fmt(i.monto), mes: i.mes || "" })
+      L.push({
+        concepto: i.concepto,
+        monto: i.monto,
+        desc: i.label + " — " + fmt(i.monto),
+        mes: i.mes || "",
+        ym: i.tipo === "m" ? i.key.slice(1) : "",
+      })
     );
   if (caja.otro) {
     const m = r2(parseMontoCaja(caja.otro.monto));
-    if (m > 0)
+    const o = caja.otro;
+    if (m > 0) {
+      // Abono a un mes: el recibo dice a cuál, y se descuenta de ese mes
+      const cuota = o.concepto === "Mensualidad" && o.ym ? cajaCuotasAbonables(e).find((q) => q.ym === o.ym) : null;
+      const desc = cuota
+        ? (m >= cuota.pendiente - 0.004 ? "Mensualidad " : "Abono a la mensualidad de ") + cuota.mes
+        : o.concepto === "Mensualidad"
+          ? "Adelanto de mensualidad"
+          : o.concepto === "Otro"
+            ? o.detalle.trim() || "Otro"
+            : o.concepto + (o.detalle.trim() ? ": " + o.detalle.trim() : "");
       L.push({
-        concepto: caja.otro.concepto,
+        concepto: o.concepto,
         monto: m,
-        desc: (caja.otro.concepto === "Mensualidad" ? "Abono de mensualidad" : caja.otro.concepto) + " — " + fmt(m),
-        mes: "",
+        desc: desc + " — " + fmt(m),
+        mes: cuota ? MESES[Number(cuota.ym.slice(5, 7)) - 1] : "",
+        ym: cuota ? cuota.ym : "",
       });
+    }
   }
   return { lineas: L, total: r2(L.reduce((s, x) => s + x.monto, 0)) };
 }
@@ -376,13 +394,31 @@ function cajaToggle(key) {
   else delete caja.sel[key];
   cajaRefrescar();
 }
+// Meses a los que se puede abonar: los que aún se deben (pagados en parte o sin pagar), del más antiguo al más nuevo
+function cajaCuotasAbonables(e) {
+  const cu = e && calcCuotas(e);
+  return cu ? cu.lista.filter((q) => q.monto > 0 && q.pendiente > 0.004) : [];
+}
 function cajaOtro(on) {
-  caja.otro = on ? { concepto: "Mensualidad", monto: "" } : null;
+  const primero = cajaCuotasAbonables(cajaEst())[0];
+  caja.otro = on ? { concepto: "Mensualidad", monto: "", ym: primero ? primero.ym : "", detalle: "" } : null;
   cajaRefrescar();
 }
 function cajaOtroConcepto(v) {
   if (caja.otro) {
     caja.otro.concepto = v;
+    cajaRefrescar(); // cambia la pregunta: «¿A qué mes?» o «¿Para qué es?»
+  }
+}
+function cajaOtroMes(ym) {
+  if (caja.otro) {
+    caja.otro.ym = ym;
+    cajaActualizarTotal();
+  }
+}
+function cajaOtroDetalle(v) {
+  if (caja.otro) {
+    caja.otro.detalle = v;
     cajaActualizarTotal();
   }
 }
@@ -436,10 +472,10 @@ function htmlCajaPanel() {
     ${
       caja.otro
         ? `<div style="margin-top:0.6rem;background:#f8faff;border-radius:12px;padding:0.7rem">
-        <div class="form-row">
-          <div class="field"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono / adelanto de mensualidad" : c}</option>`).join("")}</select></div>
+        <div class="field" style="margin-bottom:0.5rem"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono a mensualidad" : c}</option>`).join("")}</select></div>
           <div class="field"><label class="field-label">Monto ($)</label><input class="inp" id="caja-otro-inp" readonly inputmode="none" data-pad="monto" data-pad-label="Monto a cobrar ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí" value="${escHtml(caja.otro.monto)}" oninput="cajaOtroMonto(this.value)" style="cursor:pointer"/></div>
-        </div><button class="btn btn-gray btn-sm" onclick="cajaOtro(false)">Quitar</button></div>`
+        ${htmlCajaOtroPara(e)}
+        <button class="btn btn-gray btn-sm" onclick="cajaOtro(false)">Quitar</button></div>`
         : `<button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="cajaOtro(true)">➕ Otro monto (abono, inscripción, uniformes…)</button>`
     }
     <div class="field-label" style="margin-top:0.9rem">¿Cómo paga?</div>
@@ -462,6 +498,13 @@ function htmlCajaTotal() {
   let falta = "";
   if (!tv) falta = "Falta la tasa BCV de hoy";
   else if (!(total > 0)) falta = "Marca lo que paga";
+  else if (
+    caja.otro &&
+    caja.otro.concepto === "Otro" &&
+    !caja.otro.detalle.trim() &&
+    parseMontoCaja(caja.otro.monto) > 0
+  )
+    falta = "Escribe para qué es el pago";
   else if (!caja.metodo) falta = "Toca cómo paga";
   else if (caja.metodo === "Transferencia Bs" && caja.ref.replace(/\D/g, "").length < 4)
     falta = "Escribe la referencia";
@@ -509,10 +552,11 @@ async function cajaCobrar() {
   const fecha = todayStr(),
     porConcepto = new Map();
   lineas.forEach((l) => {
-    const g = porConcepto.get(l.concepto) || { concepto: l.concepto, monto: 0, desc: [], meses: [] };
+    const g = porConcepto.get(l.concepto) || { concepto: l.concepto, monto: 0, desc: [], meses: [], cuotas: {} };
     g.monto = r2(g.monto + l.monto);
     g.desc.push(l.desc);
     if (l.mes) g.meses.push(l.mes);
+    if (l.ym) g.cuotas[l.ym] = r2((g.cuotas[l.ym] || 0) + l.monto); // a qué mes va cada parte (ver calcCuotas)
     porConcepto.set(l.concepto, g);
   });
   const base = {
@@ -530,6 +574,7 @@ async function cajaCobrar() {
     ...base,
     concepto: g.concepto,
     mes: g.meses[0] || "",
+    ...(Object.keys(g.cuotas).length ? { cuotas: g.cuotas } : {}),
     descripcion: g.desc.join("\n") + (ref ? "\nRef. " + (caja.metodo === "Punto" ? "punto" : "pago") + ": " + ref : ""),
     total: g.monto,
     totalBs: r2(g.monto * tv),
@@ -681,4 +726,24 @@ function imprimirCierreCaja() {
     <div class="firmas"><div>Cajera</div><div>Director(a)</div></div>
     <script>window.onload=function(){window.print();}<\/script></body></html>`);
   w.document.close();
+}
+
+// «Otro monto»: a qué mes va el abono (mensualidad) o para qué es (los demás conceptos)
+function htmlCajaOtroPara(e) {
+  const o = caja.otro;
+  if (o.concepto === "Mensualidad") {
+    const meses = cajaCuotasAbonables(e);
+    if (!meses.length)
+      return `<div style="font-size:0.75rem;color:#1a7a4a;margin:0.3rem 0 0.5rem">✅ Está al día: el monto quedará como adelanto para los próximos meses.</div>`;
+    return `<div class="field" style="margin:0.3rem 0 0.5rem"><label class="field-label">¿A qué mes abona?</label>
+      <select class="inp" id="caja-otro-mes" onchange="cajaOtroMes(this.value)">${meses
+        .map(
+          (q) =>
+            `<option value="${q.ym}" ${o.ym === q.ym ? "selected" : ""}>${escHtml(q.mes)} · debe ${fmt(q.pendiente)}${q.vencida ? " (vencida)" : ""}</option>`
+        )
+        .join("")}</select></div>`;
+  }
+  const obligatorio = o.concepto === "Otro";
+  return `<div class="field" style="margin:0.3rem 0 0.5rem"><label class="field-label">¿Para qué es?${obligatorio ? " *" : " (opcional)"}</label>
+    <input class="inp" id="caja-otro-detalle" maxlength="80" autocomplete="off" placeholder="${obligatorio ? "Ej: Excursión, carnet, libro…" : "Ej: Camisa talla 10"}" value="${escHtml(o.detalle)}" oninput="cajaOtroDetalle(this.value)"/></div>`;
 }
