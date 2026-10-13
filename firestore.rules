@@ -14,6 +14,8 @@ rules_version = '2';
 //      La app nunca edita un pago, así que esto no cambia nada del uso normal y protege la contabilidad.
 //   3. (Octubre 2026) Contador de recibos correlativos: config/contadores, que la administradora también
 //      puede avanzar (solo de 1 en 1).
+//   4. (Octubre 2026) Privacidad: los docentes ya no leen "estudiantes"; leen "estudiantes_docentes", una copia
+//      sin datos privados.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -46,11 +48,20 @@ service cloud.firestore {
 
     // ───────────── Estudiantes ─────────────
     // Director y administradora registran y editan (al cobrar se actualiza la deuda del estudiante).
-    // Los docentes solo leen (para cargar notas). Borrar: solo el director.
+    // Borrar: solo el director. Los docentes NO leen esta colección (tiene teléfonos, correo, deuda, mensualidad,
+    // observaciones médicas...): leen sus fichas en "estudiantes_docentes".
     match /estudiantes/{id} {
-      allow read:           if isStaff() || isDocente();
+      allow read:           if isStaff();
       allow create, update: if isStaff();
       allow delete:         if isDirector();
+    }
+    // Fichas para docentes: copia de cada estudiante con solo lo necesario para notas y boletín.
+    // La mantiene la app de director y administradora; no acepta ningún otro campo.
+    match /estudiantes_docentes/{id} {
+      allow read:           if isStaff() || isDocente();
+      allow create, update: if isStaff() && request.resource.data.keys().hasOnly(
+        ['nombre', 'cedula', 'fechaNac', 'grado', 'seccion', 'anioEscolar', 'acudiente', 'estado', 'graduado']);
+      allow delete:         if isStaff();
     }
 
     // ───────────── Dinero y personal: solo director y administradora ─────────────

@@ -46,7 +46,8 @@ beforeEach(async () => {
     const db = ctx.firestore();
     await setDoc(doc(db, "usuarios/uid-docente"), { rol: "docente", activo: true, nombre: "Profe" });
     await setDoc(doc(db, "usuarios/uid-inactivo"), { rol: "docente", activo: false, nombre: "Ex profe" });
-    await setDoc(doc(db, "estudiantes/est1"), { nombre: "Ana", grado: "1er Grado" });
+    await setDoc(doc(db, "estudiantes/est1"), { nombre: "Ana", grado: "1er Grado", telefonoAcudiente: "0414" });
+    await setDoc(doc(db, "estudiantes_docentes/est1"), { nombre: "Ana", grado: "1er Grado" });
     await setDoc(doc(db, "pagos/pag1"), { nombre: "Ana", total: 45 });
     await setDoc(doc(db, "finanzas/fin1"), { tipo: "gasto", monto: 10 });
     await setDoc(doc(db, "trabajadores/trab1"), { nombre: "Docente Uno", salario: 160 });
@@ -118,10 +119,15 @@ test("administradora: carga la tasa BCV pero no el resto de la configuración", 
   await assertFails(getDocs(collection(db, "usuarios")));
 });
 
-test("docente: lee estudiantes y configuración, carga notas, y nada más", async () => {
+test("docente: lee las fichas de estudiantes y la configuración, carga notas, y nada más", async () => {
   for (const rol of ["docente", "docenteFijo"]) {
     const db = como(rol);
-    await assertSucceeds(getDoc(doc(db, "estudiantes/est1")));
+    await assertSucceeds(getDoc(doc(db, "estudiantes_docentes/est1")));
+    await assertSucceeds(getDocs(collection(db, "estudiantes_docentes")));
+    await assertFails(getDoc(doc(db, "estudiantes/est1"))); // datos privados: teléfonos, deuda...
+    await assertFails(getDocs(collection(db, "estudiantes")));
+    await assertFails(setDoc(doc(db, "estudiantes_docentes/est1"), { nombre: "Otro" }));
+    await assertFails(deleteDoc(doc(db, "estudiantes_docentes/est1")));
     await assertSucceeds(getDoc(doc(db, "config/materias")));
     await assertSucceeds(getDocs(collection(db, "notas")));
     await assertSucceeds(
@@ -147,8 +153,34 @@ test("docente: ve su perfil pero no puede cambiarse el rol", async () => {
 
 test("docente desactivado: pierde el acceso", async () => {
   const db = como("docenteInactivo");
-  await assertFails(getDoc(doc(db, "estudiantes/est1")));
+  await assertFails(getDoc(doc(db, "estudiantes_docentes/est1")));
   await assertFails(setDoc(doc(db, "notas/est1_Lapso 2"), { estId: "est1" }));
+});
+
+test("fichas de docentes: director y administradora las mantienen, solo con los campos permitidos", async () => {
+  for (const rol of ["director", "administradora"]) {
+    const db = como(rol);
+    const ficha = {
+      nombre: "Luis",
+      cedula: "V-1",
+      fechaNac: "2015-01-01",
+      grado: "2do Grado",
+      seccion: "A",
+      anioEscolar: "2026-2027",
+      acudiente: "María",
+      estado: "retirado",
+      graduado: true,
+    };
+    await assertSucceeds(setDoc(doc(db, "estudiantes_docentes/est2"), ficha));
+    await assertSucceeds(getDoc(doc(db, "estudiantes_docentes/est2")));
+    await assertSucceeds(deleteDoc(doc(db, "estudiantes_docentes/est2")));
+    // Un dato privado no puede llegar a las fichas, ni por error de la app
+    for (const privado of ["telefonoAcudiente", "correoAcudiente", "deuda", "mensualidad", "observacionesMedicas"]) {
+      await assertFails(setDoc(doc(db, "estudiantes_docentes/est3"), { nombre: "Luis", [privado]: "x" }));
+      await assertFails(updateDoc(doc(db, "estudiantes_docentes/est1"), { [privado]: "x" }));
+    }
+  }
+  await assertFails(getDoc(doc(como("desconocido"), "estudiantes_docentes/est1")));
 });
 
 test("colecciones no previstas: cerradas para todos", async () => {

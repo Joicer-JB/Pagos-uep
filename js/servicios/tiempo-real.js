@@ -76,6 +76,7 @@ const aplicarPagos = (snap) => {
 const aplicarEstudiantes = (snap) => {
   const nuevo = hayNovedades(snap, estudiantes);
   estudiantes = docsDe(snap);
+  programarFichasDocentes(); // las fichas de los docentes siguen a los estudiantes
   return nuevo;
 };
 const aplicarFinanzas = (snap) => {

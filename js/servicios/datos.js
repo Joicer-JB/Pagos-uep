@@ -1,7 +1,8 @@
 // Carga de datos desde Firestore y protección de solo lectura para años escolares anteriores.
 
 // Carga de Firestore todo lo que necesita el rol actual y dibuja la pantalla.
-// Los docentes solo cargan estudiantes y notas; director y administradora cargan además pagos,
+// Los docentes solo cargan las fichas de los estudiantes (sin datos privados, ver servicios/fichas-docentes.js)
+// y las notas; director y administradora cargan además pagos,
 // finanzas y nómina del año escolar que están viendo. En el año actual, pagos, estudiantes y finanzas
 // quedan en tiempo real (ver servicios/tiempo-real.js).
 async function cargarTodo() {
@@ -10,10 +11,7 @@ async function cargarTodo() {
   try {
     let sp, se, st, sf, sn;
     if (rolUsuario === "docente") {
-      [se, sn] = await Promise.all([
-        db.collection("estudiantes").orderBy("nombre").get(),
-        db.collection("notas").get(),
-      ]);
+      [se, sn] = await Promise.all([leerFichasDocente(), db.collection("notas").get()]);
       pagos = [];
       trabajadores = [];
       finanzas = [];
@@ -46,6 +44,7 @@ async function cargarTodo() {
     await cargarConfig();
     render();
     animarEntradaPestana();
+    sincronizarFichasDocentes(); // director y administradora: pone al día las fichas de los docentes
   } catch (e) {
     document.getElementById("app").innerHTML =
       `<div class="loading">❌ Error: ${escHtml(e.message)}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;

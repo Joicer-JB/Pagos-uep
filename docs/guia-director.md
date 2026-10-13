@@ -42,6 +42,10 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 - El docente entra con ese correo y esa contraseña, y solo ve la pestaña 📝 Notas.
 - **Desactivar** quita el acceso sin borrar el perfil. Las reglas de Firestore también le cierran la base
   de datos.
+- **Privacidad:** los docentes no ven los datos privados de los estudiantes (teléfonos y correo del
+  representante, deuda, mensualidad, observaciones médicas). Trabajan con una **ficha** que solo tiene nombre,
+  cédula, fecha de nacimiento, grado, sección, año escolar y representante (lo que sale en el boletín). La app
+  prepara y actualiza esas fichas sola cuando entras tú o la administradora.
 
 ## Lo que solo puede hacer el director
 

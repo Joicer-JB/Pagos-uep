@@ -1,8 +1,9 @@
 // Datos de prueba (ficticios) que carga el Firebase falso.
 // Fecha de referencia de las pruebas: 7 de octubre de 2026 (ver FECHA_PRUEBA en recorrido.js).
+const { cargar } = require("../../unidad/cargar");
 const ts = (fecha) => ({ seconds: Math.floor(new Date(fecha + "T12:00:00-04:00").getTime() / 1000), nanoseconds: 0 });
 
-module.exports = {
+const semilla = {
   usuarios: [
     { uid: "uid-director", email: "herrerajoicer@gmail.com", password: "prueba123" },
     { uid: "uid-admin", email: "josefajsanquez@gmail.com", password: "prueba123" },
@@ -282,3 +283,18 @@ module.exports = {
     },
   },
 };
+
+// Fichas de los docentes ya al día (como si el director hubiera entrado antes), con la misma función de la app.
+// Las pruebas que agregan estudiantes a su copia de la semilla la vuelven a llamar.
+const fichaDocente = cargar("js/servicios/fichas-docentes.js").evaluar("fichaDocente");
+function ponerFichas(datos) {
+  datos.colecciones.estudiantes_docentes = Object.fromEntries(
+    Object.entries(datos.colecciones.estudiantes).map(([id, e]) => [id, fichaDocente(e)])
+  );
+  return datos;
+}
+ponerFichas(semilla);
+
+module.exports = semilla;
+// No enumerable: así no viaja dentro de los datos que se copian a la página
+Object.defineProperty(semilla, "ponerFichas", { value: ponerFichas });

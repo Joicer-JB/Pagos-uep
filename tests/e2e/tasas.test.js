@@ -115,3 +115,92 @@ test("no se aceptan fechas futuras", async () => {
   assert.match(await pagina().textContent("#p-err"), /La fecha no puede ser futura/);
   assert.deepEqual(sesion.errores, []);
 });
+
+// ---- Importar el Excel del BCV (una hoja por día), hecho aquí mismo con SheetJS
+function excelBCV(dias) {
+  const XLSX = require("xlsx");
+  const libro = XLSX.utils.book_new();
+  dias.forEach(([fechaValor, compra, venta]) => {
+    const hoja = XLSX.utils.aoa_to_sheet([
+      ["", "BANCO CENTRAL DE VENEZUELA"],
+      ["", "Fecha Operación: 29/09/2026"],
+      ["", `Fecha Valor: ${fechaValor}`],
+      ["Moneda", "País", "Compra (Bs./M.E.)", "Venta (Bs./M.E.)", "Compra (M.E./US$)", "Venta (M.E./US$)"],
+      ["EUR", "Unión Europea", 210.11, 210.55, 1.17, 1.17],
+      ["USD", "E.U.A.", compra, venta, 1, 1],
+    ]);
+    XLSX.utils.book_append_sheet(libro, hoja, fechaValor.replace(/\//g, ""));
+  });
+  return {
+    name: "2_1_2c26_smc.xls",
+    mimeType: "application/vnd.ms-excel",
+    buffer: XLSX.write(libro, { type: "buffer", bookType: "xls" }),
+  };
+}
+async function subirExcel(archivo) {
+  await llamar(`cerrarModal(); abrirModal({ tipo: "tasa" })`);
+  await pagina().setInputFiles("#tz-archivo", archivo);
+  await pagina().waitForSelector("#tz-import :text('Se encontraron')");
+}
+
+test("importar el Excel del BCV: muestra lo encontrado y guarda solo las tasas que faltan", async () => {
+  const antes = await llamar(`window.__ESCRITURAS__.length`);
+  await subirExcel(
+    excelBCV([
+      ["30/09/2026", 179.9, 180.1], // nueva
+      ["01/10/2026", 180.3, 180.5], // igual a la guardada
+      ["02/10/2026", 181.2, 181.4], // distinta a la guardada (181,3)
+    ])
+  );
+  const resumen = (await pagina().textContent("#tz-import")).replace(/\s+/g, " ");
+  assert.match(
+    resumen,
+    /Se encontraron 3 tasas \(del 30\/09\/2026 al 02\/10\/2026\): 1 nueva, 1 igual a las guardadas, 1 distinta/
+  );
+  assert.equal(await pagina().isVisible("#tz-reemplazar"), true);
+  await pagina().click("text=Guardar tasas del archivo");
+  await pagina().waitForSelector("#tz-msg:has-text('Se guardó 1 tasa')");
+  assert.equal(await tasaGuardada("2026-09-30"), 180.1);
+  assert.equal(await tasaGuardada("2026-10-02"), 181.3); // la distinta no se tocó
+  const nuevas = await llamar(`window.__ESCRITURAS__.slice(${antes})`);
+  assert.deepEqual(nuevas, [
+    { op: "set-merge", ruta: "config/tasasBCV", datos: { tasas: { "2026-09-30": 180.1 }, actualizado: "2026-10-07" } },
+  ]);
+  // La tasa ya se usa en un pago con esa fecha
+  await llamar(`cerrarModal()`);
+  await nuevoPago();
+  await ponerFecha("2026-09-30");
+  assert.equal(await valor("p-tasa"), "180,1");
+});
+
+test("importar el Excel del BCV marcando «reemplazar» corrige también las distintas", async () => {
+  await subirExcel(excelBCV([["02/10/2026", 181.2, 181.4]]));
+  await pagina().check("#tz-reemplazar");
+  await pagina().click("text=Guardar tasas del archivo");
+  await pagina().waitForSelector("#tz-msg:has-text('Se guardó 1 tasa')");
+  assert.equal(await tasaGuardada("2026-10-02"), 181.4);
+  assert.equal(await llamar(`tasas["2026-10-02"]`), 181.4);
+});
+
+test("un archivo sin tasas avisa y no guarda nada", async () => {
+  const XLSX = require("xlsx");
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(
+    libro,
+    XLSX.utils.aoa_to_sheet([
+      ["Nombre", "Grado"],
+      ["Ana", "1er Grado"],
+    ]),
+    "Lista"
+  );
+  const antes = await llamar(`window.__ESCRITURAS__.length`);
+  await llamar(`cerrarModal(); abrirModal({ tipo: "tasa" })`);
+  await pagina().setInputFiles("#tz-archivo", {
+    name: "lista.xlsx",
+    mimeType: "application/octet-stream",
+    buffer: XLSX.write(libro, { type: "buffer", bookType: "xlsx" }),
+  });
+  await pagina().waitForSelector("#tz-import :text('No se encontraron tasas')");
+  assert.equal(await llamar(`window.__ESCRITURAS__.length`), antes);
+  assert.deepEqual(sesion.errores, []);
+});

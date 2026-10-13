@@ -18,12 +18,15 @@ est.homo1 = { ...base, nombre: "José Rojas", grado: "2do Grado", cedula: "V-310
 est.homo2 = { ...base, nombre: "Rojas José", grado: "2do Grado", cedula: "V-31000002" };
 // Un docente cargó notas en una de las copias de Ana: no se deben perder
 datos.colecciones.notas["dupA1_Lapso 2"] = { estId: "dupA1", lapso: "Lapso 2", Matemáticas__0: "B" };
+semilla.ponerFichas(datos);
 
 let nav, sesion;
 const pagina = () => sesion.pagina;
 const llamar = (codigo) => pagina().evaluate(codigo);
 const espera = () => pagina().evaluate(() => new Promise((ok) => setTimeout(ok, 80)));
-const escrituras = () => pagina().evaluate(() => window.__ESCRITURAS__.slice());
+// Las fichas de los docentes siguen a los estudiantes por su cuenta (se prueban en privacidad.test.js)
+const escrituras = () =>
+  pagina().evaluate(() => window.__ESCRITURAS__.filter((e) => !e.ruta.startsWith("estudiantes_docentes/")));
 
 async function entrar(correo) {
   await pagina().goto(nav.base);
