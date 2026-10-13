@@ -6,7 +6,16 @@ const { test, before, after, beforeEach } = require("node:test");
 const fs = require("fs");
 const path = require("path");
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require("@firebase/rules-unit-testing");
-const { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs } = require("firebase/firestore");
+const {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  runTransaction,
+} = require("firebase/firestore");
 
 let entorno;
 const CUENTAS = {
@@ -145,4 +154,39 @@ test("docente desactivado: pierde el acceso", async () => {
 test("colecciones no previstas: cerradas para todos", async () => {
   await assertFails(getDoc(doc(como("director"), "otra_coleccion/x")));
   await assertFails(setDoc(doc(como("director"), "otra_coleccion/y"), { a: 1 }));
+});
+
+test("contador de recibos: director y administradora lo avanzan de 1 en 1; nadie lo retrocede", async () => {
+  const admin = como("administradora");
+  await assertSucceeds(setDoc(doc(admin, "config/contadores"), { recibo: 1 }));
+  await assertSucceeds(setDoc(doc(admin, "config/contadores"), { recibo: 2 }, { merge: true }));
+  await assertFails(setDoc(doc(admin, "config/contadores"), { recibo: 10 }, { merge: true })); // salto
+  await assertFails(setDoc(doc(admin, "config/contadores"), { recibo: 1 }, { merge: true })); // retroceso
+  await assertFails(setDoc(doc(admin, "config/contadores"), { recibo: 3, otro: true }, { merge: true }));
+  await assertFails(setDoc(doc(como("docente"), "config/contadores"), { recibo: 3 }, { merge: true }));
+  await assertSucceeds(setDoc(doc(como("director"), "config/contadores"), { recibo: 100 })); // el director puede corregirlo
+});
+
+test("cobro completo en una transacción (como lo hace la app): contador + pago + deuda del estudiante", async () => {
+  const db = como("administradora");
+  await entorno.withSecurityRulesDisabled((ctx) =>
+    setDoc(doc(ctx.firestore(), "estudiantes/est1"), { nombre: "Ana", estado: "mora", moraMonto: 30 })
+  );
+  await assertSucceeds(
+    runTransaction(db, async (tx) => {
+      const c = await tx.get(doc(db, "config/contadores"));
+      const e = await tx.get(doc(db, "estudiantes/est1"));
+      const n = ((c.exists() && c.data().recibo) || 0) + 1;
+      tx.set(doc(db, "config/contadores"), { recibo: n }, { merge: true });
+      tx.set(doc(db, "pagos/nuevo"), { total: 30, factura: "FAC-" + n, deudaAplicada: 30 });
+      tx.update(doc(db, "estudiantes/est1"), { moraMonto: e.data().moraMonto - 30, estado: "alsaldo" });
+    })
+  );
+  // y el docente no puede hacerlo
+  const dbDocente = como("docente");
+  await assertFails(
+    runTransaction(dbDocente, async (tx) => {
+      tx.set(doc(dbDocente, "pagos/otro"), { total: 1 });
+    })
+  );
 });

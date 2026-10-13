@@ -48,6 +48,29 @@ function descargarRespaldo(etq) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  registrarRespaldo();
+}
+// Anota la fecha del respaldo (para el recordatorio de Inicio). Si falla, no impide nada.
+function registrarRespaldo() {
+  if (rolUsuario !== "director") return;
+  configRespaldo = { ultimo: hoyLocal() };
+  db.collection("config")
+    .doc("respaldo")
+    .set(configRespaldo, { merge: true })
+    .catch((e) => console.warn("No se pudo anotar la fecha del respaldo:", e.message));
+}
+// Aviso en Inicio para el director cuando hace más de DIAS_RESPALDO días que no descarga un respaldo
+const DIAS_RESPALDO = 14;
+function htmlAvisoRespaldo() {
+  if (rolUsuario !== "director" || soloLectura() || !configRespaldo) return "";
+  const ultimo = configRespaldo.ultimo;
+  const dias = ultimo ? diasEntre(ultimo, hoyLocal()) : null;
+  if (dias !== null && dias < DIAS_RESPALDO) return "";
+  const cuando =
+    dias === null ? "Todavía no hay ningún respaldo registrado" : `El último respaldo fue hace ${dias} días`;
+  return `<div class="alert-item alert-mora" style="display:flex;gap:0.6rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:0.85rem">
+    <div><strong>💾 ${cuando}.</strong> Descarga uno y guárdalo fuera de esta computadora (Drive, correo o pendrive).</div>
+    <button class="btn btn-primary btn-sm" onclick="descargarRespaldo();renderTabContent()">Descargar respaldo</button></div>`;
 }
 function resumenAnio(pagosA, finA, ests, deudores) {
   const cobrado = pagosA.reduce((s, p) => s + (p.total || 0), 0);

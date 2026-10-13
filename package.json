@@ -5,7 +5,7 @@
   "scripts": {
     "test": "npm run test:unidad && npm run test:e2e",
     "test:unidad": "node --test \"tests/unidad/**/*.test.js\"",
-    "test:e2e": "node --test tests/e2e/app.test.js tests/e2e/duplicados.test.js",
+    "test:e2e": "node --test tests/e2e/app.test.js tests/e2e/duplicados.test.js tests/e2e/cobros.test.js tests/e2e/tiempo-real.test.js",
     "test:reglas": "firebase emulators:exec --only firestore --project demo-pagos-uep \"node --test tests/reglas/reglas.test.js\"",
     "test:todo": "npm run revisar && npm test && npm run test:reglas",
     "revisar": "prettier --check . && eslint .",
@@ -16,6 +16,7 @@
     "comparar": "node tests/e2e/comparar.js"
   },
   "devDependencies": {
+    "@emailjs/browser": "4.4.1",
     "@eslint/js": "9.39.5",
     "@firebase/rules-unit-testing": "5.0.2",
     "chart.js": "4.4.1",

@@ -114,7 +114,7 @@ async function marcarRecordado(estId) {
     alert("No se pudo guardar el registro del aviso: " + err.message);
     return;
   }
-  estudiantes[i] = { ...estudiantes[i], ...upd };
+  ponerEnLista(estudiantes, { id: estId, ...upd }); // por id: la lista pudo cambiar mientras se guardaba
   renderTabContent();
 }
 // ---- Recibo de cobranza (imagen) y envío por WhatsApp

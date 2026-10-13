@@ -573,7 +573,7 @@ async function guardarPagoNomina() {
   try {
     const ref = await db.collection("finanzas").add(datos);
     datos.id = ref.id;
-    finanzas.push(datos);
+    ponerEnLista(finanzas, datos);
     recordarTasa(fecha, tasa);
     alertaPagoNomina(datos.descripcion, datos.monto, datos.responsable);
     cerrarModal();

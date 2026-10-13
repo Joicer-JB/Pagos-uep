@@ -507,7 +507,6 @@ async function cajaCobrar() {
   cajaPadCerrar();
   cajaActualizarTotal();
   const fecha = todayStr(),
-    factura = genFac(),
     porConcepto = new Map();
   lineas.forEach((l) => {
     const g = porConcepto.get(l.concepto) || { concepto: l.concepto, monto: 0, desc: [], meses: [] };
@@ -524,7 +523,6 @@ async function cajaCobrar() {
     fecha,
     metodo: caja.metodo,
     tasa: tv,
-    factura,
     origen: "caja",
     ...(ref ? { referencia: ref } : {}),
   };
@@ -537,36 +535,16 @@ async function cajaCobrar() {
     totalBs: r2(g.monto * tv),
   }));
   try {
-    const b = db.batch(),
-      guardados = [];
-    docs.forEach((d) => {
-      const r = db.collection("pagos").doc();
-      b.set(r, { ...d, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-      guardados.push({ ...d, id: r.id });
+    // Todos los conceptos con el mismo N° de recibo; la deuda anterior se descuenta igual que en el formulario de pagos
+    const r = await registrarCobro(docs, {
+      estId: e.id,
+      aplicaDeuda: (d) => !cobCfgActiva() || d.concepto === "Deuda anterior",
     });
-    await b.commit();
-    guardados.reverse().forEach((d) => pagos.unshift(d));
-    // Deuda anterior (campo manual del estudiante): se descuenta igual que en el formulario de pagos
-    const idx = estudiantes.findIndex((x) => x.id === e.id);
-    if (idx >= 0) {
-      const parte = docs
-        .filter((d) => !cobCfgActiva() || d.concepto === "Deuda anterior")
-        .reduce((s, d) => s + d.total, 0);
-      const cur = estudiantes[idx];
-      if (parte > 0 && cur.estado === "mora" && cur.moraMonto > 0) {
-        const nueva = Math.max(0, r2(cur.moraMonto - parte));
-        const upd = {
-          moraMonto: nueva,
-          estado: nueva <= 0 ? "alsaldo" : "mora",
-          moraConcepto: nueva <= 0 ? "" : cur.moraConcepto,
-        };
-        await db.collection("estudiantes").doc(e.id).update(upd);
-        estudiantes[idx] = { ...cur, ...upd };
-      }
-    }
+    reflejarCobro(e.id, r);
     // Un solo recibo con todo lo cobrado
     const virtual = {
       ...docs[0],
+      factura: r.factura,
       id: undefined,
       concepto: docs.map((d) => d.concepto).join(" + "),
       mes: docs.length === 1 ? docs[0].mes : "",

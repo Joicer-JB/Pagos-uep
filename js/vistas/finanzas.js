@@ -462,7 +462,7 @@ async function guardarFinanza(tipo) {
   try {
     const ref = await db.collection("finanzas").add(datos);
     datos.id = ref.id;
-    finanzas.push(datos);
+    ponerEnLista(finanzas, datos);
     recordarTasa(fecha, c.tasa);
     alertaFinanza(datos);
     cerrarModal();

@@ -52,8 +52,11 @@ test("un usuario sin rol no entra y ve el aviso", () => {
 
 test("caja: cobrar guarda el pago, descuenta la deuda anterior y muestra el recibo", () => {
   const f = paso("director › caja cobrado (recibo)");
-  assert.deepEqual(rutas(f), ["set pagos/id00001", "update estudiantes/est2"]);
-  const pago = f.escrituras[0].datos;
+  // En una sola transacción: número de recibo correlativo, deuda anterior del estudiante y el pago
+  assert.deepEqual(rutas(f), ["set-merge config/contadores", "update estudiantes/est2", "set pagos/id00001"]);
+  const pago = f.escrituras.find((e) => e.ruta.startsWith("pagos/")).datos;
+  assert.equal(pago.factura, "FAC-000001");
+  assert.ok(pago.deudaAplicada > 0, "guarda cuánto descontó de la deuda anterior");
   assert.equal(pago.origen, "caja");
   assert.equal(pago.tasa, 184.5); // la tasa del día que se cargó antes
   assert.equal(pago.totalBs, Math.round(pago.total * 184.5 * 100) / 100);
@@ -64,9 +67,11 @@ test("caja: cobrar guarda el pago, descuenta la deuda anterior y muestra el reci
 
 test("pagos: el formulario registra un pago con su tasa", () => {
   const f = paso("director › pagos guardado");
-  assert.deepEqual(rutas(f), ["set pagos/id00002"]);
-  assert.equal(f.escrituras[0].datos.cedula, "V-30444555");
-  assert.equal(f.escrituras[0].datos.metodo, "Punto");
+  assert.deepEqual(rutas(f), ["set-merge config/contadores", "set pagos/id00002"]);
+  const pago = f.escrituras[1].datos;
+  assert.equal(pago.factura, "FAC-000002"); // correlativo: sigue al de la caja
+  assert.equal(pago.cedula, "V-30444555");
+  assert.equal(pago.metodo, "Punto");
 });
 
 test("tasa BCV: se guarda en la configuración compartida", () => {

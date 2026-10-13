@@ -317,35 +317,20 @@ async function guardarPago() {
     total,
     tasa,
     totalBs: r2(total * tasa),
-    factura: genFac(),
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
   };
   try {
-    const ref = await db.collection("pagos").add(pago);
-    pago.id = ref.id;
-    pagos.unshift(pago);
-    recordarTasa(fecha, tasa);
     // Deuda manual anterior: con mora automática activa solo la reduce un pago de "Deuda anterior"
     // (las mensualidades se descuentan solas de las cuotas). Sin mora automática se mantiene el comportamiento de siempre.
-    if (window._pagoEstId && (!cobCfgActiva() || pago.concepto === "Deuda anterior")) {
-      const estIdx = estudiantes.findIndex((e) => e.id === window._pagoEstId);
-      if (estIdx >= 0 && estudiantes[estIdx].estado === "mora" && estudiantes[estIdx].moraMonto > 0) {
-        const deuda = estudiantes[estIdx].moraMonto;
-        const nuevaDeuda = Math.max(0, Math.round((deuda - pago.total) * 100) / 100);
-        const nuevoEstado = nuevaDeuda <= 0 ? "alsaldo" : "mora";
-        const update = {
-          moraMonto: nuevaDeuda,
-          estado: nuevoEstado,
-          moraConcepto: nuevaDeuda <= 0 ? "" : estudiantes[estIdx].moraConcepto,
-        };
-        await db.collection("estudiantes").doc(window._pagoEstId).update(update);
-        estudiantes[estIdx] = { ...estudiantes[estIdx], ...update };
-      }
-    }
+    const r = await registrarCobro([pago], {
+      estId: pago.estId,
+      aplicaDeuda: (d) => !cobCfgActiva() || d.concepto === "Deuda anterior",
+    });
+    reflejarCobro(pago.estId, r);
+    recordarTasa(fecha, tasa);
     window._pagoEstId = null;
     window._pagoCedula = null;
     subTab.pagos = "lista";
-    modalActual = { tipo: "recibo", pago };
+    modalActual = { tipo: "recibo", pago: r.guardados[0] };
     render();
   } catch (e) {
     mostrarError(errBox, e.message);
@@ -426,10 +411,20 @@ async function eliminarRecibo(id) {
     alert("Sin permiso");
     return;
   }
-  if (!confirm("¿Eliminar este recibo?")) return;
+  const p = pagos.find((x) => x.id === id);
+  if (!p) return;
+  const devuelve =
+    p.estId && p.deudaAplicada > 0
+      ? "\n\nSe devolverán " + fmt(p.deudaAplicada) + " a la deuda anterior del estudiante."
+      : "";
+  if (!confirm("¿Eliminar este recibo?" + devuelve)) return;
   try {
-    await db.collection("pagos").doc(id).delete();
-    pagos = pagos.filter((p) => p.id !== id);
+    const cambios = await borrarPago(p);
+    pagos = pagos.filter((x) => x.id !== id);
+    if (cambios) {
+      const i = estudiantes.findIndex((e) => e.id === p.estId);
+      if (i >= 0) estudiantes[i] = { ...estudiantes[i], ...cambios };
+    }
     cerrarModal();
   } catch (e) {
     alert("Error: " + e.message);

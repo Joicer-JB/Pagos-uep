@@ -238,7 +238,8 @@ function toggleMoraFields() {
 function renderModalVerEstudiante(m) {
   const e = estudiantes.find((x) => x.id === m.id);
   if (!e) return "";
-  const pagosEst = pagos.filter((p) => p.nombre.toLowerCase() === e.nombre.toLowerCase());
+  const suyos = new Set(pagosDeEstudiante(e));
+  const pagosEst = pagos.filter((p) => suyos.has(p)); // en el mismo orden de la lista de pagos (más recientes primero)
   const totalPag = pagosEst.reduce((s, p) => s + p.total, 0);
   const edad = calcEdad(e.fechaNac);
   return `<div class="modal-bg" onclick="if(event.target.classList.contains('modal-bg'))cerrarModal()">
@@ -472,7 +473,7 @@ async function guardarEstudiante(editId) {
     } else {
       const ref = await db.collection("estudiantes").add(datos);
       datos.id = ref.id;
-      estudiantes.push(datos);
+      ponerEnLista(estudiantes, datos);
       alertaEstudiante(datos, "➕ Registrado");
     }
     cerrarModal();

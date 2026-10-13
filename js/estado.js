@@ -19,3 +19,12 @@ let filtros = { busq: "", fecha: "", metodo: "", estado: "", lapso: LAPSOS[0], a
 // "notas_historial" y se limpian de "notas". Los estudiantes se conservan y su saldo vuelve a cero.
 let escCfg = null; // null = aún no se separó por años (modo anterior: todo junto)
 let anioVista = null; // id del año que se está viendo
+
+// Agrega un registro a una lista en memoria (pagos, estudiantes, finanzas…), o lo actualiza si ya está.
+// Con el tiempo real, Firestore puede traer el registro recién guardado antes de que el código lo agregue.
+function ponerEnLista(lista, obj, alInicio = false) {
+  const i = lista.findIndex((x) => x.id === obj.id);
+  if (i >= 0) lista[i] = { ...lista[i], ...obj };
+  else if (alInicio) lista.unshift(obj);
+  else lista.push(obj);
+}

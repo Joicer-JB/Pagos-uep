@@ -21,7 +21,7 @@ function renderDashboard() {
     0
   );
 
-  return `
+  return `${htmlAvisoRespaldo()}
   <div style="background:linear-gradient(135deg,#003366,#00509e);border-radius:14px;padding:1.1rem 1.25rem;color:#fff;margin-bottom:0.85rem">
     <div style="font-size:0.65rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">Resumen del mes</div>
     <div style="font-size:1.5rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${mesNom} ${anio}</div>
