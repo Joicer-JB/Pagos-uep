@@ -4,8 +4,8 @@
 
 - En el recibo impreso, **Recibo, Método y Fecha** quedan en tres columnas separadas (antes salían pegados) y la
   fecha sale como dd/mm/aaaa. Los colores también se imprimen.
-- «Cliente» pasa a **«Estudiante»** (recibo en pantalla, impreso y por WhatsApp) y la firma dice **«Firma
-  Administrador»**. En el flujo de caja impreso, «Administradora» pasa a **«Administrador»**.
+- «Cliente» pasa a **«Estudiante»** (recibo en pantalla, impreso y por WhatsApp) y las firmas dicen **«Firma
+  Administrador»** y **«Firma Docente»**. En el flujo de caja impreso, «Administradora» pasa a **«Administrador»**.
 
 ## Octubre 2026 — Auditoría, app instalable y trabajo sin internet
 

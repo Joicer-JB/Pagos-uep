@@ -493,7 +493,7 @@ function imprimirRecibo() {
     <p style="text-align:center;font-size:0.63rem;color:#aaa;margin-top:0.5rem">Este recibo es válido como comprobante de pago</p>
     <div class="firma">
       <div class="fbox"><div class="fline"></div><div class="flabel">Firma Administrador</div></div>
-      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Estudiante</div></div>
+      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Docente</div></div>
     </div>
   </div>
   </body></html>`);
