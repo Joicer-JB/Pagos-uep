@@ -26,7 +26,7 @@ En pantallas táctiles, al tocar un monto o la referencia aparece un teclado num
 
 ### Abonos (cuando no paga el mes completo)
 
-1. Toca **➕ Otro monto** y deja el concepto **«Abono / adelanto de mensualidad»**.
+1. Toca **➕ Otro monto** y deja el concepto **«Abono a mensualidad»**.
 2. En **«¿A qué mes abona?»** elige el mes. La lista muestra cuánto se debe de cada mes; por defecto sale el más
    antiguo.
 3. Escribe el monto y cobra. El abono se resta de **ese mes** y le queda el saldo pendiente. Por ejemplo, si

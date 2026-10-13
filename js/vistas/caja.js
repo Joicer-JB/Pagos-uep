@@ -472,10 +472,8 @@ function htmlCajaPanel() {
     ${
       caja.otro
         ? `<div style="margin-top:0.6rem;background:#f8faff;border-radius:12px;padding:0.7rem">
-        <div class="form-row">
-          <div class="field"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono / adelanto de mensualidad" : c}</option>`).join("")}</select></div>
+        <div class="field" style="margin-bottom:0.5rem"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono a mensualidad" : c}</option>`).join("")}</select></div>
           <div class="field"><label class="field-label">Monto ($)</label><input class="inp" id="caja-otro-inp" readonly inputmode="none" data-pad="monto" data-pad-label="Monto a cobrar ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí" value="${escHtml(caja.otro.monto)}" oninput="cajaOtroMonto(this.value)" style="cursor:pointer"/></div>
-        </div>
         ${htmlCajaOtroPara(e)}
         <button class="btn btn-gray btn-sm" onclick="cajaOtro(false)">Quitar</button></div>`
         : `<button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="cajaOtro(true)">➕ Otro monto (abono, inscripción, uniformes…)</button>`
