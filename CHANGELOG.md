@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Octubre 2026 — Imprimir en el teléfono
+
+- En el teléfono (y en la app instalada), recibos, cierres, boletines y reportes ya no se abren en una ventana nueva
+  sin salida: se muestran encima de la app con **«← Volver»** y **«🖨️ Imprimir / PDF»**. El botón «atrás» del
+  teléfono también los cierra. En la computadora se siguen abriendo en una ventana aparte.
+
 ## Octubre 2026 — Abonos a un mes
 
 - En la 💳 Caja, al abonar a la mensualidad se elige **«¿A qué mes abona?»** (con lo que se debe de cada mes). El

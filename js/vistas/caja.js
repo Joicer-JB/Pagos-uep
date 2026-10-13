@@ -704,7 +704,7 @@ function imprimirCierreCaja() {
       return `<tr><td>${escHtml(ETIQ_METODO[m])}</td><td align="right">${mon(esp)}</td><td align="right">${c == null ? "—" : mon(c)}</td><td align="right">${c == null ? "—" : Math.abs(r2(c - esp)) < 0.005 ? "Cuadra" : (c > esp ? "Sobra " : "Falta ") + mon(Math.abs(r2(c - esp)))}</td></tr>`;
     })
     .join("");
-  const w = window.open("", "_blank", "width=700,height=900");
+  const w = abrirVentanaImpresion("width=700,height=900");
   if (!w) {
     alert("Permite las ventanas emergentes para imprimir");
     return;

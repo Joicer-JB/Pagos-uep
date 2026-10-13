@@ -762,7 +762,7 @@ function imprimirCobranza() {
   const total = filas.reduce((s, r) => s + r.deuda, 0);
   const t = tasaHoy(),
     tv = tasaDe(todayStr());
-  const w = window.open("", "_blank");
+  const w = abrirVentanaImpresion();
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Listado de cobranza</title>
   <style>body{font-family:'Segoe UI',sans-serif;padding:1.2rem;color:#222}h2{color:#003366;font-family:Georgia,serif}
   table{width:100%;border-collapse:collapse;font-size:0.78rem;margin-top:0.8rem}th{background:#003366;color:#fff;text-align:left;padding:0.4rem}

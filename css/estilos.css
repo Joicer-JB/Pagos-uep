@@ -832,3 +832,52 @@ textarea.inp {
   color: #1a7a4a;
   border: 2px solid #1a9e5c;
 }
+
+/* Documento para imprimir en el teléfono (js/utils/impresion.js): encima de la app, con «Volver» e «Imprimir» */
+.impresion-capa {
+  position: fixed;
+  inset: 0;
+  z-index: 15000;
+  background: #eef2f9;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.impresion-barra {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #003366;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+.impresion-barra .btn {
+  flex: 1;
+  margin: 0;
+  white-space: nowrap;
+}
+.impresion-hoja {
+  background: #fff;
+  margin: 0.75rem auto;
+  max-width: 900px;
+  min-height: 60vh;
+}
+@media print {
+  body.con-impresion > *:not(.impresion-capa) {
+    display: none !important;
+  }
+  body.con-impresion .impresion-capa {
+    position: static;
+    overflow: visible;
+    background: #fff;
+  }
+  body.con-impresion .impresion-barra {
+    display: none;
+  }
+  body.con-impresion .impresion-hoja {
+    margin: 0;
+    max-width: none;
+  }
+}

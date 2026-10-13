@@ -460,7 +460,7 @@ function imprimirRecibo() {
   const p = modalActual.pago;
   if (!p) return;
   const lines = (p.descripcion || "").split("\n").filter(Boolean);
-  const w = window.open("", "_blank", "width=600,height=800");
+  const w = abrirVentanaImpresion("width=600,height=800");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Recibo ${escHtml(p.factura)}</title>
   <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',sans-serif;padding:1.5rem;max-width:480px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .hdr{background:linear-gradient(135deg,#003366,#00509e);color:#fff;padding:1.1rem;border-radius:10px 10px 0 0}

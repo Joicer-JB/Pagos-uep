@@ -74,11 +74,13 @@ async function abrirNavegador({ datos = semilla } = {}) {
   const base = `http://127.0.0.1:${servidor.address().port}/`;
   return {
     base,
-    async nuevaPagina() {
+    // movil: true → como un teléfono (pantalla táctil y angosta)
+    async nuevaPagina({ movil = false } = {}) {
       const contexto = await navegador.newContext({
         timezoneId: "America/Caracas",
         locale: "es-VE",
         acceptDownloads: true,
+        ...(movil ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } : {}),
       });
       await contexto.route("**/*", (ruta) => {
         const url = ruta.request().url();
