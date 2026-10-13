@@ -50,6 +50,17 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 - Cambiar la configuración: cuotas, correo, materias, indicadores e institución.
 - Importar matrícula, unificar grados escritos de formas distintas y pasar de grado.
 
+## Respaldos
+
+Si pasan más de 14 días sin descargar un respaldo, en 🏠 Inicio aparece un aviso con el botón **Descargar
+respaldo**. Guarda el archivo fuera de la computadora (Drive, correo o pendrive).
+
+## Borrar un recibo
+
+Si el pago había descontado una «deuda anterior» anotada a mano, al borrar el recibo esa deuda vuelve a la
+ficha del estudiante (el mensaje de confirmación lo indica). Los recibos registrados antes de octubre de 2026
+no guardaban ese dato: si borras uno de esos, revisa la deuda del estudiante a mano.
+
 ## Al terminar el año escolar
 
 1. **💾 Descargar respaldo ahora** (Configuración → Año escolar). Guarda el archivo fuera de la

@@ -24,6 +24,12 @@ Todos los montos están en **$ de referencia**. Cada pago guarda la tasa de su d
 
 En pantallas táctiles, al tocar un monto o la referencia aparece un teclado numérico grande.
 
+## Varias computadoras a la vez
+
+Si el director u otra persona cobra en otra computadora, tu pantalla se actualiza sola. Si en ese momento
+estás llenando un formulario, aparece arriba el aviso **«🔄 Hay cambios nuevos de otro equipo»**: termina lo
+que estás haciendo y pulsa **Actualizar**.
+
 ## 💰 Pagos
 
 - **➕ Nuevo Pago:** busca al estudiante por cédula, elige el concepto, el mes y el método, y escribe el
