@@ -58,6 +58,16 @@ Si se va el internet puedes **seguir cobrando**. Abajo aparece el aviso **«📴
 - Lo único que necesita internet es borrar un recibo que descontó deuda anterior (eso lo hace el director).
 - La **primera vez** que entras en un equipo sí necesitas internet. Después, la app abre aunque no haya conexión.
 
+## Imprimir desde el teléfono
+
+Al tocar 🖨️ en un recibo (o en el cierre de caja, reportes, boletines…), el documento se abre dentro de la app con
+tres botones:
+
+- **← Volver**: regresa a donde estabas (el botón «atrás» del teléfono también).
+- **🖨️ Imprimir**: abre la impresión del teléfono (impresora o «Guardar como PDF»).
+- **📤 Compartir**: convierte el documento en una imagen y abre el menú de compartir (WhatsApp, galería, etc.).
+  Úsalo si tu teléfono no abre la impresión desde la app; desde la imagen también puedes imprimir.
+
 ## Instalar la app en el teléfono o la computadora
 
 - **Android o computadora (Chrome/Edge):** entra a la plataforma y pulsa **📲 Instalar** en la cabecera (o, en el

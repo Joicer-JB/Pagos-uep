@@ -19,8 +19,14 @@ before(async () => {
   await s.pagina.fill("#l-pwd", "prueba123");
   await s.pagina.click("#login-btn");
   await s.pagina.waitForSelector(".tabs .tab");
-  // window.print se cuenta en vez de abrir el diálogo de impresión
-  await llamar(`window.__IMPRESO__ = 0; window.print = () => window.__IMPRESO__++`);
+  // window.print se cuenta en vez de abrir el diálogo de impresión (y avisa «beforeprint», como el navegador).
+  // Con __SIN_IMPRESORA__ hace como el iPhone con la app instalada: nada.
+  await llamar(`window.__IMPRESO__ = 0;
+    window.print = () => {
+      if (window.__SIN_IMPRESORA__) return;
+      window.dispatchEvent(new Event("beforeprint"));
+      window.__IMPRESO__++;
+    }`);
 });
 after(async () => nav && nav.cerrar());
 
@@ -40,11 +46,33 @@ test("en el teléfono el recibo se abre dentro de la app, no en una ventana nuev
 test("«🖨️ Imprimir» imprime solo el documento", async () => {
   await s.pagina.click(".impresion-barra >> text=Imprimir");
   await s.pagina.waitForFunction(() => window.__IMPRESO__ === 1);
+  await s.pagina.waitForTimeout(1700);
+  assert.equal(await s.pagina.textContent(".impresion-aviso"), "", "si se abrió la impresión no hay aviso");
   await s.pagina.emulateMedia({ media: "print" });
   assert.equal(await llamar(`getComputedStyle(document.getElementById("app")).display`), "none");
   assert.equal(await llamar(`getComputedStyle(document.querySelector(".impresion-barra")).display`), "none");
   assert.notEqual(await llamar(`getComputedStyle(document.querySelector(".impresion-hoja")).display`), "none");
   await s.pagina.emulateMedia({ media: "screen" });
+});
+
+test("si el teléfono no abre la impresión, se avisa y se sugiere compartir como imagen", async () => {
+  await llamar(`window.__SIN_IMPRESORA__ = true`);
+  await s.pagina.click(".impresion-barra >> text=Imprimir");
+  await s.pagina.waitForSelector(".impresion-aviso:has-text('no abrió la impresión')");
+  assert.match(await s.pagina.textContent(".impresion-aviso"), /📤 Compartir/);
+  await llamar(`window.__SIN_IMPRESORA__ = false`);
+});
+
+test("«📤 Compartir» convierte el documento en una imagen (aquí se descarga; en el teléfono abre compartir)", async () => {
+  const [descarga] = await Promise.all([
+    s.pagina.waitForEvent("download"),
+    s.pagina.click(".impresion-barra >> text=Compartir"),
+  ]);
+  assert.match(descarga.suggestedFilename(), /^Recibo_FAC-\d+\.png$/);
+  const datos = require("fs").readFileSync(await descarga.path());
+  assert.equal(datos.subarray(1, 4).toString(), "PNG");
+  assert.ok(datos.length > 20000, "la imagen tiene contenido (" + datos.length + " bytes)");
+  await s.pagina.waitForSelector(".impresion-aviso:has-text('Imagen guardada')");
 });
 
 test("«← Volver» regresa a la app tal como estaba", async () => {
