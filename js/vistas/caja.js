@@ -166,11 +166,33 @@ function parseMontoCaja(s) {
   if (/^\d+\.\d{1,2}$/.test(s)) return parseFloat(s);
   return parseFmt(s);
 }
-// Lo que se le puede cobrar a un estudiante: cuotas vencidas + la próxima, recargo y deuda anterior
+// Lo que se le puede cobrar a un estudiante: inscripción y carnet del año (si faltan), cuotas vencidas + la próxima,
+// recargo y deuda anterior
 function cajaItems(e) {
   const cu = calcCuotas(e),
     it = [];
   if (cu) {
+    const anio = escCfg && escCfg.actual ? " " + escCfg.actual.nombre : "";
+    [
+      ["i", cu.inscripcion, "Inscripción" + anio, "Obligatoria para el año escolar"],
+      [
+        "k",
+        cu.carnet,
+        "Carnet QR y papelería",
+        "Carnet QR " + fmt(cobCfg.carnet || 0) + " + papelería " + fmt(cobCfg.papeleria || 0),
+      ],
+    ].forEach(([key, o, label, sub]) => {
+      if (o && o.pendiente > 0.004)
+        it.push({
+          key,
+          tipo: key,
+          concepto: o.concepto,
+          label,
+          monto: o.pendiente,
+          vencida: true, // se marcan solas al elegir al estudiante, junto con las mensualidades vencidas
+          sub: o.pagado > 0 ? "Ya abonó " + fmt(o.pagado) + " de " + fmt(o.monto) : sub,
+        });
+    });
     cu.lista
       .filter((q) => q.pendiente > 0.004 && (q.vencida || q === cu.proxima))
       .forEach((q) =>
@@ -342,8 +364,12 @@ function cajaElegir(id) {
   const e = cajaEst();
   if (!e) return;
   const { items } = cajaItems(e);
+  // Se marca lo vencido (y la inscripción y el carnet si faltan); si no debe ninguna mensualidad vencida, la próxima
+  // (al empezar el año se cobra casi siempre inscripción + septiembre)
   const venc = items.filter((i) => i.vencida);
-  (venc.length ? venc : items.filter((i) => i.tipo === "m").slice(0, 1)).forEach((i) => {
+  const conProxima =
+    !venc.some((i) => i.tipo === "m") && (!venc.length || venc.some((i) => i.tipo === "i" || i.tipo === "k"));
+  [...venc, ...(conProxima ? items.filter((i) => i.tipo === "m").slice(0, 1) : [])].forEach((i) => {
     caja.sel[i.key] = true;
   });
   const r = document.getElementById("caja-res");
@@ -472,7 +498,7 @@ function htmlCajaPanel() {
     ${
       caja.otro
         ? `<div style="margin-top:0.6rem;background:#f8faff;border-radius:12px;padding:0.7rem">
-        <div class="field" style="margin-bottom:0.5rem"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono a mensualidad" : c}</option>`).join("")}</select></div>
+        <div class="field" style="margin-bottom:0.5rem"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", CONCEPTO_CARNET, "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono a mensualidad" : c}</option>`).join("")}</select></div>
           <div class="field"><label class="field-label">Monto ($)</label><input class="inp" id="caja-otro-inp" readonly inputmode="none" data-pad="monto" data-pad-label="Monto a cobrar ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí" value="${escHtml(caja.otro.monto)}" oninput="cajaOtroMonto(this.value)" style="cursor:pointer"/></div>
         ${htmlCajaOtroPara(e)}
         <button class="btn btn-gray btn-sm" onclick="cajaOtro(false)">Quitar</button></div>`

@@ -5,7 +5,7 @@
   "scripts": {
     "test": "npm run test:unidad && npm run test:e2e",
     "test:unidad": "node --test \"tests/unidad/**/*.test.js\"",
-    "test:e2e": "node --test tests/e2e/app.test.js tests/e2e/duplicados.test.js tests/e2e/cobros.test.js tests/e2e/tiempo-real.test.js tests/e2e/tasas.test.js tests/e2e/animaciones.test.js tests/e2e/privacidad.test.js tests/e2e/auditoria.test.js tests/e2e/sin-conexion.test.js tests/e2e/caja-abono.test.js tests/e2e/impresion-movil.test.js",
+    "test:e2e": "node --test tests/e2e/app.test.js tests/e2e/duplicados.test.js tests/e2e/cobros.test.js tests/e2e/tiempo-real.test.js tests/e2e/tasas.test.js tests/e2e/animaciones.test.js tests/e2e/privacidad.test.js tests/e2e/auditoria.test.js tests/e2e/sin-conexion.test.js tests/e2e/caja-abono.test.js tests/e2e/impresion-movil.test.js tests/e2e/costos.test.js",
     "test:reglas": "firebase emulators:exec --only firestore --project demo-pagos-uep \"node --test tests/reglas/reglas.test.js\"",
     "test:todo": "npm run revisar && npm test && npm run test:reglas",
     "revisar": "prettier --check . && eslint .",

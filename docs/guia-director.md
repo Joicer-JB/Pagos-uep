@@ -54,6 +54,20 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 - Cambiar la configuración: cuotas, correo, materias, indicadores e institución.
 - Importar matrícula, unificar grados escritos de formas distintas y pasar de grado.
 
+## Estructura de costos del año
+
+En **🔔 Cobranza → ⚙️ Cuotas del año** está **💲 Estructura de costos del año**: inscripción y mensualidad de cada
+nivel (Inicial tiempo completo, Inicial medio tiempo, Primaria, Media general), carnet QR y papelería. Revisa los
+montos y pulsa **Guardar**.
+
+- La plataforma ofrece poner a cada estudiante la mensualidad de su nivel. Si alguno tiene un monto especial
+  (descuento, beca), corrígelo luego en su ficha.
+- La inscripción y el carnet + papelería se cobran una vez al año. Si un estudiante no los ha pagado, salen como
+  deuda y aparecen ya marcados en la Caja.
+- En la ficha de los niños de inicial elige el **horario** (tiempo completo o medio tiempo), que define sus montos.
+  Para becados o hijos del personal marca **«No paga inscripción»**.
+- Al empezar un año nuevo, actualiza aquí los montos.
+
 ## Bitácora: quién registró y quién borró
 
 - Cada pago y cada ingreso o gasto guarda **quién lo registró**. Se ve en la lista de pagos (👤) y en el recibo

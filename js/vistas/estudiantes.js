@@ -172,7 +172,7 @@ function renderModalEstudiante(e) {
         </div>
         <div class="form-row">
           <div class="field"><label class="field-label">Grado *</label>
-            <select class="inp" id="e-grado"><option value="">Seleccionar...</option>
+            <select class="inp" id="e-grado" onchange="sugerirMensualidadEst()"><option value="">Seleccionar...</option>
               ${ESCALERA.map((g) => `<option value="${g}" ${(gradoCanon(e.grado) || e.grado) === g ? "selected" : ""}>${g}</option>`).join("")}
               ${e.grado && !gradoCanon(e.grado) ? `<option value="${escHtml(e.grado)}" selected>${escHtml(e.grado)} (revisar)</option>` : ""}
             </select></div>
@@ -180,6 +180,8 @@ function renderModalEstudiante(e) {
             <select class="inp" id="e-jornada"><option value="Mañana" ${e.jornada === "Mañana" ? "selected" : ""}>Mañana</option><option value="Tarde" ${e.jornada === "Tarde" ? "selected" : ""}>Tarde</option></select>
           </div>
         </div>
+        <div class="field" id="e-horario-box" style="display:${getNivel(e.grado) === "preescolar" ? "block" : "none"}"><label class="field-label">Horario (inicial)</label>
+          <select class="inp" id="e-horario" onchange="sugerirMensualidadEst(true)"><option value="completo" ${e.horario !== "medio" ? "selected" : ""}>Tiempo completo</option><option value="medio" ${e.horario === "medio" ? "selected" : ""}>Medio tiempo</option></select></div>
         <div class="form-row">
           <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="e-tel" value="${escHtml(e.telefono) || ""}"/></div>
           </div>
@@ -197,7 +199,8 @@ function renderModalEstudiante(e) {
             <div class="field"><label class="field-label">Correo del acudiente (opcional)</label><input class="inp" id="e-correo-acud" type="email" placeholder="nombre@gmail.com" value="${escHtml(e.correoAcudiente) || ""}"/></div>
         <div class="field"><label class="field-label">Mensualidad ($)</label>
           <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#003366;font-weight:700">$</span>
-          <input class="inp" id="e-mens" placeholder="0,00" style="padding-left:2rem" value="${e.mensualidad ? String(e.mensualidad).replace(".", ",") : ""}" oninput="fmtInput(this)"/></div></div>
+          <input class="inp" id="e-mens" placeholder="0,00" style="padding-left:2rem" value="${e.mensualidad ? String(e.mensualidad).replace(".", ",") : ""}" oninput="fmtInput(this)"/></div>
+          <div id="e-mens-nota" style="font-size:0.68rem;color:#888;margin-top:2px">${notaMensualidadEst(e)}</div></div>
         <div class="field"><label class="field-label">Paga cuotas desde (opcional)</label>
           <input class="inp" type="month" id="e-cuota-desde" value="${escHtml(e.cuotaDesde) || ""}"/>
           <div style="font-size:0.68rem;color:#888;margin-top:2px">Déjalo vacío si paga desde la primera cuota. Úsalo para quien entró después de que empezó el año.</div></div>
@@ -213,6 +216,7 @@ function renderModalEstudiante(e) {
         </div>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-graduado" ${e.graduado ? "checked" : ""}/> 🎓 Graduado (egresado)</label>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinrec" ${e.sinRecargo ? "checked" : ""}/> 🤝 Exonerado de recargos por mora</label>
+        <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinins" ${e.sinInscripcion ? "checked" : ""}/> 🎟️ No paga inscripción (becado, hijo del personal…)</label>
         <div id="mora-fields" style="display:${e.estado === "mora" ? "flex" : "none"};flex-direction:column;gap:0.75rem;background:#fff5f5;border-radius:10px;padding:0.85rem;border-left:4px solid #e53e3e">
           <div class="field"><label class="field-label" style="color:#e53e3e">⚠️ Concepto de Mora</label>
             <textarea class="inp" id="e-mora-concepto" rows="2" placeholder="Ej: Mensualidad Enero y Febrero sin cancelar">${escHtml(e.moraConcepto) || ""}</textarea></div>
@@ -459,6 +463,8 @@ async function guardarEstudiante(editId) {
     cuotaDesde: (document.getElementById("e-cuota-desde") || {}).value || "",
     graduado: !!(document.getElementById("e-graduado") || {}).checked,
     sinRecargo: !!(document.getElementById("e-sinrec") || {}).checked,
+    sinInscripcion: !!(document.getElementById("e-sinins") || {}).checked,
+    horario: getNivel(grado) === "preescolar" ? (document.getElementById("e-horario") || {}).value || "completo" : "",
     anioEscolar,
     estado,
     moraConcepto: estado === "mora" ? document.getElementById("e-mora-concepto").value.trim() : "",
@@ -494,4 +500,26 @@ async function eliminarEstudiante(id) {
   } catch (e) {
     alert("Error: " + e.message);
   }
+}
+
+// Mensualidad e inscripción que corresponden a la ficha según la estructura de costos del año
+function notaMensualidadEst(e) {
+  const c = costoDe(e);
+  return c
+    ? `Según la estructura de costos: mensualidad ${fmt(c.mensualidad)} · inscripción ${fmt(c.inscripcion)}`
+    : "";
+}
+// Al cambiar el grado o el horario: muestra el horario solo en inicial y llena la mensualidad si está vacía
+// (o si se cambió el horario, que define el monto)
+function sugerirMensualidadEst(forzar) {
+  const grado = (document.getElementById("e-grado") || {}).value || "";
+  const horario = (document.getElementById("e-horario") || {}).value || "completo";
+  const caja = document.getElementById("e-horario-box");
+  if (caja) caja.style.display = getNivel(grado) === "preescolar" ? "block" : "none";
+  const ficha = { grado, horario };
+  const nota = document.getElementById("e-mens-nota");
+  if (nota) nota.textContent = notaMensualidadEst(ficha);
+  const c = costoDe(ficha),
+    mens = document.getElementById("e-mens");
+  if (c && mens && (forzar || !mens.value.trim())) mens.value = String(c.mensualidad).replace(".", ",");
 }

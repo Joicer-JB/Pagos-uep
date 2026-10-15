@@ -7,7 +7,36 @@
 // (sigue vencida, o se pagó después del día de vencimiento). No se acumula mes a mes. Se paga con concepto «Recargo».
 // config.recargoDesde = fecha; solo cuotas que vencen desde ese día generan recargo (evita cobrar con efecto retroactivo).
 // El estudiante marcado «sinRecargo» (exonerado) nunca lo genera.
+// ESTRUCTURA DE COSTOS (opcional): config.costos = {plan: {inscripcion, mensualidad}} por plan (inicial a tiempo
+// completo o medio tiempo, primaria, media general), más config.carnet y config.papeleria. La inscripción y el
+// carnet + papelería son obligatorios una vez por año: los pagos con esos conceptos desde config.inscripcionDesde
+// los cubren. El estudiante marcado «sinInscripcion» (exonerado) no paga inscripción.
 let cobCfg = null;
+const PLANES_COSTO = [
+  ["inicialCompleto", "Inicial · tiempo completo"],
+  ["inicialMedio", "Inicial · medio tiempo"],
+  ["primaria", "Primaria"],
+  ["media", "Media general"],
+];
+const CONCEPTO_CARNET = "Carnet y papelería";
+// Montos con los que se llena el formulario la primera vez (estructura de costos 2026-2027)
+const COSTOS_SUGERIDOS = {
+  costos: {
+    inicialCompleto: { inscripcion: 45, mensualidad: 45 },
+    inicialMedio: { inscripcion: 40, mensualidad: 40 },
+    primaria: { inscripcion: 45, mensualidad: 45 },
+    media: { inscripcion: 55, mensualidad: 55 },
+  },
+  carnet: 13,
+  papeleria: 3,
+};
+// Plan de costos de un estudiante: por su nivel y, en inicial, por su horario
+function planDe(e) {
+  const n = getNivel(e.grado);
+  return n === "preescolar" ? (e.horario === "medio" ? "inicialMedio" : "inicialCompleto") : n;
+}
+const costoDe = (e) => (cobCfg && cobCfg.costos && cobCfg.costos[planDe(e)]) || null;
+const montoCfg = (v) => Math.max(0, r2(Number(v) || 0));
 // Lee config/cobranza (cuotas, día de vencimiento y recargo). Sin configuración no hay mora automática
 async function cargarCobCfg() {
   cobCfg = null;
@@ -22,6 +51,22 @@ async function cargarCobCfg() {
           diaVence: Math.min(28, Math.max(1, Number(d.diaVence) || 5)),
           recargo: Math.max(0, r2(Number(d.recargo) || 0)),
           recargoDesde: /^\d{4}-\d{2}-\d{2}$/.test(d.recargoDesde || "") ? d.recargoDesde : "",
+          costos: d.costos
+            ? Object.fromEntries(
+                PLANES_COSTO.map(([k]) => [
+                  k,
+                  {
+                    inscripcion: montoCfg((d.costos[k] || {}).inscripcion),
+                    mensualidad: montoCfg((d.costos[k] || {}).mensualidad),
+                  },
+                ])
+              )
+            : null,
+          carnet: montoCfg(d.carnet),
+          papeleria: montoCfg(d.papeleria),
+          inscripcionDesde: /^\d{4}-\d{2}-\d{2}$/.test(d.inscripcionDesde || "")
+            ? d.inscripcionDesde
+            : sumarMeses(d.primerMes, -3) + "-01",
         };
     }
   } catch (e) {
@@ -143,7 +188,23 @@ function calcCuotas(e, hoy) {
   const recargoPend = r2(Math.max(0, recargoTotal - recargoPagado));
   const vencidas = lista.filter((c) => c.vencida);
   const saldo = r2(vencidas.reduce((s, c) => s + c.pendiente, 0));
+  // Inscripción y carnet + papelería del año (si hay estructura de costos): obligatorios desde el inicio del año
+  const delAnio = pagosDeEstudiante(e).filter((p) => p.fecha && p.fecha >= (cobCfg.inscripcionDesde || desde));
+  const obligacion = (concepto, monto) => {
+    const pagadoO = r2(delAnio.filter((p) => p.concepto === concepto).reduce((s, p) => s + (p.total || 0), 0));
+    const ab = r2(Math.min(monto, Math.max(0, pagadoO)));
+    return { concepto, monto, pagado: ab, pendiente: r2(monto - ab) };
+  };
+  const costo = costoDe(e);
+  const inscripcion =
+    costo && costo.inscripcion > 0 && !e.sinInscripcion ? obligacion("Inscripción", costo.inscripcion) : null;
+  const kit = r2((cobCfg.carnet || 0) + (cobCfg.papeleria || 0));
+  const carnet = cobCfg.costos && kit > 0 ? obligacion(CONCEPTO_CARNET, kit) : null;
+  const obligPend = r2((inscripcion ? inscripcion.pendiente : 0) + (carnet ? carnet.pendiente : 0));
   return {
+    inscripcion,
+    carnet,
+    obligPend,
     lista,
     pagado,
     saldo,
@@ -151,7 +212,7 @@ function calcCuotas(e, hoy) {
     recargoPagado,
     recargoPend,
     nRecargos: conRecargo.length,
-    total: r2(saldo + recargoPend),
+    total: r2(saldo + recargoPend + obligPend),
     pendientes: vencidas.filter((c) => c.pendiente > 0.004),
     aFavor: r2(Math.max(0, resto)),
     proxima: lista.find((c) => !c.vencida && c.pendiente > 0.004) || null,
@@ -180,6 +241,8 @@ const enMora = (e) => e.estado !== "retirado" && (deudaDe(e) > 0 || e.estado ===
 function conceptoDeE(e) {
   const c = calcCuotas(e),
     p = [];
+  if (c && c.inscripcion && c.inscripcion.pendiente > 0.004) p.push("Inscripción");
+  if (c && c.carnet && c.carnet.pendiente > 0.004) p.push(CONCEPTO_CARNET);
   if (c && c.pendientes.length) p.push("Mensualidad: " + c.pendientes.map((q) => q.mes).join(", "));
   if (c && c.recargoPend > 0)
     p.push("Recargo por mora (" + c.nRecargos + (c.nRecargos === 1 ? " mes" : " meses") + ")");
@@ -214,11 +277,25 @@ function htmlEstadoCuenta(e) {
             )
             .join("")
     }
+    ${[c.inscripcion, c.carnet]
+      .filter(Boolean)
+      .map(
+        (o) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px dashed #eee;font-size:0.8rem">
+      <div><strong>${escHtml(o.concepto)}</strong><div style="font-size:0.65rem;color:#888">del año escolar</div></div>
+      <div style="text-align:right">${fmt(o.monto)}${est({ ...o, vencida: true })}</div></div>`
+      )
+      .join("")}
     <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.8rem"><span>Pagado en mensualidades</span><strong style="color:#1a9e5c">${fmt(c.pagado)}</strong></div>
     <div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Saldo vencido</span><strong style="color:${c.saldo > 0 ? "#e53e3e" : "#1a9e5c"}">${fmt(c.saldo)}${tv && c.saldo > 0 ? " · " + fmtBs(r2(c.saldo * tv)) : ""}</strong></div>
     ${
-      c.recargoTotal > 0
-        ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Recargos por mora (${fmt(c.recargoTotal)}${c.recargoPagado > 0 ? " · pagado " + fmt(Math.min(c.recargoPagado, c.recargoTotal)) : ""})</span><strong style="color:${c.recargoPend > 0 ? "#e53e3e" : "#1a9e5c"}">${fmt(c.recargoPend)}</strong></div>
+      c.obligPend > 0
+        ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Inscripción y carnet pendientes</span><strong style="color:#e53e3e">${fmt(c.obligPend)}</strong></div>`
+        : ""
+    }
+    ${
+      c.recargoTotal > 0 || c.obligPend > 0
+        ? `${c.recargoTotal > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Recargos por mora (${fmt(c.recargoTotal)}${c.recargoPagado > 0 ? " · pagado " + fmt(Math.min(c.recargoPagado, c.recargoTotal)) : ""})</span><strong style="color:${c.recargoPend > 0 ? "#e53e3e" : "#1a9e5c"}">${fmt(c.recargoPend)}</strong></div>` : ""}
     <div style="display:flex;justify-content:space-between;font-size:0.9rem;border-top:1px solid #eee;margin-top:3px;padding-top:3px"><span>Total a pagar</span><strong style="color:${c.total > 0 ? "#e53e3e" : "#1a9e5c"}">${fmt(c.total)}${tv && c.total > 0 ? " · " + fmtBs(r2(c.total * tv)) : ""}</strong></div>`
         : ""
     }
@@ -257,14 +334,75 @@ async function guardarCobCfg() {
   // Sin retroactivo: al activarlo por primera vez, solo cuentan las cuotas que venzan desde hoy (salvo que lo marques)
   const recargoDesde =
     monto > 0 ? (incluirVencidas ? "" : (cobCfg && cobCfg.recargo > 0 && cobCfg.recargoDesde) || todayStr()) : "";
+  // Estructura de costos: inscripción y mensualidad por plan, carnet y papelería
+  const val = (id) => r2(parseFmt((document.getElementById(id) || {}).value || "0"));
+  const costos = Object.fromEntries(
+    PLANES_COSTO.map(([k]) => [k, { inscripcion: val("cc-ins-" + k), mensualidad: val("cc-men-" + k) }])
+  );
+  const carnet = val("cc-carnet"),
+    papeleria = val("cc-papeleria");
+  const inscripcionDesde = (document.getElementById("cc-ins-desde") || {}).value || sumarMeses(primerMes, -3) + "-01";
+  if (
+    [...Object.values(costos).flatMap((c) => [c.inscripcion, c.mensualidad]), carnet, papeleria].some(
+      (v) => !(v >= 0) || v > 10000
+    )
+  ) {
+    alert("Revisa los montos de la estructura de costos");
+    return;
+  }
   try {
-    const nueva = { primerMes, cuotas: n, diaVence: dia, recargo: monto, recargoDesde };
+    const nueva = {
+      primerMes,
+      cuotas: n,
+      diaVence: dia,
+      recargo: monto,
+      recargoDesde,
+      costos,
+      carnet,
+      papeleria,
+      inscripcionDesde,
+    };
     await db.collection("config").doc("cobranza").set(nueva);
     cobCfg = nueva;
     renderTabContent();
+    await ofrecerActualizarMensualidades();
   } catch (e) {
     alert("No se pudo guardar: " + e.message);
   }
+}
+// Estudiantes activos cuya mensualidad no es la de su plan en la estructura de costos
+function mensualidadesDistintas() {
+  if (!cobCfg || !cobCfg.costos) return [];
+  return estudiantes
+    .filter(activo)
+    .map((e) => ({ e, nueva: (costoDe(e) || {}).mensualidad || 0 }))
+    .filter((x) => x.nueva > 0 && Math.abs((Number(x.e.mensualidad) || 0) - x.nueva) > 0.004);
+}
+// Después de guardar la estructura: ofrece poner a cada estudiante la mensualidad de su plan
+async function ofrecerActualizarMensualidades() {
+  const cambios = mensualidadesDistintas();
+  if (!cambios.length) return;
+  const ejemplos = cambios
+    .slice(0, 5)
+    .map((x) => `• ${x.e.nombre}: ${fmt(Number(x.e.mensualidad) || 0)} → ${fmt(x.nueva)}`)
+    .join("\n");
+  if (
+    !confirm(
+      `${cambios.length} estudiante(s) tienen una mensualidad distinta a la de su nivel:\n${ejemplos}${cambios.length > 5 ? "\n…" : ""}\n\n` +
+        "¿Poner a todos la mensualidad de la estructura de costos?\n(Si alguno tiene un monto especial, corrígelo después en su ficha.)"
+    )
+  )
+    return;
+  for (let i = 0; i < cambios.length; i += 400) {
+    const lote = db.batch();
+    cambios
+      .slice(i, i + 400)
+      .forEach((x) => lote.update(db.collection("estudiantes").doc(x.e.id), { mensualidad: x.nueva }));
+    await lote.commit();
+  }
+  cambios.forEach((x) => (x.e.mensualidad = x.nueva));
+  renderTabContent();
+  alert(`✅ Se actualizó la mensualidad de ${cambios.length} estudiante(s).`);
 }
 // Panel de configuración de cuotas (el director lo edita; los demás ven un resumen)
 function htmlCfgCuotas() {
@@ -290,8 +428,35 @@ function htmlCfgCuotas() {
         <div style="font-size:0.7rem;color:#666;margin-top:0.4rem">Se suma una sola vez por cada cuota atrasada (no crece mes a mes). Se cobra con el concepto «Recargo». Puedes exonerar a un estudiante en su ficha.</div>
       </div>
     </div>
+    ${htmlCfgCostos()}
     <button class="btn btn-primary btn-sm" onclick="guardarCobCfg()">💾 Guardar</button>
   </details>`;
+}
+// Formulario de la estructura de costos del año (dentro de la configuración de cuotas)
+function htmlCfgCostos() {
+  const c = cobCfg && cobCfg.costos ? cobCfg : COSTOS_SUGERIDOS;
+  const v = (x) => String(x || 0).replace(".", ",");
+  const campo = (id, valor) =>
+    `<input class="inp" id="${id}" inputmode="decimal" value="${v(valor)}" oninput="fmtInput(this)" style="padding:0.45rem"/>`;
+  const desde = (cobCfg && cobCfg.inscripcionDesde) || "";
+  return `<div style="background:#f0f4ff;border-radius:10px;padding:0.7rem;margin:0.5rem 0">
+    <div style="font-weight:700;font-size:0.82rem;color:#003366">💲 Estructura de costos del año${cobCfg && cobCfg.costos ? "" : " <span style='color:#c0392b'>(sin guardar)</span>"}</div>
+    <div style="font-size:0.7rem;color:#666;margin:0.2rem 0 0.5rem">La inscripción y el carnet + papelería son obligatorios una vez al año: si no están pagados, salen como deuda y aparecen marcados en la Caja.</div>
+    <table style="width:100%;font-size:0.76rem;border-collapse:collapse">
+      <thead><tr><th style="text-align:left">Nivel</th><th>Inscripción $</th><th>Mensualidad $</th></tr></thead>
+      <tbody>${PLANES_COSTO.map(
+        ([k, nombre]) =>
+          `<tr><td style="padding:0.2rem 0.3rem 0.2rem 0">${nombre}</td><td style="padding:0.2rem">${campo("cc-ins-" + k, c.costos[k].inscripcion)}</td><td style="padding:0.2rem">${campo("cc-men-" + k, c.costos[k].mensualidad)}</td></tr>`
+      ).join("")}</tbody>
+    </table>
+    <div class="form-row" style="margin-top:0.4rem">
+      <div class="field"><label class="field-label">Carnet QR ($)</label>${campo("cc-carnet", c.carnet)}</div>
+      <div class="field"><label class="field-label">Papelería ($)</label>${campo("cc-papeleria", c.papeleria)}</div>
+    </div>
+    <div class="field" style="margin-top:0.4rem"><label class="field-label">Cuentan las inscripciones pagadas desde</label>
+      <input class="inp" type="date" id="cc-ins-desde" value="${escHtml(desde)}"/>
+      <div style="font-size:0.68rem;color:#888;margin-top:2px">Vacío = 3 meses antes de la primera cuota (para incluir las inscripciones cobradas en vacaciones).</div></div>
+  </div>`;
 }
 const activo = (e) => e.estado !== "retirado" && !e.graduado; // inscrito este año (ni retirado ni graduado)
 // Fecha de inicio del año escolar actual ("" si se está viendo un año anterior)

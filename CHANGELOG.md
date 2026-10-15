@@ -1,5 +1,18 @@
 # Historial de cambios
 
+## Octubre 2026 — Estructura de costos: inscripción y carnet obligatorios
+
+- En 🔔 Cobranza → ⚙️ Cuotas del año, el director guarda la **estructura de costos del año**: inscripción y
+  mensualidad de Inicial (tiempo completo y medio tiempo), Primaria y Media general, más **carnet QR** y
+  **papelería**. Viene llena con los montos de 2026-2027 (45/45, 40/40, 45/45, 55/55, carnet 13 y papelería 3).
+- Al guardarla, ofrece poner a cada estudiante la mensualidad de su nivel.
+- La **inscripción** y el **carnet + papelería** son obligatorios una vez por año: si faltan, son deuda (Caja,
+  Cobranza, ficha) y en la **💳 Caja aparecen ya marcados** junto con las mensualidades vencidas (o la primera, al
+  empezar el año), en un solo recibo. Cuentan los pagos desde 3 meses antes de la primera cuota (vacaciones).
+- Ficha del estudiante: **horario** para inicial (tiempo completo / medio tiempo), casilla **«No paga
+  inscripción»** y la mensualidad sugerida según la estructura.
+- Sin estructura guardada todo funciona como antes.
+
 ## Octubre 2026 — Imprimir y compartir en el teléfono
 
 - «🖨️ Imprimir» se lanza directo desde el toque. Si el teléfono no abre la impresión (por ejemplo, el iPhone con la
