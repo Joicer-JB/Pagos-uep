@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Octubre 2026 — Corregir la fecha de inicio del año escolar
+
+- En ⚙️ Configuración → 📅 Año escolar, **«✏️ Corregir la fecha de inicio»** (director): cambia el inicio del año
+  actual y pone el fin del año anterior el día antes, para que los pagos y gastos de esos días cuenten en el año
+  correcto. No acepta fechas futuras ni anteriores al inicio del año pasado.
+
 ## Octubre 2026 — La inscripción es un solo paquete
 
 - La **inscripción** incluye el **carnet QR y la papelería** (ya no son cobros aparte) y en la Caja sale en un solo

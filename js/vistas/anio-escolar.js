@@ -92,6 +92,62 @@ function eaMsg(t, ok) {
   const b = document.getElementById("ea-err");
   if (b) b.innerHTML = t ? `<div class="${ok ? "alert-item alert-info" : "error-msg"}">${t}</div>` : "";
 }
+// ---- Corregir la fecha de inicio del año actual (si se escribió mal al iniciarlo)
+// Mueve también el fin del año anterior al día antes, para que ningún pago quede en dos años ni en ninguno.
+function htmlCorregirInicio() {
+  if (rolUsuario !== "director" || !escCfg) return "";
+  const ant = escCfg.anteriores[escCfg.anteriores.length - 1];
+  return `<details style="margin:0.3rem 0 0.6rem"><summary style="cursor:pointer;font-size:0.8rem;color:#00509e">✏️ Corregir la fecha de inicio</summary>
+    <div style="font-size:0.74rem;color:#555;margin:0.4rem 0">Úsalo si al iniciar el año escribiste mal la fecha. Los pagos y gastos desde la nueva fecha pasan a contar en ${escHtml(escCfg.actual.nombre)}${ant ? ` y ${escHtml(ant.nombre)} terminará el día anterior` : ""}.</div>
+    <div style="display:flex;gap:0.5rem;align-items:flex-end">
+      <div class="field" style="flex:1;margin:0"><label class="field-label">Fecha real de inicio</label><input class="inp" type="date" id="ea-fix-inicio" value="${escHtml(escCfg.actual.inicio)}" max="${hoyLocal()}"/></div>
+      <button class="btn btn-primary btn-sm" onclick="corregirInicioAnio()">💾 Guardar</button>
+    </div>
+    <div id="ea-fix-msg"></div>
+  </details>`;
+}
+async function corregirInicioAnio() {
+  const msg = (t, ok) => {
+    const b = document.getElementById("ea-fix-msg");
+    if (b) b.innerHTML = t ? `<div class="${ok ? "alert-item alert-info" : "error-msg"}">${t}</div>` : "";
+  };
+  if (rolUsuario !== "director" || !escCfg) return;
+  const nueva = (document.getElementById("ea-fix-inicio") || {}).value || "";
+  const vieja = escCfg.actual.inicio;
+  const ant = escCfg.anteriores[escCfg.anteriores.length - 1];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(nueva)) return msg("Elige la fecha de inicio");
+  if (nueva === vieja) return msg("Esa ya es la fecha de inicio");
+  if (nueva > hoyLocal()) return msg("La fecha de inicio no puede ser futura");
+  if (ant && ant.inicio && nueva <= ant.inicio)
+    return msg(`Debe ser después del inicio de ${escHtml(ant.nombre)} (${fechaCorta(ant.inicio)})`);
+  if (
+    !confirm(
+      `¿Cambiar el inicio de ${escCfg.actual.nombre} del ${fechaCorta(vieja)} al ${fechaCorta(nueva)}?\n\n` +
+        `Los pagos y gastos desde el ${fechaCorta(nueva)} contarán en ${escCfg.actual.nombre}` +
+        (ant ? ` y ${ant.nombre} terminará el ${fechaCorta(diaAnterior(nueva))}.` : ".")
+    )
+  )
+    return;
+  try {
+    // Se lee de nuevo para no pisar nada que otro equipo haya cambiado
+    const ref = db.collection("config").doc("anioEscolar");
+    const d = (await ref.get()).data();
+    d.actual = { ...d.actual, inicio: nueva };
+    if (ant && d.anteriores && d.anteriores.length)
+      d.anteriores[d.anteriores.length - 1] = { ...d.anteriores[d.anteriores.length - 1], fin: diaAnterior(nueva) };
+    await ref.set(d);
+  } catch (e) {
+    return msg("No se pudo guardar: " + escHtml(e.message));
+  }
+  const otroMes = cobCfg && cobCfg.primerMes !== nueva.slice(0, 7);
+  await cargarTodo(); // los pagos y gastos se vuelven a leer con la fecha nueva
+  alert(
+    `✅ ${escCfg.actual.nombre} ahora inicia el ${fechaCorta(nueva)}.` +
+      (otroMes
+        ? `\n\nOjo: la primera cuota sigue siendo la de ${nombreMesYM(cobCfg.primerMes)}. Si cambió, corrígela en Cobranza → Cuotas del año.`
+        : "")
+  );
+}
 async function iniciarNuevoAnio() {
   if (rolUsuario !== "director") {
     alert("Solo el director puede cerrar el año escolar");
@@ -330,7 +386,8 @@ function renderConfigAnio() {
   <div class="info-row"><span>Año escolar actual</span><strong>${escHtml(nombreAct) || "Sin definir"}</strong></div>
   ${
     escCfg
-      ? `<div class="info-row"><span>Inició el</span><strong>${fechaCorta(escCfg.actual.inicio)}</strong></div>`
+      ? `<div class="info-row"><span>Inició el</span><strong>${fechaCorta(escCfg.actual.inicio)}</strong></div>
+  ${htmlCorregirInicio()}`
       : `<div class="info-row"><span>Estado</span><span style="font-size:0.75rem;color:#888;text-align:right">Aún no se separa por años:<br>todo el historial aparece junto</span></div>`
   }
   <div class="info-row"><span>Estudiantes activos</span><strong>${activos}</strong></div>
