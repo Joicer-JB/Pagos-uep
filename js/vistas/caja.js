@@ -3,7 +3,19 @@
 // Pensada para cobrar en 3 toques: 1) buscar y tocar al estudiante  2) tocar el método de pago  3) COBRAR.
 // Ya trae marcado lo que debe (mensualidades vencidas, recargo, deuda anterior), calcula el monto en Bs. a la tasa
 // del día y guarda al instante. Al final del día, el «Cierre de caja» cuadra lo cobrado contra el efectivo, el punto y el banco.
-let caja = { q: "", estId: "", sel: {}, otro: null, metodo: "", ref: "", guardando: false, vista: "cobro", cierre: "" };
+let caja = {
+  q: "",
+  estId: "",
+  sel: {},
+  otro: null,
+  trae: "", // «¿Cuánto trae?»: monto que se reparte solo (ver cajaRepartir)
+  parcial: null, // {key, monto}: el último concepto, si el monto solo alcanza para un abono
+  metodo: "",
+  ref: "",
+  guardando: false,
+  vista: "cobro",
+  cierre: "",
+};
 const cajaNorm = (s) =>
   sinAcento(s)
     .toLowerCase()
@@ -22,6 +34,8 @@ const cajaReset = () => {
   caja.estId = "";
   caja.sel = {};
   caja.otro = null;
+  caja.trae = "";
+  caja.parcial = null;
   caja.metodo = "";
   caja.ref = "";
   caja.guardando = false;
@@ -238,7 +252,9 @@ function cajaLineas() {
   const L = [];
   cajaItems(e)
     .items.filter((i) => caja.sel[i.key])
+    .map((i) => (caja.parcial && caja.parcial.key === i.key ? { ...i, abono: caja.parcial.monto } : i))
     .forEach((i) => {
+      if (i.abono != null) return L.push(...lineasDeAbono(i)); // solo alcanzó para un abono
       if (i.tipo === "i") {
         // La inscripción (con carnet y papelería) y el primer mes se guardan cada uno con su concepto, pero en el
         // recibo salen en un solo renglón («recibo»)
@@ -380,6 +396,8 @@ function cajaElegir(id) {
   caja.estId = id;
   caja.sel = {};
   caja.otro = null;
+  caja.trae = "";
+  caja.parcial = null;
   caja.metodo = "";
   caja.ref = "";
   caja.guardando = false;
@@ -424,6 +442,8 @@ function cajaActualizarTotal() {
 function cajaToggle(key) {
   const e = cajaEst();
   if (!e) return;
+  caja.trae = ""; // marcar a mano deja de repartir el monto
+  caja.parcial = null;
   const { items } = cajaItems(e);
   const meses = items.filter((i) => i.tipo === "m"),
     it = items.find((i) => i.key === key);
@@ -497,7 +517,11 @@ function htmlCajaPanel() {
     return `<div onclick="cajaToggle('${i.key}')" style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem;border:2px solid ${on ? "#1a9e5c" : "#dde3f0"};background:${on ? "#f0fff6" : "#fff"};border-radius:12px;margin-top:0.5rem;cursor:pointer;-webkit-tap-highlight-color:transparent">
       <div style="width:28px;height:28px;flex:none;border-radius:8px;border:2px solid ${on ? "#1a9e5c" : "#b8c2d6"};background:${on ? "#1a9e5c" : "#fff"};color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center">${on ? "✓" : ""}</div>
       <div style="flex:1;min-width:0"><div style="font-weight:700;color:#222">${escHtml(i.label)}</div><div style="font-size:0.72rem;color:${i.vencida ? "#c0392b" : "#888"}">${escHtml(i.sub)}</div></div>
-      <div style="font-weight:800;color:#003366;white-space:nowrap">${fmt(i.monto)}</div></div>`;
+      ${
+        caja.parcial && caja.parcial.key === i.key
+          ? `<div style="text-align:right;white-space:nowrap"><div style="font-weight:800;color:#b8860b">abono ${fmt(caja.parcial.monto)}</div><div style="font-size:0.68rem;color:#888">de ${fmt(i.monto)}</div></div>`
+          : `<div style="font-weight:800;color:#003366;white-space:nowrap">${fmt(i.monto)}</div>`
+      }</div>`;
   };
   const necesitaRef = caja.metodo === "Punto" || caja.metodo === "Transferencia Bs";
   return `<div class="card" style="padding:0.9rem">
@@ -513,16 +537,9 @@ function htmlCajaPanel() {
           ? `<div class="alert-item alert-mora" style="margin-top:0.6rem">⚠️ Este estudiante no tiene mensualidad asignada (ficha del estudiante).</div>`
           : ""
     }
-    ${items.length ? items.map(fila).join("") : cu && e.mensualidad > 0 ? `<div style="text-align:center;color:#1a9e5c;font-weight:700;padding:0.8rem">✅ Está al día. Puedes usar «Otro monto» para un adelanto.</div>` : ""}
-    ${
-      caja.otro
-        ? `<div style="margin-top:0.6rem;background:#f8faff;border-radius:12px;padding:0.7rem">
-        <div class="field" style="margin-bottom:0.5rem"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono a mensualidad" : c}</option>`).join("")}</select></div>
-          <div class="field"><label class="field-label">Monto ($)</label><input class="inp" id="caja-otro-inp" readonly inputmode="none" data-pad="monto" data-pad-label="Monto a cobrar ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí" value="${escHtml(caja.otro.monto)}" oninput="cajaOtroMonto(this.value)" style="cursor:pointer"/></div>
-        ${htmlCajaOtroPara(e)}
-        <button class="btn btn-gray btn-sm" onclick="cajaOtro(false)">Quitar</button></div>`
-        : `<button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="cajaOtro(true)">➕ Otro monto (abono, inscripción, uniformes…)</button>`
-    }
+    <div class="field" style="margin:0.6rem 0 0"><label class="field-label">💵 ¿Cuánto trae? <span style="font-weight:400;color:#888">(opcional: se reparte solo)</span></label>
+      <input class="inp" id="caja-trae-inp" readonly inputmode="none" data-pad="monto" data-pad-label="¿Cuánto trae? ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí y escribe el monto" value="${escHtml(caja.trae)}" oninput="cajaTrae(this.value)" style="cursor:pointer"/></div>
+    <div id="caja-items">${htmlCajaItems(e, items, cu, fila)}</div>
     <div class="field-label" style="margin-top:0.9rem">¿Cómo paga?</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
       ${METODOS.map(([m]) => `<button class="metodo-btn ${caja.metodo === m ? "selected" : ""}" style="padding:0.95rem 0.4rem;font-size:0.9rem" onclick="cajaMetodo('${m}')">${ETIQ_METODO[m] || m}</button>`).join("")}
@@ -794,4 +811,128 @@ function htmlCajaOtroPara(e) {
   const obligatorio = o.concepto === "Otro";
   return `<div class="field" style="margin:0.3rem 0 0.5rem"><label class="field-label">¿Para qué es?${obligatorio ? " *" : " (opcional)"}</label>
     <input class="inp" id="caja-otro-detalle" maxlength="80" autocomplete="off" placeholder="${obligatorio ? "Ej: Excursión, carnet, libro…" : "Ej: Camisa talla 10"}" value="${escHtml(o.detalle)}" oninput="cajaOtroDetalle(this.value)"/></div>`;
+}
+
+// Renglones de lo que se cobra y el bloque de «Otro monto» (se redibujan solos al repartir «¿Cuánto trae?»)
+function htmlCajaItems(e, items, cu, fila) {
+  return `${items.length ? items.map(fila).join("") : cu && e.mensualidad > 0 ? `<div style="text-align:center;color:#1a9e5c;font-weight:700;padding:0.8rem">✅ Está al día. Puedes usar «Otro monto» para un adelanto.</div>` : ""}
+    ${
+      caja.otro
+        ? `<div style="margin-top:0.6rem;background:#f8faff;border-radius:12px;padding:0.7rem">
+        <div class="field" style="margin-bottom:0.5rem"><label class="field-label">Concepto</label><select class="inp" onchange="cajaOtroConcepto(this.value)">${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${caja.otro.concepto === c ? "selected" : ""}>${c === "Mensualidad" ? "Abono a mensualidad" : c}</option>`).join("")}</select></div>
+          <div class="field"><label class="field-label">Monto ($)</label><input class="inp" id="caja-otro-inp" readonly inputmode="none" data-pad="monto" data-pad-label="Monto a cobrar ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí" value="${escHtml(caja.otro.monto)}" oninput="cajaOtroMonto(this.value)" style="cursor:pointer"/></div>
+        ${htmlCajaOtroPara(e)}
+        <button class="btn btn-gray btn-sm" onclick="cajaOtro(false)">Quitar</button></div>`
+        : `<button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="cajaOtro(true)">➕ Otro monto (abono, inscripción, uniformes…)</button>`
+    }`;
+}
+
+// ---- «¿Cuánto trae?»: el monto se reparte solo, como lo haría la administración
+// Orden: 1) inscripción (con carnet, papelería y su primer mes): sin ella no está inscrito; 2) deuda anterior;
+// 3) mensualidades vencidas, de la más antigua a la más nueva; 4) recargos por mora; 5) la mensualidad en curso.
+// Si no alcanza para un concepto completo, queda como abono a ese concepto; lo que sobra, adelanto de los meses
+// siguientes.
+const ordenCobro = (i) =>
+  i.tipo === "i" ? 0 : i.tipo === "d" ? 1 : i.tipo === "m" && i.vencida ? 2 : i.tipo === "r" ? 3 : 4;
+function cajaRepartir(monto) {
+  const e = cajaEst();
+  if (!e) return;
+  const { items } = cajaItems(e);
+  caja.sel = {};
+  caja.parcial = null;
+  caja.otro = null;
+  let queda = r2(monto);
+  const orden = items
+    .map((i, n) => ({ i, n }))
+    .sort((a, b) => ordenCobro(a.i) - ordenCobro(b.i) || a.n - b.n)
+    .map((x) => x.i);
+  for (const i of orden) {
+    if (queda <= 0.004) break;
+    caja.sel[i.key] = true;
+    if (queda < i.monto - 0.004) {
+      caja.parcial = { key: i.key, monto: queda };
+      queda = 0;
+    } else queda = r2(queda - i.monto);
+  }
+  if (queda > 0.004) {
+    // Adelanto: al primer mes que se deba y no esté ya en la lista
+    const yaEstan = new Set(items.filter((i) => i.tipo === "m").map((i) => i.key.slice(1)));
+    const ins = items.find((i) => i.tipo === "i");
+    if (ins && ins.primerMes) yaEstan.add(ins.primerMes.ym);
+    const siguiente = cajaCuotasAbonables(e).find((q) => !yaEstan.has(q.ym));
+    caja.otro = {
+      concepto: "Mensualidad",
+      monto: String(queda).replace(".", ","),
+      ym: siguiente ? siguiente.ym : "",
+      detalle: "",
+    };
+  }
+}
+function cajaTrae(v) {
+  caja.trae = v;
+  const m = parseMontoCaja(v);
+  if (m > 0) cajaRepartir(m);
+  // Solo se redibujan los renglones: el teclado numérico sigue abierto en «¿Cuánto trae?»
+  const cont = document.getElementById("caja-items");
+  if (cont) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = htmlCajaPanel();
+    const nuevo = tmp.querySelector("#caja-items");
+    if (nuevo) cont.innerHTML = nuevo.innerHTML;
+  }
+  cajaActualizarTotal();
+}
+// Renglones de un concepto que solo se abona en parte
+function lineasDeAbono(i) {
+  const m = r2(i.abono);
+  if (i.tipo === "i") {
+    // Primero la inscripción y, si sobra, el primer mes
+    const aIns = r2(Math.min(m, i.montoIns)),
+      aMes = r2(m - aIns);
+    const L = [
+      {
+        concepto: "Inscripción",
+        monto: aIns,
+        desc:
+          (aIns < i.montoIns - 0.004 ? "Abono a la " : "") +
+          i.label.replace(/^Inscripción/, aIns < i.montoIns - 0.004 ? "inscripción" : "Inscripción") +
+          " — " +
+          fmt(aIns),
+        recibo:
+          "Abono a la " +
+          i.label.replace(/^Inscripción/, "inscripción") +
+          " (" +
+          i.partes +
+          ") — " +
+          fmt(m) +
+          " de " +
+          fmt(i.monto),
+        mes: "",
+        ym: "",
+      },
+    ];
+    if (aMes > 0.004 && i.primerMes)
+      L.push({
+        concepto: "Mensualidad",
+        monto: aMes,
+        desc: "Abono a la mensualidad de " + i.primerMes.mes + " — " + fmt(aMes),
+        recibo: "",
+        mes: MESES[Number(i.primerMes.ym.slice(5, 7)) - 1],
+        ym: i.primerMes.ym,
+      });
+    return L;
+  }
+  const deMes = i.tipo === "m";
+  return [
+    {
+      concepto: i.concepto,
+      monto: m,
+      desc:
+        (deMes ? "Abono a la mensualidad de " + i.label.replace(/^Mensualidad /, "") : "Abono a " + i.label) +
+        " — " +
+        fmt(m),
+      mes: i.mes || "",
+      ym: deMes ? i.key.slice(1) : "",
+    },
+  ];
 }

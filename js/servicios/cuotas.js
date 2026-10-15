@@ -141,9 +141,39 @@ function calcCuotas(e, hoy) {
   }
   const desde = cobCfg.primerMes + "-01";
   const delEst = pagosDeEstudiante(e).filter((p) => p.fecha && p.fecha >= desde);
+  // Inscripción del año (si hay estructura de costos): inscripción de su nivel + carnet QR + papelería, en un solo
+  // pago obligatorio desde el inicio del año. Se paga junto con el primer mes: si un pago de «Inscripción» trae más
+  // de lo que vale (p. ej. 106 $ = 61 de inscripción + 45 de septiembre), lo demás paga el primer mes.
+  const primera = lista.find((c) => c.monto > 0) || null;
+  const costo = costoDe(e);
+  let inscripcion = null,
+    sobranteIns = null;
+  if (costo) {
+    const partes = {
+      inscripcion: e.sinInscripcion ? 0 : costo.inscripcion,
+      carnet: cobCfg.carnet || 0,
+      papeleria: cobCfg.papeleria || 0,
+    };
+    const monto = r2(partes.inscripcion + partes.carnet + partes.papeleria);
+    const pagosIns = pagosDeEstudiante(e)
+      .filter((p) => p.fecha && p.fecha >= (cobCfg.inscripcionDesde || desde))
+      .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET);
+    const pagadoIns = r2(pagosIns.reduce((s, p) => s + (p.total || 0), 0));
+    const ab = r2(Math.min(monto, Math.max(0, pagadoIns)));
+    if (monto > 0) inscripcion = { concepto: "Inscripción", monto, partes, pagado: ab, pendiente: r2(monto - ab) };
+    const sobra = r2(pagadoIns - Math.max(monto, 0));
+    if (sobra > 0.004 && primera) {
+      const ultimo = pagosIns
+        .map((p) => p.fecha)
+        .sort()
+        .pop();
+      sobranteIns = { fecha: ultimo, total: sobra, cuotas: { [primera.ym]: sobra }, concepto: "Mensualidad" };
+    }
+  }
   // Pagos de mensualidad en orden cronológico: sirven para saber CUÁNDO quedó pagada cada cuota (¿a tiempo o tarde?)
   const pagosM = delEst
     .filter((p) => p.concepto === "Mensualidad")
+    .concat(sobranteIns ? [sobranteIns] : [])
     .sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
   const pagado = r2(pagosM.reduce((s, p) => s + (p.total || 0), 0));
   // Cada pago, en orden de fecha: primero a los meses que indica y el resto desde la cuota más antigua que se deba.
@@ -189,31 +219,11 @@ function calcCuotas(e, hoy) {
   const recargoPend = r2(Math.max(0, recargoTotal - recargoPagado));
   const vencidas = lista.filter((c) => c.vencida);
   const saldo = r2(vencidas.reduce((s, c) => s + c.pendiente, 0));
-  // Inscripción del año (si hay estructura de costos): inscripción de su nivel + carnet QR + papelería, en un solo
-  // pago obligatorio desde el inicio del año. (El primer mes se cobra con ella, pero como mensualidad.)
-  const costo = costoDe(e);
-  let inscripcion = null;
-  if (costo) {
-    const partes = {
-      inscripcion: e.sinInscripcion ? 0 : costo.inscripcion,
-      carnet: cobCfg.carnet || 0,
-      papeleria: cobCfg.papeleria || 0,
-    };
-    const monto = r2(partes.inscripcion + partes.carnet + partes.papeleria);
-    const pagadoIns = r2(
-      pagosDeEstudiante(e)
-        .filter((p) => p.fecha && p.fecha >= (cobCfg.inscripcionDesde || desde))
-        .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET)
-        .reduce((s, p) => s + (p.total || 0), 0)
-    );
-    const ab = r2(Math.min(monto, Math.max(0, pagadoIns)));
-    if (monto > 0) inscripcion = { concepto: "Inscripción", monto, partes, pagado: ab, pendiente: r2(monto - ab) };
-  }
   const obligPend = inscripcion ? inscripcion.pendiente : 0;
   return {
     inscripcion,
     obligPend,
-    primera: lista.find((c) => c.monto > 0) || null, // el primer mes que paga (se cobra con la inscripción)
+    primera, // el primer mes que paga (se cobra con la inscripción)
     lista,
     pagado,
     saldo,

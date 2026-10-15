@@ -129,10 +129,11 @@ function renderFormPago(data = {}) {
       <div class="form-row">
         <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="p-fecha" max="${todayStr()}" value="${escHtml(data.fecha) || todayStr()}" onchange="actualizarTasaCampo('p',calcBsPago)"/></div>
         <div class="field"><label class="field-label">Concepto *</label>
-          <select class="inp" id="p-concepto">
+          <select class="inp" id="p-concepto" onchange="sugerirInscripcionPago()">
             <option value="">Seleccionar...</option>
             ${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${data.concepto === c ? "selected" : ""}>${c}</option>`).join("")}
           </select>
+          <div id="p-ins-nota" style="font-size:0.7rem;color:#1a7a4a;margin-top:2px"></div>
         </div>
       </div>
       <div class="field"><label class="field-label">Mes que cancela</label>
@@ -218,6 +219,34 @@ function seleccionarEstudiantePago(estId) {
   if (badgeCed) badgeCed.textContent = est.cedula ? "CC " + est.cedula : "";
   window._pagoEstId = estId;
   window._pagoCedula = est.cedula;
+  sugerirInscripcionPago();
+}
+// Concepto «Inscripción»: llena el monto con todo lo que se paga al inscribir (inscripción + carnet + papelería +
+// el primer mes) y su desglose. Lo que pase de la inscripción se descuenta del primer mes (ver calcCuotas).
+function sugerirInscripcionPago() {
+  const concepto = (document.getElementById("p-concepto") || {}).value;
+  const est = estudiantes.find((e) => e.id === window._pagoEstId);
+  const nota = document.getElementById("p-ins-nota");
+  if (nota) nota.textContent = "";
+  if (concepto !== "Inscripción" || !est) return;
+  const cu = calcCuotas(est);
+  if (!cu || !cu.inscripcion || cu.inscripcion.pendiente <= 0.004) {
+    if (nota && cu && cu.inscripcion) nota.textContent = "✅ La inscripción de este año ya está pagada.";
+    return;
+  }
+  const ins = cu.inscripcion,
+    mes = cu.primera && cu.primera.pendiente > 0.004 ? cu.primera : null;
+  const total = r2(ins.pendiente + (mes ? mes.pendiente : 0));
+  const detalle = textoPartesInscripcion(ins) + (mes ? " + " + mes.mes.split(" ")[0] + " " + fmt(mes.pendiente) : "");
+  const t = document.getElementById("p-total"),
+    d = document.getElementById("p-desc"),
+    m = document.getElementById("p-mes");
+  if (t) t.value = String(total).replace(".", ",");
+  if (d && !d.value.trim()) d.value = "Inscripción" + (escCfg ? " " + escCfg.actual.nombre : "") + " (" + detalle + ")";
+  if (m && mes) m.value = MESES[Number(mes.ym.slice(5, 7)) - 1];
+  if (nota)
+    nota.textContent = "Incluye " + detalle + " = " + fmt(total) + (mes ? ". " + mes.mes + " queda pagado." : ".");
+  calcBsPago();
 }
 function limpiarSeleccionPago() {
   const cedInput = document.getElementById("p-cedula");

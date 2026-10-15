@@ -31,6 +31,20 @@ renglón con todo lo que se paga al inscribir: inscripción de su nivel + carnet
 ejemplo, en media general: 55 + 13 + 3 + 55 = **126 $**. Elige cómo paga y cobra: septiembre queda pagado y sale un
 solo recibo. Si también debe otro mes vencido, aparece aparte.
 
+### «¿Cuánto trae?» (lo más rápido)
+
+Escribe en **💵 ¿Cuánto trae?** el monto que trae el representante y la Caja lo reparte sola:
+
+1. Inscripción (con carnet, papelería y septiembre).
+2. Deuda anterior.
+3. Mensualidades vencidas, de la más antigua a la más nueva.
+4. Recargos por mora.
+5. La mensualidad en curso.
+
+Si el monto no alcanza para algo completo, queda como **abono** a eso (por ejemplo «abono $ 24 de $ 45» en octubre).
+Si sobra, va como **adelanto** del mes siguiente. Revisa, elige cómo paga y cobra. Si prefieres elegir tú, marca o
+desmarca a mano.
+
 ### Abonos (cuando no paga el mes completo)
 
 1. Toca **➕ Otro monto** y deja el concepto **«Abono a mensualidad»**.
@@ -106,6 +120,9 @@ Pago**:
    estaba mal, así los demás pagos y reportes de ese día la usarán también.
 3. Si la fecha es de un **año escolar anterior**, la app te pide confirmar: el pago quedará en el historial de
    ese año y no aparecerá en las listas del año actual. No se aceptan fechas futuras.
+
+**Inscripción desde 💰 Pagos:** al elegir el concepto «Inscripción», el monto se llena solo con todo el paquete
+(inscripción + carnet + papelería + septiembre). Lo que pase de la inscripción se descuenta de septiembre.
 
 Lo mismo funciona en 📒 Finanzas (ingresos y gastos) y en 👷 Nómina. Para revisar o corregir las tasas de varios
 días también puedes usar el botón 💱 de la cabecera.
