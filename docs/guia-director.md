@@ -87,6 +87,12 @@ Si el pago había descontado una «deuda anterior» anotada a mano, al borrar el
 ficha del estudiante (el mensaje de confirmación lo indica). Los recibos registrados antes de octubre de 2026
 no guardaban ese dato: si borras uno de esos, revisa la deuda del estudiante a mano.
 
+## Si pusiste mal la fecha de inicio del año
+
+En **⚙️ Configuración → 📅 Año escolar → ✏️ Corregir la fecha de inicio**, escribe la fecha real y pulsa
+**Guardar**. El año anterior termina automáticamente el día antes, y los pagos y gastos de esos días pasan al año
+correcto. (El resumen guardado del año anterior al cerrarlo no se recalcula.)
+
 ## Al terminar el año escolar
 
 1. **💾 Descargar respaldo ahora** (Configuración → Año escolar). Guarda el archivo fuera de la
