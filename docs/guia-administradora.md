@@ -107,6 +107,9 @@ Pago**:
 3. Si la fecha es de un **año escolar anterior**, la app te pide confirmar: el pago quedará en el historial de
    ese año y no aparecerá en las listas del año actual. No se aceptan fechas futuras.
 
+**Inscripción desde 💰 Pagos:** al elegir el concepto «Inscripción», el monto se llena solo con todo el paquete
+(inscripción + carnet + papelería + septiembre). Lo que pase de la inscripción se descuenta de septiembre.
+
 Lo mismo funciona en 📒 Finanzas (ingresos y gastos) y en 👷 Nómina. Para revisar o corregir las tasas de varios
 días también puedes usar el botón 💱 de la cabecera.
 

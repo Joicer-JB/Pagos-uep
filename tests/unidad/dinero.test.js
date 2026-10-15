@@ -357,3 +357,30 @@ test("sin estructura de costos guardada, nada cambia (no hay inscripción obliga
   assert.equal(c.inscripcion, null);
   assert.equal(c.total, 0);
 });
+
+test("un pago de «Inscripción» que incluye septiembre (Pagos) también paga septiembre", () => {
+  conCostos();
+  poner("pagos", [pago("2026-09-02", 106, "Inscripción")]); // primaria: 61 de inscripción + 45 de septiembre
+  const c = cuotasDe({ grado: "3er Grado", mensualidad: 45 });
+  assert.equal(c.inscripcion.pendiente, 0);
+  assert.equal(c.lista[0].pendiente, 0); // septiembre pagado
+  assert.equal(c.lista[0].fechaPago, "2026-09-02");
+  assert.equal(c.lista[1].pendiente, 45); // octubre sigue pendiente
+  assert.equal(c.total, 45);
+});
+
+test("si la inscripción se paga sola (sin septiembre), septiembre sigue pendiente", () => {
+  conCostos();
+  poner("pagos", [pago("2026-09-02", 61, "Inscripción")]);
+  const c = cuotasDe({ grado: "3er Grado", mensualidad: 45 });
+  assert.equal(c.inscripcion.pendiente, 0);
+  assert.equal(c.lista[0].pendiente, 45);
+});
+
+test("lo que pase de inscripción + septiembre sigue a los meses siguientes", () => {
+  conCostos();
+  poner("pagos", [pago("2026-09-02", 151, "Inscripción")]); // 61 + 45 + 45
+  const c = cuotasDe({ grado: "3er Grado", mensualidad: 45 });
+  assert.equal(c.lista[0].pendiente, 0);
+  assert.equal(c.lista[1].pendiente, 0);
+});

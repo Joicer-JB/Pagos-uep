@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — Inscripción con septiembre desde 💰 Pagos
+
+- Si un pago con concepto **«Inscripción»** trae más de lo que vale la inscripción (por ejemplo 106 $ = 61 de
+  inscripción + 45 de septiembre), lo demás **paga el primer mes** (septiembre). Corrige también los pagos ya
+  registrados así.
+- En 💰 Pagos → Nuevo pago, al elegir «Inscripción» se llenan solos el monto del paquete, el mes y el desglose.
+
 ## Octubre 2026 — Corregir la fecha de inicio del año escolar
 
 - En ⚙️ Configuración → 📅 Año escolar, **«✏️ Corregir la fecha de inicio»** (director): cambia el inicio del año

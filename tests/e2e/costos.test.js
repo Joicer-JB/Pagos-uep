@@ -102,6 +102,22 @@ test("si septiembre ya estaba pagado, la inscripción va sola", async () => {
   assert.equal(await llamar(`cajaItems(cajaEst()).items.find((i) => i.key === "i").monto`), 71);
 });
 
+test("en Pagos, el concepto «Inscripción» llena el paquete y septiembre queda pagado", async () => {
+  await llamar(
+    `cerrarModal(); setTab("pagos"); subTab.pagos = "nuevo"; renderTabContent(); seleccionarEstudiantePago("est3")`
+  );
+  await s.pagina.selectOption("#p-concepto", "Inscripción"); // Valentina Rojas, inicial tiempo completo
+  assert.equal(await s.pagina.inputValue("#p-total"), "106");
+  assert.equal(await s.pagina.inputValue("#p-mes"), "Septiembre");
+  assert.match(await s.pagina.inputValue("#p-desc"), /^Inscripción 2026-2027 \(inscripción \$ 45,00 \+ carnet QR/);
+  assert.match(await s.pagina.textContent("#p-ins-nota"), /= \$ 106,00\. Septiembre 2026 queda pagado/);
+  await llamar(`guardarPago()`);
+  await s.pagina.waitForSelector(".recibo-nums");
+  const c = await llamar(`JSON.parse(JSON.stringify(calcCuotas(estudiantes.find((e) => e.id === "est3"))))`);
+  assert.equal(c.inscripcion.pendiente, 0);
+  assert.equal(c.lista[0].pendiente, 0); // septiembre pagado con lo que pasó de la inscripción
+});
+
 test("ficha: en inicial se elige el horario y la mensualidad se ajusta a la estructura", async () => {
   await llamar(`setTab("estudiantes"); abrirModal({ tipo: "nuevo-estudiante" })`);
   assert.equal(await s.pagina.isVisible("#e-horario"), false); // sin grado no aplica
