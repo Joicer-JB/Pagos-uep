@@ -8,9 +8,10 @@
 // config.recargoDesde = fecha; solo cuotas que vencen desde ese día generan recargo (evita cobrar con efecto retroactivo).
 // El estudiante marcado «sinRecargo» (exonerado) nunca lo genera.
 // ESTRUCTURA DE COSTOS (opcional): config.costos = {plan: {inscripcion, mensualidad}} por plan (inicial a tiempo
-// completo o medio tiempo, primaria, media general), más config.carnet y config.papeleria. La inscripción y el
-// carnet + papelería son obligatorios una vez por año: los pagos con esos conceptos desde config.inscripcionDesde
-// los cubren. El estudiante marcado «sinInscripcion» (exonerado) no paga inscripción.
+// completo o medio tiempo, primaria, media general), más config.carnet y config.papeleria. La INSCRIPCIÓN es un solo
+// pago obligatorio por año que incluye la inscripción de su nivel, el carnet QR y la papelería; en la Caja se cobra
+// junto con el primer mes (septiembre). La cubren los pagos de «Inscripción» desde config.inscripcionDesde.
+// El estudiante marcado «sinInscripcion» (exonerado) solo paga el carnet y la papelería.
 let cobCfg = null;
 const PLANES_COSTO = [
   ["inicialCompleto", "Inicial · tiempo completo"],
@@ -18,7 +19,7 @@ const PLANES_COSTO = [
   ["primaria", "Primaria"],
   ["media", "Media general"],
 ];
-const CONCEPTO_CARNET = "Carnet y papelería";
+const CONCEPTO_CARNET = "Carnet y papelería"; // ya no se cobra aparte (va en la inscripción); pagos viejos cuentan
 // Montos con los que se llena el formulario la primera vez (estructura de costos 2026-2027)
 const COSTOS_SUGERIDOS = {
   costos: {
@@ -188,23 +189,31 @@ function calcCuotas(e, hoy) {
   const recargoPend = r2(Math.max(0, recargoTotal - recargoPagado));
   const vencidas = lista.filter((c) => c.vencida);
   const saldo = r2(vencidas.reduce((s, c) => s + c.pendiente, 0));
-  // Inscripción y carnet + papelería del año (si hay estructura de costos): obligatorios desde el inicio del año
-  const delAnio = pagosDeEstudiante(e).filter((p) => p.fecha && p.fecha >= (cobCfg.inscripcionDesde || desde));
-  const obligacion = (concepto, monto) => {
-    const pagadoO = r2(delAnio.filter((p) => p.concepto === concepto).reduce((s, p) => s + (p.total || 0), 0));
-    const ab = r2(Math.min(monto, Math.max(0, pagadoO)));
-    return { concepto, monto, pagado: ab, pendiente: r2(monto - ab) };
-  };
+  // Inscripción del año (si hay estructura de costos): inscripción de su nivel + carnet QR + papelería, en un solo
+  // pago obligatorio desde el inicio del año. (El primer mes se cobra con ella, pero como mensualidad.)
   const costo = costoDe(e);
-  const inscripcion =
-    costo && costo.inscripcion > 0 && !e.sinInscripcion ? obligacion("Inscripción", costo.inscripcion) : null;
-  const kit = r2((cobCfg.carnet || 0) + (cobCfg.papeleria || 0));
-  const carnet = cobCfg.costos && kit > 0 ? obligacion(CONCEPTO_CARNET, kit) : null;
-  const obligPend = r2((inscripcion ? inscripcion.pendiente : 0) + (carnet ? carnet.pendiente : 0));
+  let inscripcion = null;
+  if (costo) {
+    const partes = {
+      inscripcion: e.sinInscripcion ? 0 : costo.inscripcion,
+      carnet: cobCfg.carnet || 0,
+      papeleria: cobCfg.papeleria || 0,
+    };
+    const monto = r2(partes.inscripcion + partes.carnet + partes.papeleria);
+    const pagadoIns = r2(
+      pagosDeEstudiante(e)
+        .filter((p) => p.fecha && p.fecha >= (cobCfg.inscripcionDesde || desde))
+        .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET)
+        .reduce((s, p) => s + (p.total || 0), 0)
+    );
+    const ab = r2(Math.min(monto, Math.max(0, pagadoIns)));
+    if (monto > 0) inscripcion = { concepto: "Inscripción", monto, partes, pagado: ab, pendiente: r2(monto - ab) };
+  }
+  const obligPend = inscripcion ? inscripcion.pendiente : 0;
   return {
     inscripcion,
-    carnet,
     obligPend,
+    primera: lista.find((c) => c.monto > 0) || null, // el primer mes que paga (se cobra con la inscripción)
     lista,
     pagado,
     saldo,
@@ -228,6 +237,15 @@ function ymDeMes(nombreMes) {
   }
   return "";
 }
+// «inscripción $ 55 + carnet QR $ 13 + papelería $ 3»
+const textoPartesInscripcion = (ins) =>
+  [
+    ins.partes.inscripcion > 0 ? "inscripción " + fmt(ins.partes.inscripcion) : "",
+    ins.partes.carnet > 0 ? "carnet QR " + fmt(ins.partes.carnet) : "",
+    ins.partes.papeleria > 0 ? "papelería " + fmt(ins.partes.papeleria) : "",
+  ]
+    .filter(Boolean)
+    .join(" + ");
 // Deuda anterior escrita a mano en la ficha (estado «mora» + monto)
 const deudaManual = (e) => (e.estado === "mora" ? e.moraMonto || 0 : 0);
 // Deuda total de un estudiante: cuotas vencidas + recargos pendientes + deuda anterior
@@ -242,7 +260,6 @@ function conceptoDeE(e) {
   const c = calcCuotas(e),
     p = [];
   if (c && c.inscripcion && c.inscripcion.pendiente > 0.004) p.push("Inscripción");
-  if (c && c.carnet && c.carnet.pendiente > 0.004) p.push(CONCEPTO_CARNET);
   if (c && c.pendientes.length) p.push("Mensualidad: " + c.pendientes.map((q) => q.mes).join(", "));
   if (c && c.recargoPend > 0)
     p.push("Recargo por mora (" + c.nRecargos + (c.nRecargos === 1 ? " mes" : " meses") + ")");
@@ -277,20 +294,19 @@ function htmlEstadoCuenta(e) {
             )
             .join("")
     }
-    ${[c.inscripcion, c.carnet]
-      .filter(Boolean)
-      .map(
-        (o) => `
+    ${
+      c.inscripcion
+        ? `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px dashed #eee;font-size:0.8rem">
-      <div><strong>${escHtml(o.concepto)}</strong><div style="font-size:0.65rem;color:#888">del año escolar</div></div>
-      <div style="text-align:right">${fmt(o.monto)}${est({ ...o, vencida: true })}</div></div>`
-      )
-      .join("")}
+      <div><strong>Inscripción</strong><div style="font-size:0.65rem;color:#888">${escHtml(textoPartesInscripcion(c.inscripcion))}</div></div>
+      <div style="text-align:right">${fmt(c.inscripcion.monto)}${est({ ...c.inscripcion, vencida: true })}</div></div>`
+        : ""
+    }
     <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.8rem"><span>Pagado en mensualidades</span><strong style="color:#1a9e5c">${fmt(c.pagado)}</strong></div>
     <div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Saldo vencido</span><strong style="color:${c.saldo > 0 ? "#e53e3e" : "#1a9e5c"}">${fmt(c.saldo)}${tv && c.saldo > 0 ? " · " + fmtBs(r2(c.saldo * tv)) : ""}</strong></div>
     ${
       c.obligPend > 0
-        ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Inscripción y carnet pendientes</span><strong style="color:#e53e3e">${fmt(c.obligPend)}</strong></div>`
+        ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem"><span>Inscripción pendiente</span><strong style="color:#e53e3e">${fmt(c.obligPend)}</strong></div>`
         : ""
     }
     ${
@@ -441,7 +457,7 @@ function htmlCfgCostos() {
   const desde = (cobCfg && cobCfg.inscripcionDesde) || "";
   return `<div style="background:#f0f4ff;border-radius:10px;padding:0.7rem;margin:0.5rem 0">
     <div style="font-weight:700;font-size:0.82rem;color:#003366">💲 Estructura de costos del año${cobCfg && cobCfg.costos ? "" : " <span style='color:#c0392b'>(sin guardar)</span>"}</div>
-    <div style="font-size:0.7rem;color:#666;margin:0.2rem 0 0.5rem">La inscripción y el carnet + papelería son obligatorios una vez al año: si no están pagados, salen como deuda y aparecen marcados en la Caja.</div>
+    <div style="font-size:0.7rem;color:#666;margin:0.2rem 0 0.5rem">La inscripción es obligatoria una vez al año e <strong>incluye el carnet QR y la papelería</strong>. En la Caja se cobra junto con el primer mes (septiembre). Si no está pagada, sale como deuda.</div>
     <table style="width:100%;font-size:0.76rem;border-collapse:collapse">
       <thead><tr><th style="text-align:left">Nivel</th><th>Inscripción $</th><th>Mensualidad $</th></tr></thead>
       <tbody>${PLANES_COSTO.map(

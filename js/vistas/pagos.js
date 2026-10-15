@@ -131,7 +131,7 @@ function renderFormPago(data = {}) {
         <div class="field"><label class="field-label">Concepto *</label>
           <select class="inp" id="p-concepto">
             <option value="">Seleccionar...</option>
-            ${["Mensualidad", "Inscripción", CONCEPTO_CARNET, "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${data.concepto === c ? "selected" : ""}>${c}</option>`).join("")}
+            ${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${data.concepto === c ? "selected" : ""}>${c}</option>`).join("")}
           </select>
         </div>
       </div>

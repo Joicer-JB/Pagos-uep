@@ -62,8 +62,8 @@ montos y pulsa **Guardar**.
 
 - La plataforma ofrece poner a cada estudiante la mensualidad de su nivel. Si alguno tiene un monto especial
   (descuento, beca), corrígelo luego en su ficha.
-- La inscripción y el carnet + papelería se cobran una vez al año. Si un estudiante no los ha pagado, salen como
-  deuda y aparecen ya marcados en la Caja.
+- La inscripción se cobra una vez al año e **incluye el carnet QR y la papelería**; en la Caja va junto con
+  septiembre en un solo renglón. Si un estudiante no la ha pagado, sale como deuda y aparece ya marcada en la Caja.
 - En la ficha de los niños de inicial elige el **horario** (tiempo completo o medio tiempo), que define sus montos.
   Para becados o hijos del personal marca **«No paga inscripción»**.
 - Al empezar un año nuevo, actualiza aquí los montos.

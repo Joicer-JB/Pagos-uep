@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Octubre 2026 — La inscripción es un solo paquete
+
+- La **inscripción** incluye el **carnet QR y la papelería** (ya no son cobros aparte) y en la Caja sale en un solo
+  renglón junto con el **primer mes (septiembre)**: «Inscripción 2026-2027 (inscripción $ 55 + carnet QR $ 13 +
+  papelería $ 3 + Septiembre $ 55) — $ 126». Al cobrarla, septiembre queda pagado.
+- Si septiembre ya estaba pagado, la inscripción va sola. Si el estudiante entró después, va con su primer mes.
+- Exonerados de inscripción: pagan solo carnet y papelería (con su primer mes).
+
 ## Octubre 2026 — Estructura de costos: inscripción y carnet obligatorios
 
 - En 🔔 Cobranza → ⚙️ Cuotas del año, el director guarda la **estructura de costos del año**: inscripción y

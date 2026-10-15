@@ -24,11 +24,12 @@ Todos los montos están en **$ de referencia**. Cada pago guarda la tasa de su d
 
 En pantallas táctiles, al tocar un monto o la referencia aparece un teclado numérico grande.
 
-### Inscripción, carnet y septiembre
+### Inscripción (con carnet, papelería y septiembre)
 
-Si el estudiante todavía no pagó la **inscripción** o el **carnet QR y papelería** del año, al elegirlo en la Caja
-aparecen **ya marcados**, junto con la mensualidad vencida (al empezar el año, septiembre). Revisa lo marcado,
-elige cómo paga y cobra: sale un solo recibo con todo. Si solo trae una parte, desmarca lo que no paga.
+Si el estudiante todavía no pagó la **inscripción** del año, al elegirlo en la Caja aparece **ya marcada** en un solo
+renglón con todo lo que se paga al inscribir: inscripción de su nivel + carnet QR + papelería + septiembre. Por
+ejemplo, en media general: 55 + 13 + 3 + 55 = **126 $**. Elige cómo paga y cobra: septiembre queda pagado y sale un
+solo recibo. Si también debe otro mes vencido, aparece aparte.
 
 ### Abonos (cuando no paga el mes completo)
 
