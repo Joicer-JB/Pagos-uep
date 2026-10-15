@@ -45,6 +45,21 @@ Si el monto no alcanza para algo completo, queda como **abono** a eso (por ejemp
 Si sobra, va como **adelanto** del mes siguiente. Revisa, elige cómo paga y cobra. Si prefieres elegir tú, marca o
 desmarca a mano.
 
+### Pago mixto (una parte en $ y el resto en Bs.)
+
+Si el representante paga con dos formas, por ejemplo 20 $ en efectivo y el resto por pago móvil:
+
+1. Debajo de los métodos toca **➗ Pago mixto**.
+2. En la primera forma elige el método y escribe **cuánto paga con ella**: en **$** si es $ efectivo y en **Bs.** si
+   es punto, Bs efectivo o transferencia (lo que dice el voucher o la transferencia).
+3. La última forma es **el resto**: se calcula sola. En el total verás cuánto se recibe con cada forma, por ejemplo
+   «2. Transferencia · el resto — Bs. 18.634,50 · $ 101,00».
+4. Escribe la referencia de la transferencia y **cobra**. Sale **un solo recibo** con el método «Mixto» y el detalle de
+   cada forma. Con **➕ Otra forma de pago** puedes agregar hasta 4 formas. **Un solo método** vuelve a lo normal.
+
+Por dentro se guarda un pago por cada concepto y forma de pago, con el mismo N° de recibo. Así el **🔒 Cierre de caja**
+cuadra cada método por separado: los 20 $ van al efectivo en $ y los Bs. exactos, a las transferencias.
+
 ### Abonos (cuando no paga el mes completo)
 
 1. Toca **➕ Otro monto** y deja el concepto **«Abono a mensualidad»**.

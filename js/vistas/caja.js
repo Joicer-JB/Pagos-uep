@@ -12,6 +12,7 @@ let caja = {
   parcial: null, // {key, monto}: el último concepto, si el monto solo alcanza para un abono
   metodo: "",
   ref: "",
+  mixto: null, // pago mixto: {partes:[{metodo, monto, ref}]} (ver cajaFormas)
   guardando: false,
   vista: "cobro",
   cierre: "",
@@ -38,6 +39,7 @@ const cajaReset = () => {
   caja.parcial = null;
   caja.metodo = "";
   caja.ref = "";
+  caja.mixto = null;
   caja.guardando = false;
   caja.q = "";
 };
@@ -359,6 +361,7 @@ function cajaBuscar(q) {
     caja.otro = null;
     caja.metodo = "";
     caja.ref = "";
+    caja.mixto = null;
     const p = document.getElementById("caja-panel");
     if (p) p.innerHTML = "";
   }
@@ -400,6 +403,7 @@ function cajaElegir(id) {
   caja.parcial = null;
   caja.metodo = "";
   caja.ref = "";
+  caja.mixto = null;
   caja.guardando = false;
   const e = cajaEst();
   if (!e) return;
@@ -541,7 +545,10 @@ function htmlCajaPanel() {
       <input class="inp" id="caja-trae-inp" readonly inputmode="none" data-pad="monto" data-pad-label="¿Cuánto trae? ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí y escribe el monto" value="${escHtml(caja.trae)}" oninput="cajaTrae(this.value)" style="cursor:pointer"/></div>
     <div id="caja-items">${htmlCajaItems(e, items, cu, fila)}</div>
     <div class="field-label" style="margin-top:0.9rem">¿Cómo paga?</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+    ${
+      caja.mixto
+        ? htmlCajaMixto()
+        : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
       ${METODOS.map(([m]) => `<button class="metodo-btn ${caja.metodo === m ? "selected" : ""}" style="padding:0.95rem 0.4rem;font-size:0.9rem" onclick="cajaMetodo('${m}')">${ETIQ_METODO[m] || m}</button>`).join("")}
     </div>
     ${
@@ -550,13 +557,16 @@ function htmlCajaPanel() {
       <input class="inp" id="caja-ref-inp" readonly inputmode="none" data-pad="ref" data-pad-label="Referencia" data-pad-unit="" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí y escribe la referencia" value="${escHtml(caja.ref)}" oninput="cajaRef(this.value)" style="font-size:1.1rem;cursor:pointer"/></div>`
         : ""
     }
+    <button class="btn btn-gray btn-sm" style="margin-top:0.5rem" onclick="cajaMixto(true)">➗ Pago mixto (ej: una parte en $ y el resto por pago móvil)</button>`
+    }
     <div id="caja-total">${htmlCajaTotal()}</div>
   </div>`;
 }
 function htmlCajaTotal() {
   const { total } = cajaLineas(),
     tv = tasaHoyValor(),
-    bs = tv ? r2(total * tv) : 0;
+    bs = tv ? r2(total * tv) : 0,
+    formas = cajaFormas(total, tv);
   let falta = "";
   if (!tv) falta = "Falta la tasa BCV de hoy";
   else if (!(total > 0)) falta = "Marca lo que paga";
@@ -567,9 +577,7 @@ function htmlCajaTotal() {
     parseMontoCaja(caja.otro.monto) > 0
   )
     falta = "Escribe para qué es el pago";
-  else if (!caja.metodo) falta = "Toca cómo paga";
-  else if (caja.metodo === "Transferencia Bs" && caja.ref.replace(/\D/g, "").length < 4)
-    falta = "Escribe la referencia";
+  else falta = cajaFaltaPago(formas);
   return `<div style="background:linear-gradient(135deg,#003366,#00509e);color:#fff;border-radius:14px;padding:0.9rem;margin-top:0.8rem;text-align:center">
       <div style="font-size:0.68rem;color:#adc8ff;letter-spacing:1.5px">TOTAL A COBRAR</div>
       <div style="font-size:2rem;font-weight:800;color:#ffd700;line-height:1.2">${fmt(total)}</div>
@@ -578,7 +586,8 @@ function htmlCajaTotal() {
           ? `<div style="font-size:1.15rem;font-weight:700">${fmtBs(bs)}</div><div style="font-size:0.68rem;color:#adc8ff">Tasa BCV de hoy: Bs. ${fmtTasa(tv)}</div>`
           : `<div style="font-size:0.78rem;color:#ffd700;margin-top:4px">⚠️ Carga la tasa BCV de hoy con el botón de arriba</div>`
       }
-      ${metodoEnBs(caja.metodo) && tv && total > 0 ? `<div style="margin-top:0.5rem;background:rgba(255,255,255,0.16);border-radius:10px;padding:0.45rem;font-size:0.9rem">${caja.metodo === "Punto" ? "Digita en el punto" : caja.metodo === "Bs Efectivo" ? "Recibe en efectivo" : "Debe transferir"}: <strong style="color:#ffd700">${fmtBs(bs)}</strong></div>` : ""}
+      ${caja.mixto && tv && total > 0 ? htmlCajaFormasTotal(formas) : ""}
+      ${!caja.mixto && metodoEnBs(caja.metodo) && tv && total > 0 ? `<div style="margin-top:0.5rem;background:rgba(255,255,255,0.16);border-radius:10px;padding:0.45rem;font-size:0.9rem">${caja.metodo === "Punto" ? "Digita en el punto" : caja.metodo === "Bs Efectivo" ? "Recibe en efectivo" : "Debe transferir"}: <strong style="color:#ffd700">${fmtBs(bs)}</strong></div>` : ""}
     </div>
     <button class="btn btn-success btn-full" style="margin-top:0.7rem;padding:1.05rem;font-size:1.1rem" ${falta || caja.guardando ? "disabled" : ""} onclick="cajaCobrar()">${caja.guardando ? "Guardando…" : falta || "✅ COBRAR " + fmt(total)}</button>`;
 }
@@ -588,59 +597,43 @@ async function cajaCobrar() {
   const e = cajaEst(),
     tv = tasaHoyValor(),
     { lineas, total } = cajaLineas();
-  if (!e || !(total > 0) || !tv || !caja.metodo) return;
+  if (!e || !(total > 0) || !tv) return;
   if (soloLectura()) {
     alert("Estás viendo un año anterior (solo lectura).");
     return;
   }
-  const ref = caja.ref.trim();
-  if (caja.metodo === "Transferencia Bs" && ref.replace(/\D/g, "").length < 4) {
-    alert("Escribe la referencia de la transferencia");
+  const formas = cajaFormas(total, tv),
+    falta = cajaFaltaPago(formas);
+  if (falta) {
+    alert(falta);
     return;
   }
-  if (
-    ref &&
-    metodoEnBs(caja.metodo) &&
-    pagos.some(
-      (p) => p.metodo === caja.metodo && p.referencia && String(p.referencia) === ref && p.fecha === todayStr()
+  for (const f of formas) {
+    if (
+      f.ref &&
+      metodoEnBs(f.metodo) &&
+      pagos.some(
+        (p) => p.metodo === f.metodo && p.referencia && String(p.referencia) === f.ref && p.fecha === todayStr()
+      ) &&
+      !confirm("⚠️ La referencia " + f.ref + " ya se registró hoy con este método.\n¿Seguro que es un cobro distinto?")
     )
-  ) {
-    if (!confirm("⚠️ La referencia " + ref + " ya se registró hoy con este método.\n¿Seguro que es un cobro distinto?"))
       return;
   }
   caja.guardando = true;
   cajaPadCerrar();
   cajaActualizarTotal();
-  const fecha = todayStr(),
-    porConcepto = new Map();
-  lineas.forEach((l) => {
-    const g = porConcepto.get(l.concepto) || { concepto: l.concepto, monto: 0, desc: [], meses: [], cuotas: {} };
-    g.monto = r2(g.monto + l.monto);
-    g.desc.push(l.desc);
-    if (l.mes) g.meses.push(l.mes);
-    if (l.ym) g.cuotas[l.ym] = r2((g.cuotas[l.ym] || 0) + l.monto); // a qué mes va cada parte (ver calcCuotas)
-    porConcepto.set(l.concepto, g);
-  });
+  const mixto = formas.length > 1,
+    refTxt = (f) => (f.ref ? "\nRef. " + (f.metodo === "Punto" ? "punto" : "pago") + ": " + f.ref : "");
   const base = {
     nombre: e.nombre,
     cedula: e.cedula || "",
     estId: e.id,
     telefono: telDe(e).raw || "",
-    fecha,
-    metodo: caja.metodo,
+    fecha: todayStr(),
     tasa: tv,
     origen: "caja",
-    ...(ref ? { referencia: ref } : {}),
   };
-  const docs = [...porConcepto.values()].map((g) => ({
-    ...base,
-    concepto: g.concepto,
-    mes: g.meses[0] || "",
-    ...(Object.keys(g.cuotas).length ? { cuotas: g.cuotas } : {}),
-    descripcion: g.desc.join("\n") + (ref ? "\nRef. " + (caja.metodo === "Punto" ? "punto" : "pago") + ": " + ref : ""),
-    total: g.monto,
-    totalBs: r2(g.monto * tv),
-  }));
+  const docs = cajaDocsCobro(lineas, formas, base, tv);
   try {
     // Todos los conceptos con el mismo N° de recibo; la deuda anterior se descuenta igual que en el formulario de pagos
     const r = await registrarCobro(docs, {
@@ -651,18 +644,19 @@ async function cajaCobrar() {
     // Un solo recibo con todo lo cobrado
     const virtual = {
       ...docs[0],
+      ...(mixto ? { metodo: "Mixto", referencia: undefined } : {}),
       factura: r.factura,
       id: undefined,
-      concepto: docs.map((d) => d.concepto).join(" + "),
+      concepto: [...new Set(docs.map((d) => d.concepto))].join(" + "),
       mes: docs.length === 1 ? docs[0].mes : "",
       // En el recibo cada renglón como se cobró (la inscripción y su primer mes van en uno solo)
       descripcion:
         lineas
           .map((l) => (l.recibo !== undefined ? l.recibo : l.desc))
           .filter(Boolean)
-          .join("\n") + (ref ? "\nRef. " + (caja.metodo === "Punto" ? "punto" : "pago") + ": " + ref : ""),
+          .join("\n") + (mixto ? "" : refTxt(formas[0])),
       total,
-      totalBs: r2(total * tv),
+      totalBs: mixto ? r2(formas.reduce((s, f) => s + (f.bs != null ? f.bs : r2(f.usd * tv)), 0)) : r2(total * tv),
     };
     cajaReset();
     modalActual = { tipo: "recibo", pago: virtual };
@@ -935,4 +929,191 @@ function lineasDeAbono(i) {
       ym: deMes ? i.key.slice(1) : "",
     },
   ];
+}
+
+// ---- Pago mixto: el representante paga con dos o más formas (p. ej. 20 $ en efectivo y el resto por pago móvil).
+// Cada forma, menos la última, lleva su monto (en $ o en Bs., según el método); la última es el resto. Se guarda un
+// pago por concepto y forma de pago, todos con el mismo N° de recibo: así el cierre de caja cuadra cada método.
+const pideRef = (m) => m === "Punto" || m === "Transferencia Bs";
+function cajaMixto(on) {
+  if (on) {
+    const segundo = metodoEnBs(caja.metodo) ? caja.metodo : "Transferencia Bs";
+    caja.mixto = {
+      partes: [
+        { metodo: "Dólares Efectivo", monto: "", ref: "" },
+        { metodo: segundo, monto: "", ref: segundo === caja.metodo ? caja.ref : "" },
+      ],
+    };
+  } else caja.mixto = null;
+  cajaRefrescar();
+}
+const cajaParte = (i) => (caja.mixto && caja.mixto.partes[i]) || null;
+function cajaMixtoMetodo(i, m) {
+  const p = cajaParte(i);
+  if (!p) return;
+  if (metodoEnBs(p.metodo) !== metodoEnBs(m)) p.monto = ""; // cambió la moneda: el monto escrito ya no sirve
+  p.metodo = m;
+  if (!pideRef(m)) p.ref = "";
+  cajaRefrescar();
+}
+function cajaMixtoMonto(i, v) {
+  const p = cajaParte(i);
+  if (p) {
+    p.monto = v;
+    cajaActualizarTotal();
+  }
+}
+function cajaMixtoRef(i, v) {
+  const p = cajaParte(i);
+  if (p) {
+    p.ref = v.replace(/[^0-9A-Za-z\-]/g, "").slice(0, 30);
+    cajaActualizarTotal();
+  }
+}
+// La forma nueva va antes de la última (la última siempre es «el resto»)
+function cajaMixtoAgregar() {
+  if (caja.mixto && caja.mixto.partes.length < 4) {
+    caja.mixto.partes.splice(caja.mixto.partes.length - 1, 0, { metodo: "Punto", monto: "", ref: "" });
+    cajaRefrescar();
+  }
+}
+function cajaMixtoQuitar(i) {
+  if (caja.mixto && caja.mixto.partes.length > 2) {
+    caja.mixto.partes.splice(i, 1);
+    cajaRefrescar();
+  }
+}
+// Formas de pago del cobro: [{metodo, usd, bs (solo métodos en Bs.), ref}]. Sin pago mixto, una sola.
+function cajaFormas(total, tv) {
+  if (!caja.mixto)
+    return caja.metodo
+      ? [{ metodo: caja.metodo, usd: total, bs: metodoEnBs(caja.metodo) ? r2(total * tv) : null, ref: caja.ref.trim() }]
+      : [];
+  const partes = caja.mixto.partes;
+  let suma = 0;
+  return partes.map((p, i) => {
+    const enBs = metodoEnBs(p.metodo),
+      ref = (p.ref || "").trim();
+    if (i === partes.length - 1) {
+      const usd = r2(total - suma);
+      return { metodo: p.metodo, usd, bs: enBs ? r2(usd * tv) : null, ref };
+    }
+    const m = r2(parseMontoCaja(p.monto));
+    const usd = enBs ? (tv ? r2(m / tv) : 0) : m;
+    suma = r2(suma + usd);
+    return { metodo: p.metodo, usd, bs: enBs ? m : null, ref };
+  });
+}
+// Qué falta para poder cobrar («» = nada)
+function cajaFaltaPago(formas) {
+  if (!formas.length) return "Toca cómo paga";
+  const nombre = (m) => ETIQ_METODO[m] || m;
+  for (let i = 0; i < formas.length - 1; i++)
+    if (!(formas[i].usd > 0)) return "Escribe cuánto paga con " + nombre(formas[i].metodo);
+  if (formas.length > 1 && !(formas[formas.length - 1].usd > 0.004)) return "Las formas de pago pasan del total";
+  const sinRef = formas.find((f) => f.metodo === "Transferencia Bs" && f.ref.replace(/\D/g, "").length < 4);
+  if (sinRef) return formas.length > 1 ? "Escribe la referencia de la transferencia" : "Escribe la referencia";
+  return "";
+}
+// Los pagos a guardar: uno por concepto y forma de pago. Los renglones se pagan con las formas en orden (primero
+// la primera forma); un renglón puede quedar repartido entre dos formas. Con una sola forma, uno por concepto.
+function cajaDocsCobro(lineas, formas, base, tv) {
+  const mixto = formas.length > 1,
+    piezas = [];
+  let f = 0,
+    quedaForma = formas[0].usd;
+  lineas.forEach((l) => {
+    let queda = r2(l.monto);
+    while (queda > 0.004) {
+      const ultima = f === formas.length - 1;
+      const toma = ultima ? queda : r2(Math.min(queda, quedaForma));
+      if (toma > 0.004) piezas.push({ l, f, monto: toma });
+      queda = r2(queda - toma);
+      quedaForma = r2(quedaForma - toma);
+      if (!ultima && quedaForma <= 0.004) quedaForma = formas[++f].usd;
+    }
+  });
+  const grupos = new Map();
+  piezas.forEach(({ l, f, monto }) => {
+    const k = l.concepto + "|" + f;
+    const g = grupos.get(k) || { concepto: l.concepto, f, monto: 0, desc: [], meses: [], cuotas: {} };
+    g.monto = r2(g.monto + monto);
+    g.desc.push(
+      monto < l.monto - 0.004 ? l.desc + " · " + fmt(monto) + " con " + (ETIQ_METODO[formas[f].metodo] || "") : l.desc
+    );
+    if (l.mes && !g.meses.includes(l.mes)) g.meses.push(l.mes);
+    if (l.ym) g.cuotas[l.ym] = r2((g.cuotas[l.ym] || 0) + monto); // a qué mes va cada parte (ver calcCuotas)
+    grupos.set(k, g);
+  });
+  const lista = [...grupos.values()];
+  const formasPago = mixto
+    ? formas.map((x) => ({
+        metodo: x.metodo,
+        monto: x.usd,
+        ...(x.bs != null ? { montoBs: x.bs } : {}),
+        ...(x.ref ? { referencia: x.ref } : {}),
+      }))
+    : null;
+  // Bs. de cada pago: en el pago mixto, los Bs. que se recibieron con esa forma, repartidos entre sus conceptos
+  const bsDeGrupo = (g) => {
+    const x = formas[g.f];
+    if (!mixto || x.bs == null) return r2(g.monto * tv);
+    const deForma = lista.filter((y) => y.f === g.f);
+    const parte = (y) => r2((y.monto / x.usd) * x.bs);
+    return g === deForma[deForma.length - 1]
+      ? r2(x.bs - deForma.slice(0, -1).reduce((s, y) => s + parte(y), 0))
+      : parte(g);
+  };
+  return lista.map((g) => {
+    const x = formas[g.f];
+    return {
+      ...base,
+      metodo: x.metodo,
+      ...(x.ref ? { referencia: x.ref } : {}),
+      concepto: g.concepto,
+      mes: g.meses[0] || "",
+      ...(Object.keys(g.cuotas).length ? { cuotas: g.cuotas } : {}),
+      descripcion:
+        g.desc.join("\n") + (x.ref ? "\nRef. " + (x.metodo === "Punto" ? "punto" : "pago") + ": " + x.ref : ""),
+      total: g.monto,
+      totalBs: bsDeGrupo(g),
+      ...(formasPago ? { formasPago } : {}),
+    };
+  });
+}
+function htmlCajaMixto() {
+  const partes = caja.mixto.partes;
+  return `<div style="background:#f8faff;border:2px solid #dde3f0;border-radius:12px;padding:0.6rem 0.7rem">
+    <div style="font-size:0.75rem;color:#555;margin-bottom:0.3rem">➗ <strong>Pago mixto</strong>: escribe cuánto paga con cada forma; la última es el resto.</div>
+    ${partes
+      .map((p, i) => {
+        const ultima = i === partes.length - 1,
+          unidad = metodoEnBs(p.metodo) ? "Bs." : "$",
+          nombre = escHtml(ETIQ_METODO[p.metodo] || p.metodo);
+        return `<div class="caja-forma" style="padding:0.5rem 0;border-top:1px dashed #dde3f0">
+        <div style="display:flex;gap:0.4rem;align-items:center"><strong style="color:#003366">${i + 1}.</strong>
+          <select class="inp" id="caja-mx-met${i}" style="flex:1" onchange="cajaMixtoMetodo(${i},this.value)">${METODOS.map(([m]) => `<option value="${m}" ${p.metodo === m ? "selected" : ""}>${ETIQ_METODO[m] || m}</option>`).join("")}</select>
+          ${partes.length > 2 ? `<button class="btn btn-gray btn-sm" onclick="cajaMixtoQuitar(${i})" title="Quitar">✕</button>` : ""}</div>
+        ${
+          ultima
+            ? `<div style="font-size:0.78rem;color:#1a7a4a;margin-top:0.35rem">El resto: se calcula solo (míralo abajo)</div>`
+            : `<input class="inp" id="caja-mx-m${i}" readonly inputmode="none" data-pad="monto" data-pad-label="Cuánto paga con ${nombre} (${unidad})" data-pad-unit="${unidad}" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Monto en ${unidad} — toca aquí" value="${escHtml(p.monto)}" oninput="cajaMixtoMonto(${i},this.value)" style="margin-top:0.35rem;cursor:pointer"/>`
+        }
+        ${pideRef(p.metodo) ? `<input class="inp" id="caja-mx-r${i}" readonly inputmode="none" data-pad="ref" data-pad-label="Referencia (${nombre})" data-pad-unit="" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="${p.metodo === "Punto" ? "Referencia del voucher (opcional)" : "Referencia de la transferencia *"}" value="${escHtml(p.ref)}" oninput="cajaMixtoRef(${i},this.value)" style="margin-top:0.35rem;cursor:pointer"/>` : ""}
+      </div>`;
+      })
+      .join("")}
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.3rem">
+      ${partes.length < 4 ? `<button class="btn btn-gray btn-sm" onclick="cajaMixtoAgregar()">➕ Otra forma de pago</button>` : ""}
+      <button class="btn btn-gray btn-sm" onclick="cajaMixto(false)">Un solo método</button></div>
+  </div>`;
+}
+// En el total: cuánto se recibe con cada forma (la última, el resto)
+function htmlCajaFormasTotal(formas) {
+  return `<div class="caja-formas-total" style="margin-top:0.5rem;background:rgba(255,255,255,0.16);border-radius:10px;padding:0.45rem 0.6rem;font-size:0.85rem;text-align:left">${formas
+    .map(
+      (f, i) =>
+        `<div style="display:flex;justify-content:space-between;gap:0.5rem"><span>${i + 1}. ${escHtml(ETIQ_METODO[f.metodo] || f.metodo)}${i === formas.length - 1 ? " · el resto" : ""}</span><strong style="color:#ffd700;white-space:nowrap">${f.usd > 0 ? (f.bs != null ? fmtBs(f.bs) + " · " + fmt(f.usd) : fmt(f.usd)) : "—"}</strong></div>`
+    )
+    .join("")}</div>`;
 }

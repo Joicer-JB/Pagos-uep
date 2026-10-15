@@ -68,6 +68,21 @@ montos y pulsa **Guardar**.
   Para becados o hijos del personal marca **«No paga inscripción»**.
 - Al empezar un año nuevo, actualiza aquí los montos.
 
+## Tablero financiero
+
+En **📊 Reportes**, arriba, está el **🧮 Tablero financiero** del año. Cuenta solo las inscripciones y mensualidades de
+los estudiantes activos:
+
+- **Índice de cobranza**: de lo que ya venció, cuánto se cobró. En verde desde 90 %; en rojo por debajo de 70 %.
+- **Cobranza por mes**: lo cobrado de lo esperado en la inscripción y en cada mes, hasta el mes en curso.
+- **Antigüedad de la deuda**: lo vencido sin cobrar, por días de atraso (1–30, 31–60, 61–90 y más de 90), más los
+  recargos y la deuda de años anteriores. **Cobrar primero** lista a los 5 más atrasados.
+- **Proyección del año**: cuánto entra si todos pagan y cuánto se estima al cierre si la cobranza sigue al ritmo de
+  hoy. Lo vencido que se recupere se suma.
+- **Punto de equilibrio**: costos del mes (nómina del personal registrado y el promedio mensual de los demás gastos de
+  📒 Finanzas) contra las mensualidades del mes. Dice cuántos estudiantes deben pagar para cubrirlos y si, con la
+  cobranza actual, alcanza.
+
 ## Bitácora: quién registró y quién borró
 
 - Cada pago y cada ingreso o gasto guarda **quién lo registró**. Se ve en la lista de pagos (👤) y en el recibo

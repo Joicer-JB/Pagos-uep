@@ -14,6 +14,7 @@ pruebas automáticas avisan si algo se rompió.
 | El recibo de pago                                   | `js/vistas/pagos.js`                                |
 | El boletín                                          | `js/vistas/boletin.js`                              |
 | Cómo se calculan cuotas, mora y recargos            | `js/servicios/cuotas.js`                            |
+| Tablero financiero (indicadores de Reportes)        | `js/servicios/indicadores.js`                       |
 | Tasa BCV y conversión a Bs.                         | `js/servicios/tasa-bcv.js`                          |
 | Formato de montos y fechas                          | `js/utils/formato.js`                               |
 | Grados y áreas                                      | `js/utils/grados.js`                                |
