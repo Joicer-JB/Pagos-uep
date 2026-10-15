@@ -31,6 +31,20 @@ renglón con todo lo que se paga al inscribir: inscripción de su nivel + carnet
 ejemplo, en media general: 55 + 13 + 3 + 55 = **126 $**. Elige cómo paga y cobra: septiembre queda pagado y sale un
 solo recibo. Si también debe otro mes vencido, aparece aparte.
 
+### «¿Cuánto trae?» (lo más rápido)
+
+Escribe en **💵 ¿Cuánto trae?** el monto que trae el representante y la Caja lo reparte sola:
+
+1. Inscripción (con carnet, papelería y septiembre).
+2. Deuda anterior.
+3. Mensualidades vencidas, de la más antigua a la más nueva.
+4. Recargos por mora.
+5. La mensualidad en curso.
+
+Si el monto no alcanza para algo completo, queda como **abono** a eso (por ejemplo «abono $ 24 de $ 45» en octubre).
+Si sobra, va como **adelanto** del mes siguiente. Revisa, elige cómo paga y cobra. Si prefieres elegir tú, marca o
+desmarca a mano.
+
 ### Abonos (cuando no paga el mes completo)
 
 1. Toca **➕ Otro monto** y deja el concepto **«Abono a mensualidad»**.

@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Octubre 2026 — Caja: «¿Cuánto trae?» reparte el monto solo
+
+- En la 💳 Caja, al escribir **cuánto trae** el representante, el monto se reparte solo en este orden:
+  1. inscripción (con carnet, papelería y su primer mes), 2. deuda anterior, 3. mensualidades vencidas (de la más
+     antigua a la más nueva), 4. recargos, 5. la mensualidad en curso. Si no alcanza para un concepto completo, queda
+     como **abono** («abono $ 24 de $ 45») y el recibo lo dice; si sobra, va como **adelanto** del mes siguiente.
+- Marcar o desmarcar a mano deja de repartir el monto.
+
 ## Octubre 2026 — Inscripción con septiembre desde 💰 Pagos
 
 - Si un pago con concepto **«Inscripción»** trae más de lo que vale la inscripción (por ejemplo 106 $ = 61 de
