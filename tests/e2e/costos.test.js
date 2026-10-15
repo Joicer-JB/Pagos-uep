@@ -58,30 +58,48 @@ test("al guardar, ofrece poner a cada estudiante la mensualidad de su nivel", as
   assert.deepEqual(await llamar(`mensualidadesDistintas().length`), 0);
 });
 
-test("en Caja salen marcadas la inscripción del año y el carnet + papelería, junto con lo vencido", async () => {
-  await llamar(`tasas[todayStr()] = 184.5; setTab("caja"); cajaElegir("est4")`); // 5to Año: 55 $
+test("en Caja la inscripción es un solo renglón: inscripción + carnet + papelería + septiembre", async () => {
+  await llamar(`tasas[todayStr()] = 184.5; setTab("caja"); cajaElegir("est6")`); // 3er Grado: 45 $, no ha pagado nada
   const panel = await s.pagina.textContent("#caja-panel");
   assert.match(panel, /Inscripción 2026-2027/);
-  assert.match(panel, /Carnet QR y papelería/);
-  assert.match(panel, /Carnet QR \$ 13,00 \+ papelería \$ 3,00/);
-  const marcados = await llamar(`Object.keys(caja.sel).sort()`);
-  assert.deepEqual(marcados, ["i", "k", "m2026-10"]);
-  assert.equal(await llamar(`cajaLineas().total`), 55 + 16 + 55);
+  assert.match(panel, /inscripción \$ 45,00 \+ carnet QR \$ 13,00 \+ papelería \$ 3,00 \+ Septiembre \$ 45,00/);
+  assert.doesNotMatch(panel, /Mensualidad Septiembre/); // septiembre va dentro de la inscripción
+  assert.doesNotMatch(panel, /Carnet QR y papelería/); // no es un cobro aparte
+  assert.deepEqual(await llamar(`Object.keys(caja.sel).sort()`), ["i", "m2026-10"]); // y octubre, que ya venció
+  assert.equal(await llamar(`cajaLineas().total`), 106 + 45);
 });
 
-test("un solo cobro guarda inscripción, carnet y mensualidad con el mismo recibo, y dejan de deberse", async () => {
+test("al cobrarla, la inscripción y septiembre quedan pagados, con un solo recibo y un solo renglón", async () => {
   const antes = (await escrituras("pagos/")).length;
-  await llamar(`cajaMetodo("Dólares Efectivo"); cajaCobrar()`);
+  await llamar(`caja.sel = { i: true }; cajaRefrescar(); cajaMetodo("Dólares Efectivo"); cajaCobrar()`);
   await s.pagina.waitForSelector(".recibo-nums");
   const nuevos = (await escrituras("pagos/")).slice(antes).map((e) => e.datos);
-  assert.deepEqual(nuevos.map((p) => p.concepto).sort(), ["Carnet y papelería", "Inscripción", "Mensualidad"]);
+  const por = Object.fromEntries(nuevos.map((p) => [p.concepto, p]));
+  assert.deepEqual(Object.keys(por).sort(), ["Inscripción", "Mensualidad"]);
+  assert.equal(por["Inscripción"].total, 61);
+  assert.equal(por["Mensualidad"].total, 45);
+  assert.deepEqual(por["Mensualidad"].cuotas, { "2026-09": 45 });
   assert.equal(new Set(nuevos.map((p) => p.factura)).size, 1);
-  assert.match(await s.pagina.textContent(".modal"), /Inscripción 2026-2027 — \$ 55,00/);
-  const c = await llamar(`JSON.parse(JSON.stringify(calcCuotas(estudiantes.find((e) => e.id === "est4"))))`);
+  const recibo = await s.pagina.textContent(".modal");
+  assert.match(
+    recibo,
+    /Inscripción 2026-2027 \(inscripción \$ 45,00 \+ carnet QR \$ 13,00 \+ papelería \$ 3,00 \+ Septiembre \$ 45,00\) — \$ 106,00/
+  );
+  assert.doesNotMatch(recibo, /Mensualidad Septiembre/);
+  const c = await llamar(`JSON.parse(JSON.stringify(calcCuotas(estudiantes.find((e) => e.id === "est6"))))`);
   assert.equal(c.inscripcion.pendiente, 0);
-  assert.equal(c.carnet.pendiente, 0);
-  await llamar(`cerrarModal(); cajaElegir("est4")`);
-  assert.doesNotMatch(await s.pagina.textContent("#caja-panel"), /Inscripción 2026-2027/);
+  assert.equal(c.lista[0].pendiente, 0); // septiembre pagado
+  await llamar(`cerrarModal(); cajaElegir("est6")`);
+  const panel = await s.pagina.textContent("#caja-panel");
+  assert.doesNotMatch(panel, /Inscripción 2026-2027/);
+  assert.match(panel, /Mensualidad Octubre 2026/);
+});
+
+test("si septiembre ya estaba pagado, la inscripción va sola", async () => {
+  await llamar(`cerrarModal(); cajaElegir("est4")`); // 5to Año: pagó septiembre, no la inscripción
+  const panel = await s.pagina.textContent("#caja-panel");
+  assert.match(panel, /inscripción \$ 55,00 \+ carnet QR \$ 13,00 \+ papelería \$ 3,00(?! \+)/);
+  assert.equal(await llamar(`cajaItems(cajaEst()).items.find((i) => i.key === "i").monto`), 71);
 });
 
 test("ficha: en inicial se elige el horario y la mensualidad se ajusta a la estructura", async () => {

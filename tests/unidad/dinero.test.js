@@ -304,43 +304,56 @@ test("planDe: el plan de costos sale del nivel y, en inicial, del horario", () =
   assert.equal(plan({ grado: "5to Año" }), "media");
 });
 
-test("inscripción y carnet + papelería: si no se han pagado, son deuda (con el monto de su nivel)", () => {
+test("inscripción: un solo pago con inscripción de su nivel + carnet + papelería; si falta, es deuda", () => {
   conCostos();
   const c = cuotasDe({ grado: "Nivel I", horario: "medio", mensualidad: 40 }, "2026-09-01");
-  assert.deepEqual(c.inscripcion, { concepto: "Inscripción", monto: 40, pagado: 0, pendiente: 40 });
-  assert.deepEqual(c.carnet, { concepto: "Carnet y papelería", monto: 16, pagado: 0, pendiente: 16 });
+  assert.deepEqual(c.inscripcion, {
+    concepto: "Inscripción",
+    monto: 56,
+    partes: { inscripcion: 40, carnet: 13, papeleria: 3 },
+    pagado: 0,
+    pendiente: 56,
+  });
+  assert.equal(c.carnet, undefined); // ya no es un cobro aparte
+  assert.equal(c.primera.ym, "2026-09"); // septiembre se cobra con ella
   assert.equal(c.saldo, 0); // ninguna mensualidad vencida todavía
   assert.equal(c.total, 56);
   app.__e = { id: "e1", grado: "Nivel I", horario: "medio", mensualidad: 40, estado: "alsaldo" };
-  assert.match(f("conceptoDeE(__e)"), /^Inscripción · Carnet y papelería/);
+  assert.match(f("conceptoDeE(__e)"), /^Inscripción/);
+  app.__i = c.inscripcion;
+  assert.equal(f("textoPartesInscripcion(__i)"), "inscripción $ 40,00 + carnet QR $ 13,00 + papelería $ 3,00");
 });
 
-test("inscripción pagada (aunque sea en vacaciones) o abonada", () => {
+test("inscripción pagada (aunque sea en vacaciones) o abonada; los pagos viejos de carnet también cuentan", () => {
   conCostos();
   poner("pagos", [pago("2026-08-20", 55, "Inscripción"), pago("2026-09-03", 10, "Carnet y papelería")]);
   const c = cuotasDe({ grado: "5to Año", mensualidad: 55 });
-  assert.equal(c.inscripcion.pendiente, 0);
-  assert.equal(c.carnet.pagado, 10);
-  assert.equal(c.carnet.pendiente, 6);
-  assert.equal(c.total, 110 + 6); // septiembre y octubre vencidas + lo que falta del carnet
+  assert.equal(c.inscripcion.monto, 71);
+  assert.equal(c.inscripcion.pagado, 65);
+  assert.equal(c.inscripcion.pendiente, 6);
+  assert.equal(c.total, 110 + 6); // septiembre y octubre vencidas + lo que falta de la inscripción
 });
 
 test("la inscripción del año anterior no cuenta para este", () => {
   conCostos();
-  poner("pagos", [pago("2025-08-20", 55, "Inscripción")]);
-  assert.equal(cuotasDe({ grado: "5to Año", mensualidad: 55 }).inscripcion.pendiente, 55);
+  poner("pagos", [pago("2025-08-20", 71, "Inscripción")]);
+  assert.equal(cuotasDe({ grado: "5to Año", mensualidad: 55 }).inscripcion.pendiente, 71);
 });
 
-test("exonerado de inscripción: no la debe (el carnet sí)", () => {
+test("exonerado de inscripción: solo paga el carnet y la papelería", () => {
   conCostos();
   const c = cuotasDe({ grado: "3er Grado", mensualidad: 45, sinInscripcion: true }, "2026-09-01");
-  assert.equal(c.inscripcion, null);
-  assert.equal(c.carnet.pendiente, 16);
+  assert.equal(c.inscripcion.monto, 16);
+  assert.deepEqual(c.inscripcion.partes, { inscripcion: 0, carnet: 13, papeleria: 3 });
 });
 
-test("sin estructura de costos guardada, nada cambia (ni inscripción ni carnet)", () => {
+test("el primer mes es el primero que paga el estudiante (si entró a mitad de año, ese)", () => {
+  conCostos();
+  assert.equal(cuotasDe({ grado: "3er Grado", mensualidad: 45, cuotaDesde: "2026-11" }).primera.ym, "2026-11");
+});
+
+test("sin estructura de costos guardada, nada cambia (no hay inscripción obligatoria)", () => {
   const c = cuotasDe({ grado: "3er Grado", mensualidad: 45 }, "2026-09-01");
   assert.equal(c.inscripcion, null);
-  assert.equal(c.carnet, null);
   assert.equal(c.total, 0);
 });
