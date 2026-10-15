@@ -400,6 +400,19 @@ function totalesRecibo(p) {
     `</div>`
   );
 }
+// Pago mixto: cómo se pagó el recibo (cada forma con su monto; las de bolívares, con los Bs. y la referencia).
+// Cada pago de un cobro mixto guarda todas las formas del recibo (formasPago).
+const formasDe = (p) => (Array.isArray(p.formasPago) && p.formasPago.length > 1 ? p.formasPago : []);
+const montoForma = (f) => (f.montoBs != null ? fmtBs(f.montoBs) + " (" + fmt(f.monto) + ")" : fmt(f.monto));
+function htmlFormasPago(p) {
+  const fs = formasDe(p);
+  if (!fs.length) return "";
+  const totalRecibo = r2(fs.reduce((s, f) => s + (f.monto || 0), 0));
+  return `<div class="formas-pago" style="margin-top:0.7rem;background:#fffbea;border:1px solid #f0d78c;border-radius:8px;padding:0.5rem 0.7rem;font-size:0.8rem">
+    <div style="font-size:0.6rem;color:#7a5b00;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:2px">Pago mixto${Math.abs(totalRecibo - (p.total || 0)) > 0.004 ? " · total del recibo " + fmt(totalRecibo) : ""}</div>
+    ${fs.map((f) => `<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:2px 0"><span>${escHtml(ETIQ_METODO[f.metodo] || f.metodo)}${f.referencia ? `<span style="display:block;font-size:0.7rem;color:#777">Ref. ${escHtml(f.referencia)}</span>` : ""}</span><strong style="white-space:nowrap">${montoForma(f)}</strong></div>`).join("")}
+  </div>`;
+}
 function renderModalRecibo(m) {
   const p = m.pago;
   if (!p) return "";
@@ -428,6 +441,7 @@ function renderModalRecibo(m) {
         </div>
         ${p.concepto ? `<div style="margin-bottom:6px"><span class="badge badge-blue">${escHtml(p.concepto)}</span></div>` : ""}
         ${lines.map((l) => `<div style="display:flex;gap:0.4rem;padding:0.4rem 0;border-bottom:1px dashed #eee;font-size:0.85rem"><span style="color:#003366">✦</span>${escHtml(l)}</div>`).join("")}
+        ${htmlFormasPago(p)}
         ${totalesRecibo(p)}
         <p style="text-align:center;font-size:0.65rem;color:#aaa;margin-top:0.55rem">Este recibo es válido como comprobante de pago</p>
         ${p.registradoPor ? `<p class="recibo-quien" style="text-align:center;font-size:0.68rem;color:#777;margin-top:0.2rem">👤 Registrado por ${escHtml(nombreUsuario(p.registradoPor))}</p>` : ""}
@@ -477,7 +491,22 @@ function enviarWhatsApp() {
     bb.bs != null
       ? `\n💱 Tasa BCV ${fechaCorta(bb.fecha)}: Bs. ${fmtTasa(bb.tasa)}\n🇻🇪 *TOTAL EN Bs: ${fmtBs(bb.bs)}*`
       : "";
-  const msg = `🏫 *${EMPRESA}*\n📍 ${EMPRESA_SUB}\n━━━━━━━━━━━━━━━━━━\n🧾 *RECIBO: ${p.factura}*\n📅 *Fecha:* ${p.fecha}\n💳 *Método:* ${p.metodo || "Efectivo"}\n${p.mes ? "📅 *Mes:* " + p.mes + "\n" : ""}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n👤 *Estudiante:* ${p.nombre}\n🪪 *Cédula:* ${p.cedula || "N/A"}\n📞 *Teléfono:* ${p.telefono || "N/A"}\n━━━━━━━━━━━━━━━━━━\n${lines.map((l) => "• " + l).join("\n")}\n━━━━━━━━━━━━━━━━━━\n💰 *TOTAL REF: ${fmt(p.total)}*${bsTxt}\n━━━━━━━━━━━━━━━━━━\n✅ Pago registrado. ¡Gracias!`;
+  const msg = `🏫 *${EMPRESA}*\n📍 ${EMPRESA_SUB}\n━━━━━━━━━━━━━━━━━━\n🧾 *RECIBO: ${p.factura}*\n📅 *Fecha:* ${p.fecha}\n💳 *Método:* ${p.metodo || "Efectivo"}\n${p.mes ? "📅 *Mes:* " + p.mes + "\n" : ""}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n👤 *Estudiante:* ${p.nombre}\n🪪 *Cédula:* ${p.cedula || "N/A"}\n📞 *Teléfono:* ${p.telefono || "N/A"}\n━━━━━━━━━━━━━━━━━━\n${lines.map((l) => "• " + l).join("\n")}\n━━━━━━━━━━━━━━━━━━\n${
+    formasDe(p).length
+      ? "💳 *Pago mixto:*\n" +
+        formasDe(p)
+          .map(
+            (f) =>
+              "• " +
+              (ETIQ_METODO[f.metodo] || f.metodo) +
+              ": " +
+              montoForma(f) +
+              (f.referencia ? " · ref " + f.referencia : "")
+          )
+          .join("\n") +
+        "\n━━━━━━━━━━━━━━━━━━\n"
+      : ""
+  }💰 *TOTAL REF: ${fmt(p.total)}*${bsTxt}\n━━━━━━━━━━━━━━━━━━\n✅ Pago registrado. ¡Gracias!`;
   const telWa = normalizarTelVE(p.telefono);
   if (!telWa) {
     alert("Este pago no tiene teléfono registrado");
@@ -522,6 +551,7 @@ function imprimirRecibo() {
       ${p.mes ? `<div style="font-size:0.75rem;color:#555;margin-top:2px">Mes: ${escHtml(p.mes)}</div>` : ""}</div>
     ${p.concepto ? `<div style="display:inline-block;padding:0.2rem 0.55rem;border-radius:20px;font-size:0.65rem;font-weight:700;background:#e8f0fe;color:#003366;margin-bottom:6px">${escHtml(p.concepto)}</div>` : ""}
     ${lines.map((l) => `<div style="display:flex;gap:0.4rem;padding:0.38rem 0;border-bottom:1px dashed #eee;font-size:0.82rem"><span style="color:#003366">✦</span>${escHtml(l)}</div>`).join("")}
+    ${htmlFormasPago(p)}
     ${totalesRecibo(p)}
     <p style="text-align:center;font-size:0.63rem;color:#aaa;margin-top:0.5rem">Este recibo es válido como comprobante de pago</p>
     <div class="firma">

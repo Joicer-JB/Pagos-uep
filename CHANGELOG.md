@@ -1,5 +1,16 @@
 # Historial de cambios
 
+## Octubre 2026 — Pago mixto y tablero financiero
+
+- **Pago mixto** en la 💳 Caja (**➗ Pago mixto**): un mismo cobro con dos o más formas de pago, por ejemplo 20 $ en
+  efectivo y el resto por pago móvil. Cada forma lleva su monto (en $ o en Bs., según el método) y la última es el
+  resto, que se calcula sola. Sale un solo recibo con el método «Mixto» y el detalle de cada forma (en pantalla,
+  impreso y por WhatsApp). Se guarda un pago por concepto y forma con el mismo N° de recibo, así el cierre de caja
+  cuadra cada método; las transferencias guardan los Bs. exactos que se recibieron.
+- **🧮 Tablero financiero** en 📊 Reportes: índice de cobranza de lo vencido, cobranza por mes (inscripción y cada
+  mes), antigüedad de la deuda por tramos de días con los 5 a cobrar primero, proyección del año y punto de
+  equilibrio (costos del mes contra mensualidades, y cuántos estudiantes deben pagar para cubrirlos).
+
 ## Octubre 2026 — Caja: «¿Cuánto trae?» reparte el monto solo
 
 - En la 💳 Caja, al escribir **cuánto trae** el representante, el monto se reparte solo en este orden:
