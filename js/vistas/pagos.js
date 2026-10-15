@@ -136,6 +136,7 @@ function renderFormPago(data = {}) {
           <div id="p-ins-nota" style="font-size:0.7rem;color:#1a7a4a;margin-top:2px"></div>
         </div>
       </div>
+      <div class="field" id="p-ins-box"></div>
       <div class="field"><label class="field-label">Mes que cancela</label>
         <select class="inp" id="p-mes">
           <option value="">-- Seleccionar mes --</option>
@@ -153,7 +154,7 @@ function renderFormPago(data = {}) {
       </div>
       <div class="field"><label class="field-label">Total *</label>
         <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#003366;font-weight:700">$</span>
-        <input class="inp" id="p-total" placeholder="0,00" style="padding-left:2rem" value="${data.total ? String(data.total).replace(".", ",") : ""}" oninput="fmtInput(this);calcBsPago()"/></div>
+        <input class="inp" id="p-total" placeholder="0,00" style="padding-left:2rem" value="${data.total ? String(data.total).replace(".", ",") : ""}" oninput="fmtInput(this);calcBsPago();previewInsPago()"/></div>
       </div>
       ${campoTasaHTML("p", data.fecha, "calcBsPago()")}
       <div id="p-bs-box" style="display:none;justify-content:space-between;align-items:center;background:#e8f0fe;border-radius:10px;padding:0.7rem 0.9rem"><span style="color:#003366;font-weight:700;font-size:0.82rem">Total en bolívares</span><strong id="p-bs-val" style="color:#003366;font-size:1.05rem"></strong></div>
@@ -221,32 +222,119 @@ function seleccionarEstudiantePago(estId) {
   window._pagoCedula = est.cedula;
   sugerirInscripcionPago();
 }
-// Concepto «Inscripción»: llena el monto con todo lo que se paga al inscribir (inscripción + carnet + papelería +
-// el primer mes) y su desglose. Lo que pase de la inscripción se descuenta del primer mes (ver calcCuotas).
+// Concepto «Inscripción»: lista para marcar qué se paga con la inscripción (la inscripción, con carnet y papelería,
+// y los meses que se deban; por defecto el primer mes). El total, la descripción y el mes se llenan solos, y debajo
+// se ve cómo se reparte el monto. Al guardar, la inscripción y las mensualidades van en pagos separados con el
+// mismo recibo (como en la Caja), cada mensualidad descontada de su mes.
+let insPago = null; // {estId, meses: Set de "YYYY-MM"} mientras el concepto es «Inscripción»
+const mesesInsPago = (cu) => cu.lista.filter((q) => q.monto > 0 && q.pendiente > 0.004);
+function insPagoActual() {
+  const est = insPago && estudiantes.find((e) => e.id === insPago.estId);
+  const cu = est && calcCuotas(est);
+  if (!cu || !cu.inscripcion || cu.inscripcion.pendiente <= 0.004) return null;
+  const pendientes = mesesInsPago(cu);
+  return { ins: cu.inscripcion, pendientes, meses: pendientes.filter((q) => insPago.meses.has(q.ym)) };
+}
 function sugerirInscripcionPago() {
   const concepto = (document.getElementById("p-concepto") || {}).value;
   const est = estudiantes.find((e) => e.id === window._pagoEstId);
-  const nota = document.getElementById("p-ins-nota");
+  const nota = document.getElementById("p-ins-nota"),
+    box = document.getElementById("p-ins-box");
   if (nota) nota.textContent = "";
+  if (box) box.innerHTML = "";
+  insPago = null;
   if (concepto !== "Inscripción" || !est) return;
   const cu = calcCuotas(est);
   if (!cu || !cu.inscripcion || cu.inscripcion.pendiente <= 0.004) {
     if (nota && cu && cu.inscripcion) nota.textContent = "✅ La inscripción de este año ya está pagada.";
     return;
   }
-  const ins = cu.inscripcion,
-    mes = cu.primera && cu.primera.pendiente > 0.004 ? cu.primera : null;
-  const total = r2(ins.pendiente + (mes ? mes.pendiente : 0));
-  const detalle = textoPartesInscripcion(ins) + (mes ? " + " + mes.mes.split(" ")[0] + " " + fmt(mes.pendiente) : "");
+  insPago = { estId: est.id, meses: new Set(cu.primera && cu.primera.pendiente > 0.004 ? [cu.primera.ym] : []) };
+  aplicarInscripcionPago();
+}
+// Los meses se pagan en orden: marcar uno marca los anteriores; desmarcarlo desmarca los siguientes
+function toggleMesInsPago(ym) {
+  const a = insPagoActual();
+  if (!a) return;
+  const idx = a.pendientes.findIndex((q) => q.ym === ym),
+    on = !insPago.meses.has(ym);
+  a.pendientes.forEach((q, k) => {
+    if (on && k <= idx) insPago.meses.add(q.ym);
+    if (!on && k >= idx) insPago.meses.delete(q.ym);
+  });
+  aplicarInscripcionPago();
+}
+let _descInsAuto = ""; // última descripción que se llenó sola (si la cambiaron a mano, no se toca)
+function aplicarInscripcionPago() {
+  const a = insPagoActual();
+  if (!a) return;
+  const total = r2(a.ins.pendiente + a.meses.reduce((x, q) => x + q.pendiente, 0));
+  const detalle =
+    textoPartesInscripcion(a.ins) + a.meses.map((q) => " + " + q.mes.split(" ")[0] + " " + fmt(q.pendiente)).join("");
   const t = document.getElementById("p-total"),
     d = document.getElementById("p-desc"),
-    m = document.getElementById("p-mes");
+    m = document.getElementById("p-mes"),
+    nota = document.getElementById("p-ins-nota"),
+    box = document.getElementById("p-ins-box");
   if (t) t.value = String(total).replace(".", ",");
-  if (d && !d.value.trim()) d.value = "Inscripción" + (escCfg ? " " + escCfg.actual.nombre : "") + " (" + detalle + ")";
-  if (m && mes) m.value = MESES[Number(mes.ym.slice(5, 7)) - 1];
+  const desc = "Inscripción" + (escCfg ? " " + escCfg.actual.nombre : "") + " (" + detalle + ")";
+  if (d && (!d.value.trim() || d.value === _descInsAuto)) d.value = desc;
+  _descInsAuto = desc;
+  if (m) m.value = a.meses.length ? MESES[Number(a.meses[0].ym.slice(5, 7)) - 1] : "";
   if (nota)
-    nota.textContent = "Incluye " + detalle + " = " + fmt(total) + (mes ? ". " + mes.mes + " queda pagado." : ".");
+    nota.textContent =
+      "Incluye " +
+      detalle +
+      " = " +
+      fmt(total) +
+      (a.meses.length
+        ? ". " + a.meses.map((q) => q.mes).join(", ") + (a.meses.length === 1 ? " queda pagado." : " quedan pagados.")
+        : ".");
+  if (box)
+    box.innerHTML = `<label class="field-label">¿Qué paga con la inscripción?</label>
+      <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+        <span class="ins-op on" style="${estiloOpIns(true)};opacity:0.85">✓ Inscripción ${fmt(a.ins.pendiente)}</span>
+        ${a.pendientes
+          .map((q) => {
+            const on = insPago.meses.has(q.ym);
+            return `<label class="ins-op${on ? " on" : ""}" style="${estiloOpIns(on)};cursor:pointer"><input type="checkbox" data-ym="${q.ym}" ${on ? "checked" : ""} onchange="toggleMesInsPago('${q.ym}')" style="margin:0 0.3rem 0 0"/>${escHtml(q.mes)} ${fmt(q.pendiente)}${q.vencida ? "" : " · adelanto"}</label>`;
+          })
+          .join("")}
+      </div>
+      <div id="p-ins-reparto" style="font-size:0.74rem;color:#444;margin-top:0.35rem"></div>`;
   calcBsPago();
+  previewInsPago();
+}
+const estiloOpIns = (on) =>
+  `display:inline-flex;align-items:center;padding:0.35rem 0.6rem;border-radius:20px;font-size:0.78rem;border:1.5px solid ${on ? "#1a9e5c" : "#cfd8ea"};background:${on ? "#f0fff6" : "#fff"};color:#222`;
+// Cómo se reparte un monto: primero la inscripción, luego los meses marcados (en orden); lo que sobre, adelanto
+function repartoInsPago(monto) {
+  const a = insPagoActual();
+  if (!a) return null;
+  let queda = r2(monto);
+  const ins = r2(Math.min(queda, a.ins.pendiente));
+  queda = r2(queda - ins);
+  const meses = [];
+  a.meses.forEach((q) => {
+    const m = r2(Math.min(queda, q.pendiente));
+    if (m > 0.004) meses.push({ ym: q.ym, mes: q.mes, monto: m, completo: m >= q.pendiente - 0.004 });
+    queda = r2(queda - m);
+  });
+  return { ins, insPendiente: a.ins.pendiente, meses, resto: queda };
+}
+function previewInsPago() {
+  const out = document.getElementById("p-ins-reparto");
+  if (!out) return;
+  const r = repartoInsPago(parseFmt((document.getElementById("p-total") || {}).value || "0"));
+  if (!r || !(r.ins > 0)) return (out.innerHTML = "");
+  const partes = [
+    r.ins < r.insPendiente - 0.004
+      ? "Abono a la inscripción " + fmt(r.ins) + " de " + fmt(r.insPendiente)
+      : "Inscripción " + fmt(r.ins),
+    ...r.meses.map((m) => (m.completo ? "" : "Abono a ") + m.mes + " " + fmt(m.monto)),
+    ...(r.resto > 0.004 ? ["Adelanto " + fmt(r.resto) + " (próximos meses)"] : []),
+  ];
+  out.innerHTML = "<strong>Así se aplica:</strong> " + partes.map(escHtml).join(" · ");
 }
 function limpiarSeleccionPago() {
   const cedInput = document.getElementById("p-cedula");
@@ -262,6 +350,7 @@ function limpiarSeleccionPago() {
   if (badge) badge.style.display = "none";
   window._pagoEstId = null;
   window._pagoCedula = "";
+  sugerirInscripcionPago(); // sin estudiante, se quita la lista de la inscripción
 }
 let _metodoPago = "Dólares Efectivo";
 function calcBsPago() {
@@ -354,10 +443,11 @@ async function guardarPago() {
   // Mensualidad con «Mes que cancela»: se descuenta de ese mes (no del más antiguo que se deba)
   const ymPago = pago.concepto === "Mensualidad" ? ymDeMes(pago.mes) : "";
   if (ymPago) pago.cuotas = { [ymPago]: total };
+  const docs = docsInscripcionPago(pago);
   try {
     // Deuda manual anterior: con mora automática activa solo la reduce un pago de "Deuda anterior"
     // (las mensualidades se descuentan solas de las cuotas). Sin mora automática se mantiene el comportamiento de siempre.
-    const r = await registrarCobro([pago], {
+    const r = await registrarCobro(docs, {
       estId: pago.estId,
       aplicaDeuda: (d) => !cobCfgActiva() || d.concepto === "Deuda anterior",
     });
@@ -366,7 +456,23 @@ async function guardarPago() {
     window._pagoEstId = null;
     window._pagoCedula = null;
     subTab.pagos = "lista";
-    modalActual = { tipo: "recibo", pago: r.guardados[0] };
+    // Inscripción con mensualidades: un solo recibo con todo
+    modalActual = {
+      tipo: "recibo",
+      pago:
+        r.guardados.length > 1
+          ? {
+              ...r.guardados[0],
+              id: undefined,
+              concepto: r.guardados.map((d) => d.concepto).join(" + "),
+              mes: r.guardados[1].mes,
+              descripcion: pago.descripcion,
+              total,
+              totalBs: pago.totalBs,
+            }
+          : r.guardados[0],
+    };
+    insPago = null;
     render();
     mostrarExito("¡Pago realizado con éxito!", fmt(total) + " · " + textoRecibo(r));
   } catch (e) {
@@ -561,4 +667,31 @@ function imprimirRecibo() {
   </div>
   </body></html>`);
   w.document.close();
+}
+
+// Inscripción con meses marcados: un pago de «Inscripción» y otro de «Mensualidad» (con a qué mes va cada parte),
+// con el mismo recibo. Si el monto solo alcanza para la inscripción, va solo como antes.
+function docsInscripcionPago(pago) {
+  if (pago.concepto !== "Inscripción" || !insPago || insPago.estId !== pago.estId || !insPago.meses.size) return [pago];
+  const r = repartoInsPago(pago.total);
+  const enMeses = r ? r2(pago.total - r.ins) : 0;
+  if (!r || enMeses <= 0.004) return [pago];
+  const bsIns = r2(r.ins * pago.tasa);
+  return [
+    { ...pago, mes: "", total: r.ins, totalBs: bsIns },
+    {
+      ...pago,
+      concepto: "Mensualidad",
+      mes: r.meses.length ? MESES[Number(r.meses[0].ym.slice(5, 7)) - 1] : "",
+      cuotas: Object.fromEntries(r.meses.map((m) => [m.ym, m.monto])),
+      descripcion:
+        "Con la inscripción: " +
+        r.meses
+          .map((m) => (m.completo ? "Mensualidad " : "Abono a la mensualidad de ") + m.mes + " — " + fmt(m.monto))
+          .join(", ") +
+        (r.resto > 0.004 ? " · adelanto " + fmt(r.resto) : ""),
+      total: enMeses,
+      totalBs: r2(pago.totalBs - bsIns),
+    },
+  ];
 }
