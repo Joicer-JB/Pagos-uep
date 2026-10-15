@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## Octubre 2026 — Inscripción con meses desde 💰 Pagos
+
+- En **💰 Pagos → Nuevo pago**, el concepto **«Inscripción»** muestra **«¿Qué paga con la inscripción?»**: la
+  inscripción (con carnet y papelería) y los meses que se deben, para marcar los que se pagaron juntos (septiembre
+  viene marcado). El total, la descripción y el mes se llenan solos, y **«Así se aplica»** muestra cómo se reparte
+  cualquier monto (inscripción → meses marcados → adelanto). Sirve también para registrar pagos viejos.
+- Se guarda como en la Caja: un pago de «Inscripción» y otro de «Mensualidad» (con el mes de cada parte) con el
+  mismo recibo.
+
 ## Octubre 2026 — Pago mixto y tablero financiero
 
 - **Pago mixto** en la 💳 Caja (**➗ Pago mixto**): un mismo cobro con dos o más formas de pago, por ejemplo 20 $ en

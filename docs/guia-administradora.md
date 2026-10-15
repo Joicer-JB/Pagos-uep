@@ -136,8 +136,19 @@ Pago**:
 3. Si la fecha es de un **año escolar anterior**, la app te pide confirmar: el pago quedará en el historial de
    ese año y no aparecerá en las listas del año actual. No se aceptan fechas futuras.
 
-**Inscripción desde 💰 Pagos:** al elegir el concepto «Inscripción», el monto se llena solo con todo el paquete
-(inscripción + carnet + papelería + septiembre). Lo que pase de la inscripción se descuenta de septiembre.
+**Inscripción desde 💰 Pagos (también para pagos viejos):** al elegir el concepto **«Inscripción»** aparece
+**«¿Qué paga con la inscripción?»**, con la inscripción (que incluye carnet y papelería) y los meses que se deben;
+septiembre sale ya marcado.
+
+1. Marca los meses que pagó junto con la inscripción. Los meses van en orden: marcar octubre marca también
+   septiembre, y desmarcar un mes quita los siguientes.
+2. El **total**, la **descripción** y el **mes** se llenan solos. Por ejemplo, en primaria, inscripción + septiembre
+   - octubre = **151 $**.
+3. Si pagó otro monto, escríbelo en **Total**. Debajo de la lista, **«Así se aplica»** muestra cómo se reparte:
+   - primero la inscripción;
+   - luego los meses marcados (si no alcanza para el último, queda como abono);
+   - lo que sobre, como adelanto.
+4. Guarda. Sale **un solo recibo**, y cada mes marcado queda pagado.
 
 Lo mismo funciona en 📒 Finanzas (ingresos y gastos) y en 👷 Nómina. Para revisar o corregir las tasas de varios
 días también puedes usar el botón 💱 de la cabecera.
