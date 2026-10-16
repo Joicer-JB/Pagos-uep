@@ -523,3 +523,41 @@ function sugerirMensualidadEst(forzar) {
     mens = document.getElementById("e-mens");
   if (c && mens && (forzar || !mens.value.trim())) mens.value = String(c.mensualidad).replace(".", ",");
 }
+
+// ---- Perdonar el recargo de un mes (solo el director). Queda anotado el motivo, quién y cuándo.
+async function guardarRecargosPerdonados(e, recargosPerdonados) {
+  await db.collection("estudiantes").doc(e.id).update({ recargosPerdonados });
+  const i = estudiantes.findIndex((x) => x.id === e.id);
+  if (i >= 0) estudiantes[i] = { ...estudiantes[i], recargosPerdonados };
+  render();
+}
+async function perdonarRecargo(estId, ym, motivo) {
+  if (rolUsuario !== "director") return alert("Solo el director puede perdonar recargos.");
+  const e = estudiantes.find((x) => x.id === estId);
+  if (!e) return;
+  if (motivo === undefined)
+    motivo = prompt("¿Por qué se perdona el recargo de " + nombreMesYM(ym) + " a " + e.nombre + "?", "");
+  if (motivo == null) return; // canceló
+  motivo = String(motivo).trim().slice(0, 120);
+  if (!motivo) return alert("Escribe el motivo para perdonar el recargo.");
+  try {
+    await guardarRecargosPerdonados(e, {
+      ...(e.recargosPerdonados || {}),
+      [ym]: { motivo, por: correoUsuario(), fecha: todayStr() },
+    });
+  } catch (ex) {
+    alert("No se pudo guardar: " + ex.message);
+  }
+}
+async function quitarPerdonRecargo(estId, ym) {
+  if (rolUsuario !== "director") return alert("Solo el director puede cambiar esto.");
+  const e = estudiantes.find((x) => x.id === estId);
+  if (!e || !confirm("¿Volver a cobrar el recargo de " + nombreMesYM(ym) + "?")) return;
+  const resto = { ...(e.recargosPerdonados || {}) };
+  delete resto[ym];
+  try {
+    await guardarRecargosPerdonados(e, resto);
+  } catch (ex) {
+    alert("No se pudo guardar: " + ex.message);
+  }
+}

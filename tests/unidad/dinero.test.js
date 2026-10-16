@@ -174,6 +174,20 @@ test("calcCuotas: el primer mes pagado el mismo día que la inscripción no gene
   assert.equal(f('calcCuotas(__e, "2026-10-07")').recargoTotal, 5);
 });
 
+test("calcCuotas: el director puede perdonar el recargo de un mes", () => {
+  poner("cobCfg", { primerMes: "2026-09", cuotas: 10, diaVence: 5, recargo: 5, recargoDesde: "" });
+  poner("pagos", [pago("2026-09-20", 45)]); // septiembre tarde; octubre vencida
+  app.__e = {
+    ...estudiante,
+    recargosPerdonados: { "2026-09": { motivo: "Enfermedad", por: "d@x.com", fecha: "2026-10-01" } },
+  };
+  const c = f('calcCuotas(__e, "2026-10-07")');
+  assert.equal(c.recargoTotal, 5); // solo octubre
+  assert.equal(c.lista[0].recargo, 0);
+  assert.equal(c.lista[0].recargoPerdonado.motivo, "Enfermedad");
+  assert.equal(c.lista[1].recargoPerdonado, null);
+});
+
 test("calcCuotas: el recargo no es retroactivo (recargoDesde) y no aplica a exonerados", () => {
   poner("cobCfg", { primerMes: "2026-09", cuotas: 10, diaVence: 5, recargo: 5, recargoDesde: "2026-10-01" });
   assert.equal(cuotas("2026-10-07").nRecargos, 1); // solo octubre

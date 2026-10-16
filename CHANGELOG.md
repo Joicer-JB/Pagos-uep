@@ -1,5 +1,10 @@
 # Historial de cambios
 
+## Octubre 2026 — Perdonar el recargo de un mes
+
+- En el estado de cuenta del estudiante, el director puede **🤝 Perdonar** el recargo por mora de un mes escribiendo el
+  motivo. Queda anotado quién lo perdonó, cuándo y por qué, y se puede deshacer. Los demás meses se siguen cobrando.
+
 ## Octubre 2026 — Carnet y papelería para quienes no pagan inscripción
 
 - Los estudiantes marcados «No paga inscripción» pagan solo **carnet y papelería** (con septiembre). Ahora la Caja,

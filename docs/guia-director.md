@@ -83,6 +83,18 @@ los estudiantes activos:
   📒 Finanzas) contra las mensualidades del mes. Dice cuántos estudiantes deben pagar para cubrirlos y si, con la
   cobranza actual, alcanza.
 
+## Perdonar el recargo de un mes
+
+Si a un estudiante se le debe perdonar el recargo por mora de un mes (por enfermedad, un acuerdo con el representante
+u otro motivo):
+
+1. Abre su ficha (👨‍🎓 Estudiantes → toca al estudiante).
+2. En el **estado de cuenta**, junto al «+ recargo» de ese mes, toca **🤝 Perdonar** y escribe el motivo.
+3. El recargo de ese mes deja de cobrarse y queda anotado: «🤝 Recargo perdonado: motivo (quién, fecha)».
+   Con **Deshacer** se vuelve a cobrar.
+
+Solo el director ve el botón. Para no cobrarle recargos nunca, marca en su ficha «🤝 Exonerado de recargos por mora».
+
 ## Bitácora: quién registró y quién borró
 
 - Cada pago y cada ingreso o gasto guarda **quién lo registró**. Se ve en la lista de pagos (👤) y en el recibo

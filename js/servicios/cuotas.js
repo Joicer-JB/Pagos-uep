@@ -6,7 +6,8 @@
 // RECARGO (opcional): config.recargo = monto en $ (0 = no se cobra). Se suma UNA vez por cada cuota que no se pagó a tiempo
 // (sigue vencida, o se pagó después del día de vencimiento). No se acumula mes a mes. Se paga con concepto «Recargo».
 // config.recargoDesde = fecha; solo cuotas que vencen desde ese día generan recargo (evita cobrar con efecto retroactivo).
-// El estudiante marcado «sinRecargo» (exonerado) nunca lo genera.
+// El estudiante marcado «sinRecargo» (exonerado) nunca lo genera. El director puede perdonar el recargo de un mes:
+// estudiante.recargosPerdonados = {"2026-10": {motivo, por, fecha}}.
 // ESTRUCTURA DE COSTOS (opcional): config.costos = {plan: {inscripcion, mensualidad}} por plan (inicial a tiempo
 // completo o medio tiempo, primaria, media general), más config.carnet y config.papeleria. La INSCRIPCIÓN es un solo
 // pago obligatorio por año que incluye la inscripción de su nivel, el carnet QR y la papelería; en la Caja se cobra
@@ -218,13 +219,14 @@ function calcCuotas(e, hoy) {
       .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET)
       .map((p) => p.fecha)
   );
+  const perdonados = e.recargosPerdonados && typeof e.recargosPerdonados === "object" ? e.recargosPerdonados : {};
   lista.forEach((c) => {
     const tarde = c.pendiente <= 0.004 ? !!c.fechaPago && c.fechaPago > c.vence : c.vencida;
     const conInscripcion = c === primera && c.pendiente <= 0.004 && diasInscripcion.has(c.fechaPago);
-    c.recargo =
-      rec > 0 && c.monto > 0 && tarde && !conInscripcion && (!cobCfg.recargoDesde || c.vence >= cobCfg.recargoDesde)
-        ? rec
-        : 0;
+    const corresponde =
+      rec > 0 && c.monto > 0 && tarde && !conInscripcion && (!cobCfg.recargoDesde || c.vence >= cobCfg.recargoDesde);
+    c.recargoPerdonado = corresponde && perdonados[c.ym] ? perdonados[c.ym] : null;
+    c.recargo = corresponde && !c.recargoPerdonado ? rec : 0;
   });
   const conRecargo = lista.filter((c) => c.recargo > 0);
   const recargoTotal = r2(conRecargo.reduce((s, c) => s + c.recargo, 0));
@@ -290,6 +292,20 @@ function conceptoDeE(e) {
   return p.join(" · ");
 }
 // Tabla del estado de cuenta (cuota por cuota) que se muestra en la ficha del estudiante
+// Recargo de un mes en el estado de cuenta: cuándo se pagó, y el director puede perdonarlo (con su motivo)
+function htmlRecargoMes(e, q) {
+  const director = rolUsuario === "director" && !soloLectura();
+  const boton = (txt, accion) =>
+    director
+      ? ` <button class="btn btn-gray btn-sm recargo-accion" style="padding:1px 6px;font-size:0.62rem" onclick="${accion}('${e.id}','${q.ym}')">${txt}</button>`
+      : "";
+  if (q.recargoPerdonado) {
+    const p = q.recargoPerdonado;
+    return `<div class="recargo-perdonado" style="font-size:0.65rem;color:#1a7a4a">🤝 Recargo perdonado: ${escHtml(p.motivo || "")}${p.por ? ` <span style="color:#888">(${escHtml(nombreUsuario(p.por))}${p.fecha ? ", " + fechaCorta(p.fecha) : ""})</span>` : ""}${boton("Deshacer", "quitarPerdonRecargo")}</div>`;
+  }
+  if (!(q.recargo > 0)) return "";
+  return `<div style="font-size:0.65rem;color:#c0392b;font-weight:700">+ recargo ${fmt(q.recargo)}${q.fechaPago ? ` <span style="font-weight:400">(pagada el ${fechaCorta(q.fechaPago)})</span>` : ""}${boton("🤝 Perdonar", "perdonarRecargo")}</div>`;
+}
 function htmlEstadoCuenta(e) {
   const c = calcCuotas(e);
   if (!c) return "";
@@ -313,7 +329,7 @@ function htmlEstadoCuenta(e) {
               (q) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px dashed #eee;font-size:0.8rem">
       <div><strong>${escHtml(q.mes)}</strong><div style="font-size:0.65rem;color:#888">vence ${fechaCorta(q.vence)}</div></div>
-      <div style="text-align:right">${fmt(q.monto)}${bsl(q.monto)}${est(q)}${q.recargo > 0 ? `<div style="font-size:0.65rem;color:#c0392b;font-weight:700">+ recargo ${fmt(q.recargo)}${q.fechaPago ? ` <span style="font-weight:400">(pagada el ${fechaCorta(q.fechaPago)})</span>` : ""}</div>` : ""}</div></div>`
+      <div style="text-align:right">${fmt(q.monto)}${bsl(q.monto)}${est(q)}${htmlRecargoMes(e, q)}</div></div>`
             )
             .join("")
     }
