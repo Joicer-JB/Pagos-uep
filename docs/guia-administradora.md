@@ -150,6 +150,10 @@ septiembre sale ya marcado.
    - lo que sobre, como adelanto.
 4. Guarda. Sale **un solo recibo**, y cada mes marcado queda pagado.
 
+Si sale el aviso **«La estructura de costos del año no está guardada»**, el monto no se llena solo: escribe el total
+que pagó. Los meses marcados (septiembre, por ejemplo) se descuentan primero y lo demás queda como inscripción. Para
+que el monto se llene solo, el director debe guardar la estructura en 🔔 Cobranza → ⚙️ Cuotas del año.
+
 Lo mismo funciona en 📒 Finanzas (ingresos y gastos) y en 👷 Nómina. Para revisar o corregir las tasas de varios
 días también puedes usar el botón 💱 de la cabecera.
 
