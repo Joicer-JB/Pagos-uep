@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Octubre 2026 — Carnet y papelería para quienes no pagan inscripción
+
+- Los estudiantes marcados «No paga inscripción» pagan solo **carnet y papelería** (con septiembre). Ahora la Caja,
+  Nuevo pago, el recibo y la deuda lo llaman **«Carnet y papelería»** (antes decía «Inscripción») y el pago se guarda
+  con ese concepto; el desglose de ingresos de 📒 Finanzas lo muestra aparte.
+- En Nuevo pago el concepto se llama **«Inscripción / Carnet y papelería»**. Con «Mensualidad», si el estudiante aún
+  debe la inscripción o el carnet y la papelería, avisa que el pago que los incluya debe ir con ese concepto.
+
 ## Octubre 2026 — Sin recargo en el primer mes pagado con la inscripción
 
 - El primer mes (septiembre) pagado **el mismo día que la inscripción** ya no genera recargo por mora, aunque la
