@@ -207,11 +207,22 @@ function calcCuotas(e, hoy) {
     c.pendiente = r2(c.monto - c.pagado);
     c.vencida = c.vence < hoy;
   });
-  // Recargo por cuota no pagada a tiempo
+  // Recargo por cuota no pagada a tiempo. El primer mes pagado junto con la inscripción (el mismo día) no lo
+  // genera: se paga al inscribirse, aunque sea después del día de vencimiento.
   const rec = cobCfg.recargo > 0 && !e.sinRecargo ? cobCfg.recargo : 0;
+  const diasInscripcion = new Set(
+    pagosDeEstudiante(e)
+      .filter((p) => p.fecha >= (cobCfg.inscripcionDesde || desde))
+      .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET)
+      .map((p) => p.fecha)
+  );
   lista.forEach((c) => {
     const tarde = c.pendiente <= 0.004 ? !!c.fechaPago && c.fechaPago > c.vence : c.vencida;
-    c.recargo = rec > 0 && c.monto > 0 && tarde && (!cobCfg.recargoDesde || c.vence >= cobCfg.recargoDesde) ? rec : 0;
+    const conInscripcion = c === primera && c.pendiente <= 0.004 && diasInscripcion.has(c.fechaPago);
+    c.recargo =
+      rec > 0 && c.monto > 0 && tarde && !conInscripcion && (!cobCfg.recargoDesde || c.vence >= cobCfg.recargoDesde)
+        ? rec
+        : 0;
   });
   const conRecargo = lista.filter((c) => c.recargo > 0);
   const recargoTotal = r2(conRecargo.reduce((s, c) => s + c.recargo, 0));
@@ -300,7 +311,7 @@ function htmlEstadoCuenta(e) {
               (q) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px dashed #eee;font-size:0.8rem">
       <div><strong>${escHtml(q.mes)}</strong><div style="font-size:0.65rem;color:#888">vence ${fechaCorta(q.vence)}</div></div>
-      <div style="text-align:right">${fmt(q.monto)}${bsl(q.monto)}${est(q)}${q.recargo > 0 ? `<div style="font-size:0.65rem;color:#c0392b;font-weight:700">+ recargo ${fmt(q.recargo)}</div>` : ""}</div></div>`
+      <div style="text-align:right">${fmt(q.monto)}${bsl(q.monto)}${est(q)}${q.recargo > 0 ? `<div style="font-size:0.65rem;color:#c0392b;font-weight:700">+ recargo ${fmt(q.recargo)}${q.fechaPago ? ` <span style="font-weight:400">(pagada el ${fechaCorta(q.fechaPago)})</span>` : ""}</div>` : ""}</div></div>`
             )
             .join("")
     }
