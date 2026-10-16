@@ -181,7 +181,10 @@ También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
 
 ## 👨‍🎓 Estudiantes
 
-- Toca un estudiante para ver su ficha y su **estado de cuenta** cuota por cuota.
+- Toca un estudiante para ver su ficha y su **estado de cuenta** cuota por cuota. Si un mes tiene recargo, dice
+  cuándo se pagó («+ recargo $ 5,00 (pagada el 20/09/2026)»).
+- **Recargo por mora:** se cobra una vez por cada mes pagado después de su vencimiento. El primer mes pagado
+  **junto con la inscripción** (el mismo día) no tiene recargo, aunque se inscriba después del día de vencimiento.
 - **Editar:** datos personales, representante, mensualidad, deuda anterior manual o exoneración del
   recargo.
 - Desde la ficha: **Registrar pago** y **🖨️ Constancia de estudio**.

@@ -158,6 +158,22 @@ test("calcCuotas: recargo una sola vez por cada cuota pagada tarde o vencida", (
   assert.equal(cuotas("2026-10-07").recargoPend, 0);
 });
 
+test("calcCuotas: el primer mes pagado el mismo día que la inscripción no genera recargo", () => {
+  poner("cobCfg", { primerMes: "2026-09", cuotas: 10, diaVence: 5, recargo: 5, recargoDesde: "" });
+  // Se inscribió el 11/09 (después del día 5) y pagó septiembre con la inscripción
+  poner("pagos", [pago("2026-09-11", 61, "Inscripción"), pago("2026-09-11", 45), pago("2026-10-03", 45)]);
+  assert.equal(cuotas("2026-10-07").recargoTotal, 0);
+  // un pago de inscripción que trae septiembre (un solo pago)
+  conCostos();
+  app.__e = { ...estudiante, grado: "3er Grado" };
+  app.evaluar("cobCfg.recargo = 5");
+  poner("pagos", [pago("2026-09-11", 106, "Inscripción"), pago("2026-10-03", 45)]);
+  assert.equal(f('calcCuotas(__e, "2026-10-07")').recargoTotal, 0);
+  // si septiembre se pagó otro día, después del vencimiento, sí hay recargo
+  poner("pagos", [pago("2026-09-11", 61, "Inscripción"), pago("2026-09-20", 45), pago("2026-10-03", 45)]);
+  assert.equal(f('calcCuotas(__e, "2026-10-07")').recargoTotal, 5);
+});
+
 test("calcCuotas: el recargo no es retroactivo (recargoDesde) y no aplica a exonerados", () => {
   poner("cobCfg", { primerMes: "2026-09", cuotas: 10, diaVence: 5, recargo: 5, recargoDesde: "2026-10-01" });
   assert.equal(cuotas("2026-10-07").nRecargos, 1); // solo octubre

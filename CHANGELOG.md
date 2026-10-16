@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Octubre 2026 — Sin recargo en el primer mes pagado con la inscripción
+
+- El primer mes (septiembre) pagado **el mismo día que la inscripción** ya no genera recargo por mora, aunque la
+  inscripción sea después del día de vencimiento. Se corrige solo en los pagos ya registrados.
+- En el estado de cuenta, junto a cada recargo dice cuándo se pagó ese mes.
+
 ## Octubre 2026 — Inscripción con septiembre aunque falte la estructura de costos
 
 - En 💰 Pagos → Nuevo pago, la lista **«¿Qué paga con la inscripción?»** aparece también cuando la estructura de
