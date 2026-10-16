@@ -129,3 +129,46 @@ test("sin la estructura de costos guardada también se marca septiembre y se des
   assert.equal(c.lista[0].pendiente, 0); // septiembre pagado
   assert.deepEqual(s.errores, []);
 });
+
+test("quien no paga inscripción paga carnet y papelería con septiembre, y se guarda con ese concepto", async () => {
+  await llamar(`cerrarModal(); cobCfg = { ...cobCfg, costos: COSTOS_SUGERIDOS.costos };
+    for (const id of ["est3", "est4"]) { const i = estudiantes.findIndex((e) => e.id === id); estudiantes[i] = { ...estudiantes[i], sinInscripcion: true }; }
+    subTab.pagos = "nuevo"; renderTabContent(); seleccionarEstudiantePago("est3")`); // Nivel II, 45 $
+  await s.pagina.selectOption("#p-concepto", "Inscripción");
+  const box = await s.pagina.textContent("#p-ins-box");
+  assert.match(box, /No paga inscripción: solo carnet y papelería/);
+  assert.match(box, /✓ Carnet y papelería \$ 16,00/);
+  assert.equal(await s.pagina.inputValue("#p-total"), "61");
+  assert.match(
+    await s.pagina.inputValue("#p-desc"),
+    /^Carnet y papelería 2026-2027 \(carnet QR \$ 13,00 \+ papelería \$ 3,00 \+ Septiembre/
+  );
+  const antes = await llamar(`window.__ESCRITURAS__.length`);
+  await llamar(`guardarPago()`);
+  await s.pagina.waitForSelector(".recibo-nums");
+  const nuevos = await llamar(
+    `JSON.parse(JSON.stringify(window.__ESCRITURAS__.slice(${antes}).filter((e) => e.ruta.startsWith("pagos/")).map((e) => e.datos)))`
+  );
+  assert.deepEqual(
+    nuevos.map((p) => [p.concepto, p.total, p.cuotas || null]),
+    [
+      ["Carnet y papelería", 16, null],
+      ["Mensualidad", 45, { "2026-09": 45 }],
+    ]
+  );
+  const c = await llamar(`JSON.parse(JSON.stringify(calcCuotas(estudiantes.find((e) => e.id === "est3"))))`);
+  assert.equal(c.inscripcion.pendiente, 0);
+  assert.equal(c.lista[0].pendiente, 0);
+});
+
+test("con el concepto «Mensualidad», avisa si todavía debe el carnet y la papelería", async () => {
+  await llamar(`cerrarModal(); subTab.pagos = "nuevo"; renderTabContent(); seleccionarEstudiantePago("est4")`);
+  await s.pagina.selectOption("#p-concepto", "Mensualidad");
+  assert.match(
+    await s.pagina.textContent("#p-ins-nota"),
+    /Debe carnet y papelería \(\$ 16,00\)\. Si este pago lo incluye, elige el concepto «Inscripción \/ Carnet y papelería»/
+  );
+  await llamar(`setTab("caja"); cajaElegir("est4")`);
+  assert.match(await s.pagina.textContent("#caja-items"), /Carnet y papelería 2026-2027/);
+  assert.deepEqual(s.errores, []);
+});

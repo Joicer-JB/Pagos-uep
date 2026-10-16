@@ -199,14 +199,14 @@ function cajaItems(e) {
       it.push({
         key: "i",
         tipo: "i",
-        concepto: "Inscripción",
-        label: "Inscripción" + anio,
+        concepto: ins.concepto, // «Carnet y papelería» si no paga inscripción
+        label: ins.concepto + anio,
         monto: r2(ins.pendiente + (primerMes ? primerMes.pendiente : 0)),
         montoIns: ins.pendiente,
         primerMes,
         partes,
         vencida: true, // se marca sola al elegir al estudiante
-        sub: ins.pagado > 0 ? "Ya abonó " + fmt(ins.pagado) + " de la inscripción · " + partes : partes,
+        sub: ins.pagado > 0 ? "Ya abonó " + fmt(ins.pagado) + " · " + partes : partes,
       });
     }
     cu.lista
@@ -261,7 +261,7 @@ function cajaLineas() {
         // La inscripción (con carnet y papelería) y el primer mes se guardan cada uno con su concepto, pero en el
         // recibo salen en un solo renglón («recibo»)
         L.push({
-          concepto: "Inscripción",
+          concepto: i.concepto,
           monto: i.montoIns,
           desc: i.label + " (" + textoPartesInscripcion(calcCuotas(e).inscripcion) + ") — " + fmt(i.montoIns),
           recibo: i.label + " (" + i.partes + ") — " + fmt(i.monto),
@@ -876,6 +876,11 @@ function cajaTrae(v) {
   }
   cajaActualizarTotal();
 }
+// «Abono a la inscripción 2026-2027» / «Abono a carnet y papelería 2026-2027»
+const abonoA = (label) =>
+  /^Inscripción/.test(label)
+    ? "Abono a la " + label.replace(/^Inscripción/, "inscripción")
+    : "Abono a " + label.replace(/^C/, "c");
 // Renglones de un concepto que solo se abona en parte
 function lineasDeAbono(i) {
   const m = r2(i.abono);
@@ -885,22 +890,10 @@ function lineasDeAbono(i) {
       aMes = r2(m - aIns);
     const L = [
       {
-        concepto: "Inscripción",
+        concepto: i.concepto,
         monto: aIns,
-        desc:
-          (aIns < i.montoIns - 0.004 ? "Abono a la " : "") +
-          i.label.replace(/^Inscripción/, aIns < i.montoIns - 0.004 ? "inscripción" : "Inscripción") +
-          " — " +
-          fmt(aIns),
-        recibo:
-          "Abono a la " +
-          i.label.replace(/^Inscripción/, "inscripción") +
-          " (" +
-          i.partes +
-          ") — " +
-          fmt(m) +
-          " de " +
-          fmt(i.monto),
+        desc: (aIns < i.montoIns - 0.004 ? abonoA(i.label) : i.label) + " — " + fmt(aIns),
+        recibo: abonoA(i.label) + " (" + i.partes + ") — " + fmt(m) + " de " + fmt(i.monto),
         mes: "",
         ym: "",
       },

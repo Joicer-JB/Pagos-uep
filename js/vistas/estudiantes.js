@@ -216,7 +216,7 @@ function renderModalEstudiante(e) {
         </div>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-graduado" ${e.graduado ? "checked" : ""}/> 🎓 Graduado (egresado)</label>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinrec" ${e.sinRecargo ? "checked" : ""}/> 🤝 Exonerado de recargos por mora</label>
-        <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinins" ${e.sinInscripcion ? "checked" : ""}/> 🎟️ No paga inscripción (becado, hijo del personal…)</label>
+        <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinins" ${e.sinInscripcion ? "checked" : ""}/> 🎟️ No paga inscripción: solo carnet y papelería (becado, hijo del personal…)</label>
         <div id="mora-fields" style="display:${e.estado === "mora" ? "flex" : "none"};flex-direction:column;gap:0.75rem;background:#fff5f5;border-radius:10px;padding:0.85rem;border-left:4px solid #e53e3e">
           <div class="field"><label class="field-label" style="color:#e53e3e">⚠️ Concepto de Mora</label>
             <textarea class="inp" id="e-mora-concepto" rows="2" placeholder="Ej: Mensualidad Enero y Febrero sin cancelar">${escHtml(e.moraConcepto) || ""}</textarea></div>

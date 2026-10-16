@@ -150,6 +150,11 @@ septiembre sale ya marcado.
    - lo que sobre, como adelanto.
 4. Guarda. Sale **un solo recibo**, y cada mes marcado queda pagado.
 
+**Niños que no pagan inscripción** (marcados en su ficha con «🎟️ No paga inscripción»): pagan igual el **carnet y la
+papelería** junto con septiembre. Usa el mismo concepto **«Inscripción / Carnet y papelería»**: la lista dice «Carnet y
+papelería $ 16,00» y el pago se guarda con ese nombre. No lo registres como «Mensualidad»: lo que pase del mes se
+iría al mes siguiente y el carnet quedaría debiendo (si lo intentas, la app te avisa).
+
 Si sale el aviso **«La estructura de costos del año no está guardada»**, el monto no se llena solo: escribe el total
 que pagó. Los meses marcados (septiembre, por ejemplo) se descuentan primero y lo demás queda como inscripción. Para
 que el monto se llene solo, el director debe guardar la estructura en 🔔 Cobranza → ⚙️ Cuotas del año.

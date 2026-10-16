@@ -19,7 +19,7 @@ const PLANES_COSTO = [
   ["primaria", "Primaria"],
   ["media", "Media general"],
 ];
-const CONCEPTO_CARNET = "Carnet y papelería"; // ya no se cobra aparte (va en la inscripción); pagos viejos cuentan
+const CONCEPTO_CARNET = "Carnet y papelería"; // lo que paga al inscribirse quien no paga inscripción (exonerado)
 // Montos con los que se llena el formulario la primera vez (estructura de costos 2026-2027)
 const COSTOS_SUGERIDOS = {
   costos: {
@@ -160,7 +160,9 @@ function calcCuotas(e, hoy) {
       .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET);
     const pagadoIns = r2(pagosIns.reduce((s, p) => s + (p.total || 0), 0));
     const ab = r2(Math.min(monto, Math.max(0, pagadoIns)));
-    if (monto > 0) inscripcion = { concepto: "Inscripción", monto, partes, pagado: ab, pendiente: r2(monto - ab) };
+    // Los exonerados de inscripción pagan solo carnet y papelería: así se llama y así se guarda
+    const concepto = partes.inscripcion > 0 ? "Inscripción" : CONCEPTO_CARNET;
+    if (monto > 0) inscripcion = { concepto, monto, partes, pagado: ab, pendiente: r2(monto - ab) };
     const sobra = r2(pagadoIns - Math.max(monto, 0));
     if (sobra > 0.004 && primera) {
       const ultimo = pagosIns
@@ -280,7 +282,7 @@ const enMora = (e) => e.estado !== "retirado" && (deudaDe(e) > 0 || e.estado ===
 function conceptoDeE(e) {
   const c = calcCuotas(e),
     p = [];
-  if (c && c.inscripcion && c.inscripcion.pendiente > 0.004) p.push("Inscripción");
+  if (c && c.inscripcion && c.inscripcion.pendiente > 0.004) p.push(c.inscripcion.concepto);
   if (c && c.pendientes.length) p.push("Mensualidad: " + c.pendientes.map((q) => q.mes).join(", "));
   if (c && c.recargoPend > 0)
     p.push("Recargo por mora (" + c.nRecargos + (c.nRecargos === 1 ? " mes" : " meses") + ")");

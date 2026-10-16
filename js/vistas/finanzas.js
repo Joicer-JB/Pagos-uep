@@ -96,6 +96,7 @@ function renderFinanzas() {
       [
         ["Mensualidades", pagosMes.filter((p) => p.concepto === "Mensualidad").reduce((s, p) => s + p.total, 0)],
         ["Inscripciones", pagosMes.filter((p) => p.concepto === "Inscripción").reduce((s, p) => s + p.total, 0)],
+        ["Carnet y papelería", pagosMes.filter((p) => p.concepto === CONCEPTO_CARNET).reduce((s, p) => s + p.total, 0)],
         ["Uniformes", pagosMes.filter((p) => p.concepto === "Uniformes").reduce((s, p) => s + p.total, 0)],
         ["Otros ingresos", ingMes.reduce((s, f) => s + f.monto, 0)],
       ]

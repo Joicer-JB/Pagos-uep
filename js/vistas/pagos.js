@@ -131,7 +131,7 @@ function renderFormPago(data = {}) {
         <div class="field"><label class="field-label">Concepto *</label>
           <select class="inp" id="p-concepto" onchange="sugerirInscripcionPago()">
             <option value="">Seleccionar...</option>
-            ${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${data.concepto === c ? "selected" : ""}>${c}</option>`).join("")}
+            ${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${data.concepto === c ? "selected" : ""}>${c === "Inscripción" ? "Inscripción / Carnet y papelería" : c}</option>`).join("")}
           </select>
           <div id="p-ins-nota" style="font-size:0.7rem;color:#1a7a4a;margin-top:2px"></div>
         </div>
@@ -247,14 +247,36 @@ function sugerirInscripcionPago() {
   const est = estudiantes.find((e) => e.id === window._pagoEstId);
   const nota = document.getElementById("p-ins-nota"),
     box = document.getElementById("p-ins-box");
-  if (nota) nota.textContent = "";
+  if (nota) {
+    nota.textContent = "";
+    nota.style.color = "";
+  }
   if (box) box.innerHTML = "";
   insPago = null;
+  // Una mensualidad de quien aún debe la inscripción (o el carnet y la papelería): si el pago la incluye, debe ir
+  // con el concepto «Inscripción»; si no, lo que pase del mes se iría al mes siguiente
+  if (concepto === "Mensualidad" && est && nota) {
+    const cu = calcCuotas(est);
+    if (cu && cu.inscripcion && cu.inscripcion.pendiente > 0.004) {
+      nota.style.color = "#b45309";
+      nota.textContent =
+        "⚠️ Debe " +
+        cu.inscripcion.concepto.toLowerCase() +
+        " (" +
+        fmt(cu.inscripcion.pendiente) +
+        "). Si este pago lo incluye, elige el concepto «Inscripción / Carnet y papelería»: así se descuenta de los dos.";
+    }
+    return;
+  }
   if (concepto !== "Inscripción" || !est) return;
   const cu = calcCuotas(est);
   if (!cu) return; // sin cuotas del año configuradas
   if (cu.inscripcion && cu.inscripcion.pendiente <= 0.004) {
-    if (nota) nota.textContent = "✅ La inscripción de este año ya está pagada.";
+    if (nota)
+      nota.textContent =
+        cu.inscripcion.concepto === "Inscripción"
+          ? "✅ La inscripción de este año ya está pagada."
+          : "✅ El carnet y la papelería de este año ya están pagados.";
     return;
   }
   insPago = { estId: est.id, meses: new Set(cu.primera && cu.primera.pendiente > 0.004 ? [cu.primera.ym] : []) };
@@ -286,7 +308,8 @@ function aplicarInscripcionPago() {
     box = document.getElementById("p-ins-box");
   const total = a.ins ? r2(a.ins.pendiente + sumaMeses) : null;
   if (t && total != null) t.value = String(total).replace(".", ",");
-  const desc = "Inscripción" + (escCfg ? " " + escCfg.actual.nombre : "") + " (" + detalle + ")";
+  const desc =
+    (a.ins ? a.ins.concepto : "Inscripción") + (escCfg ? " " + escCfg.actual.nombre : "") + " (" + detalle + ")";
   if (d && (!d.value.trim() || d.value === _descInsAuto)) d.value = desc;
   _descInsAuto = desc;
   if (m) m.value = a.meses.length ? MESES[Number(a.meses[0].ym.slice(5, 7)) - 1] : "";
@@ -305,9 +328,10 @@ function aplicarInscripcionPago() {
           ? ""
           : `<div class="alert-item alert-mora" style="margin-bottom:0.4rem;font-size:0.75rem">⚠️ La estructura de costos del año no está guardada, por eso el monto de la inscripción no se llena solo. El director la guarda en 🔔 Cobranza → ⚙️ Cuotas del año.</div>`
       }
+      ${a.ins && a.ins.concepto === CONCEPTO_CARNET ? `<div class="alert-item alert-info" style="margin-bottom:0.4rem;font-size:0.75rem">🎟️ No paga inscripción: solo carnet y papelería.</div>` : ""}
       ${sinMensualidad ? `<div class="alert-item alert-mora" style="margin-bottom:0.4rem;font-size:0.75rem">⚠️ Este estudiante no tiene mensualidad en su ficha: no hay meses que descontar.</div>` : ""}
       <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
-        <span class="ins-op on" style="${estiloOpIns(true)};opacity:0.85">✓ Inscripción ${a.ins ? fmt(a.ins.pendiente) : "(el resto)"}</span>
+        <span class="ins-op on" style="${estiloOpIns(true)};opacity:0.85">✓ ${a.ins ? escHtml(a.ins.concepto) + " " + fmt(a.ins.pendiente) : "Inscripción (el resto)"}</span>
         ${a.pendientes
           .map((q) => {
             const on = insPago.meses.has(q.ym);
@@ -340,7 +364,13 @@ function repartoInsPago(monto) {
     queda = r2(queda - m);
   });
   if (!a.ins) ins = aIns(Infinity);
-  return { ins, insPendiente: a.ins ? a.ins.pendiente : null, meses, resto: queda };
+  return {
+    ins,
+    insPendiente: a.ins ? a.ins.pendiente : null,
+    nombre: a.ins ? a.ins.concepto : "Inscripción",
+    meses,
+    resto: queda,
+  };
 }
 function previewInsPago() {
   const out = document.getElementById("p-ins-reparto");
@@ -351,8 +381,11 @@ function previewInsPago() {
     ...(r.ins > 0.004
       ? [
           r.insPendiente != null && r.ins < r.insPendiente - 0.004
-            ? "Abono a la inscripción " + fmt(r.ins) + " de " + fmt(r.insPendiente)
-            : "Inscripción " + fmt(r.ins),
+            ? (r.nombre === "Inscripción" ? "Abono a la inscripción " : "Abono a carnet y papelería ") +
+              fmt(r.ins) +
+              " de " +
+              fmt(r.insPendiente)
+            : r.nombre + " " + fmt(r.ins),
         ]
       : []),
     ...r.meses.map((m) => (m.completo ? "" : "Abono a ") + m.mes + " " + fmt(m.monto)),
@@ -696,7 +729,11 @@ function imprimirRecibo() {
 // Inscripción con meses marcados: un pago de «Inscripción» y otro de «Mensualidad» (con a qué mes va cada parte),
 // con el mismo recibo. Si el monto solo alcanza para la inscripción, va solo como antes.
 function docsInscripcionPago(pago) {
-  if (pago.concepto !== "Inscripción" || !insPago || insPago.estId !== pago.estId || !insPago.meses.size) return [pago];
+  if (pago.concepto !== "Inscripción" || !insPago || insPago.estId !== pago.estId) return [pago];
+  // Quien no paga inscripción paga «Carnet y papelería»: se guarda con ese concepto
+  const a = insPagoActual();
+  if (a && a.ins) pago = { ...pago, concepto: a.ins.concepto };
+  if (!insPago.meses.size) return [pago];
   const r = repartoInsPago(pago.total);
   const enMeses = r ? r2(pago.total - r.ins) : 0;
   if (!r || enMeses <= 0.004) return [pago];
