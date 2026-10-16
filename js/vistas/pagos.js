@@ -226,14 +226,21 @@ function seleccionarEstudiantePago(estId) {
 // y los meses que se deban; por defecto el primer mes). El total, la descripción y el mes se llenan solos, y debajo
 // se ve cómo se reparte el monto. Al guardar, la inscripción y las mensualidades van en pagos separados con el
 // mismo recibo (como en la Caja), cada mensualidad descontada de su mes.
+// Sin la estructura de costos guardada no se sabe cuánto vale la inscripción: se escribe el total, los meses
+// marcados se descuentan primero y lo demás queda como inscripción.
 let insPago = null; // {estId, meses: Set de "YYYY-MM"} mientras el concepto es «Inscripción»
 const mesesInsPago = (cu) => cu.lista.filter((q) => q.monto > 0 && q.pendiente > 0.004);
 function insPagoActual() {
   const est = insPago && estudiantes.find((e) => e.id === insPago.estId);
   const cu = est && calcCuotas(est);
-  if (!cu || !cu.inscripcion || cu.inscripcion.pendiente <= 0.004) return null;
+  if (!cu || (cu.inscripcion && cu.inscripcion.pendiente <= 0.004)) return null;
   const pendientes = mesesInsPago(cu);
-  return { ins: cu.inscripcion, pendientes, meses: pendientes.filter((q) => insPago.meses.has(q.ym)) };
+  return {
+    ins: cu.inscripcion, // null = sin estructura de costos
+    est,
+    pendientes,
+    meses: pendientes.filter((q) => insPago.meses.has(q.ym)),
+  };
 }
 function sugerirInscripcionPago() {
   const concepto = (document.getElementById("p-concepto") || {}).value;
@@ -245,8 +252,9 @@ function sugerirInscripcionPago() {
   insPago = null;
   if (concepto !== "Inscripción" || !est) return;
   const cu = calcCuotas(est);
-  if (!cu || !cu.inscripcion || cu.inscripcion.pendiente <= 0.004) {
-    if (nota && cu && cu.inscripcion) nota.textContent = "✅ La inscripción de este año ya está pagada.";
+  if (!cu) return; // sin cuotas del año configuradas
+  if (cu.inscripcion && cu.inscripcion.pendiente <= 0.004) {
+    if (nota) nota.textContent = "✅ La inscripción de este año ya está pagada.";
     return;
   }
   insPago = { estId: est.id, meses: new Set(cu.primera && cu.primera.pendiente > 0.004 ? [cu.primera.ym] : []) };
@@ -268,32 +276,38 @@ let _descInsAuto = ""; // última descripción que se llenó sola (si la cambiar
 function aplicarInscripcionPago() {
   const a = insPagoActual();
   if (!a) return;
-  const total = r2(a.ins.pendiente + a.meses.reduce((x, q) => x + q.pendiente, 0));
-  const detalle =
-    textoPartesInscripcion(a.ins) + a.meses.map((q) => " + " + q.mes.split(" ")[0] + " " + fmt(q.pendiente)).join("");
+  const sumaMeses = r2(a.meses.reduce((x, q) => x + q.pendiente, 0));
+  const textoMeses = a.meses.map((q) => " + " + q.mes.split(" ")[0] + " " + fmt(q.pendiente)).join("");
+  const detalle = a.ins ? textoPartesInscripcion(a.ins) + textoMeses : "inscripción" + textoMeses;
   const t = document.getElementById("p-total"),
     d = document.getElementById("p-desc"),
     m = document.getElementById("p-mes"),
     nota = document.getElementById("p-ins-nota"),
     box = document.getElementById("p-ins-box");
-  if (t) t.value = String(total).replace(".", ",");
+  const total = a.ins ? r2(a.ins.pendiente + sumaMeses) : null;
+  if (t && total != null) t.value = String(total).replace(".", ",");
   const desc = "Inscripción" + (escCfg ? " " + escCfg.actual.nombre : "") + " (" + detalle + ")";
   if (d && (!d.value.trim() || d.value === _descInsAuto)) d.value = desc;
   _descInsAuto = desc;
   if (m) m.value = a.meses.length ? MESES[Number(a.meses[0].ym.slice(5, 7)) - 1] : "";
+  const pagados = a.meses.length
+    ? " " + a.meses.map((q) => q.mes).join(", ") + (a.meses.length === 1 ? " queda pagado." : " quedan pagados.")
+    : "";
   if (nota)
-    nota.textContent =
-      "Incluye " +
-      detalle +
-      " = " +
-      fmt(total) +
-      (a.meses.length
-        ? ". " + a.meses.map((q) => q.mes).join(", ") + (a.meses.length === 1 ? " queda pagado." : " quedan pagados.")
-        : ".");
+    nota.textContent = a.ins
+      ? "Incluye " + detalle + " = " + fmt(total) + "." + pagados
+      : "Escribe el total que pagó: los meses marcados se descuentan primero y lo demás es la inscripción." + pagados;
+  const sinMensualidad = !(Number(a.est.mensualidad) > 0);
   if (box)
     box.innerHTML = `<label class="field-label">¿Qué paga con la inscripción?</label>
+      ${
+        a.ins
+          ? ""
+          : `<div class="alert-item alert-mora" style="margin-bottom:0.4rem;font-size:0.75rem">⚠️ La estructura de costos del año no está guardada, por eso el monto de la inscripción no se llena solo. El director la guarda en 🔔 Cobranza → ⚙️ Cuotas del año.</div>`
+      }
+      ${sinMensualidad ? `<div class="alert-item alert-mora" style="margin-bottom:0.4rem;font-size:0.75rem">⚠️ Este estudiante no tiene mensualidad en su ficha: no hay meses que descontar.</div>` : ""}
       <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
-        <span class="ins-op on" style="${estiloOpIns(true)};opacity:0.85">✓ Inscripción ${fmt(a.ins.pendiente)}</span>
+        <span class="ins-op on" style="${estiloOpIns(true)};opacity:0.85">✓ Inscripción ${a.ins ? fmt(a.ins.pendiente) : "(el resto)"}</span>
         ${a.pendientes
           .map((q) => {
             const on = insPago.meses.has(q.ym);
@@ -307,30 +321,40 @@ function aplicarInscripcionPago() {
 }
 const estiloOpIns = (on) =>
   `display:inline-flex;align-items:center;padding:0.35rem 0.6rem;border-radius:20px;font-size:0.78rem;border:1.5px solid ${on ? "#1a9e5c" : "#cfd8ea"};background:${on ? "#f0fff6" : "#fff"};color:#222`;
-// Cómo se reparte un monto: primero la inscripción, luego los meses marcados (en orden); lo que sobre, adelanto
+// Cómo se reparte un monto: primero la inscripción, luego los meses marcados (en orden); lo que sobre, adelanto.
+// Sin estructura de costos: primero los meses marcados y lo demás es la inscripción.
 function repartoInsPago(monto) {
   const a = insPagoActual();
   if (!a) return null;
   let queda = r2(monto);
-  const ins = r2(Math.min(queda, a.ins.pendiente));
-  queda = r2(queda - ins);
+  const aIns = (tope) => {
+    const x = r2(Math.min(queda, tope));
+    queda = r2(queda - x);
+    return x;
+  };
+  let ins = a.ins ? aIns(a.ins.pendiente) : 0;
   const meses = [];
   a.meses.forEach((q) => {
     const m = r2(Math.min(queda, q.pendiente));
     if (m > 0.004) meses.push({ ym: q.ym, mes: q.mes, monto: m, completo: m >= q.pendiente - 0.004 });
     queda = r2(queda - m);
   });
-  return { ins, insPendiente: a.ins.pendiente, meses, resto: queda };
+  if (!a.ins) ins = aIns(Infinity);
+  return { ins, insPendiente: a.ins ? a.ins.pendiente : null, meses, resto: queda };
 }
 function previewInsPago() {
   const out = document.getElementById("p-ins-reparto");
   if (!out) return;
   const r = repartoInsPago(parseFmt((document.getElementById("p-total") || {}).value || "0"));
-  if (!r || !(r.ins > 0)) return (out.innerHTML = "");
+  if (!r || !(r.ins > 0 || r.meses.length)) return (out.innerHTML = "");
   const partes = [
-    r.ins < r.insPendiente - 0.004
-      ? "Abono a la inscripción " + fmt(r.ins) + " de " + fmt(r.insPendiente)
-      : "Inscripción " + fmt(r.ins),
+    ...(r.ins > 0.004
+      ? [
+          r.insPendiente != null && r.ins < r.insPendiente - 0.004
+            ? "Abono a la inscripción " + fmt(r.ins) + " de " + fmt(r.insPendiente)
+            : "Inscripción " + fmt(r.ins),
+        ]
+      : []),
     ...r.meses.map((m) => (m.completo ? "" : "Abono a ") + m.mes + " " + fmt(m.monto)),
     ...(r.resto > 0.004 ? ["Adelanto " + fmt(r.resto) + " (próximos meses)"] : []),
   ];
@@ -676,9 +700,9 @@ function docsInscripcionPago(pago) {
   const r = repartoInsPago(pago.total);
   const enMeses = r ? r2(pago.total - r.ins) : 0;
   if (!r || enMeses <= 0.004) return [pago];
-  const bsIns = r2(r.ins * pago.tasa);
+  const bsIns = r.ins > 0.004 ? r2(r.ins * pago.tasa) : 0;
   return [
-    { ...pago, mes: "", total: r.ins, totalBs: bsIns },
+    ...(r.ins > 0.004 ? [{ ...pago, mes: "", total: r.ins, totalBs: bsIns }] : []),
     {
       ...pago,
       concepto: "Mensualidad",

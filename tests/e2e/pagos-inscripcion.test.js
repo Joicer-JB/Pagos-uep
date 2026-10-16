@@ -100,3 +100,32 @@ test("al guardar: inscripción y mensualidades con un solo recibo, y cada mes qu
   );
   assert.deepEqual(s.errores, []);
 });
+
+test("sin la estructura de costos guardada también se marca septiembre y se descuenta de su mes", async () => {
+  await llamar(`cerrarModal(); cobCfg = { ...cobCfg, costos: null };
+    subTab.pagos = "nuevo"; renderTabContent(); seleccionarEstudiantePago("est2")`); // 1er Año: debe septiembre
+  await s.pagina.selectOption("#p-concepto", "Inscripción");
+  const box = await s.pagina.textContent("#p-ins-box");
+  assert.match(box, /estructura de costos del año no está guardada/);
+  assert.match(box, /✓ Inscripción \(el resto\)/);
+  assert.deepEqual(await marcados(), ["2026-09"]);
+  assert.equal(await s.pagina.inputValue("#p-total"), ""); // no se sabe cuánto vale la inscripción
+  await s.pagina.fill("#p-total", "126");
+  assert.match(await s.pagina.textContent("#p-ins-reparto"), /Inscripción \$ 71,00 · Septiembre 2026 \$ 55,00/);
+  const antes = await llamar(`window.__ESCRITURAS__.length`);
+  await llamar(`guardarPago()`);
+  await s.pagina.waitForSelector(".recibo-nums");
+  const nuevos = await llamar(
+    `JSON.parse(JSON.stringify(window.__ESCRITURAS__.slice(${antes}).filter((e) => e.ruta.startsWith("pagos/")).map((e) => e.datos)))`
+  );
+  assert.deepEqual(
+    nuevos.map((p) => [p.concepto, p.total, p.cuotas || null]),
+    [
+      ["Inscripción", 71, null],
+      ["Mensualidad", 55, { "2026-09": 55 }],
+    ]
+  );
+  const c = await llamar(`JSON.parse(JSON.stringify(calcCuotas(estudiantes.find((e) => e.id === "est2"))))`);
+  assert.equal(c.lista[0].pendiente, 0); // septiembre pagado
+  assert.deepEqual(s.errores, []);
+});

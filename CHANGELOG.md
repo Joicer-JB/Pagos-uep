@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — Inscripción con septiembre aunque falte la estructura de costos
+
+- En 💰 Pagos → Nuevo pago, la lista **«¿Qué paga con la inscripción?»** aparece también cuando la estructura de
+  costos del año no está guardada (con un aviso): se escribe el total, los meses marcados (septiembre por defecto) se
+  descuentan de su mes y lo demás queda como inscripción. Antes, sin la estructura, septiembre no se descontaba.
+- Si el estudiante no tiene mensualidad en su ficha, la lista lo avisa.
+
 ## Octubre 2026 — Inscripción con meses desde 💰 Pagos
 
 - En **💰 Pagos → Nuevo pago**, el concepto **«Inscripción»** muestra **«¿Qué paga con la inscripción?»**: la
