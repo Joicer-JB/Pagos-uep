@@ -4,10 +4,7 @@ function renderReportes() {
   const anio = anioActual();
   const totalPagos = pagos.reduce((s, p) => s + p.total, 0);
   const tm = totalesMetodo(pagos);
-  const totalNomina = trabajadores.reduce(
-    (s, t) => s + (t.salario || 0) + (t.bonoAlimentacion || 0) + (t.bonoProductividad || 0) - (t.descuento || 0),
-    0
-  );
+  // Los gastos ya incluyen lo pagado en nómina (cada pago de nómina es un gasto en Finanzas)
   const totalGastos = finanzas.filter((f) => f.tipo === "gasto").reduce((s, f) => s + f.monto, 0);
   const mora = estudiantes.filter(enMora);
 
@@ -29,7 +26,7 @@ function renderReportes() {
   ${htmlTableroFinanciero()}
   <div class="stats-grid">
     <div class="stat-card green"><div class="stat-val">${fmt(totalPagos)}</div><div class="stat-label">💰 Total Recaudado</div></div>
-    <div class="stat-card red"><div class="stat-val">${fmt(totalGastos + totalNomina)}</div><div class="stat-label">📉 Total Gastos</div></div>
+    <div class="stat-card red"><div class="stat-val">${fmt(totalGastos)}</div><div class="stat-label">📉 Total Gastos (con la nómina pagada)</div></div>
     <div class="stat-card"><div class="stat-val">${fmt(tm["Dólares Efectivo"].usd)}</div><div class="stat-label">💵 $ Efectivo</div></div>
     <div class="stat-card blue"><div class="stat-val" style="font-size:0.95rem">${fmtBs(tm["Transferencia Bs"].bs)}</div><div class="stat-label">📲 Transf Bs · ${fmt(tm["Transferencia Bs"].usd)}${tm["Transferencia Bs"].sinTasa ? " ⚠️" : ""}</div></div>
     <div class="stat-card green"><div class="stat-val" style="font-size:0.95rem">${fmtBs(tm["Bs Efectivo"].bs)}</div><div class="stat-label">💵 Bs Efectivo · ${fmt(tm["Bs Efectivo"].usd)}${tm["Bs Efectivo"].sinTasa ? " ⚠️" : ""}</div></div>

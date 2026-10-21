@@ -1,5 +1,22 @@
 # Historial de cambios
 
+## Octubre 2026 — Nómina por quincenas, adelantos y préstamos
+
+- **Pagar nómina** por **1ra quincena, 2da quincena o mes completo**: se llenan solos el salario y los bonos del
+  período (la mitad en una quincena) y las **deducciones**: la deducción fija, los **adelantos** por descontar y la
+  **cuota de cada préstamo** (se pueden cambiar o desmarcar). Avisa si ese período ya se pagó.
+- **💸 Adelanto** a cuenta de una quincena (dice cuánto le corresponde y cuánto ya se le adelantó) y **🤝 Préstamo**
+  con su cuota por pago: se descuentan solos al pagar, y la ficha del trabajador muestra lo que debe.
+- **📅 Nómina del mes**: por trabajador, lo que gana, lo pagado, la quincena que falta y lo que debe, con el botón para
+  pagar lo que sigue; arriba, la nómina del mes, lo pagado, lo que falta y el dinero entregado.
+- Recibo único con **asignaciones, deducciones y neto**, y un **número fijo** (antes cambiaba en cada impresión); el
+  recibo ya no tenía un nombre de directora escrito fijo. Recibos de adelanto y comprobante de préstamo.
+- Ficha: salario y bonos **mensuales**, cómo se le paga (quincenal o mensual), nombre de la deducción fija y «Ya no
+  trabaja aquí» (un trabajador con pagos ya no se puede borrar, para no perder su historial).
+- Correcciones: en 📊 Reportes, «Total Gastos» sumaba la nómina dos veces (los pagos de nómina ya están en los gastos);
+  el total de nómina del Inicio contaba al personal retirado; el tablero financiero ya no cuenta los préstamos al
+  personal como gasto del colegio.
+
 ## Octubre 2026 — Perdonar el recargo de un mes
 
 - En el estado de cuenta del estudiante, el director puede **🤝 Perdonar** el recargo por mora de un mes escribiendo el

@@ -92,6 +92,7 @@ js/
     tasa-bcv.js            Tasa BCV, conversión $ ↔ Bs. e importación del Excel de tasas del BCV
     cuotas.js              Mora automática: cuotas mensuales, recargos y deuda de cada estudiante
     indicadores.js         Tablero financiero: cobranza por mes, antigüedad de la deuda, proyección y equilibrio
+    nomina-calculo.js      Nómina: quincenas o mes, lo que corresponde, adelantos y préstamos con su saldo
     cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día;
                            sin internet, recibo provisional que luego recibe su número
     bitacora.js            Quién registró cada pago y bitácora de lo que se borra (la ve el director)

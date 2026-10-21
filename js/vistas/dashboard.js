@@ -16,10 +16,7 @@ function renderDashboard() {
   const totalGastos = gastosMes.reduce((s, f) => s + f.monto, 0);
   const balance = totalIngresos - totalGastos;
   const mora = estudiantes.filter(enMora);
-  const totalNomina = trabajadores.reduce(
-    (s, t) => s + (t.salario || 0) + (t.bonoAlimentacion || 0) + (t.bonoProductividad || 0),
-    0
-  );
+  const totalNomina = r2(trabajadoresActivos().reduce((s, t) => s + devengadoMensual(t), 0)); // al mes
 
   return `${htmlAvisoRespaldo()}
   <div style="background:linear-gradient(135deg,#003366,#00509e);border-radius:14px;padding:1.1rem 1.25rem;color:#fff;margin-bottom:0.85rem">
@@ -96,7 +93,7 @@ function renderDashboard() {
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>👷 Nómina Total del Personal</h2></div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.85rem;background:#f0f4ff;border-radius:10px">
-      <span style="font-size:0.85rem;color:#555">${trabajadores.length} trabajadores</span>
+      <span style="font-size:0.85rem;color:#555">${trabajadoresActivos().length} trabajadores · al mes</span>
       <span style="font-size:1.1rem;font-weight:800;color:#003366">${fmt(totalNomina)}</span>
     </div>
   </div>
