@@ -95,39 +95,40 @@ function imprimirReciboNomina(trabId, movId) {
   <title>${titulo} - ${escHtml(t.nombre)}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',sans-serif;background:#fff;color:#222;max-width:680px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .hdr{background:linear-gradient(135deg,#003366,#00509e);color:#fff;padding:1.2rem 1.5rem}
-    .hdr-top{display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem}
-    .logo{width:60px;height:60px;object-fit:contain;background:#fff;border-radius:8px;padding:3px;flex-shrink:0}
-    .hdr-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;background:rgba(0,0,0,0.2);border-radius:8px;padding:0.55rem 0.9rem}
-    .sec{padding:1rem 1.5rem}
-    .worker-box{background:#f0f4ff;border-radius:10px;padding:0.9rem 1.1rem;margin-bottom:1rem;border-left:5px solid #003366;display:grid;grid-template-columns:1fr 1fr;gap:0.35rem}
-    .wf span{font-size:0.65rem;color:#888;display:block;text-transform:uppercase;letter-spacing:0.5px}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#222;max-width:680px;margin:0 auto}
+    .hdr{padding:1rem 1.5rem 0}
+    .hdr-top{display:flex;align-items:center;gap:1rem;padding-bottom:0.6rem;border-bottom:2px solid #003366;margin-bottom:0.7rem}
+    .logo{width:50px;height:50px;object-fit:contain;flex-shrink:0}
+    .hdr-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;border:1px solid #bbb;border-radius:6px;padding:0.5rem 0.9rem}
+    .hl{font-size:0.55rem;color:#666;text-transform:uppercase;letter-spacing:1px}
+    .sec{padding:0.8rem 1.5rem}
+    .worker-box{border-left:3px solid #003366;padding:0.2rem 0 0.2rem 0.8rem;margin-bottom:0.8rem;display:grid;grid-template-columns:1fr 1fr;gap:0.35rem}
+    .wf span{font-size:0.65rem;color:#666;display:block;text-transform:uppercase;letter-spacing:0.5px}
     .wf strong{font-size:0.85rem;color:#003366}
-    .tit{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0.6rem 0 0.4rem}
-    .concept-row{display:flex;justify-content:space-between;gap:0.5rem;padding:0.5rem 0.85rem;border-radius:7px;margin-bottom:0.3rem;font-size:0.85rem}
-    .earn{background:#e6f7ef}.earn strong{color:#1a9e5c}.dedu{background:#fff5f5}.dedu strong{color:#c0392b}
-    .subtotal{display:flex;justify-content:space-between;padding:0.35rem 0.85rem;font-weight:700;font-size:0.82rem;color:#555}
-    .total-box{background:linear-gradient(135deg,#003366,#00509e);color:#fff;border-radius:10px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;margin:0.75rem 0}
-    .nota{background:#f8faff;border-radius:8px;padding:0.6rem 0.85rem;font-size:0.78rem;color:#444;margin-top:0.5rem}
-    .firmas{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:2rem;padding-top:1rem;border-top:1px dashed #ccc}
-    .fbox{text-align:center}.fline{border-top:1px solid #444;margin-bottom:5px;margin-top:2.5rem}.flabel{font-size:0.68rem;color:#555}
-    @media (max-width:420px){.sec,.hdr{padding:0.8rem}.hdr-nums{gap:0.4rem;padding:0.5rem}}
+    .tit{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0.6rem 0 0.2rem}
+    .concept-row{display:flex;justify-content:space-between;gap:0.5rem;padding:0.38rem 0.2rem;border-bottom:1px dashed #ccc;font-size:0.85rem}
+    .concept-row strong{color:#222}
+    .subtotal{display:flex;justify-content:space-between;padding:0.35rem 0.2rem;font-weight:700;font-size:0.82rem;color:#444}
+    .total-box{border:1.5px solid #003366;border-radius:6px;padding:0.7rem 1rem;display:flex;justify-content:space-between;align-items:center;margin:0.75rem 0}
+    .nota{border:1px solid #ddd;border-radius:6px;padding:0.5rem 0.8rem;font-size:0.78rem;color:#444;margin-top:0.5rem}
+    .firmas{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.6rem;padding-top:0.8rem}
+    .fbox{text-align:center}.fline{border-top:1px solid #444;margin-bottom:5px;margin-top:2.3rem}.flabel{font-size:0.68rem;color:#555}
+    @media (max-width:420px){.sec,.hdr{padding-left:0.8rem;padding-right:0.8rem}.hdr-nums{gap:0.4rem;padding:0.5rem}}
     @media print{button{display:none!important}.no-print{display:none}}
   </style></head><body>
   <div class="hdr">
     <div class="hdr-top">
       <img src="data:image/png;base64,${LOGO}" class="logo" alt="Logo"/>
       <div style="flex:1">
-        <div style="font-size:0.55rem;letter-spacing:2px;color:#ffd700;text-transform:uppercase">${titulo}</div>
-        <div style="font-size:0.95rem;font-family:Georgia,serif">${EMPRESA}</div>
-        <div style="font-size:0.65rem;color:#adc8ff">${EMPRESA_SUB}</div>
+        <div style="font-size:0.58rem;letter-spacing:2px;color:#003366;font-weight:700;text-transform:uppercase">${titulo}</div>
+        <div style="font-size:0.95rem;font-family:Georgia,serif;color:#003366">${EMPRESA}</div>
+        <div style="font-size:0.65rem;color:#555">${EMPRESA_SUB}</div>
       </div>
     </div>
     <div class="hdr-nums">
-      <div><div style="font-size:0.55rem;color:#adc8ff">N° Recibo</div><div style="font-weight:800;color:#ffd700;font-size:0.85rem">${numReciboNomina(mov)}</div></div>
-      <div style="text-align:center"><div style="font-size:0.55rem;color:#adc8ff">${tipo === "prestamo" ? "Cuota por pago" : "Período"}</div><div style="font-weight:700;font-size:0.78rem">${escHtml(tipo === "prestamo" ? (prestamo ? fmt(prestamo.cuota) : "—") : r.periodo || "—")}</div></div>
-      <div style="text-align:right"><div style="font-size:0.55rem;color:#adc8ff">Fecha de pago</div><div style="font-weight:700;font-size:0.78rem">${escHtml(fechaCorta(fecha))}</div></div>
+      <div><div class="hl">N° Recibo</div><div style="font-weight:800;font-size:0.85rem">${numReciboNomina(mov)}</div></div>
+      <div style="text-align:center"><div class="hl">${tipo === "prestamo" ? "Cuota por pago" : "Período"}</div><div style="font-weight:700;font-size:0.78rem">${escHtml(tipo === "prestamo" ? (prestamo ? fmt(prestamo.cuota) : "—") : r.periodo || "—")}</div></div>
+      <div style="text-align:right"><div class="hl">Fecha de pago</div><div style="font-weight:700;font-size:0.78rem">${escHtml(fechaCorta(fecha))}</div></div>
     </div>
   </div>
   <div class="sec">
@@ -147,11 +148,11 @@ function imprimirReciboNomina(trabId, movId) {
         : ""
     }
     <div class="total-box">
-      <div><div style="font-size:0.62rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">${tipo === "pago" ? "Neto a recibir" : "Total entregado"}</div>
-        <div style="font-size:0.7rem;color:#adc8ff;margin-top:2px">${mov && mov.moneda === "USD" ? "Pagado en dólares en efectivo" : "Pagado en bolívares"}</div></div>
+      <div><div style="font-size:0.62rem;color:#003366;font-weight:700;text-transform:uppercase;letter-spacing:1px">${tipo === "pago" ? "Neto a recibir" : "Total entregado"}</div>
+        <div style="font-size:0.7rem;color:#555;margin-top:2px">${mov && mov.moneda === "USD" ? "Pagado en dólares en efectivo" : "Pagado en bolívares"}</div></div>
       <div style="text-align:right">
-        <div style="font-size:1.6rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(r.neto)}</div>
-        ${r.netoBs != null ? `<div style="font-size:1rem;font-weight:700;color:#fff;margin-top:2px">${fmtBs(r.netoBs)}</div><div style="font-size:0.6rem;color:#adc8ff">Tasa BCV: Bs. ${fmtTasa(r.tasa)} por $</div>` : ""}
+        <div style="font-size:1.4rem;font-weight:800;font-family:Georgia,serif;color:#000">${fmt(r.neto)}</div>
+        ${r.netoBs != null ? `<div style="font-size:0.95rem;font-weight:700;color:#222;margin-top:2px">${fmtBs(r.netoBs)}</div><div style="font-size:0.6rem;color:#666">Tasa BCV: Bs. ${fmtTasa(r.tasa)} por $</div>` : ""}
       </div>
     </div>
     ${tipo === "adelanto" ? `<div class="nota">Este adelanto se descontará en el pago de ${escHtml(r.periodo || "su próxima quincena")}.</div>` : ""}
@@ -164,7 +165,7 @@ function imprimirReciboNomina(trabId, movId) {
     <p style="text-align:center;font-size:0.62rem;color:#aaa;margin-top:1rem">${EMPRESA} · ${titulo}</p>
   </div>
   <div class="no-print" style="text-align:center;padding:0.75rem">
-    <button onclick="window.print()" style="background:linear-gradient(135deg,#003366,#00509e);color:#ffd700;border:none;padding:0.65rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem;font-family:inherit">🖨️ Imprimir / Guardar PDF</button>
+    <button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.65rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem;font-family:inherit">🖨️ Imprimir / Guardar PDF</button>
   </div>
   </body></html>`);
   w.document.close();

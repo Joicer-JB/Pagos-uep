@@ -677,50 +677,74 @@ function enviarWhatsApp() {
   }
   window.open("https://wa.me/" + telWa + "?text=" + encodeURIComponent(msg), "_blank");
 }
+// Recibo impreso en «ahorro de tinta»: fondo blanco, letras oscuras y líneas finas (sin bloques de color, que gastan
+// mucha tinta). En pantalla el recibo sigue a color.
+function totalesReciboImpreso(p) {
+  const b = bsDe(p, p.total);
+  return `<div class="tot">
+    <div class="fila grande"><span>Total referencia (USD)</span><span>${fmt(p.total)}</span></div>
+    ${
+      b.bs != null
+        ? `<div class="fila"><span>Tasa BCV${b.fecha ? " " + fechaCorta(b.fecha) : ""}${b.estimada ? " (est.)" : ""}</span><span>Bs. ${fmtTasa(b.tasa)}</span></div>
+    <div class="fila grande"><span>Total en bolívares</span><span>${fmtBs(b.bs)}</span></div>`
+        : `<div class="fila"><span>Sin tasa BCV registrada para esta fecha</span></div>`
+    }</div>`;
+}
+function formasPagoImpreso(p) {
+  const fs = formasDe(p);
+  if (!fs.length) return "";
+  return `<div class="formas-pago" style="margin-top:0.6rem;border:1px solid #bbb;border-radius:6px;padding:0.4rem 0.7rem;font-size:0.78rem">
+    <div class="lbl">Pago mixto</div>
+    ${fs.map((f) => `<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:2px 0"><span>${escHtml(ETIQ_METODO[f.metodo] || f.metodo)}${f.referencia ? ` · Ref. ${escHtml(f.referencia)}` : ""}</span><strong style="white-space:nowrap">${montoForma(f)}</strong></div>`).join("")}
+  </div>`;
+}
 function imprimirRecibo() {
   const p = modalActual.pago;
   if (!p) return;
   const lines = (p.descripcion || "").split("\n").filter(Boolean);
   const w = abrirVentanaImpresion("width=600,height=800");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Recibo ${escHtml(p.factura)}</title>
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',sans-serif;padding:1.5rem;max-width:480px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .hdr{background:linear-gradient(135deg,#003366,#00509e);color:#fff;padding:1.1rem;border-radius:10px 10px 0 0}
-  .hdr-top{display:flex;align-items:center;gap:1rem}
-  .bdy{border:1px solid #dde3f0;border-top:none;border-radius:0 0 10px 10px;padding:1.1rem}
-  .cbox{background:#f0f4ff;border-radius:8px;padding:0.75rem;margin-bottom:0.85rem;border-left:4px solid #003366}
-  .tbox{background:linear-gradient(135deg,#003366,#00509e);color:#fff;border-radius:8px;padding:0.75rem 0.9rem;display:flex;justify-content:space-between;margin-top:0.85rem}
-  .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;background:rgba(0,0,0,0.2);padding:0.55rem 0.85rem;border-radius:6px;margin-top:0.85rem}
+  <style>*{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;padding:1.2rem;max-width:480px;margin:0 auto;color:#222;background:#fff}
+  .hdr{display:flex;align-items:center;gap:0.8rem;padding-bottom:0.6rem;border-bottom:2px solid #003366}
+  .hdr img{width:46px;height:46px;object-fit:contain}
+  .tit{font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:#003366;font-weight:700}
+  .emp{font-size:0.88rem;font-family:Georgia,serif;color:#003366}.sub{font-size:0.65rem;color:#555}
+  .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;border:1px solid #bbb;border-radius:6px;padding:0.45rem 0.7rem;margin:0.7rem 0}
   .nums .c{text-align:center}.nums .d{text-align:right}
-  .lbl{font-size:0.58rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}.val{font-weight:700;font-size:0.82rem;white-space:nowrap}
-  @media (max-width:420px){body{padding:0.6rem}.nums{gap:0.4rem;padding:0.5rem 0.6rem}.val{font-size:0.74rem;white-space:normal}}
-  .firma{display:flex;justify-content:space-between;margin-top:1.5rem;padding-top:0.85rem;border-top:1px dashed #ccc}
+  .lbl{font-size:0.56rem;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+  .val{font-weight:700;font-size:0.82rem;white-space:nowrap}
+  .cbox{border-left:3px solid #003366;padding:0.15rem 0 0.15rem 0.7rem;margin-bottom:0.7rem}
+  .conc{display:inline-block;padding:0.1rem 0.5rem;border:1px solid #003366;border-radius:20px;font-size:0.64rem;font-weight:700;color:#003366;margin-bottom:4px}
+  .linea{display:flex;gap:0.4rem;padding:0.32rem 0;border-bottom:1px dashed #ccc;font-size:0.8rem}
+  .tot{border:1.5px solid #003366;border-radius:6px;padding:0.5rem 0.8rem;margin-top:0.7rem}
+  .tot .fila{display:flex;justify-content:space-between;gap:0.5rem;font-size:0.78rem;color:#444;margin-top:2px}
+  .tot .grande{font-size:0.95rem;color:#000;font-weight:800}
+  @media (max-width:420px){body{padding:0.6rem}.nums{gap:0.4rem;padding:0.45rem 0.55rem}.val{font-size:0.74rem;white-space:normal}}
+  .firma{display:flex;justify-content:space-between;margin-top:1.3rem;padding-top:0.7rem}
   .fbox{text-align:center;width:45%}.fline{border-top:1px solid #333;margin-bottom:4px;margin-top:1.5rem}.flabel{font-size:0.7rem;color:#555}
+  @media print{body{padding:0}}
   </style></head><body>
-  <div class="hdr">
-    <div class="hdr-top"><img src="data:image/png;base64,${LOGO}" style="width:55px;height:55px;object-fit:contain;border-radius:7px;background:#fff;padding:2px" alt="Logo"/>
-      <div><small style="font-size:0.55rem;letter-spacing:2px;color:#ffd700;text-transform:uppercase">Recibo de Pago</small>
-      <div style="font-size:0.85rem;font-family:Georgia,serif">${EMPRESA}</div><div style="font-size:0.65rem;color:#adc8ff">${EMPRESA_SUB}</div></div>
-    </div>
-    <div class="nums">
-      <div><div class="lbl">Recibo${p.pendiente ? " provisional" : ""}</div><div class="val" style="font-weight:800;color:#ffd700">${escHtml(p.factura)}</div></div>
-      <div class="c"><div class="lbl">Método</div><div class="val">${escHtml(p.metodo) || "Efectivo"}</div></div>
-      <div class="d"><div class="lbl">Fecha</div><div class="val">${escHtml(fechaCorta(p.fecha || ""))}</div></div>
-    </div>
+  <div class="hdr"><img src="data:image/png;base64,${LOGO}" alt="Logo"/>
+    <div><div class="tit">Recibo de Pago</div><div class="emp">${EMPRESA}</div><div class="sub">${EMPRESA_SUB}</div></div>
   </div>
-  <div class="bdy">
-    <div class="cbox"><div style="font-size:0.58rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Estudiante</div>
-      <div style="font-weight:700;font-size:0.95rem;color:#003366">${escHtml(p.nombre)}</div>
-      <div style="font-size:0.78rem;color:#555;margin-top:2px">CC ${escHtml(p.cedula) || "N/A"} · Tel: ${escHtml(p.telefono) || "N/A"}</div>
-      ${p.mes ? `<div style="font-size:0.75rem;color:#555;margin-top:2px">Mes: ${escHtml(p.mes)}</div>` : ""}</div>
-    ${p.concepto ? `<div style="display:inline-block;padding:0.2rem 0.55rem;border-radius:20px;font-size:0.65rem;font-weight:700;background:#e8f0fe;color:#003366;margin-bottom:6px">${escHtml(p.concepto)}</div>` : ""}
-    ${lines.map((l) => `<div style="display:flex;gap:0.4rem;padding:0.38rem 0;border-bottom:1px dashed #eee;font-size:0.82rem"><span style="color:#003366">✦</span>${escHtml(l)}</div>`).join("")}
-    ${htmlFormasPago(p)}
-    ${totalesRecibo(p)}
-    <p style="text-align:center;font-size:0.63rem;color:#aaa;margin-top:0.5rem">Este recibo es válido como comprobante de pago</p>
-    <div class="firma">
-      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Administrador</div></div>
-      <div class="fbox"><div class="fline"></div><div class="flabel">Firma Representante</div></div>
-    </div>
+  <div class="nums">
+    <div><div class="lbl">Recibo${p.pendiente ? " provisional" : ""}</div><div class="val">${escHtml(p.factura)}</div></div>
+    <div class="c"><div class="lbl">Método</div><div class="val">${escHtml(p.metodo) || "Efectivo"}</div></div>
+    <div class="d"><div class="lbl">Fecha</div><div class="val">${escHtml(fechaCorta(p.fecha || ""))}</div></div>
+  </div>
+  <div class="cbox"><div class="lbl">Estudiante</div>
+    <div style="font-weight:700;font-size:0.95rem;color:#003366">${escHtml(p.nombre)}</div>
+    <div style="font-size:0.78rem;color:#555;margin-top:2px">CC ${escHtml(p.cedula) || "N/A"} · Tel: ${escHtml(p.telefono) || "N/A"}</div>
+    ${p.mes ? `<div style="font-size:0.75rem;color:#555;margin-top:2px">Mes: ${escHtml(p.mes)}</div>` : ""}</div>
+  ${p.concepto ? `<div class="conc">${escHtml(p.concepto)}</div>` : ""}
+  ${lines.map((l) => `<div class="linea"><span>•</span>${escHtml(l)}</div>`).join("")}
+  ${formasPagoImpreso(p)}
+  ${totalesReciboImpreso(p)}
+  <p style="text-align:center;font-size:0.63rem;color:#777;margin-top:0.5rem">Este recibo es válido como comprobante de pago</p>
+  <div class="firma">
+    <div class="fbox"><div class="fline"></div><div class="flabel">Firma Administrador</div></div>
+    <div class="fbox"><div class="fline"></div><div class="flabel">Firma Representante</div></div>
   </div>
   </body></html>`);
   w.document.close();
