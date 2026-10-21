@@ -136,7 +136,9 @@ function renderModal() {
   if (m.tipo === "nuevo-finanza") return renderModalFinanza(m);
   if (m.tipo === "ver-finanza") return renderModalVerFinanza(m);
   if (m.tipo === "ver-trabajador") return renderModalVerTrabajador(m);
-  if (m.tipo === "pago-nomina") return renderModalPagoNomina();
+  if (m.tipo === "pago-nomina") return renderModalPagoNomina(m);
+  if (m.tipo === "adelanto-nomina") return renderModalAdelantoNomina(m);
+  if (m.tipo === "prestamo-nomina") return renderModalPrestamoNomina(m);
   if (m.tipo === "nuevo-docente") return renderModalDocente(null);
   if (m.tipo === "editar-docente") return renderModalDocente(m.id);
   return "";
@@ -149,6 +151,7 @@ function abrirModal(m) {
   }
   modalActual = m;
   render();
+  if (m && /-nomina$/.test(m.tipo || "")) prepararModalNomina(m); // llena lo que corresponde al trabajador elegido
 }
 // Cierra el modal; en la Caja devuelve el foco al buscador
 function cerrarModal() {

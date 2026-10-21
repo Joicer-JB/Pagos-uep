@@ -198,8 +198,37 @@ También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
 
 - **Finanzas:** registra ingresos y gastos en $ o en Bs., con la tasa del día. **Flujo de caja**
   muestra el año mes a mes y se puede imprimir.
-- **Nómina:** ficha de cada trabajador (salario y bonos en $). **Registrar pago de nómina** calcula el
-  neto y lo convierte a Bs. con la tasa. El recibo se imprime desde el historial.
+- **Nómina:** ver abajo.
+
+## 👷 Nómina
+
+**Ficha del trabajador** (➕ Nuevo o ✏️): salario base **mensual**, bonos mensuales, una **deducción fija mensual**
+(por ejemplo caja de ahorro o IVSS, con su nombre) y **cómo se le paga**: por quincenas (la mitad en cada una) o una
+vez al mes. Si alguien deja de trabajar, edítalo y marca «Ya no trabaja aquí»: se conserva su historial.
+
+**💳 Pagar nómina:**
+
+1. Elige el trabajador y el período: **1ra quincena**, **2da quincena** o **mes completo**, y el mes. Se llenan solos
+   el salario y los bonos de ese período (la mitad si es una quincena).
+2. En **Deducciones** aparecen solas la deducción fija, los **adelantos** que tiene por descontar y la **cuota de cada
+   préstamo**. Puedes cambiar un monto o desmarcar una deducción (por ejemplo, no cobrar la cuota esta quincena), y
+   agregar otro descuento con su motivo (por ejemplo, una inasistencia).
+3. Revisa el **neto a entregar** (en $ y en Bs.), elige si se paga en Bs. o en $ efectivo y registra. Sale el recibo
+   con asignaciones, deducciones y neto, para firmar.
+4. Si ese período ya se le pagó, la app te avisa antes de registrarlo otra vez.
+
+**💸 Adelanto:** cuando le das dinero antes de su quincena. Elige a cuenta de qué período es: la app te dice cuánto le
+corresponde y cuánto ya se le adelantó. Al pagarle ese período, el adelanto se descuenta solo.
+
+**🤝 Préstamo:** cuando le prestas dinero. Escribe el monto y la **cuota por pago**: la app dice en cuántos pagos se
+salda, y la cuota se descuenta sola en cada pago de nómina hasta pagarlo. En su ficha ves cuánto debe.
+
+**📅 Nómina del mes:** elige el mes y ves, por trabajador, cuánto gana, cuánto se le pagó, qué quincena falta, lo
+que debe y un botón para pagar lo que sigue. Arriba: la nómina del mes, lo ya pagado, lo que falta y el dinero
+entregado en el mes (adelantos, pagos y préstamos).
+
+Si se borra un pago (director), los adelantos y cuotas que descontaba vuelven a quedar pendientes. Cada recibo
+tiene un número fijo (NOM-…), así sale igual al reimprimirlo.
 
 ## Si algo no funciona
 
