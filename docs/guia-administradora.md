@@ -94,6 +94,13 @@ Si se va el internet puedes **seguir cobrando**. Abajo aparece el aviso **«📴
 - Lo único que necesita internet es borrar un recibo que descontó deuda anterior (eso lo hace el director).
 - La **primera vez** que entras en un equipo sí necesitas internet. Después, la app abre aunque no haya conexión.
 
+## Recibo «2 por hoja» (original y copia)
+
+Si quieres ahorrar papel, en el recibo marca **🖨️ Imprimir 2 por hoja (original y copia)** antes de tocar 🖨️. Sale
+una hoja carta con el **ORIGINAL** arriba y la **COPIA** abajo, separados por una línea **✂ CORTAR AQUÍ**: una
+mitad para el representante y otra para el archivo. El equipo recuerda la elección; desmárcala para volver a un
+solo recibo por hoja.
+
 ## Imprimir desde el teléfono
 
 Al tocar 🖨️ en un recibo (o en el cierre de caja, reportes, boletines…), el documento se abre dentro de la app con
