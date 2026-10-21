@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Octubre 2026 — Recibo «2 por hoja» (original y copia)
+
+- En el recibo de pago hay una casilla **🖨️ Imprimir 2 por hoja (original y copia)**. Solo si se marca, sale una
+  hoja carta con el original arriba y la copia abajo, y una línea para cortar. Sin marcar, todo sigue igual. Cada
+  equipo recuerda la elección.
+
 ## Octubre 2026 — Recibos impresos que gastan menos tinta
 
 - El **recibo de pago** y los **recibos de nómina** (pago, adelanto y préstamo) se imprimen en «ahorro de tinta»:
