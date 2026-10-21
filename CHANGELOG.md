@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Octubre 2026 — Recibos impresos que gastan menos tinta
+
+- El **recibo de pago** y los **recibos de nómina** (pago, adelanto y préstamo) se imprimen en «ahorro de tinta»:
+  fondo blanco, letras oscuras y líneas finas, sin el encabezado ni el cuadro del total en azul oscuro (antes se
+  obligaba a imprimir esos fondos). En pantalla el recibo sigue a color.
+
 ## Octubre 2026 — Nómina por quincenas, adelantos y préstamos
 
 - **Pagar nómina** por **1ra quincena, 2da quincena o mes completo**: se llenan solos el salario y los bonos del
