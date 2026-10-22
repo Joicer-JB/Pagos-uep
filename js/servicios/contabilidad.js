@@ -105,3 +105,48 @@ function libroIngresosEgresos(desde, hasta) {
     catEgresos: porCategoria("gasto"),
   };
 }
+
+// ---- Cuentas por pagar (colección «cuentas_pagar»): lo que el colegio debe pagar y cuándo vence (servicios,
+// alquiler, proveedores, impuestos…). Al pagarla se registra el gasto y, si es mensual, se crea la del mes siguiente.
+// { descripcion, proveedor, categoria, monto, moneda: "USD" | "VES", vence, recurrente: "no" | "mensual", nota,
+//   estado: "pendiente" | "pagada", pagadaEl, gastoId, registradoPor }
+const DIAS_AVISO_CUENTA = 7;
+function estadoCuentaPagar(c, hoy) {
+  hoy = hoy || todayStr();
+  if (c.estado === "pagada") return "pagada";
+  if (!c.vence) return "sin-fecha";
+  if (c.vence < hoy) return "vencida";
+  return diasEntre(hoy, c.vence) <= DIAS_AVISO_CUENTA ? "por-vencer" : "proxima";
+}
+// La misma fecha el mes siguiente (el 31 pasa al último día del mes si no lo tiene)
+function venceSiguiente(vence) {
+  const d = Number(vence.slice(8, 10));
+  const ym = sumarMeses(vence.slice(0, 7), 1);
+  const ultimo = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0).getDate();
+  return ym + "-" + String(Math.min(d, ultimo)).padStart(2, "0");
+}
+// En $ de referencia (las de bolívares, a la tasa de hoy; null si no hay tasa)
+function usdCuenta(c) {
+  if (c.moneda !== "VES") return r2(c.monto || 0);
+  const t = tasaDe(todayStr());
+  return t ? r2((c.monto || 0) / t.valor) : null;
+}
+// Pendientes ordenadas por vencimiento, y los totales para los avisos
+function resumenCuentasPagar(lista, hoy) {
+  hoy = hoy || todayStr();
+  const pendientes = (lista || cuentasPagar)
+    .filter((c) => c.estado !== "pagada")
+    .map((c) => ({ ...c, est: estadoCuentaPagar(c, hoy), usd: usdCuenta(c) }))
+    .sort((a, b) => ((a.vence || "9999") < (b.vence || "9999") ? -1 : 1));
+  const suma = (l) => r2(l.reduce((s, c) => s + (c.usd || 0), 0));
+  const vencidas = pendientes.filter((c) => c.est === "vencida"),
+    semana = pendientes.filter((c) => c.est === "por-vencer");
+  return {
+    pendientes,
+    vencidas,
+    semana,
+    total: suma(pendientes),
+    totalVencidas: suma(vencidas),
+    totalSemana: suma(semana),
+  };
+}

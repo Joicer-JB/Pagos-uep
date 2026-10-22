@@ -36,6 +36,7 @@ function renderDashboard() {
     <div class="stat-card gold"><div class="stat-val">${trabajadores.length}</div><div class="stat-label">👷 Trabajadores</div></div>
   </div>
 
+  ${avisoCuentasPagar()}
   ${
     mora.length > 0
       ? `
@@ -99,4 +100,21 @@ function renderDashboard() {
   </div>
   </div>
   ${renderRecordatoriosPagos()}`;
+}
+
+// Cuentas por pagar vencidas o que vencen en los próximos 7 días
+function avisoCuentasPagar() {
+  if (rolUsuario === "docente" || !cuentasPagar.length) return "";
+  const r = resumenCuentasPagar();
+  if (!r.vencidas.length && !r.semana.length) return "";
+  return `<div class="alert-item ${r.vencidas.length ? "alert-mora" : "alert-info"} aviso-cuentas" style="cursor:pointer;margin-bottom:0.75rem" onclick="tabActual='finanzas';subTab.finanzas='porpagar';render()"><div>🧾 <strong>Cuentas por pagar:</strong> ${[
+    r.vencidas.length
+      ? `${r.vencidas.length} vencida${r.vencidas.length > 1 ? "s" : ""} (${fmt(r.totalVencidas)})`
+      : "",
+    r.semana.length
+      ? `${r.semana.length} vence${r.semana.length > 1 ? "n" : ""} esta semana (${fmt(r.totalSemana)})`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" · ")} →</div></div>`;
 }

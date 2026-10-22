@@ -132,3 +132,34 @@ test("libro del mes: un renglón por recibo, en orden de fecha (lo que entra pri
     ["Nómina", "Servicios"]
   );
 });
+
+test("cuentas por pagar: vencida, vence pronto (7 días), pendiente o pagada", () => {
+  const e = (c) => f(`estadoCuentaPagar(${JSON.stringify(c)}, "2026-10-07")`);
+  assert.equal(e({ vence: "2026-10-06" }), "vencida");
+  assert.equal(e({ vence: "2026-10-07" }), "por-vencer");
+  assert.equal(e({ vence: "2026-10-14" }), "por-vencer");
+  assert.equal(e({ vence: "2026-10-15" }), "proxima");
+  assert.equal(e({ vence: "2026-10-01", estado: "pagada" }), "pagada");
+  assert.equal(e({}), "sin-fecha");
+});
+
+test("la cuenta de cada mes vence el mismo día del mes siguiente (o el último, si no lo tiene)", () => {
+  assert.equal(f(`venceSiguiente("2026-10-15")`), "2026-11-15");
+  assert.equal(f(`venceSiguiente("2027-01-31")`), "2027-02-28");
+  assert.equal(f(`venceSiguiente("2026-12-05")`), "2027-01-05");
+});
+
+test("resumen: pendientes por vencimiento y totales en $ (las de Bs. a la tasa de hoy)", () => {
+  app.evaluar(`tasas = {}; tasas[todayStr()] = 200`);
+  const r = f(`resumenCuentasPagar([
+    { id: "a", descripcion: "Alquiler", monto: 300, moneda: "USD", vence: "2000-01-01" },
+    { id: "b", descripcion: "Luz", monto: 20000, moneda: "VES", vence: todayStr() },
+    { id: "c", descripcion: "Agua", monto: 10, moneda: "USD", vence: "2999-01-01" },
+    { id: "d", descripcion: "Pagada", monto: 99, moneda: "USD", vence: "2000-01-01", estado: "pagada" },
+  ])`);
+  assert.deepEqual(
+    r.pendientes.map((c) => c.id),
+    ["a", "b", "c"]
+  );
+  assert.deepEqual([r.totalVencidas, r.totalSemana, r.total], [300, 100, 410]);
+});

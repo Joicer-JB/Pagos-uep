@@ -31,6 +31,7 @@ async function cargarTodo() {
         notasQ,
       ]);
       pagos = sp.docs.map((d) => ({ id: d.id, ...d.data() })).sort(porTimestampDesc);
+      cargarCuentasPagar(); // no detiene la carga: los avisos aparecen al llegar
       trabajadores = st.docs.map((d) => ({ id: d.id, ...d.data() }));
       finanzas = sf.docs.map((d) => ({ id: d.id, ...d.data() }));
     }
@@ -89,3 +90,15 @@ function qRango(col, a) {
     console.warn("No se pudo activar la protección de solo lectura:", e.message);
   }
 })();
+
+// Cuentas por pagar: todas (son pocas); si las reglas de Firestore aún no la permiten, la lista queda vacía
+async function cargarCuentasPagar() {
+  try {
+    const s = await db.collection("cuentas_pagar").get();
+    cuentasPagar = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (tabActual === "dashboard" || tabActual === "finanzas") renderTabContent();
+  } catch (e) {
+    cuentasPagar = [];
+    console.warn("Cuentas por pagar:", e.message);
+  }
+}

@@ -21,6 +21,7 @@ rules_version = '2';
 //   6. (Octubre 2026) Sin conexión: un recibo cobrado sin internet (número provisional, pendiente: true) recibe
 //      después su número correlativo; es el único cambio que se permite a un pago ya registrado.
 //   7. (Octubre 2026) Documentos del personal: "documentos_trabajadores" (solo director y administradora).
+//   8. (Octubre 2026) Cuentas por pagar: "cuentas_pagar" (solo director y administradora).
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -124,6 +125,12 @@ service cloud.firestore {
         && id == request.resource.data.adjuntoId + '_' + string(request.resource.data.parte);
       allow update: if false;
       allow delete: if isStaff();
+    }
+
+    // Cuentas por pagar (servicios, alquiler, proveedores…): director y administradora las anotan, marcan como pagadas
+    // y borran. El dinero que sale se registra aparte, como gasto en "finanzas".
+    match /cuentas_pagar/{id} {
+      allow read, create, update, delete: if isStaff();
     }
 
     // ───────────── Notas ─────────────

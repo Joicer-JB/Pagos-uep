@@ -51,6 +51,7 @@ function renderFinanzas() {
       ["gastos", "📉 Gastos"],
       ["flujo", "💹 Flujo de Caja"],
       ["libro", "📒 Libro"],
+      ["porpagar", "🧾 Por pagar"],
     ]
       .map(
         ([k, l]) => `
@@ -129,6 +130,7 @@ function renderFinanzas() {
   }
 
   ${st === "libro" ? renderLibroFinanzas(anio, mesPad) : ""}
+  ${st === "porpagar" ? renderCuentasPagar() : ""}
   ${
     st === "gastos"
       ? `
@@ -185,6 +187,10 @@ function renderFinanzas() {
 }
 function renderModalFinanza(m) {
   const isIng = m.subtipo === "ingreso";
+  // Al pagar una cuenta por pagar, el gasto ya viene lleno con sus datos
+  const pre = m.cuentaId ? cuentasPagar.find((c) => c.id === m.cuentaId) || null : null;
+  const enUsd = pre ? pre.moneda === "USD" : isIng;
+  if (pre) setTimeout(calcFin, 0);
   const categoriasGasto = ["Nómina", "Servicios", "Materiales", "Mantenimiento", "Transporte", "Alimentación", "Otros"];
   const categoriasIng = ["Donación", "Evento", "Subsidio", "Otros ingresos"];
   return `<div class="modal-bg"><div class="modal">
@@ -194,25 +200,25 @@ function renderModalFinanza(m) {
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field"><label class="field-label">Descripción *</label><input class="inp" id="fin-desc" placeholder="${isIng ? "Ej: Donación institución" : "Ej: Pago de agua"}"/></div>
+        <div class="field"><label class="field-label">Descripción *</label><input class="inp" id="fin-desc" placeholder="${isIng ? "Ej: Donación institución" : "Ej: Pago de agua"}" value="${pre ? escHtml(pre.descripcion) : ""}"/></div>
         <div class="form-row">
           <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="fin-fecha" max="${todayStr()}" value="${todayStr()}" onchange="actualizarTasaCampo('fin',calcFin)"/></div>
           <div class="field"><label class="field-label">Categoría</label>
             <select class="inp" id="fin-cat">
-              ${(isIng ? categoriasIng : categoriasGasto).map((c) => `<option value="${c}">${c}</option>`).join("")}
+              ${(isIng ? categoriasIng : categoriasGasto).map((c) => `<option value="${c}" ${pre && pre.categoria === c ? "selected" : ""}>${c}</option>`).join("")}
             </select>
           </div>
         </div>
         <div class="field"><label class="field-label">Monto * <span style="font-weight:400;color:#888">(¿en qué moneda lo escribes?)</span></label>
           <div class="metodo-row" style="margin-bottom:0.4rem">
-            <button type="button" class="metodo-btn ${isIng ? "" : "selected"}" id="fin-m-ves" onclick="selMonedaFin('VES')">🇻🇪 Bolívares (Bs.)</button>
-            <button type="button" class="metodo-btn ${isIng ? "selected" : ""}" id="fin-m-usd" onclick="selMonedaFin('USD')">💵 Dólares (ref.)</button>
+            <button type="button" class="metodo-btn ${enUsd ? "" : "selected"}" id="fin-m-ves" onclick="selMonedaFin('VES')">🇻🇪 Bolívares (Bs.)</button>
+            <button type="button" class="metodo-btn ${enUsd ? "selected" : ""}" id="fin-m-usd" onclick="selMonedaFin('USD')">💵 Dólares (ref.)</button>
           </div>
-          <div style="position:relative"><span id="fin-simbolo" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:${isIng ? "#1a9e5c" : "#e53e3e"};font-weight:700">${isIng ? "$" : "Bs."}</span>
-          <input class="inp" id="fin-monto" placeholder="0,00" style="padding-left:3rem" oninput="fmtInput(this);calcFin()"/></div></div>
+          <div style="position:relative"><span id="fin-simbolo" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:${isIng ? "#1a9e5c" : "#e53e3e"};font-weight:700">${enUsd ? "$" : "Bs."}</span>
+          <input class="inp" id="fin-monto" placeholder="0,00" style="padding-left:3rem" oninput="fmtInput(this);calcFin()" value="${pre ? String(pre.monto).replace(".", ",") : ""}"/></div></div>
         ${campoTasaHTML("fin", null, "calcFin()")}
         <div id="fin-equiv" style="display:none;background:#e8f0fe;border-radius:10px;padding:0.65rem 0.85rem;font-size:0.82rem;color:#003366"></div>
-        <div class="field"><label class="field-label">Responsable</label><input class="inp" id="fin-resp" placeholder="Quién realizó el gasto/ingreso"/></div>
+        <div class="field"><label class="field-label">Responsable</label><input class="inp" id="fin-resp" placeholder="Quién realizó el gasto/ingreso" value="${pre ? escHtml(pre.proveedor) : ""}"/></div>
         <div class="field"><label class="field-label">Observaciones</label><textarea class="inp" id="fin-obs" rows="2" placeholder="Detalles adicionales"></textarea></div>
         <div id="fin-err"></div>
       </div>
@@ -473,6 +479,7 @@ async function guardarFinanza(tipo) {
     ponerEnLista(finanzas, datos);
     aplicarTasaEditada("fin", fecha, c.tasa);
     alertaFinanza(datos);
+    if (modalActual && modalActual.cuentaId) await marcarCuentaPagada(modalActual.cuentaId, datos);
     cerrarModal();
   } catch (e) {
     err(e.message);
@@ -633,4 +640,166 @@ function imprimirLibro(anio, mesPad) {
   <div class="no-print" style="text-align:center;padding:0.75rem"><button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.6rem 1.4rem;border-radius:8px;font-weight:700">🖨️ Imprimir / Guardar PDF</button></div>
   </body></html>`);
   w.document.close();
+}
+
+// ---- 🧾 Cuentas por pagar
+const ETIQ_EST_CUENTA = {
+  vencida: ["badge-red", "⚠️ Vencida"],
+  "por-vencer": ["badge-gold", "⏰ Vence pronto"],
+  proxima: ["badge-blue", "📅 Pendiente"],
+  "sin-fecha": ["badge-gray", "Sin fecha"],
+};
+const montoCuenta = (c) => (c.moneda === "VES" ? fmtBs(c.monto) : fmt(c.monto));
+function renderCuentasPagar() {
+  const r = resumenCuentasPagar();
+  const pagadas = cuentasPagar
+    .filter((c) => c.estado === "pagada")
+    .sort((a, b) => ((a.pagadaEl || "") < (b.pagadaEl || "") ? 1 : -1))
+    .slice(0, 8);
+  return `
+  <div class="stats-grid">
+    <div class="stat-card red"><div class="stat-val">${fmt(r.totalVencidas)}</div><div class="stat-label">Vencidas (${r.vencidas.length})</div></div>
+    <div class="stat-card gold"><div class="stat-val">${fmt(r.totalSemana)}</div><div class="stat-label">Vencen en 7 días (${r.semana.length})</div></div>
+    <div class="stat-card"><div class="stat-val">${fmt(r.total)}</div><div class="stat-label">Total por pagar (${r.pendientes.length})</div></div>
+  </div>
+  <button class="btn btn-primary btn-full" style="margin-bottom:0.75rem" onclick="abrirModal({tipo:'nuevo-cuenta-pagar'})">➕ Nueva cuenta por pagar</button>
+  <div class="list">${
+    r.pendientes
+      .map((c) => {
+        const [badge, etiqueta] = ETIQ_EST_CUENTA[c.est];
+        return `<div class="list-item cuenta-pagar" style="border-left-color:${c.est === "vencida" ? "#e53e3e" : c.est === "por-vencer" ? "#b8860b" : "#00509e"}">
+      <div class="item-row">
+        <div style="flex:1;min-width:0"><div class="item-name">${escHtml(c.descripcion)}</div>
+          <div class="item-sub">${escHtml(c.proveedor || c.categoria || "")}${c.vence ? " · vence el " + escHtml(fechaCorta(c.vence)) : ""}${c.recurrente === "mensual" ? " · 🔁 cada mes" : ""}</div>
+          <div style="margin-top:3px"><span class="badge ${badge}">${etiqueta}</span></div></div>
+        <div class="item-right"><div class="item-amount" style="color:#e53e3e">${montoCuenta(c)}</div>${c.moneda === "VES" && c.usd != null ? `<div style="font-size:0.68rem;color:#888">≈ ${fmt(c.usd)}</div>` : ""}
+          <div style="display:flex;gap:0.25rem;margin-top:4px;justify-content:flex-end">
+            <button class="btn btn-success btn-sm" style="font-size:0.7rem" onclick="abrirModal({tipo:'nuevo-finanza',subtipo:'gasto',cuentaId:'${c.id}'})">✓ Pagar</button>
+            <button class="btn btn-gray btn-sm" style="font-size:0.7rem" title="Editar" onclick="abrirModal({tipo:'editar-cuenta-pagar',id:'${c.id}'})">✏️</button>
+          </div></div>
+      </div></div>`;
+      })
+      .join("") || `<div class="empty"><div class="empty-icon">🧾</div><p>No hay cuentas por pagar</p></div>`
+  }</div>
+  ${
+    pagadas.length
+      ? `<div class="card" style="margin-top:0.75rem"><div class="card-title"><div class="card-bar"></div><h2>Pagadas hace poco</h2></div>${pagadas
+          .map(
+            (c) =>
+              `<div class="info-row"><span style="color:#555">✓ ${escHtml(c.descripcion)} <span style="color:#999">· ${escHtml(fechaCorta(c.pagadaEl || ""))}</span></span><span style="font-weight:700">${montoCuenta(c)}</span></div>`
+          )
+          .join("")}</div>`
+      : ""
+  }`;
+}
+function renderModalCuentaPagar(m) {
+  const c = m.id ? cuentasPagar.find((x) => x.id === m.id) || {} : {};
+  const cats = [
+    "Servicios",
+    "Alquiler",
+    "Impuestos",
+    "Materiales",
+    "Mantenimiento",
+    "Transporte",
+    "Alimentación",
+    "Otros",
+  ];
+  return `<div class="modal-bg"><div class="modal">
+    <div class="modal-header"><div><h3>🧾 ${c.id ? "Editar" : "Nueva"} cuenta por pagar</h3><p>Lo que hay que pagar y cuándo vence</p></div><button class="modal-close-x" onclick="cerrarModal()">✕</button></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field"><label class="field-label">¿Qué es? *</label><input class="inp" id="cp-desc" placeholder="Ej: Luz (Corpoelec), alquiler, impuesto municipal" value="${escHtml(c.descripcion) || ""}"/></div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">A quién se le paga</label><input class="inp" id="cp-prov" placeholder="Ej: Corpoelec" value="${escHtml(c.proveedor) || ""}"/></div>
+        <div class="field"><label class="field-label">Categoría</label><select class="inp" id="cp-cat">${cats.map((x) => `<option ${c.categoria === x ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Monto *</label><input class="inp" id="cp-monto" inputmode="decimal" placeholder="0,00" value="${c.monto ? String(c.monto).replace(".", ",") : ""}" oninput="fmtInput(this)"/></div>
+        <div class="field"><label class="field-label">Moneda</label><select class="inp" id="cp-moneda"><option value="USD" ${c.moneda !== "VES" ? "selected" : ""}>$ (dólares)</option><option value="VES" ${c.moneda === "VES" ? "selected" : ""}>Bs. (bolívares)</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Vence el *</label><input class="inp" type="date" id="cp-vence" value="${escHtml(c.vence) || ""}"/></div>
+        <div class="field"><label class="field-label">¿Se repite?</label><select class="inp" id="cp-rec"><option value="no">No, es una sola vez</option><option value="mensual" ${c.recurrente === "mensual" ? "selected" : ""}>🔁 Cada mes</option></select></div>
+      </div>
+      <div class="field"><label class="field-label">Nota</label><input class="inp" id="cp-nota" placeholder="Ej: número de contrato o de cliente" value="${escHtml(c.nota) || ""}"/></div>
+      <div id="cp-err"></div>
+    </div></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="guardarCuentaPagar('${c.id || ""}')">✓ Guardar</button>
+      ${c.id ? `<button class="btn btn-danger btn-sm" onclick="eliminarCuentaPagar('${c.id}')">🗑️</button>` : ""}
+      <button class="btn btn-gray" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div></div>`;
+}
+async function guardarCuentaPagar(id) {
+  const val = (x) => document.getElementById(x).value.trim();
+  const datos = {
+    descripcion: val("cp-desc"),
+    proveedor: val("cp-prov"),
+    categoria: val("cp-cat"),
+    monto: r2(parseFmt(val("cp-monto"))),
+    moneda: val("cp-moneda") === "VES" ? "VES" : "USD",
+    vence: val("cp-vence"),
+    recurrente: val("cp-rec") === "mensual" ? "mensual" : "no",
+    nota: val("cp-nota"),
+  };
+  if (!datos.descripcion || !(datos.monto > 0) || !datos.vence)
+    return mostrarError("cp-err", "Completa qué es, el monto y cuándo vence");
+  try {
+    if (id) {
+      await db.collection("cuentas_pagar").doc(id).update(datos);
+      ponerEnLista(cuentasPagar, { id, ...datos });
+    } else {
+      const nueva = { ...datos, estado: "pendiente", registradoPor: correoUsuario() };
+      const ref = await db.collection("cuentas_pagar").add(nueva);
+      cuentasPagar.push({ id: ref.id, ...nueva });
+    }
+    cerrarModal();
+    renderTabContent();
+  } catch (e) {
+    mostrarError("cp-err", e.message);
+  }
+}
+async function eliminarCuentaPagar(id) {
+  if (!confirm("¿Borrar esta cuenta por pagar? (No borra ningún gasto ya registrado)")) return;
+  try {
+    await db.collection("cuentas_pagar").doc(id).delete();
+    cuentasPagar = cuentasPagar.filter((c) => c.id !== id);
+    cerrarModal();
+    renderTabContent();
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+// Al registrar el gasto de una cuenta: queda pagada y, si es de cada mes, se anota la del mes que viene
+async function marcarCuentaPagada(id, gasto) {
+  const c = cuentasPagar.find((x) => x.id === id);
+  if (!c) return;
+  const pago = { estado: "pagada", pagadaEl: gasto.fecha, gastoId: gasto.id || "" };
+  const lote = db.batch();
+  lote.update(db.collection("cuentas_pagar").doc(id), pago);
+  let siguiente = null;
+  if (c.recurrente === "mensual" && c.vence) {
+    const ref = db.collection("cuentas_pagar").doc();
+    siguiente = {
+      descripcion: c.descripcion,
+      proveedor: c.proveedor || "",
+      categoria: c.categoria || "",
+      monto: c.monto,
+      moneda: c.moneda,
+      vence: venceSiguiente(c.vence),
+      recurrente: "mensual",
+      nota: c.nota || "",
+      estado: "pendiente",
+      registradoPor: correoUsuario(),
+    };
+    lote.set(ref, siguiente);
+    siguiente.id = ref.id;
+  }
+  try {
+    await lote.commit();
+    Object.assign(c, pago);
+    if (siguiente) cuentasPagar.push(siguiente);
+  } catch (e) {
+    alert("El gasto se registró, pero no se pudo marcar la cuenta como pagada: " + e.message);
+  }
 }

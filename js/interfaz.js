@@ -135,6 +135,7 @@ function renderModal() {
   if (m.tipo === "duplicados") return renderModalDuplicados();
   if (m.tipo === "nuevo-finanza") return renderModalFinanza(m);
   if (m.tipo === "ver-finanza") return renderModalVerFinanza(m);
+  if (m.tipo === "nuevo-cuenta-pagar" || m.tipo === "editar-cuenta-pagar") return renderModalCuentaPagar(m);
   if (m.tipo === "ver-trabajador") return renderModalVerTrabajador(m);
   if (m.tipo === "constancia-trabajo") return renderModalConstanciaTrabajo(m);
   if (m.tipo === "pago-nomina") return renderModalPagoNomina(m);

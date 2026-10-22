@@ -80,6 +80,7 @@ function logout() {
   estudiantes = [];
   trabajadores = [];
   finanzas = [];
+  cuentasPagar = [];
   notas = {};
   render();
 }

@@ -8,6 +8,7 @@ let pagos = [],
   estudiantes = [],
   trabajadores = [],
   finanzas = [],
+  cuentasPagar = [], // cuentas por pagar (ver servicios/contabilidad.js)
   notas = {};
 let modalActual = null;
 let subTab = { pagos: "lista", finanzas: "resumen", nomina: "lista", config: "docentes" };
