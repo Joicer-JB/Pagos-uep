@@ -324,3 +324,42 @@ test("clases que da: grados, materia, días y horario; la vista por grado avisa 
   await llamar(`cerrarModal()`);
   assert.deepEqual(s.errores, []);
 });
+
+test("constancia de trabajo: la firma la directora, con el cargo, la fecha de ingreso y el salario en letras", async () => {
+  const t = await trabajador("Coordinadora Tres");
+  await llamar(`configInst = {}; abrirModal({ tipo: "ver-trabajador", id: ${JSON.stringify(t.id)} })`);
+  await s.pagina.click("text=📜 Constancia");
+  assert.match(
+    await s.pagina.textContent(".modal"),
+    /Falta el nombre de la directora, la cédula de la directora, el RIF del plantel/
+  );
+  await llamar(`configInst = { nombre: "U.E.P. Josefa Joaquina Sánchez", directora: "Lic. Directora Prueba",
+    cedulaDirectora: "V-9000111", rif: "J-12345678-9", direccion: "Turumo - Caucagüita, Estado Miranda", codigo: "PD13831519" };
+    abrirModal({ tipo: "constancia-trabajo", id: ${JSON.stringify(t.id)} })`);
+  assert.doesNotMatch(await s.pagina.textContent(".modal"), /Falta/);
+  await s.pagina.selectOption("#ct-trato", "la");
+  await s.pagina.click("text=🖨️ Imprimir constancia");
+  const texto = (await ultimaImpresion()).replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+  for (const parte of [
+    "Constancia de trabajo",
+    "R.I.F.: J-12345678-9",
+    "A quien pueda interesar",
+    "Quien suscribe, Lic. Directora Prueba, titular de la cédula de identidad N° V-9000111",
+    "que la ciudadana Coordinadora Tres, titular de la cédula de identidad N° V-14000333 y R.I.F. N° V-14000333-9",
+    "presta sus servicios en esta institución desde el 15 de septiembre de 2015 hasta la presente fecha",
+    "desempeñando el cargo de Coordinadora de Primaria y docente de Media general",
+    "(docente de aula en 3er Grado; Matemáticas en 1er Año, 2do Año)",
+    // 300 de sueldo + 40 h × 2,50 = 400 al mes; a Bs. 184,50 = 73.800
+    "devengando un ingreso mensual promedio de Bs. 73.800,00 (SETENTA Y TRES MIL OCHOCIENTOS BOLÍVARES CON 00/100)",
+    "equivalente a $ 400,00 a la tasa oficial del Banco Central de Venezuela del 7 de octubre de 2026",
+    "en Turumo - Caucagüita, a los siete (7) días del mes de octubre de 2026",
+  ])
+    assert.ok(texto.includes(parte), "falta en la constancia: " + parte + "\n\n" + texto);
+  // sin salario
+  await llamar(`abrirModal({ tipo: "constancia-trabajo", id: ${JSON.stringify(t.id)} })`);
+  await s.pagina.selectOption("#ct-sueldo", "no");
+  await s.pagina.click("text=🖨️ Imprimir constancia");
+  assert.doesNotMatch(await ultimaImpresion(), /devengando/);
+  await llamar(`cerrarModal()`);
+  assert.deepEqual(s.errores, []);
+});

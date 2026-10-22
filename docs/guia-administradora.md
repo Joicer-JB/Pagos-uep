@@ -232,6 +232,13 @@ También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
 Si alguien deja de trabajar, edítalo y marca «Ya no trabaja aquí»: se conserva su historial. En la lista, cada uno
 dice si es de **sueldo fijo**, **por horas** o **fijo + horas**.
 
+**📜 Constancia de trabajo:** en la ficha del trabajador toca **📜 Constancia**. Eliges a quién va dirigida («A quien
+pueda interesar»), el tratamiento (la ciudadana, el ciudadano o el(la) ciudadano(a)), el cargo que dirá, el salario
+(completo con bonos y horas, sin bonos, o sin salario) y la moneda (bolívares a la tasa BCV del día, con su
+equivalente en $, o solo una de las dos). El monto sale también en letras. La firma la directora: su nombre, su
+cédula y el RIF del plantel se ponen una sola vez en ⚙️ Configuración → 🏫 Institución (si faltan, sale una línea
+para escribirlos a mano). Para alguien que ya no trabaja aquí, dice «prestó sus servicios desde… hasta…».
+
 **📚 Clases** (pestaña de Nómina): cada grado y año con su docente de aula, las materias, quién las da y a qué hora.
 Avisa los **choques de horario** (un profesor en dos clases a la vez, o un año con dos materias a la misma hora), los
 grados **sin docente** y, en Media general, las materias del año (Configuración → Materias) que nadie da. Con

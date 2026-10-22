@@ -234,8 +234,12 @@ function renderConfigInstitucion() {
       <input class="inp" id="inst-nombre" value="${escHtml(inst.nombre) || "U.E.P. Josefa Joaquina Sánchez"}" placeholder="Nombre del plantel"/></div>
     <div class="field"><label class="field-label">Dirección</label>
       <input class="inp" id="inst-direccion" value="${escHtml(inst.direccion) || "Turumo - Caucagüita, Estado Miranda"}" placeholder="Dirección"/></div>
+    <div class="field"><label class="field-label">RIF del plantel</label>
+      <input class="inp" id="inst-rif" value="${escHtml(inst.rif) || ""}" placeholder="J-12345678-9"/></div>
     <div class="field"><label class="field-label">Directora</label>
       <input class="inp" id="inst-directora" value="${escHtml(inst.directora) || "Lic. Ligia Herrera"}" placeholder="Nombre y título"/></div>
+    <div class="field"><label class="field-label">Cédula de la directora <span style="font-weight:400;color:#888">(para las constancias)</span></label>
+      <input class="inp" id="inst-cedula-directora" value="${escHtml(inst.cedulaDirectora) || ""}" placeholder="V-12345678"/></div>
     <div class="field"><label class="field-label">Coordinador/a de Media General</label>
       <input class="inp" id="inst-coordinador" value="${escHtml(inst.coordinador) || "Lic. Carlos Carrascal"}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Coordinador/a de Primaria</label>
@@ -305,7 +309,9 @@ async function guardarInstitucion() {
     codigo: document.getElementById("inst-codigo").value.trim(),
     nombre: document.getElementById("inst-nombre").value.trim(),
     direccion: document.getElementById("inst-direccion").value.trim(),
+    rif: normalizarRif(document.getElementById("inst-rif").value),
     directora: document.getElementById("inst-directora").value.trim(),
+    cedulaDirectora: document.getElementById("inst-cedula-directora").value.trim(),
     coordinador: document.getElementById("inst-coordinador").value.trim(),
     coordinadorPrimaria: document.getElementById("inst-coordinador-prim").value.trim(),
     anioEscolar: document.getElementById("inst-anio").value.trim(),
