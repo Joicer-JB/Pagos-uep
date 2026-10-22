@@ -52,6 +52,7 @@ function renderFinanzas() {
       ["flujo", "💹 Flujo de Caja"],
       ["libro", "📒 Libro"],
       ["porpagar", "🧾 Por pagar"],
+      ["conciliacion", "🏦 Conciliación"],
     ]
       .map(
         ([k, l]) => `
@@ -131,6 +132,7 @@ function renderFinanzas() {
 
   ${st === "libro" ? renderLibroFinanzas(anio, mesPad) : ""}
   ${st === "porpagar" ? renderCuentasPagar() : ""}
+  ${st === "conciliacion" ? renderConciliacion() : ""}
   ${
     st === "gastos"
       ? `
@@ -802,4 +804,260 @@ async function marcarCuentaPagada(id, gasto) {
   } catch (e) {
     alert("El gasto se registró, pero no se pudo marcar la cuenta como pagada: " + e.message);
   }
+}
+
+// ---- 🏦 Conciliación bancaria (ver servicios/conciliacion.js). No se guarda nada: se sube el estado de cuenta, se
+// revisa y, si hace falta, se registra lo que falta.
+let conc = null; // { nombre, filas, mapa, resultado, error }
+const ETIQ_COL_BANCO = {
+  fecha: "Fecha *",
+  referencia: "Referencia",
+  descripcion: "Descripción",
+  credito: "Crédito / abono",
+  debito: "Débito / cargo",
+  monto: "Monto (si va todo en una columna)",
+};
+function leerEstadoCuenta(archivo) {
+  if (!archivo) return;
+  const r = new FileReader();
+  r.onload = (ev) => {
+    try {
+      const libro = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellDates: true });
+      const hojas = libro.SheetNames.map((n) =>
+        XLSX.utils.sheet_to_json(libro.Sheets[n], { header: 1, raw: true, defval: "" })
+      );
+      const filas = hojas.find((h) => detectarColumnas(h)) || hojas[0] || [];
+      conc = { nombre: archivo.name, filas, mapa: detectarColumnas(filas) || { fila: 0, col: {} } };
+      conciliarActual();
+    } catch (e) {
+      conc = { nombre: archivo.name, error: "No se pudo leer el archivo: " + e.message };
+    }
+    renderTabContent();
+  };
+  r.readAsArrayBuffer(archivo);
+}
+function conciliarActual() {
+  if (!conc || !conc.filas) return;
+  const { col } = conc.mapa;
+  conc.resultado = null;
+  conc.error = "";
+  if (col.fecha == null || (col.credito == null && col.monto == null))
+    return void (conc.error = "Elige qué columna es la fecha y cuál trae los abonos (crédito o monto).");
+  const entradas = movimientosBanco(conc.filas, conc.mapa);
+  if (!entradas.length) return void (conc.error = "No se encontraron abonos (dinero que entró) en el archivo.");
+  conc.resultado = conciliarBanco(entradas, cobrosPorTransferencia());
+}
+function cambiarColumnaBanco(k, v) {
+  if (v === "") delete conc.mapa.col[k];
+  else conc.mapa.col[k] = Number(v);
+  conciliarActual();
+  renderTabContent();
+}
+function cambiarFilaTitulos(v) {
+  conc.mapa = detectarColumnas(conc.filas.slice(Number(v))) || { fila: 0, col: {} };
+  conc.mapa.fila += Number(v);
+  conciliarActual();
+  renderTabContent();
+}
+// Abre «Nuevo pago» con lo que dice el banco (fecha, referencia y el monto pasado a $ con la tasa de ese día)
+function registrarDesdeBanco(i) {
+  const e = conc && conc.resultado && conc.resultado.sinRegistrar[i];
+  if (!e) return;
+  const t = tasaDe(e.fecha);
+  pagoPrefill = {
+    fecha: e.fecha,
+    metodo: "Transferencia Bs",
+    referencia: e.referencia,
+    total: t ? r2(e.monto / t.valor) : "",
+    desc:
+      "Recibido en el banco el " +
+      fechaCorta(e.fecha) +
+      ": " +
+      fmtBs(e.monto) +
+      (e.descripcion ? " (" + e.descripcion + ")" : ""),
+  };
+  _metodoPago = "Transferencia Bs";
+  tabActual = "pagos";
+  subTab.pagos = "nuevo";
+  render();
+}
+function renderConciliacion() {
+  const repetidas = referenciasRepetidas();
+  const htmlRepetidas = repetidas.length
+    ? `<div class="card conc-repetidas"><div class="card-title"><div class="card-bar"></div><h2>⚠️ Referencias repetidas en los recibos (${repetidas.length})</h2></div>
+      <div style="font-size:0.75rem;color:#666;margin-bottom:0.4rem">La misma transferencia registrada en más de un recibo: puede ser un error o un comprobante usado dos veces.</div>
+      ${repetidas
+        .map(
+          (g) =>
+            `<div class="info-row"><span><strong>Ref. ${escHtml(g.ref)}</strong></span><span style="text-align:right;font-size:0.78rem">${g.recibos.map((r) => `${escHtml(r.factura)} · ${escHtml(r.nombre)} · ${escHtml(fechaCorta(r.fecha))} · ${fmt(r.total)}`).join("<br/>")}</span></div>`
+        )
+        .join("")}</div>`
+    : "";
+  const cabecera = `<div class="card">
+    <div class="card-title"><div class="card-bar"></div><h2>🏦 Conciliación bancaria</h2></div>
+    <div style="font-size:0.78rem;color:#555;margin-bottom:0.5rem">Descarga el estado de cuenta de tu banco en <strong>Excel o CSV</strong> y súbelo aquí. La app compara cada abono con los cobros registrados por <strong>transferencia o pago móvil</strong> (por la referencia y el monto, o por el monto y la fecha). Los cobros por punto de venta no se comparan uno por uno: el banco los abona juntos al cerrar el lote.</div>
+    <input class="inp" type="file" id="conc-archivo" accept=".xlsx,.xls,.csv,.txt" onchange="leerEstadoCuenta(this.files[0])"/>
+    ${conc ? `<div style="font-size:0.75rem;color:#888;margin-top:0.3rem">📄 ${escHtml(conc.nombre)}</div>` : ""}
+  </div>`;
+  if (!conc) return cabecera + htmlRepetidas;
+  if (!conc.filas)
+    return cabecera + `<div class="alert-item alert-mora"><div>${escHtml(conc.error)}</div></div>` + htmlRepetidas;
+  const titulos = conc.filas[conc.mapa.fila] || [];
+  const opciones = (k) =>
+    `<option value="">— ninguna —</option>` +
+    titulos
+      .map(
+        (t, j) =>
+          `<option value="${j}" ${conc.mapa.col[k] === j ? "selected" : ""}>${escHtml(String(t || "Columna " + (j + 1)))}</option>`
+      )
+      .join("");
+  const columnas = `<details class="card conc-columnas" ${conc.resultado ? "" : "open"}><summary style="cursor:pointer;font-weight:700;color:#003366;font-size:0.85rem">⚙️ Columnas del archivo ${conc.resultado ? "(detectadas)" : ""}</summary>
+    <div class="form-grid" style="margin-top:0.5rem">
+      <div class="field"><label class="field-label">Fila de los títulos</label><select class="inp" id="conc-fila" onchange="cambiarFilaTitulos(this.value)">${conc.filas
+        .slice(0, 40)
+        .map(
+          (f, i) =>
+            `<option value="${i}" ${i === conc.mapa.fila ? "selected" : ""}>Fila ${i + 1}: ${escHtml((f || []).filter(Boolean).slice(0, 4).join(" · ").slice(0, 60))}</option>`
+        )
+        .join("")}</select></div>
+      <div class="form-row" style="flex-wrap:wrap">${Object.entries(ETIQ_COL_BANCO)
+        .map(
+          ([k, l]) =>
+            `<div class="field"><label class="field-label">${l}</label><select class="inp" id="conc-col-${k}" onchange="cambiarColumnaBanco('${k}',this.value)">${opciones(k)}</select></div>`
+        )
+        .join("")}</div>
+    </div></details>`;
+  const r = conc.resultado;
+  if (!r)
+    return (
+      cabecera + columnas + `<div class="alert-item alert-info"><div>${escHtml(conc.error)}</div></div>` + htmlRepetidas
+    );
+  const linea = (izq, der, extra) =>
+    `<div class="list-item" style="padding:0.55rem 0.75rem"><div class="item-row"><div style="flex:1;min-width:0;font-size:0.8rem">${izq}</div><div class="item-right" style="font-size:0.8rem">${der}${extra || ""}</div></div></div>`;
+  const cobroTxt = (c) =>
+    `${escHtml(c.factura)} · ${escHtml(c.nombre)} · ${escHtml(fechaCorta(c.fecha))}${c.referencia ? " · ref " + escHtml(c.referencia) : ""}`;
+  const banco = (e) =>
+    `🏦 ${escHtml(fechaCorta(e.fecha))}${e.referencia ? " · ref " + escHtml(e.referencia) : ""}${e.descripcion ? `<div style="color:#888;font-size:0.72rem">${escHtml(e.descripcion)}</div>` : ""}`;
+  const seccion = (clase, titulo, ayuda, items) =>
+    items.length
+      ? `<div class="card ${clase}"><div class="card-title"><div class="card-bar"></div><h2>${titulo}</h2></div><div style="font-size:0.75rem;color:#666;margin-bottom:0.4rem">${ayuda}</div><div class="list">${items.join("")}</div></div>`
+      : "";
+  return (
+    cabecera +
+    columnas +
+    `<div class="stats-grid conc-resumen">
+      <div class="stat-card"><div class="stat-val">${r.entradas}</div><div class="stat-label">Abonos del ${escHtml(fechaCorta(r.desde))} al ${escHtml(fechaCorta(r.hasta))} · ${fmtBs(r.totalBanco)}</div></div>
+      <div class="stat-card green"><div class="stat-val">${r.conciliados.length + r.porMonto.length}</div><div class="stat-label">✅ Coinciden con un recibo</div></div>
+      <div class="stat-card red"><div class="stat-val">${r.sinRegistrar.length}</div><div class="stat-label">❓ Sin registrar · ${fmtBs(r.totalSinRegistrar)}</div></div>
+      <div class="stat-card gold"><div class="stat-val">${r.noEnBanco.length + r.montoDistinto.length}</div><div class="stat-label">⚠️ Por revisar</div></div>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.6rem"><button class="btn btn-gray btn-sm" onclick="conciliarActual();renderTabContent()">🔄 Volver a comparar</button><button class="btn btn-print btn-sm" onclick="imprimirConciliacion()">🖨️ Imprimir</button></div>` +
+    seccion(
+      "conc-sin-registrar",
+      "❓ Entró al banco y no está registrado (" + r.sinRegistrar.length + ")",
+      "Dinero que llegó a la cuenta y no aparece en ningún recibo. Averigua de quién es y regístralo.",
+      r.sinRegistrar.map((e, i) =>
+        linea(
+          banco(e),
+          `<strong>${fmtBs(e.monto)}</strong>`,
+          `<div><button class="btn btn-primary btn-sm" style="margin-top:4px;font-size:0.7rem" onclick="registrarDesdeBanco(${i})">➕ Registrar</button></div>`
+        )
+      )
+    ) +
+    seccion(
+      "conc-monto-distinto",
+      "⚠️ La referencia coincide pero el monto no (" + r.montoDistinto.length + ")",
+      "El banco recibió otro monto: revisa si pagó de menos o si se registró mal.",
+      r.montoDistinto.map((x) =>
+        linea(
+          banco(x.entrada) + `<div>🧾 ${cobroTxt(x.cobro)}</div>`,
+          `Banco <strong>${fmtBs(x.entrada.monto)}</strong><div>Recibo ${fmtBs(x.cobro.bs)}</div>`
+        )
+      )
+    ) +
+    seccion(
+      "conc-no-banco",
+      "⚠️ Registrado y no aparece en el banco (" + r.noEnBanco.length + ")",
+      "Cobros por transferencia del período que no están en el estado de cuenta: puede que la referencia esté mal escrita o que el pago no haya llegado.",
+      r.noEnBanco.map((c) => linea(`🧾 ${cobroTxt(c)}`, `<strong>${fmtBs(c.bs)}</strong>`))
+    ) +
+    seccion(
+      "conc-por-monto",
+      "🟡 Coinciden por monto y fecha (" + r.porMonto.length + ")",
+      "No tienen la misma referencia, pero el monto y la fecha cuadran con un solo recibo. Confírmalos.",
+      r.porMonto.map((x) =>
+        linea(banco(x.entrada) + `<div>🧾 ${cobroTxt(x.cobro)}</div>`, `<strong>${fmtBs(x.entrada.monto)}</strong>`)
+      )
+    ) +
+    seccion(
+      "conc-ok",
+      "✅ Conciliados (" + r.conciliados.length + ")",
+      "La referencia y el monto coinciden con un recibo.",
+      r.conciliados.map((x) =>
+        linea(banco(x.entrada) + `<div>🧾 ${cobroTxt(x.cobro)}</div>`, `<strong>${fmtBs(x.entrada.monto)}</strong>`)
+      )
+    ) +
+    htmlRepetidas
+  );
+}
+function imprimirConciliacion() {
+  const r = conc && conc.resultado;
+  if (!r) return;
+  const w = abrirVentanaImpresion("width=900,height=900");
+  if (!w) return alert("Permite las ventanas emergentes para imprimir");
+  const tabla = (titulo, filas) =>
+    filas.length
+      ? `<h2>${titulo}</h2><table>${filas.map((f) => `<tr>${f.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</table>`
+      : "";
+  const cobroTxt = (c) => `${escHtml(c.factura)} · ${escHtml(c.nombre)} · ${escHtml(fechaCorta(c.fecha))}`;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Conciliación bancaria</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;background:#fff;padding:1rem;max-width:900px;margin:0 auto}
+  h1{font-size:0.95rem;color:#003366}h2{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#003366;margin:0.8rem 0 0.3rem}
+  table{width:100%;border-collapse:collapse;font-size:0.75rem}td{padding:0.25rem 0.35rem;border-bottom:1px solid #ddd}td:last-child{text-align:right;white-space:nowrap}
+  @media print{.no-print{display:none}}</style></head><body>
+  <h1>${EMPRESA} · Conciliación bancaria del ${escHtml(fechaCorta(r.desde))} al ${escHtml(fechaCorta(r.hasta))}</h1>
+  <p style="font-size:0.75rem;color:#555">Archivo: ${escHtml(conc.nombre)} · ${r.entradas} abonos por ${fmtBs(r.totalBanco)} · impreso el ${escHtml(fechaCorta(todayStr()))}</p>
+  ${tabla(
+    "Entró al banco y no está registrado",
+    r.sinRegistrar.map((e) => [
+      escHtml(fechaCorta(e.fecha)),
+      escHtml(e.referencia),
+      escHtml(e.descripcion),
+      fmtBs(e.monto),
+    ])
+  )}
+  ${tabla(
+    "La referencia coincide pero el monto no",
+    r.montoDistinto.map((x) => [
+      escHtml(fechaCorta(x.entrada.fecha)),
+      escHtml(x.entrada.referencia),
+      cobroTxt(x.cobro),
+      "Banco " + fmtBs(x.entrada.monto) + " · recibo " + fmtBs(x.cobro.bs),
+    ])
+  )}
+  ${tabla(
+    "Registrado y no aparece en el banco",
+    r.noEnBanco.map((c) => [cobroTxt(c), "ref " + escHtml(c.referencia || "—"), fmtBs(c.bs)])
+  )}
+  ${tabla(
+    "Coinciden por monto y fecha",
+    r.porMonto.map((x) => [
+      escHtml(fechaCorta(x.entrada.fecha)),
+      escHtml(x.entrada.referencia),
+      cobroTxt(x.cobro),
+      fmtBs(x.entrada.monto),
+    ])
+  )}
+  ${tabla(
+    "Conciliados",
+    r.conciliados.map((x) => [
+      escHtml(fechaCorta(x.entrada.fecha)),
+      escHtml(x.entrada.referencia),
+      cobroTxt(x.cobro),
+      fmtBs(x.entrada.monto),
+    ])
+  )}
+  <div class="no-print" style="text-align:center;padding:0.75rem"><button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.6rem 1.4rem;border-radius:8px;font-weight:700">🖨️ Imprimir / Guardar PDF</button></div>
+  </body></html>`);
+  w.document.close();
 }

@@ -72,6 +72,7 @@ ${bannerTasa()}
 function setTab(t) {
   if (rolUsuario === "docente" && t !== "notas") return;
   tabActual = t;
+  pagoPrefill = null;
   filtros = { busq: "", fecha: "", metodo: "", estado: "", lapso: LAPSOS[0], anio: String(anioActual()) };
   modalActual = null;
   render();
