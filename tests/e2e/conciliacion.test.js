@@ -87,3 +87,67 @@ test("lo que entró y nadie registró se registra desde ahí, con la fecha, la r
   assert.equal(await s.pagina.inputValue("#p-desc"), "");
   assert.deepEqual(s.errores, []);
 });
+
+test("otros formatos: CSV con punto y coma (guardado por Windows) y un «.xls» que en realidad es una página HTML", async () => {
+  await llamar(`setTab("finanzas"); subTab.finanzas = "conciliacion"; renderTabContent()`);
+  const csv =
+    "Fecha;Referencia;Descripción;Débito;Crédito\r\n02/10/2026;000000123456;PAGO MÓVIL RECIBIDO;;8.156,25\r\n03/10/2026;445566;TRANSFERENCIA;;3.690,00\r\n";
+  await s.pagina.setInputFiles("#conc-archivo", {
+    name: "movimientos.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(csv, "latin1"),
+  });
+  await s.pagina.waitForSelector(".conc-resumen");
+  assert.match(await texto(".conc-resumen"), /2\s*Abonos del 02\/10\/2026 al 03\/10\/2026/);
+  assert.match(await texto(".conc-sin-registrar"), /PAGO MÓVIL|TRANSFERENCIA/);
+  const html = `<html><body><table><tr><td>Fecha</td><td>Nro. Referencia</td><td>Concepto</td><td>Tipo</td><td>Monto</td></tr>
+    <tr><td>02-10-2026</td><td>000000123456</td><td>PAGO MOVIL</td><td>C</td><td>8.156,25</td></tr>
+    <tr><td>02-10-2026</td><td>1</td><td>COMISION</td><td>D</td><td>12,00</td></tr></table></body></html>`;
+  await s.pagina.setInputFiles("#conc-archivo", {
+    name: "estado.xls",
+    mimeType: "application/vnd.ms-excel",
+    buffer: Buffer.from(html),
+  });
+  await s.pagina.waitForFunction(
+    () => /estado\.xls/.test(document.body.textContent) && document.querySelector(".conc-ok")
+  );
+  assert.match(await texto(".conc-resumen"), /1\s*Abonos del 02\/10\/2026 al 02\/10\/2026/);
+  assert.match(await texto(".conc-ok"), /FAC-0000002/);
+});
+
+test("un banco con títulos que la app no conoce: se eligen las columnas una vez y la próxima vez las recuerda", async () => {
+  const raro = () => {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([
+        ["Col1", "Col2", "Col3", "Col4"],
+        ["02/10/2026", "000000123456", "PAGO", 8156.25],
+      ]),
+      "Hoja1"
+    );
+    return XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  };
+  await s.pagina.setInputFiles("#conc-archivo", {
+    name: "raro.xlsx",
+    mimeType: "application/octet-stream",
+    buffer: raro(),
+  });
+  await s.pagina.waitForFunction(() => /raro\.xlsx/.test(document.body.textContent));
+  assert.match(await texto("#tab-content"), /Elige qué columna es la fecha/);
+  await s.pagina.selectOption("#conc-col-fecha", "0");
+  await s.pagina.selectOption("#conc-col-referencia", "1");
+  await s.pagina.selectOption("#conc-col-credito", "3");
+  await s.pagina.waitForSelector(".conc-ok");
+  // otro archivo del mismo banco
+  await s.pagina.setInputFiles("#conc-archivo", {
+    name: "raro2.xlsx",
+    mimeType: "application/octet-stream",
+    buffer: raro(),
+  });
+  await s.pagina.waitForFunction(
+    () => /raro2\.xlsx/.test(document.body.textContent) && document.querySelector(".conc-ok")
+  );
+  assert.match(await texto(".conc-columnas summary"), /formato recordado de este banco/);
+  assert.deepEqual(s.errores, []);
+});

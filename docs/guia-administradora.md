@@ -221,9 +221,17 @@ También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
   monto en $ o Bs. y la fecha en que vence; si se repite cada mes, márcalo. Arriba ves lo vencido, lo que vence en 7
   días y el total. **✓ Pagar** abre el gasto ya lleno: al guardarlo, la cuenta queda pagada y, si es de cada mes,
   se anota sola la del mes siguiente. En **Inicio** sale el aviso de lo vencido y de lo que vence esta semana.
-- **🏦 Conciliación:** descarga del banco el estado de cuenta en Excel o CSV y súbelo. La app reconoce la fila de
-  títulos y las columnas (fecha, referencia, abono); si alguna no la reconoce, elígela en **⚙️ Columnas**. Compara
-  cada abono con los cobros por **transferencia o pago móvil** y te dice:
+- **🏦 Conciliación:** descarga del banco el estado de cuenta y súbelo. Sirve **Excel** (.xlsx o .xls, también los
+  .xls que en realidad son una página), **CSV** (con coma, punto y coma o tabulador) y **TXT** en columnas. La app
+  busca sola la fila de títulos y las columnas, aunque cada banco las llame distinto: fecha (o fecha valor u
+  operación), referencia (o número de documento o comprobante), descripción o concepto, y el dinero en columnas de
+  **débito y crédito**, en **una columna con signo** (los cargos en negativo, entre paréntesis o con «D» al final) o
+  con una columna de **tipo** (C/D, NC/ND, crédito/débito). Si la referencia viene dentro de la descripción
+  («PAGO MOVIL … REF 445566»), también la toma, sin confundirla con un teléfono. Las fechas pueden venir como
+  07/10/2026, 07-OCT-2026 o 7 de octubre de 2026. Las filas de saldo inicial o de totales no se cuentan. Si alguna
+  columna no la reconoce, elígela en **⚙️ Columnas**: la app **recuerda el formato de ese banco** en este equipo para
+  la próxima vez. Si el Excel trae varias hojas, eliges la hoja. Compara cada abono con los cobros por
+  **transferencia o pago móvil** y te dice:
   - **❓ Entró al banco y no está registrado:** dinero que llegó y no aparece en ningún recibo. **➕ Registrar** abre
     «Nuevo pago» con la fecha, la referencia y el monto (pasado a $ con la tasa de ese día); solo falta el
     estudiante y el concepto.

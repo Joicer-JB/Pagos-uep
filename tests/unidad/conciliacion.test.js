@@ -185,3 +185,126 @@ test("conciliar: por referencia y monto, por monto y fecha, monto distinto, sin 
   );
   assert.deepEqual([r.desde, r.hasta, r.entradas, r.totalBanco], ["2026-10-05", "2026-10-07", 5, 19392.5]);
 });
+
+// ---- Formatos de estados de cuenta: lo que importa es que de cada uno salgan los mismos abonos
+const abonos = (filas) => {
+  const mapa = f(`detectarColumnas(${JSON.stringify(filas)})`);
+  assert.ok(mapa, "no reconoció los títulos");
+  return f(`movimientosBanco(${JSON.stringify(filas)}, ${JSON.stringify(mapa)})`).map((m) => [
+    m.fecha,
+    m.referencia,
+    m.monto,
+  ]);
+};
+const ESPERADO = [
+  ["2026-10-07", "000123456", 8302.5],
+  ["2026-10-08", "445566", 3690],
+];
+
+test("formato: débito y crédito en columnas separadas, con títulos más abajo y saldos", () => {
+  assert.deepEqual(
+    abonos([
+      ["BANCO EJEMPLO"],
+      ["Desde 01/10/2026 hasta 31/10/2026"],
+      ["Fecha Valor", "Nº Documento", "Concepto", "Débitos (-)", "Créditos (+)", "Saldo Disponible"],
+      ["", "", "SALDO INICIAL", "", "", "1.000,00"],
+      ["07/10/2026", "000123456", "PAGO MOVIL RECIBIDO", "", "8.302,50", "9.302,50"],
+      ["07/10/2026", "990011", "PAGO A PROVEEDOR", "1.000,00", "", "8.302,50"],
+      ["08/10/2026", "445566", "TRANSFERENCIA DE TERCEROS", "", "3.690,00", "11.992,50"],
+      ["", "", "TOTALES", "1.000,00", "11.992,50", ""],
+    ]),
+    ESPERADO
+  );
+});
+
+test("formato: una sola columna de monto con signo (los débitos en negativo)", () => {
+  assert.deepEqual(
+    abonos([
+      ["F. Operación", "Referencia", "Descripción", "Importe", "Saldo"],
+      ["07-10-2026", "'000123456", "PAGO MOVIL", "8302,50", "9302,50"],
+      ["07-10-2026", "990011", "CARGO COMISION", "-12,00", "9290,50"],
+      ["08-10-2026", "445566", "TRANSF", "3.690,00", "12980,50"],
+      ["08-10-2026", "445567", "PAGO", "(500,00)", "12480,50"],
+    ]),
+    ESPERADO
+  );
+});
+
+test("formato: monto y una columna de tipo (C/D, NC/ND, crédito/débito)", () => {
+  for (const [cr, db] of [
+    ["C", "D"],
+    ["NC", "ND"],
+    ["Crédito", "Débito"],
+    ["ABONO", "CARGO"],
+  ])
+    assert.deepEqual(
+      abonos([
+        ["Fecha", "Descripción", "Referencia", "Tipo", "Monto"],
+        ["07/10/2026", "PAGO MOVIL", "000123456", cr, "8.302,50"],
+        ["07/10/2026", "COMISION", "1", db, "12,00"],
+        ["08/10/2026", "TRANSF", "445566", cr, "3.690,00"],
+      ]),
+      ESPERADO,
+      cr + "/" + db
+    );
+});
+
+test("formato: «Débito/Crédito» en una sola columna, con signo o con D y C al final del monto", () => {
+  assert.deepEqual(
+    abonos([
+      ["Fecha", "Referencia", "Detalle", "Débito/Crédito"],
+      ["07/10/2026", "000123456", "PAGO MOVIL", "8.302,50"],
+      ["07/10/2026", "1", "COMISION", "-12,00"],
+      ["08/10/2026", "445566", "TRANSF", "3.690,00"],
+    ]),
+    ESPERADO
+  );
+  assert.deepEqual(
+    abonos([
+      ["Fecha", "Referencia", "Detalle", "Monto"],
+      ["07/10/2026", "000123456", "PAGO MOVIL", "8.302,50 C"],
+      ["07/10/2026", "1", "COMISION", "12,00 D"],
+      ["08/10/2026", "445566", "TRANSF", "3.690,00 Cr"],
+      ["08/10/2026", "2", "IMPUESTO", "1,00 Db"],
+    ]),
+    ESPERADO
+  );
+});
+
+test("fechas como las escriben los bancos", () => {
+  for (const v of [
+    "07/10/2026",
+    "7/10/26",
+    "07.10.2026",
+    "2026/10/07",
+    "07-OCT-2026",
+    "07 oct 2026",
+    "7 de octubre de 2026",
+    "07-Oct-26 10:30",
+    "07102026",
+    "20261007",
+    "07/10/2026 10:15:00",
+  ])
+    assert.equal(f(`fechaBanco(${JSON.stringify(v)})`), "2026-10-07", v);
+  assert.equal(f(`fechaBanco("10/31/2026")`), "2026-10-31"); // vino mes/día
+  assert.equal(f(`fechaBanco("32/13/2026")`), "");
+});
+
+test("referencia dentro de la descripción, sin confundirla con un teléfono", () => {
+  assert.equal(f(`refDeDescripcion("PAGO MOVIL DE 04141234567 REF: 445566")`), "445566");
+  assert.equal(f(`refDeDescripcion("TRANSF 04141234567 0001234567")`), "0001234567");
+  assert.equal(f(`refDeDescripcion("Nro. 778899 ANA PEREZ")`), "778899");
+  assert.equal(f(`refDeDescripcion("DEPOSITO EN EFECTIVO")`), "");
+});
+
+test("archivos de texto: separados por punto y coma (con comillas), tabulador o en columnas fijas", () => {
+  const csv =
+    '﻿Fecha;Referencia;Concepto;Débito;Crédito\n"07/10/2026";"000123456";"PAGO MOVIL; DE ANA";"";"8.302,50"\n"08/10/2026";"445566";"TRANSF";"";"3.690,00"\n';
+  assert.deepEqual(abonos(f(`filasDeTexto(${JSON.stringify(csv)})`)), ESPERADO);
+  const tsv =
+    "Fecha\tReferencia\tConcepto\tMonto\n07/10/2026\t000123456\tPAGO MOVIL\t8302.50\n08/10/2026\t445566\tTRANSF\t3690.00\n";
+  assert.deepEqual(abonos(f(`filasDeTexto(${JSON.stringify(tsv)})`)), ESPERADO);
+  const fijo =
+    "FECHA       REFERENCIA    DESCRIPCION          CREDITO\n07/10/2026  000123456     PAGO MOVIL RECIBIDO  8.302,50\n08/10/2026  445566        TRANSFERENCIA        3.690,00\n";
+  assert.deepEqual(abonos(f(`filasDeTexto(${JSON.stringify(fijo)})`)), ESPERADO);
+});

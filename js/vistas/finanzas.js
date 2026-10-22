@@ -808,7 +808,7 @@ async function marcarCuentaPagada(id, gasto) {
 
 // ---- 🏦 Conciliación bancaria (ver servicios/conciliacion.js). No se guarda nada: se sube el estado de cuenta, se
 // revisa y, si hace falta, se registra lo que falta.
-let conc = null; // { nombre, filas, mapa, resultado, error }
+let conc = null; // { nombre, hojas: [{ nombre, filas }], hoja, filas, mapa, resultado, error }
 const ETIQ_COL_BANCO = {
   fecha: "Fecha *",
   referencia: "Referencia",
@@ -816,25 +816,60 @@ const ETIQ_COL_BANCO = {
   credito: "Crédito / abono",
   debito: "Débito / cargo",
   monto: "Monto (si va todo en una columna)",
+  tipo: "Tipo (C/D, crédito/débito)",
 };
-function leerEstadoCuenta(archivo) {
+// Los archivos de texto se leen como texto (UTF-8 o, si trae caracteres raros, como los guarda Windows); los de
+// Excel con la biblioteca de hojas de cálculo (también lee .xls que en realidad son páginas HTML)
+const esTextoBanco = (archivo) =>
+  /\.(csv|txt|tsv|prn)$/i.test(archivo.name || "") || /^text\//.test(archivo.type || "");
+function leerComoTexto(archivo, codificacion) {
+  return new Promise((ok, no) => {
+    const r = new FileReader();
+    r.onload = () => ok(r.result);
+    r.onerror = () => no(new Error("no se pudo leer el archivo"));
+    r.readAsText(archivo, codificacion);
+  });
+}
+async function hojasDeArchivo(archivo) {
+  if (esTextoBanco(archivo)) {
+    let texto = await leerComoTexto(archivo, "utf-8");
+    if (texto.includes("�")) texto = await leerComoTexto(archivo, "windows-1252");
+    return [{ nombre: archivo.name, filas: filasDeTexto(texto) }];
+  }
+  const datos = new Uint8Array(await archivo.arrayBuffer());
+  // raw: los textos de un CSV o HTML no se convierten en fechas a la manera de EE. UU. (mes/día)
+  const libro = XLSX.read(datos, { type: "array", cellDates: true, raw: true });
+  const hojas = libro.SheetNames.map((n) => ({
+    nombre: n,
+    filas: XLSX.utils.sheet_to_json(libro.Sheets[n], { header: 1, raw: true, defval: "" }),
+  }));
+  if (hojas.some((h) => detectarColumnas(h.filas))) return hojas;
+  // un «.xls» que en realidad es texto separado por tabuladores
+  const texto = new TextDecoder("utf-8").decode(datos);
+  const comoTexto = filasDeTexto(texto.includes("�") ? new TextDecoder("windows-1252").decode(datos) : texto);
+  return detectarColumnas(comoTexto) ? [{ nombre: archivo.name, filas: comoTexto }] : hojas;
+}
+async function leerEstadoCuenta(archivo) {
   if (!archivo) return;
-  const r = new FileReader();
-  r.onload = (ev) => {
-    try {
-      const libro = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellDates: true });
-      const hojas = libro.SheetNames.map((n) =>
-        XLSX.utils.sheet_to_json(libro.Sheets[n], { header: 1, raw: true, defval: "" })
-      );
-      const filas = hojas.find((h) => detectarColumnas(h)) || hojas[0] || [];
-      conc = { nombre: archivo.name, filas, mapa: detectarColumnas(filas) || { fila: 0, col: {} } };
-      conciliarActual();
-    } catch (e) {
-      conc = { nombre: archivo.name, error: "No se pudo leer el archivo: " + e.message };
-    }
+  try {
+    const hojas = await hojasDeArchivo(archivo);
+    const i = Math.max(
+      0,
+      hojas.findIndex((h) => detectarColumnas(h.filas))
+    );
+    conc = { nombre: archivo.name, hojas, hoja: i };
+    elegirHojaBanco(i);
+  } catch (e) {
+    conc = { nombre: archivo.name, error: "No se pudo leer el archivo: " + e.message };
     renderTabContent();
-  };
-  r.readAsArrayBuffer(archivo);
+  }
+}
+function elegirHojaBanco(i) {
+  conc.hoja = Number(i) || 0;
+  conc.filas = (conc.hojas[conc.hoja] || {}).filas || [];
+  conc.mapa = detectarColumnas(conc.filas) || { fila: 0, col: {} };
+  conciliarActual();
+  renderTabContent();
 }
 function conciliarActual() {
   if (!conc || !conc.filas) return;
@@ -850,12 +885,13 @@ function conciliarActual() {
 function cambiarColumnaBanco(k, v) {
   if (v === "") delete conc.mapa.col[k];
   else conc.mapa.col[k] = Number(v);
+  recordarFormatoBanco(conc.filas[conc.mapa.fila], conc.mapa.col); // la próxima vez, este formato sale solo
+  conc.mapa.recordado = true;
   conciliarActual();
   renderTabContent();
 }
 function cambiarFilaTitulos(v) {
-  conc.mapa = detectarColumnas(conc.filas.slice(Number(v))) || { fila: 0, col: {} };
-  conc.mapa.fila += Number(v);
+  conc.mapa = { fila: Number(v), col: columnasDeFila(conc.filas, Number(v)) };
   conciliarActual();
   renderTabContent();
 }
@@ -911,8 +947,16 @@ function renderConciliacion() {
           `<option value="${j}" ${conc.mapa.col[k] === j ? "selected" : ""}>${escHtml(String(t || "Columna " + (j + 1)))}</option>`
       )
       .join("");
-  const columnas = `<details class="card conc-columnas" ${conc.resultado ? "" : "open"}><summary style="cursor:pointer;font-weight:700;color:#003366;font-size:0.85rem">⚙️ Columnas del archivo ${conc.resultado ? "(detectadas)" : ""}</summary>
+  const columnas = `<details class="card conc-columnas" ${conc.resultado ? "" : "open"}><summary style="cursor:pointer;font-weight:700;color:#003366;font-size:0.85rem">⚙️ Columnas del archivo ${conc.mapa.recordado ? "(formato recordado de este banco)" : conc.resultado ? "(detectadas)" : ""}</summary>
+    <div style="font-size:0.72rem;color:#888;margin-top:0.3rem">Si alguna columna no es la correcta, elígela: la app recuerda el formato de cada banco para la próxima vez.</div>
     <div class="form-grid" style="margin-top:0.5rem">
+      ${
+        conc.hojas && conc.hojas.length > 1
+          ? `<div class="field"><label class="field-label">Hoja</label><select class="inp" id="conc-hoja" onchange="elegirHojaBanco(this.value)">${conc.hojas
+              .map((h, i) => `<option value="${i}" ${i === conc.hoja ? "selected" : ""}>${escHtml(h.nombre)}</option>`)
+              .join("")}</select></div>`
+          : ""
+      }
       <div class="field"><label class="field-label">Fila de los títulos</label><select class="inp" id="conc-fila" onchange="cambiarFilaTitulos(this.value)">${conc.filas
         .slice(0, 40)
         .map(
