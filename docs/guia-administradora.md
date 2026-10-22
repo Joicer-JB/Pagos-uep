@@ -221,12 +221,21 @@ También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
   sueldo fijo **y** horas, en la misma ficha). Toca **+ Agregar horas de clase**, elige el nivel, las **horas que da al
   mes** y **lo que vale la hora**: Media general sale en $ 2,50 y Primaria en $ 2,00, y se puede cambiar. Cada nivel
   va con su tarifa: el profesor de deporte lleva una fila de Primaria a $ 2,00 y otra de Media general a $ 2,50.
+- **📚 Clases que da:** toca **+ Agregar clase**. En Inicial y Primaria basta marcar el grado (sin materia: es el
+  docente de aula). En Media general, una fila por materia: escribe la materia, marca los años, los días y la hora de
+  inicio y de salida; si el horario cambia de un año a otro, agrega otra fila. Para Deporte o Inglés usa **🏫 Todo el
+  colegio** (o los botones Inicial, Primaria y Media general, que marcan o desmarcan el nivel completo).
 - **🏦 Cuentas para pagarle:** hasta dos (la primera es la principal): número de cuenta de 20 dígitos (el banco se
   llena solo con los 4 primeros) o el teléfono del **pago móvil**, tipo y, si la cuenta es de otra persona, su
   titular y cédula. La app avisa si a la cuenta le faltan dígitos o si no es del banco escrito.
 
 Si alguien deja de trabajar, edítalo y marca «Ya no trabaja aquí»: se conserva su historial. En la lista, cada uno
 dice si es de **sueldo fijo**, **por horas** o **fijo + horas**.
+
+**📚 Clases** (pestaña de Nómina): cada grado y año con su docente de aula, las materias, quién las da y a qué hora.
+Avisa los **choques de horario** (un profesor en dos clases a la vez, o un año con dos materias a la misma hora), los
+grados **sin docente** y, en Media general, las materias del año (Configuración → Materias) que nadie da. Con
+**🖨️ Imprimir** sale la lista completa.
 
 **📎 Documentos (certificado de salud, título, cédula, RIF):** en la ficha del trabajador (toca su nombre), en
 **Documentos**, elige cuál es, la **fecha en que vence** (el certificado de salud), toma la foto o elige el PDF y toca

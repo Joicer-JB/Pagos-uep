@@ -8,6 +8,7 @@ const app = cargar(
   "js/config.js",
   "js/utils/formato.js",
   "js/utils/texto.js",
+  "js/utils/grados.js",
   "js/estado.js",
   "js/servicios/nomina-calculo.js"
 );
@@ -277,4 +278,107 @@ test("certificado de salud: falta, vigente, por vencer (30 días) o vencido; cue
     f(`estadoCertificado(${JSON.stringify(con(salud("2026-10-01"), salud("2027-10-01")))}, "2026-10-22")`).estado,
     "vigente"
   );
+});
+
+// ---- Clases que da cada docente
+const AULA = {
+  id: "a1",
+  nombre: "Maestra Aula",
+  clases: [
+    { materia: "", grados: ["3er Grado"], dias: ["Lun", "Mar", "Mié", "Jue", "Vie"], desde: "07:00", hasta: "12:00" },
+  ],
+};
+const MATE = {
+  id: "m1",
+  nombre: "Profe Mate",
+  clases: [
+    {
+      materia: "Matemáticas",
+      grados: ["1er Año", "2do Año", "3er Año"],
+      dias: ["Lun", "Mié"],
+      desde: "07:00",
+      hasta: "08:30",
+    },
+    { materia: "Física", grados: ["4to Año"], dias: ["Mié"], desde: "08:00", hasta: "09:30" },
+  ],
+};
+const INGLES = {
+  id: "i1",
+  nombre: "Profe Inglés",
+  clases: [{ materia: "Inglés", grados: ESC(), dias: ["Lun"], desde: "07:30", hasta: "08:15" }],
+};
+function ESC() {
+  return [
+    "Maternal",
+    "Nivel I",
+    "Nivel II",
+    "Nivel III",
+    "1er Grado",
+    "2do Grado",
+    "3er Grado",
+    "4to Grado",
+    "5to Grado",
+    "6to Grado",
+    "1er Año",
+    "2do Año",
+    "3er Año",
+    "4to Año",
+    "5to Año",
+  ];
+}
+
+test("clases: grados en pocas palabras, horario y tiempo a la semana", () => {
+  assert.equal(f(`textoGrados(${JSON.stringify(ESC())})`), "Todo el colegio");
+  assert.equal(f(`textoGrados(["1er Año", "2do Año", "3er Año"])`), "1er Año a 3er Año");
+  assert.equal(f(`textoGrados(["3er Grado", "5to Grado"])`), "3er Grado, 5to Grado");
+  assert.equal(
+    f(`textoGrados(["1er Grado", "2do Grado", "3er Grado", "4to Grado", "5to Grado", "6to Grado", "5to Año"])`),
+    "Toda la Primaria, 5to Año"
+  );
+  assert.equal(f(`textoHorario(${JSON.stringify(MATE.clases[0])})`), "Lun, Mié · 7:00 a. m. a 8:30 a. m.");
+  assert.equal(f(`horaCorta("13:15")`), "1:15 p. m.");
+  assert.equal(f(`textoMinutos(minutosSemana(${JSON.stringify(MATE)}))`), "4 h 30 min"); // 2 × 1 h 30 + 1 h 30
+  assert.equal(f(`materiaDe(${JSON.stringify(AULA.clases[0])})`), "Docente de aula");
+});
+
+test("clases: lo que falta o está mal al cargarlas", () => {
+  const r = (c) =>
+    f(`revisarClase(${JSON.stringify({ materia: "", grados: [], dias: [], desde: "", hasta: "", ...c })})`);
+  assert.match(r({}), /elige a qué grado/);
+  assert.match(r({ grados: ["2do Año"] }), /escribe la materia/);
+  assert.equal(r({ grados: ["2do Grado"] }), ""); // en Primaria basta el grado
+  assert.match(
+    r({ materia: "Física", grados: ["4to Año"], desde: "09:00", hasta: "08:00", dias: ["Lun"] }),
+    /después de la de inicio/
+  );
+  assert.match(r({ materia: "Física", grados: ["4to Año"], desde: "08:00", hasta: "09:00" }), /marca los días/);
+  assert.match(r({ materia: "Física", grados: ["4to Año"], desde: "08:00" }), /hora de inicio y la de salida/);
+});
+
+test("clases por grado y choques de horario", () => {
+  poner("trabajadores", [
+    AULA,
+    MATE,
+    INGLES,
+    { id: "r1", nombre: "Retirado", activo: false, clases: [{ materia: "Arte", grados: ["1er Año"] }] },
+  ]);
+  const g = f(
+    `Object.fromEntries([...clasesPorGrado()].map(([k, v]) => [k, v.map((x) => x.t.nombre + ": " + materiaDe(x.c))]))`
+  );
+  assert.deepEqual(g["3er Grado"], ["Maestra Aula: Docente de aula", "Profe Inglés: Inglés"]);
+  assert.deepEqual(g["1er Año"], ["Profe Mate: Matemáticas", "Profe Inglés: Inglés"]); // el retirado no cuenta
+  assert.deepEqual(g["5to Año"], ["Profe Inglés: Inglés"]);
+  const choques = f(`choquesHorario()`);
+  // Matemáticas (7:00–8:30) y Física (8:00–9:30) el miércoles: el mismo profesor; Inglés de 7:30 choca con Matemáticas
+  // en 1er, 2do y 3er Año el lunes. Inglés en 3er Grado con la maestra de aula no es choque.
+  assert.equal(choques.length, 4);
+  assert.match(
+    choques.join("\n"),
+    /Profe Mate tiene dos clases a la vez el miércoles: Matemáticas \(1er Año a 3er Año, 7:00 a\. m\. a 8:30 a\. m\.\) y Física/
+  );
+  assert.match(
+    choques.join("\n"),
+    /1er Año tiene dos clases a la vez el lunes: Matemáticas con Profe Mate .* y Inglés con Profe Inglés/
+  );
+  assert.doesNotMatch(choques.join("\n"), /Grado/);
 });

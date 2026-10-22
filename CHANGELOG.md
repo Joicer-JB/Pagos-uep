@@ -12,6 +12,9 @@
 - **Documentos:** se adjuntan el certificado de salud (con su vencimiento), título, cédula, RIF u otro (foto o PDF
   de hasta 4 MB) para verlos o imprimirlos. Aviso de certificados vencidos o por vencer. **📄 Ficha** del
   trabajador para imprimir. Nueva colección `documentos_trabajadores`: **hay que publicar las reglas de Firestore**.
+- **Clases que da cada docente:** grado (Inicial y Primaria), o materia, años, días y horario (Media general);
+  Deporte o Inglés a todo el colegio. Nueva pestaña **📚 Clases** con cada grado y año, sus docentes y horarios, los
+  choques de horario, los grados sin docente y las materias sin profesor; se puede imprimir.
 - **Recibos de nómina «2 por hoja»** (original y copia), solo si se marca la casilla.
 - La nómina del mes calcula lo que falta por los períodos que aún no se pagan (antes, una quincena con menos horas
   quedaba como deuda). El tablero financiero y los avisos por correo cuentan las horas de clase.

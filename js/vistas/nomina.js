@@ -202,6 +202,7 @@ function renderNomina() {
     ${[
       ["lista", "👷 Personal"],
       ["mes", "📅 Nómina del mes"],
+      ["clases", "📚 Clases"],
       ["nuevo", "➕ Nuevo"],
       ["historial", "📋 Historial"],
     ]
@@ -229,6 +230,7 @@ function renderNomina() {
       : ""
   }
   ${st === "mes" ? botones + renderNominaMes() : ""}
+  ${st === "clases" ? renderClasesNomina() : ""}
   ${st === "historial" ? botones + renderHistorialNomina() : ""}`;
 }
 // Certificados de salud vencidos o por vencer (los que no tienen, se ven en cada fila)
@@ -262,6 +264,19 @@ const badgesHoras = (t) =>
         `<span class="badge badge-blue">⏱️ ${escHtml(h.nivel)}: ${String(h.horas).replace(".", ",")} h/mes · ${fmt(h.tarifa)}/h</span>`
     )
     .join("");
+// «📚 Matemáticas · 1er Año a 3er Año», «📚 3er Grado» (docente de aula)
+function badgesClases(t) {
+  const l = clasesDe(t);
+  return (
+    l
+      .slice(0, 3)
+      .map(
+        (c) =>
+          `<span class="badge badge-blue">📚 ${(c.materia || "").trim() ? escHtml(c.materia.trim()) + " · " : ""}${escHtml(textoGrados(c.grados))}</span>`
+      )
+      .join("") + (l.length > 3 ? `<span class="badge badge-gray">+${l.length - 3} clases</span>` : "")
+  );
+}
 function filaTrabajador(t) {
   const deudaP = sumaDe(prestamosDe(t.id), "saldo"),
     adel = sumaDe(adelantosPendientes(t.id), "pendiente");
@@ -273,6 +288,7 @@ function filaTrabajador(t) {
           <span class="badge badge-gray">${ETIQ_TIPO_PAGO[tipoPago]}</span>
           ${tipoPago !== "horas" ? `<span class="badge badge-blue">Base: ${fmt(t.salario || 0)}</span>` : ""}
           ${badgesHoras(t)}
+          ${badgesClases(t)}
           <span class="badge badge-gray">${t.frecuencia === "mensual" ? "📆 Mensual" : "🔁 Quincenal"}</span>
           ${t.bonoAlimentacion ? `<span class="badge badge-green">🍽️ ${fmt(t.bonoAlimentacion)}</span>` : ""}
           ${t.bonoProductividad ? `<span class="badge badge-gold">⭐ ${fmt(t.bonoProductividad)}</span>` : ""}
@@ -332,6 +348,92 @@ function renderNominaMes() {
           .join("")
       : `<div class="empty"><div class="empty-icon">👷</div><p>Sin personal activo</p></div>`
   }`;
+}
+// 📚 Clases: cada grado y año con sus docentes, materias y horario; choques de horario y lo que falta
+function renderClasesNomina() {
+  const porGrado = clasesPorGrado();
+  const choques = choquesHorario();
+  const sinDocente = ESCALERA.filter((g) => !porGrado.get(g).length);
+  const norm = (m) =>
+    sinAcento(String(m || ""))
+      .toLowerCase()
+      .trim();
+  // En Media general: las materias del año (Configuración → Materias) que nadie da
+  const faltan = (g) =>
+    getNivel(g) === "media" && Array.isArray(configMaterias[g])
+      ? configMaterias[g].filter((m) => !porGrado.get(g).some((x) => norm(x.c.materia) === norm(m)))
+      : [];
+  return `
+  <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.6rem">
+    <div style="flex:1;font-size:0.78rem;color:#555">Quién da clase en cada grado y año, y a qué hora. Se carga en la ficha de cada trabajador (✏️ → 📚 Clases que da).</div>
+    <button class="btn btn-print btn-sm" onclick="imprimirClases()">🖨️ Imprimir</button>
+  </div>
+  ${choques.length ? `<div class="alert-item alert-mora choques-horario" style="margin-bottom:0.6rem"><div><strong>⚠️ Choques de horario:</strong><br/>${choques.map(escHtml).join("<br/>")}</div></div>` : ""}
+  ${sinDocente.length ? `<div class="alert-item alert-info" style="margin-bottom:0.6rem"><div>Sin docente asignado: ${sinDocente.map(escHtml).join(", ")}</div></div>` : ""}
+  ${GRUPOS_GRADOS.map(
+    (grupo) => `<div class="card clases-nivel" style="padding:0.75rem">
+      <div class="card-title" style="margin-bottom:0.4rem"><div class="card-bar"></div><h2>${grupo.nombre}</h2></div>
+      ${grupo.grados
+        .map((g) => {
+          const l = porGrado.get(g),
+            f = faltan(g);
+          return `<div class="clases-grado" data-grado="${escHtml(g)}" style="border-bottom:1px solid #eef2f9;padding:0.45rem 0">
+          <div style="font-weight:700;color:#003366;font-size:0.85rem">${escHtml(g)}</div>
+          ${
+            l.length
+              ? l
+                  .map(
+                    ({
+                      t,
+                      c,
+                    }) => `<div style="font-size:0.78rem;padding:2px 0;cursor:pointer" onclick="abrirModal({tipo:'ver-trabajador',id:'${t.id}'})">
+              <strong>${escHtml(materiaDe(c))}</strong> · ${escHtml(t.nombre)}${textoHorario(c) ? `<div style="color:#666;font-size:0.72rem">🕐 ${escHtml(textoHorario(c))}</div>` : ""}</div>`
+                  )
+                  .join("")
+              : `<div style="font-size:0.75rem;color:#aaa">Sin docente asignado</div>`
+          }
+          ${f.length ? `<div style="font-size:0.72rem;color:#b8860b">Sin profesor: ${f.map(escHtml).join(", ")}</div>` : ""}
+        </div>`;
+        })
+        .join("")}
+    </div>`
+  ).join("")}`;
+}
+function imprimirClases() {
+  const porGrado = clasesPorGrado();
+  const w = abrirVentanaImpresion("width=800,height=900");
+  if (!w) return alert("Permite las ventanas emergentes para imprimir");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Clases por grado y año</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;background:#fff;max-width:800px;margin:0 auto;padding:1rem 1.2rem}
+  .hdr{display:flex;align-items:center;gap:0.9rem;padding-bottom:0.6rem;border-bottom:2px solid #003366;margin-bottom:0.6rem}.hdr img{width:46px;height:46px;object-fit:contain}
+  h2{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#003366;margin:0.8rem 0 0.3rem}
+  table{width:100%;border-collapse:collapse;font-size:0.78rem}th,td{text-align:left;padding:0.28rem 0.4rem;border-bottom:1px solid #ddd;vertical-align:top}
+  th{font-size:0.65rem;text-transform:uppercase;color:#555;border-bottom:1.5px solid #003366}td.g{font-weight:700;color:#003366;white-space:nowrap}
+  tr{break-inside:avoid}@media print{.no-print{display:none}}</style></head><body>
+  <div class="hdr"><img src="data:image/png;base64,${LOGO}" alt="Logo"/><div>
+    <div style="font-size:0.58rem;letter-spacing:2px;color:#003366;font-weight:700;text-transform:uppercase">Clases por grado y año</div>
+    <div style="font-size:0.95rem;font-family:Georgia,serif;color:#003366">${EMPRESA}</div><div style="font-size:0.65rem;color:#555">${EMPRESA_SUB} · ${escHtml(fechaCorta(todayStr()))}</div></div></div>
+  ${GRUPOS_GRADOS.map(
+    (
+      grupo
+    ) => `<h2>${grupo.nombre}</h2><table><tr><th>Grado / año</th><th>Materia</th><th>Docente</th><th>Días y horario</th></tr>
+    ${grupo.grados
+      .map((g) => {
+        const l = porGrado.get(g);
+        return l.length
+          ? l
+              .map(
+                ({ t, c }, k) =>
+                  `<tr>${k === 0 ? `<td class="g" rowspan="${l.length}">${escHtml(g)}</td>` : ""}<td>${escHtml(materiaDe(c))}</td><td>${escHtml(t.nombre)}</td><td>${escHtml(textoHorario(c))}</td></tr>`
+              )
+              .join("")
+          : `<tr><td class="g">${escHtml(g)}</td><td colspan="3" style="color:#999">Sin docente asignado</td></tr>`;
+      })
+      .join("")}</table>`
+  ).join("")}
+  <div class="no-print" style="text-align:center;padding:0.75rem"><button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.65rem 1.5rem;border-radius:8px;font-weight:700">🖨️ Imprimir / Guardar PDF</button></div>
+  </body></html>`);
+  w.document.close();
 }
 function editarTrabajador(id) {
   trabEditId = id;
@@ -454,15 +556,98 @@ function leerCuentasForm() {
   }
   return { lista, error };
 }
+// ---- Clases que da: materia, grados o años, días y horario
+const chipOpcion = (attr, i, valor, marcado, texto) =>
+  `<label class="chip-op"><input type="checkbox" ${attr}="${i}" value="${escHtml(valor)}" ${marcado ? "checked" : ""}/>${escHtml(texto || valor)}</label>`;
+const filaClaseForm = (i, c = {}) => {
+  const grados = c.grados || [],
+    dias = c.dias || [];
+  return `<div class="t-clase" data-i="${i}" style="border:1px solid #e2e8f0;border-radius:10px;padding:0.55rem;margin-bottom:0.45rem">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:0.4rem;align-items:end">
+      <div class="field" style="margin:0"><label class="field-label">Materia <span style="font-weight:400;color:#888">(vacía = docente de aula)</span></label><input class="inp" id="t-cl-mat-${i}" list="materias-lista" placeholder="Ej: Matemáticas" value="${escHtml(c.materia) || ""}"/></div>
+      <button type="button" class="btn btn-gray btn-sm" title="Quitar" style="margin-bottom:0.2rem" onclick="this.closest('.t-clase').remove()">✕</button>
+    </div>
+    <div class="field-label" style="margin-top:0.4rem">Grados o años</div>
+    <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.3rem">
+      <button type="button" class="btn btn-gray btn-sm" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="marcarGradosClase(${i},'todo')">🏫 Todo el colegio</button>
+      ${GRUPOS_GRADOS.map((g) => `<button type="button" class="btn btn-gray btn-sm" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="marcarGradosClase(${i},'${g.nombre}')">${g.nombre}</button>`).join("")}
+      <button type="button" class="btn btn-gray btn-sm" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="marcarGradosClase(${i},'nada')">Ninguno</button>
+    </div>
+    ${GRUPOS_GRADOS.map(
+      (g) =>
+        `<div style="display:flex;gap:0.25rem;flex-wrap:wrap;margin-bottom:0.25rem"><span style="font-size:0.64rem;color:#888;width:100%">${g.nombre}</span>${g.grados
+          .map((x) => chipOpcion("data-cl-grado", i, x, grados.includes(x)))
+          .join("")}</div>`
+    ).join("")}
+    <div class="field-label" style="margin-top:0.35rem">Días y horario <span style="font-weight:400;color:#888">(opcional)</span></div>
+    <div style="display:flex;gap:0.25rem;flex-wrap:wrap;margin-bottom:0.35rem">${DIAS_SEMANA.map((d) => chipOpcion("data-cl-dia", i, d, dias.includes(d))).join("")}</div>
+    <div class="form-row">
+      <div class="field" style="margin:0"><label class="field-label">Desde</label><input class="inp" type="time" id="t-cl-desde-${i}" value="${escHtml(c.desde) || ""}"/></div>
+      <div class="field" style="margin:0"><label class="field-label">Hasta</label><input class="inp" type="time" id="t-cl-hasta-${i}" value="${escHtml(c.hasta) || ""}"/></div>
+    </div>
+  </div>`;
+};
+function agregarFilaClase() {
+  const cont = document.getElementById("t-clases");
+  if (!cont) return;
+  const i = Math.max(-1, ...[...cont.querySelectorAll(".t-clase")].map((f) => Number(f.dataset.i))) + 1;
+  cont.insertAdjacentHTML("beforeend", filaClaseForm(i));
+}
+// Atajos: todo el colegio, un nivel completo (si ya estaba todo marcado, lo desmarca) o ninguno
+function marcarGradosClase(i, que) {
+  const cajas = [...document.querySelectorAll(`input[data-cl-grado="${i}"]`)];
+  const grupo = GRUPOS_GRADOS.find((g) => g.nombre === que);
+  const del = grupo ? cajas.filter((c) => grupo.grados.includes(c.value)) : cajas;
+  const marcar = que === "nada" ? false : grupo ? !del.every((c) => c.checked) : true;
+  del.forEach((c) => (c.checked = marcar));
+}
+function leerClasesForm() {
+  const lista = [];
+  let error = "";
+  document.querySelectorAll("#t-clases .t-clase").forEach((f, n) => {
+    const i = f.dataset.i;
+    const marcados = (attr) => [...f.querySelectorAll(`input[${attr}="${i}"]:checked`)].map((x) => x.value);
+    const c = {
+      materia: document.getElementById("t-cl-mat-" + i).value.trim(),
+      grados: marcados("data-cl-grado"),
+      dias: marcados("data-cl-dia"),
+      desde: document.getElementById("t-cl-desde-" + i).value,
+      hasta: document.getElementById("t-cl-hasta-" + i).value,
+    };
+    if (!c.materia && !c.grados.length && !c.dias.length && !c.desde && !c.hasta) return; // fila vacía
+    const mal = revisarClase(c);
+    if (mal && !error) error = "Clase " + (n + 1) + (c.materia ? " (" + c.materia + ")" : "") + ": " + mal;
+    lista.push(c);
+  });
+  return { lista, error };
+}
+// Materias que se sugieren: las de Configuración → Materias y las de siempre
+const materiasSugeridas = () =>
+  [
+    ...new Set(
+      [
+        ...MATERIAS,
+        ...Object.values(configMaterias || {}).flat(),
+        "Educación Física y Deporte",
+        "Inglés",
+        "Música",
+        "Computación",
+      ].filter((m) => typeof m === "string" && m.trim())
+    ),
+  ].sort((a, b) => a.localeCompare(b));
 function renderFormTrabajador(data = {}) {
   const horas = Array.isArray(data.horas) && data.horas.length ? data.horas : [];
   const cuentas = Array.isArray(data.cuentas) ? data.cuentas : [];
+  const clases = Array.isArray(data.clases) ? data.clases : [];
   setTimeout(resumenSueldoForm, 0);
   return `<div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>${data.id ? "Editar" : "Nuevo"} Trabajador</h2></div>
     <datalist id="bancos-ve">${Object.values(BANCOS_VE)
       .sort()
       .map((b) => `<option value="${b}"></option>`)
+      .join("")}</datalist>
+    <datalist id="materias-lista">${materiasSugeridas()
+      .map((m) => `<option value="${escHtml(m)}"></option>`)
       .join("")}</datalist>
     <div class="form-grid">
       ${seccionForm("👤 Datos personales")}
@@ -501,6 +686,11 @@ function renderFormTrabajador(data = {}) {
       <div id="t-horas">${horas.map((h, i) => filaHorasForm(i, h)).join("")}</div>
       <button type="button" class="btn btn-gray btn-sm" onclick="agregarFilaHoras()">+ Agregar horas de clase</button>
       <div id="t-resumen"></div>
+
+      ${seccionForm("📚 Clases que da")}
+      <div style="font-size:0.72rem;color:#888">En Inicial y Primaria basta marcar el grado. En Media general, una fila por materia con los años, los días y el horario (si el horario cambia de un año a otro, agrega otra fila). Deporte o Inglés: «Todo el colegio».</div>
+      <div id="t-clases">${clases.map((c, i) => filaClaseForm(i, c)).join("")}</div>
+      <button type="button" class="btn btn-gray btn-sm" onclick="agregarFilaClase()">+ Agregar clase</button>
 
       ${seccionForm("🏦 Cuentas para pagarle")}
       ${[0, 1].map((i) => filaCuentaForm(i, cuentas[i])).join("")}
@@ -564,6 +754,8 @@ async function guardarTrabajador(editId) {
   if (!rifValido(rif)) return err("El RIF debe ser como V-12345678-9");
   const horas = leerHorasForm();
   if (horas.error) return err(horas.error);
+  const clases = leerClasesForm();
+  if (clases.error) return err(clases.error);
   const cuentas = leerCuentasForm();
   if (cuentas.error) return err(cuentas.error);
   const retirado = document.getElementById("t-retirado");
@@ -584,6 +776,7 @@ async function guardarTrabajador(editId) {
     descuento: parseFmt(val("t-desc")),
     descuentoConcepto: val("t-desc-concepto"),
     horas: horas.lista,
+    clases: clases.lista,
     cuentas: cuentas.lista,
     fechaIngreso: val("t-fingreso"),
     observacion: val("t-obs"),
@@ -725,6 +918,23 @@ function renderModalVerTrabajador(m) {
           <span style="font-size:1.2rem;font-weight:800;font-family:Georgia,serif">${fmt(netoMensual(t))}</span>
         </div>
         ${t.frecuencia !== "mensual" ? `<div style="font-size:0.72rem;color:#666;margin-top:0.3rem;text-align:center">Por quincena: ${fmt(r2(netoMensual(t) / 2))}${horasDe(t).length ? " · las horas se pagan según lo trabajado" : ""}</div>` : ""}
+        ${titulo("📚 Clases que da")}
+        ${
+          clasesDe(t).length
+            ? clasesDe(t)
+                .map((c) =>
+                  fila(
+                    "📚 " + escHtml(materiaDe(c)) + " · " + escHtml(textoGrados(c.grados)),
+                    escHtml(textoHorario(c)) || "—",
+                    "#333"
+                  )
+                )
+                .join("") +
+              (minutosSemana(t)
+                ? `<div style="font-size:0.72rem;color:#666;text-align:center">Según el horario: ${textoMinutos(minutosSemana(t))} de clase a la semana</div>`
+                : "")
+            : `<div style="font-size:0.78rem;color:#888">Sin clases registradas</div>`
+        }
         ${titulo("🏦 Cuentas para pagarle")}
         ${cuentas.length ? cuentas.map((c, i) => fila((i === 0 ? "Principal: " : "") + escHtml(c.banco || "Banco") + " · " + escHtml(c.tipo), escHtml(c.tipo === "Pago móvil" ? c.numero : c.numero.replace(/(\d{4})(\d{4})(\d{2})(\d{10})/, "$1-$2-$3-$4")) + (c.titular ? `<br/><span style="font-weight:400;font-size:0.72rem">${escHtml(c.titular)}${c.cedulaTitular ? " · " + escHtml(c.cedulaTitular) : ""}</span>` : ""), "#333")).join("") : `<div style="font-size:0.78rem;color:#888">Sin cuentas registradas</div>`}
         ${titulo("📎 Documentos")}
@@ -794,6 +1004,18 @@ function imprimirFichaTrabajador(trabId) {
       .join("")}
     ${t.descuento ? fila(escHtml(t.descuentoConcepto || "Deducción fija"), "- " + fmt(t.descuento)) : ""}
     ${fila("Neto mensual" + (horasDe(t).length ? " (aprox.)" : ""), `<strong>${fmt(netoMensual(t))}</strong>`)}</table>
+  ${
+    clasesDe(t).length
+      ? `<h2>📚 Clases que da</h2><table>${clasesDe(t)
+          .map((c) =>
+            fila(
+              escHtml(materiaDe(c)),
+              escHtml(textoGrados(c.grados)) + (textoHorario(c) ? "<br/>" + escHtml(textoHorario(c)) : "")
+            )
+          )
+          .join("")}</table>`
+      : ""
+  }
   <h2>🏦 Cuentas para el pago</h2><table>
     ${cuentas.length ? cuentas.map((c, i) => fila("Cuenta " + (i + 1) + (i === 0 ? " (principal)" : ""), escHtml([c.banco, c.tipo, c.numero].filter(Boolean).join(" · ")) + (c.titular ? "<br/>Titular: " + escHtml(c.titular) + (c.cedulaTitular ? " · " + escHtml(c.cedulaTitular) : "") : ""))).join("") : fila("Cuentas", "Sin cuentas registradas")}</table>
   <h2>📎 Documentos en el archivo digital</h2><table>

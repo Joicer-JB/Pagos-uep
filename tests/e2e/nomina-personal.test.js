@@ -257,3 +257,70 @@ test("la ficha del trabajador se imprime con sus datos, sueldo, cuentas y docume
     assert.ok(html.includes(txt), "falta en la ficha: " + txt);
   assert.deepEqual(s.errores, []);
 });
+
+test("clases que da: grados, materia, días y horario; la vista por grado avisa choques y grados sin docente", async () => {
+  // la coordinadora: Primaria en la mañana (docente de aula de 3er Grado) y Matemáticas en Media general en la tarde
+  const t = await trabajador("Coordinadora Tres");
+  await llamar(`editarTrabajador(${JSON.stringify(t.id)})`);
+  await s.pagina.click("text=+ Agregar clase");
+  await s.pagina.check(`input[data-cl-grado="0"][value="3er Grado"]`);
+  await s.pagina.click("text=+ Agregar clase");
+  await s.pagina.fill("#t-cl-mat-1", "Matemáticas");
+  await s.pagina.check(`input[data-cl-grado="1"][value="1er Año"]`);
+  await s.pagina.check(`input[data-cl-grado="1"][value="2do Año"]`);
+  await s.pagina.check(`input[data-cl-dia="1"][value="Lun"]`);
+  await s.pagina.check(`input[data-cl-dia="1"][value="Mié"]`);
+  await s.pagina.fill("#t-cl-desde-1", "13:00");
+  await s.pagina.fill("#t-cl-hasta-1", "14:30");
+  // en Media general la materia es obligatoria
+  await s.pagina.click("text=+ Agregar clase");
+  await s.pagina.check(`input[data-cl-grado="2"][value="5to Año"]`);
+  await llamar(`guardarTrabajador(${JSON.stringify(t.id)})`);
+  assert.match(await s.pagina.textContent("#t-err"), /Clase 3: escribe la materia/);
+  await s.pagina.click(".t-clase[data-i='2'] >> button[title='Quitar']");
+  await llamar(`guardarTrabajador(${JSON.stringify(t.id)})`);
+  await s.pagina.waitForSelector(".fila-trabajador:has-text('Coordinadora Tres')");
+  assert.deepEqual((await trabajador("Coordinadora Tres")).clases, [
+    { materia: "", grados: ["3er Grado"], dias: [], desde: "", hasta: "" },
+    { materia: "Matemáticas", grados: ["1er Año", "2do Año"], dias: ["Lun", "Mié"], desde: "13:00", hasta: "14:30" },
+  ]);
+  const fila = await s.pagina.textContent(".fila-trabajador:has-text('Coordinadora Tres')");
+  assert.match(fila, /📚 3er Grado/);
+  assert.match(fila, /📚 Matemáticas · 1er Año, 2do Año/);
+  // el profesor de deporte: a todo el colegio, los lunes en la tarde (choca con la clase de Matemáticas)
+  const d = await trabajador("Profesor Deporte");
+  await llamar(`editarTrabajador(${JSON.stringify(d.id)})`);
+  await s.pagina.click("text=+ Agregar clase");
+  await s.pagina.fill("#t-cl-mat-0", "Educación Física");
+  await s.pagina.click(".t-clase[data-i='0'] >> text=Todo el colegio");
+  await s.pagina.click(".t-clase[data-i='0'] >> button:text-is('Inicial')"); // quita Inicial
+  await s.pagina.check(`input[data-cl-dia="0"][value="Lun"]`);
+  await s.pagina.fill("#t-cl-desde-0", "14:00");
+  await s.pagina.fill("#t-cl-hasta-0", "15:00");
+  await llamar(`guardarTrabajador(${JSON.stringify(d.id)})`);
+  await s.pagina.waitForSelector(".fila-trabajador:has-text('Profesor Deporte')");
+  assert.match(
+    await s.pagina.textContent(".fila-trabajador:has-text('Profesor Deporte')"),
+    /📚 Educación Física · Toda la Primaria, Toda la Media general/
+  );
+  // la vista por grado
+  await llamar(`subTab.nomina = "clases"; renderTabContent()`);
+  const g = (grado) => s.pagina.textContent(`.clases-grado[data-grado="${grado}"]`);
+  assert.match(await g("3er Grado"), /Docente de aula · Coordinadora Tres/);
+  assert.match(await g("3er Grado"), /Educación Física · Profesor Deporte/);
+  assert.match(await g("1er Año"), /Matemáticas · Coordinadora Tres🕐 Lun, Mié · 1:00 p\. m\. a 2:30 p\. m\./);
+  assert.match(await g("Maternal"), /Sin docente asignado/);
+  const choques = await s.pagina.textContent(".choques-horario");
+  assert.match(choques, /1er Año tiene dos clases a la vez el lunes: Matemáticas con Coordinadora Tres/);
+  assert.match(choques, /2do Año tiene dos clases a la vez el lunes/);
+  // se imprime
+  await s.pagina.click("text=🖨️ Imprimir");
+  const html = await ultimaImpresion();
+  assert.match(html, /Clases por grado y año/);
+  assert.match(html, /Matemáticas<\/td><td>Coordinadora Tres<\/td><td>Lun, Mié · 1:00 p\. m\. a 2:30 p\. m\./);
+  // y en la ficha del trabajador
+  await llamar(`abrirModal({ tipo: "ver-trabajador", id: ${JSON.stringify(t.id)} })`);
+  assert.match(await s.pagina.textContent(".modal"), /Según el horario: 3 h de clase a la semana/);
+  await llamar(`cerrarModal()`);
+  assert.deepEqual(s.errores, []);
+});
