@@ -155,3 +155,36 @@ async function imagenDeDocumento(host, estilos, cuerpo) {
   ctx.drawImage(img, 0, 0);
   return new Promise((ok, no) => lienzo.toBlob((b) => (b ? ok(b) : no(new Error("sin imagen"))), "image/png"));
 }
+
+// «2 por hoja»: el original y la copia en una hoja carta, con una línea para cortar. Solo si se marca la casilla
+// (cada equipo recuerda la elección, por separado para los recibos de pago y los de nómina).
+const CLAVES_DOS_POR_HOJA = { recibo: "reciboDosPorHoja", nomina: "reciboNominaDosPorHoja" };
+function dosPorHoja(tipo) {
+  try {
+    return localStorage.getItem(CLAVES_DOS_POR_HOJA[tipo]) === "1";
+  } catch (e) {
+    return false;
+  }
+}
+function guardarDosPorHoja(tipo, on) {
+  try {
+    if (on) localStorage.setItem(CLAVES_DOS_POR_HOJA[tipo], "1");
+    else localStorage.removeItem(CLAVES_DOS_POR_HOJA[tipo]);
+  } catch (e) {
+    /* sin almacenamiento: vale solo para esta vez */
+  }
+  document.querySelectorAll(`input[data-dos-por-hoja="${tipo}"]`).forEach((c) => (c.checked = !!on));
+}
+const casillaDosPorHoja = (tipo, id) =>
+  `<label class="dos-por-hoja" style="display:flex;align-items:center;justify-content:center;gap:0.4rem;font-size:0.76rem;color:#555;cursor:pointer">
+    <input type="checkbox" id="${id}" data-dos-por-hoja="${tipo}" ${dosPorHoja(tipo) ? "checked" : ""} onchange="guardarDosPorHoja('${tipo}',this.checked)"/> 🖨️ Imprimir 2 por hoja (original y copia)
+  </label>`;
+// Cada mitad en dos columnas (izquierda: datos y conceptos; derecha: totales y firmas), para que quepa en media hoja
+const CSS_DOS_POR_HOJA = `.mitad{display:grid;grid-template-columns:1.25fr 1fr;gap:1.2rem;align-items:start;min-height:127mm;padding:6mm 2mm;break-inside:avoid}
+  .corte{display:flex;align-items:center;gap:0.4rem;color:#888;font-size:0.6rem;letter-spacing:1px}
+  .corte::before,.corte::after{content:"";flex:1;border-top:1px dashed #999}
+  @page{size:letter portrait;margin:6mm 8mm}
+  @media (max-width:560px){.mitad{grid-template-columns:1fr;min-height:0;gap:0}}`;
+// cuerpo(etiqueta) dibuja un recibo con «ORIGINAL» o «COPIA» en la esquina
+const htmlDosPorHoja = (cuerpo) =>
+  `<div class="mitad">${cuerpo("ORIGINAL")}</div><div class="corte">✂ CORTAR AQUÍ</div><div class="mitad">${cuerpo("COPIA")}</div>`;

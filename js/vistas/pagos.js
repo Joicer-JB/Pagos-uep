@@ -609,9 +609,7 @@ function renderModalRecibo(m) {
         <p style="text-align:center;font-size:0.65rem;color:#aaa;margin-top:0.55rem">Este recibo es válido como comprobante de pago</p>
         ${p.registradoPor ? `<p class="recibo-quien" style="text-align:center;font-size:0.68rem;color:#777;margin-top:0.2rem">👤 Registrado por ${escHtml(nombreUsuario(p.registradoPor))}</p>` : ""}
       </div>
-      <label class="recibo-doble" style="display:flex;align-items:center;justify-content:center;gap:0.4rem;font-size:0.76rem;color:#555;margin:0 1.1rem 0.5rem;cursor:pointer">
-        <input type="checkbox" id="recibo-doble" ${reciboDoble() ? "checked" : ""} onchange="guardarReciboDoble(this.checked)"/> 🖨️ Imprimir 2 por hoja (original y copia)
-      </label>
+      <div style="margin:0 1.1rem 0.5rem">${casillaDosPorHoja("recibo", "recibo-doble")}</div>
       <div class="modal-actions">
         <button class="btn btn-whatsapp" style="flex:1;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="enviarWhatsApp()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -701,24 +699,6 @@ function formasPagoImpreso(p) {
     ${fs.map((f) => `<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:2px 0"><span>${escHtml(ETIQ_METODO[f.metodo] || f.metodo)}${f.referencia ? ` · Ref. ${escHtml(f.referencia)}` : ""}</span><strong style="white-space:nowrap">${montoForma(f)}</strong></div>`).join("")}
   </div>`;
 }
-// «2 por hoja»: original y copia en la misma hoja carta, con una línea para cortar. Solo si se marca en el recibo
-// (cada equipo recuerda la elección).
-const CLAVE_RECIBO_DOBLE = "reciboDosPorHoja";
-function reciboDoble() {
-  try {
-    return localStorage.getItem(CLAVE_RECIBO_DOBLE) === "1";
-  } catch (e) {
-    return false;
-  }
-}
-function guardarReciboDoble(on) {
-  try {
-    if (on) localStorage.setItem(CLAVE_RECIBO_DOBLE, "1");
-    else localStorage.removeItem(CLAVE_RECIBO_DOBLE);
-  } catch (e) {
-    /* sin almacenamiento: vale solo para esta vez */
-  }
-}
 function cuerpoReciboImpreso(p, copia) {
   const lines = (p.descripcion || "").split("\n").filter(Boolean);
   return `<div class="izq">
@@ -750,8 +730,7 @@ function cuerpoReciboImpreso(p, copia) {
 function imprimirRecibo() {
   const p = modalActual.pago;
   if (!p) return;
-  const marcado = document.getElementById("recibo-doble");
-  const doble = marcado ? marcado.checked : reciboDoble();
+  const doble = dosPorHoja("recibo");
   const w = abrirVentanaImpresion("width=600,height=800");
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Recibo ${escHtml(p.factura)}</title>
   <style>*{box-sizing:border-box;margin:0;padding:0}
@@ -774,25 +753,10 @@ function imprimirRecibo() {
   @media (max-width:420px){body{padding:0.6rem}.nums{gap:0.4rem;padding:0.45rem 0.55rem}.val{font-size:0.74rem;white-space:normal}}
   .firma{display:flex;justify-content:space-between;margin-top:1.3rem;padding-top:0.7rem}
   .fbox{text-align:center;width:45%}.fline{border-top:1px solid #333;margin-bottom:4px;margin-top:1.5rem}.flabel{font-size:0.7rem;color:#555}
-  ${
-    doble
-      ? `.mitad{display:grid;grid-template-columns:1.25fr 1fr;gap:1.2rem;align-items:start;min-height:127mm;padding:6mm 2mm;break-inside:avoid}
-  .der .tot{margin-top:0}
-  .corte{display:flex;align-items:center;gap:0.4rem;color:#888;font-size:0.6rem;letter-spacing:1px}
-  .corte::before,.corte::after{content:"";flex:1;border-top:1px dashed #999}
-  @page{size:letter portrait;margin:6mm 8mm}
-  @media (max-width:560px){.mitad{grid-template-columns:1fr;min-height:0;gap:0}.der .tot{margin-top:0.7rem}}`
-      : ""
-  }
+  ${doble ? CSS_DOS_POR_HOJA + `.der .tot{margin-top:0}@media (max-width:560px){.der .tot{margin-top:0.7rem}}` : ""}
   @media print{body{padding:0}}
   </style></head><body>
-  ${
-    doble
-      ? `<div class="mitad">${cuerpoReciboImpreso(p, "ORIGINAL")}</div>
-  <div class="corte">✂ CORTAR AQUÍ</div>
-  <div class="mitad">${cuerpoReciboImpreso(p, "COPIA")}</div>`
-      : cuerpoReciboImpreso(p)
-  }
+  ${doble ? htmlDosPorHoja((etiqueta) => cuerpoReciboImpreso(p, etiqueta)) : cuerpoReciboImpreso(p)}
   </body></html>`);
   w.document.close();
 }

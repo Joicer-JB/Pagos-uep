@@ -12,7 +12,9 @@ const app = cargar(
   "js/vistas/anio-escolar.js",
   "js/servicios/tasa-bcv.js",
   "js/servicios/cuotas.js",
-  "js/servicios/indicadores.js"
+  "js/servicios/indicadores.js",
+  "js/utils/texto.js",
+  "js/servicios/nomina-calculo.js"
 );
 const f = (codigo) => {
   const v = app.evaluar(codigo);
