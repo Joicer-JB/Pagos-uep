@@ -243,7 +243,7 @@ function htmlResultadoSimulador(t) {
   const meses = (cobCfg && cobCfg.cuotas) || 10;
   return `
     ${fila("Nueva mensualidad promedio", fmt(r.promedio), "antes " + fmt(r.actual.promedio))}
-    ${fila("Estudiantes que pagarían", r.estudiantes + " de " + eq.estudiantes + " · el " + simulador.cobranza + " % al día")}
+    ${fila("Estudiantes", r.estudiantes + " de " + eq.estudiantes + " se quedan", "paga el " + simulador.cobranza + " % de las mensualidades")}
     ${fila("Entraría al mes", fmt(r.cobrado), (r.diferencia >= 0 ? "+" : "−") + fmt(Math.abs(r.diferencia)) + " que hoy")}
     ${fila("Costos del mes", fmt(r.costo), "nómina " + fmt(r.nomina) + " + otros gastos " + fmt(eq.otrosGastos))}
     ${fila("<strong>Resultado del mes</strong>", color(r.margen), "hoy: " + (r.actual.margen >= 0 ? "sobran " : "faltan ") + fmt(Math.abs(r.actual.margen)))}

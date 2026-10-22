@@ -672,7 +672,7 @@ function renderCuentasPagar() {
         return `<div class="list-item cuenta-pagar" style="border-left-color:${c.est === "vencida" ? "#e53e3e" : c.est === "por-vencer" ? "#b8860b" : "#00509e"}">
       <div class="item-row">
         <div style="flex:1;min-width:0"><div class="item-name">${escHtml(c.descripcion)}</div>
-          <div class="item-sub">${escHtml(c.proveedor || c.categoria || "")}${c.vence ? " · vence el " + escHtml(fechaCorta(c.vence)) : ""}${c.recurrente === "mensual" ? " · 🔁 cada mes" : ""}</div>
+          <div class="item-sub">${[escHtml(c.proveedor || c.categoria || ""), c.vence ? "vence el " + escHtml(fechaCorta(c.vence)) : "", c.recurrente === "mensual" ? "🔁 cada mes" : ""].filter(Boolean).join(" · ")}</div>
           <div style="margin-top:3px"><span class="badge ${badge}">${etiqueta}</span></div></div>
         <div class="item-right"><div class="item-amount" style="color:#e53e3e">${montoCuenta(c)}</div>${c.moneda === "VES" && c.usd != null ? `<div style="font-size:0.68rem;color:#888">≈ ${fmt(c.usd)}</div>` : ""}
           <div style="display:flex;gap:0.25rem;margin-top:4px;justify-content:flex-end">

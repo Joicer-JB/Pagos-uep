@@ -83,6 +83,13 @@ los estudiantes activos:
   📒 Finanzas) contra las mensualidades del mes. Dice cuántos estudiantes deben pagar para cubrirlos y si, con la
   cobranza actual, alcanza.
 
+### 🧮 Simulador de mensualidad
+
+Debajo del tablero: escribe el **aumento de la mensualidad**, cuántos pagan (sale con la cobranza actual), cuántos
+estudiantes se irían por el aumento y si también sube la **nómina**. Ves la nueva mensualidad promedio, lo que
+entraría al mes, los costos, el resultado del mes y del año, y **la mensualidad con la que se cubren los costos**
+(y el aumento que haría falta).
+
 ## Perdonar el recargo de un mes
 
 Si a un estudiante se le debe perdonar el recargo por mora de un mes (por enfermedad, un acuerdo con el representante

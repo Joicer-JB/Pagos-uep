@@ -147,6 +147,19 @@ test("documentos del personal: director y administradora los adjuntan, ven y qui
   }
 });
 
+test("asistencia del personal: solo director y administradora", async () => {
+  const diaAsist = { fecha: "2026-10-07", registros: { trab1: { estado: "presente" } } };
+  for (const rol of ["director", "administradora"]) {
+    const db = como(rol);
+    await assertSucceeds(setDoc(doc(db, "asistencia_personal/2026-10-07"), diaAsist));
+    await assertSucceeds(getDoc(doc(db, "asistencia_personal/2026-10-07")));
+  }
+  for (const rol of ["docente", "desconocido"]) {
+    await assertFails(getDoc(doc(como(rol), "asistencia_personal/2026-10-07")));
+    await assertFails(setDoc(doc(como(rol), "asistencia_personal/2026-10-08"), diaAsist));
+  }
+});
+
 test("cuentas por pagar: solo director y administradora", async () => {
   const cuenta = { descripcion: "Luz", monto: 20, moneda: "USD", vence: "2026-10-31", estado: "pendiente" };
   for (const rol of ["director", "administradora"]) {

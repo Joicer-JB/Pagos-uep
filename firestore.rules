@@ -22,6 +22,7 @@ rules_version = '2';
 //      después su número correlativo; es el único cambio que se permite a un pago ya registrado.
 //   7. (Octubre 2026) Documentos del personal: "documentos_trabajadores" (solo director y administradora).
 //   8. (Octubre 2026) Cuentas por pagar: "cuentas_pagar" (solo director y administradora).
+//   9. (Octubre 2026) Asistencia del personal: "asistencia_personal" (solo director y administradora).
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -131,6 +132,11 @@ service cloud.firestore {
     // y borran. El dinero que sale se registra aparte, como gasto en "finanzas".
     match /cuentas_pagar/{id} {
       allow read, create, update, delete: if isStaff();
+    }
+
+    // Asistencia del personal: un documento por día (id = fecha). Solo director y administradora.
+    match /asistencia_personal/{fecha} {
+      allow read, write: if isStaff();
     }
 
     // ───────────── Notas ─────────────

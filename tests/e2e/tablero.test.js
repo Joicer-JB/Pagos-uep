@@ -72,6 +72,6 @@ test("simulador de mensualidad: al cambiar el aumento se recalcula lo que entrar
   assert.ok(res.includes(await llamar(`fmt(${r.cobrado})`)));
   assert.match(await texto(".sim-conclusion"), /(se cubren|no alcanza)/);
   await s.pagina.fill("#sim-retiro", "100"); // si se fueran todos
-  assert.match(await texto("#sim-res"), /Estudiantes que pagarían0 de/);
+  assert.match(await texto("#sim-res"), /Estudiantespaga el 100 % de las mensualidades0 de \d+ se quedan/);
   assert.deepEqual(s.errores, []);
 });
