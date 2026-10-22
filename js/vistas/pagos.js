@@ -31,13 +31,13 @@ function renderPagos() {
     ]
       .map(
         ([k, l]) =>
-          `<button class="stab ${st === k ? "active" : ""}" onclick="subTab.pagos='${k}';renderTabContent()">${l}</button>`
+          `<button class="stab ${st === k ? "active" : ""}" onclick="pagoPrefill=null;subTab.pagos='${k}';renderTabContent()">${l}</button>`
       )
       .join("")}
   </div>
   ${
     st === "nuevo"
-      ? renderFormPago()
+      ? renderFormPago(pagoPrefill || {})
       : `
   <div class="card" style="padding:0.85rem">
     <div style="display:flex;gap:0.4rem;margin-bottom:0.5rem;flex-wrap:wrap">
@@ -152,6 +152,8 @@ function renderFormPago(data = {}) {
           <button class="metodo-btn ${data.metodo === "Punto" ? "selected" : ""}" id="m-pt" onclick="selMetodoPago('Punto')">💳 Punto</button>
         </div>
       </div>
+      <div class="field" id="p-ref-box" style="${data.metodo === "Transferencia Bs" || data.metodo === "Punto" ? "" : "display:none"}"><label class="field-label">Referencia <span style="font-weight:400;color:#888">(de la transferencia, el pago móvil o el voucher)</span></label>
+        <input class="inp" id="p-ref" inputmode="numeric" autocomplete="off" placeholder="Ej: 123456" value="${escHtml(data.referencia) || ""}"/></div>
       <div class="field"><label class="field-label">Total *</label>
         <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#003366;font-weight:700">$</span>
         <input class="inp" id="p-total" placeholder="0,00" style="padding-left:2rem" value="${data.total ? String(data.total).replace(".", ",") : ""}" oninput="fmtInput(this);calcBsPago();previewInsPago()"/></div>
@@ -161,7 +163,7 @@ function renderFormPago(data = {}) {
       <div id="p-err"></div>
       <div style="display:flex;gap:0.5rem">
         <button class="btn btn-primary" style="flex:1" onclick="guardarPago()">✓ Registrar Pago</button>
-        <button class="btn btn-gray" onclick="subTab.pagos='lista';renderTabContent()">Cancelar</button>
+        <button class="btn btn-gray" onclick="pagoPrefill=null;subTab.pagos='lista';renderTabContent()">Cancelar</button>
       </div>
     </div>
   </div>`;
@@ -410,6 +412,7 @@ function limpiarSeleccionPago() {
   sugerirInscripcionPago(); // sin estudiante, se quita la lista de la inscripción
 }
 let _metodoPago = "Dólares Efectivo";
+let pagoPrefill = null; // datos con los que se abre «Nuevo pago» (p. ej. un abono del banco que nadie registró)
 function calcBsPago() {
   const usd = parseFmt(document.getElementById("p-total")?.value || "0"),
     tasa = parseTasa(document.getElementById("p-tasa")?.value || "0");
@@ -426,6 +429,8 @@ function selMetodoPago(m) {
   document.querySelectorAll(".metodo-btn").forEach((b) => {
     b.classList.toggle("selected", b.id === map[m]);
   });
+  const ref = document.getElementById("p-ref-box");
+  if (ref) ref.style.display = m === "Transferencia Bs" || m === "Punto" ? "" : "none";
 }
 // Desglose común de los recibos de nómina (sin sección de deducciones).
 // El total SIEMPRE es lo realmente pagado. Si lo pagado no coincide con la suma de los conceptos
@@ -478,6 +483,11 @@ async function guardarPago() {
   const errFecha = revisarFechaMovimiento(fecha);
   if (errFecha === "cancelado") return;
   if (errFecha) return mostrarError(errBox, errFecha);
+  const conRef = _metodoPago === "Transferencia Bs" || _metodoPago === "Punto";
+  const referencia = conRef
+    ? ((document.getElementById("p-ref") || {}).value || "").replace(/[^0-9A-Za-z-]/g, "").slice(0, 30)
+    : "";
+  if (referencia && _metodoPago === "Transferencia Bs" && !confirmarReferencia(referencia)) return;
   const btn = document.querySelector('button[onclick="guardarPago()"]');
   if (btn) {
     btn.disabled = true;
@@ -491,8 +501,11 @@ async function guardarPago() {
     fecha,
     concepto: document.getElementById("p-concepto").value,
     mes: document.getElementById("p-mes").value,
-    descripcion: document.getElementById("p-desc").value.trim(),
+    descripcion:
+      document.getElementById("p-desc").value.trim() +
+      (referencia ? "\nRef. " + (_metodoPago === "Punto" ? "punto" : "pago") + ": " + referencia : ""),
     metodo: _metodoPago,
+    ...(referencia ? { referencia } : {}),
     total,
     tasa,
     totalBs: r2(total * tasa),
@@ -512,6 +525,7 @@ async function guardarPago() {
     aplicarTasaEditada("p", fecha, tasa);
     window._pagoEstId = null;
     window._pagoCedula = null;
+    pagoPrefill = null;
     subTab.pagos = "lista";
     // Inscripción con mensualidades: un solo recibo con todo
     modalActual = {

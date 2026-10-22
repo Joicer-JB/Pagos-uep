@@ -121,6 +121,11 @@ La app instalada es la misma plataforma: se actualiza sola y usa tu misma cuenta
 
 ## 💰 Pagos
 
+**Referencias repetidas:** al cobrar una transferencia o pago móvil (en la Caja o en «Nuevo pago»), si esa
+referencia ya está en otro recibo del año la app lo avisa antes de cobrar («ya se registró en FAC-… · nombre ·
+fecha»). Basta con que coincidan las últimas 6 cifras. En «Nuevo pago», con transferencia o punto, se escribe la
+referencia.
+
 - **➕ Nuevo Pago:** busca al estudiante por cédula, elige el concepto, el mes y el método, y escribe el
   total.
 - En la lista, toca un pago para ver el recibo, imprimirlo o enviarlo por WhatsApp.
@@ -199,12 +204,44 @@ También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
   **junto con la inscripción** (el mismo día) no tiene recargo, aunque se inscriba después del día de vencimiento.
 - **Editar:** datos personales, representante, mensualidad, deuda anterior manual o exoneración del
   recargo.
-- Desde la ficha: **Registrar pago** y **🖨️ Constancia de estudio**.
+- Desde la ficha: **Registrar pago**, **🖨️ Constancia de estudio** y **🧾 Estado de cuenta**: una hoja con las cuotas
+  del año (pagadas, vencidas y por vencer), la inscripción, los recargos, la deuda anterior, los recibos del año y el
+  **total a pagar hoy** en $ y Bs. Desde el teléfono, **📤 Compartir** la manda como imagen. El botón **💬** envía el
+  mismo resumen por WhatsApp al representante.
 
 ## 📒 Finanzas y 👷 Nómina
 
 - **Finanzas:** registra ingresos y gastos en $ o en Bs., con la tasa del día. **Flujo de caja**
   muestra el año mes a mes y se puede imprimir.
+- **📒 Libro:** el libro de ingresos y egresos del mes (o, marcando la casilla, del año) para el contador: cada cobro
+  (un renglón por recibo), ingreso y gasto en orden de fecha, con su documento (FAC-…, NOM-…), en $ y en Bs. a la
+  tasa de cada operación y con el saldo. Abajo, el total por categoría. **📥 Excel** lo descarga (hojas «Libro» y
+  «Resumen»); **🖨️ Imprimir**, en hoja horizontal.
+- **🧾 Por pagar:** anota lo que el colegio tiene que pagar (luz, agua, alquiler, proveedores, impuestos) con su
+  monto en $ o Bs. y la fecha en que vence; si se repite cada mes, márcalo. Arriba ves lo vencido, lo que vence en 7
+  días y el total. **✓ Pagar** abre el gasto ya lleno: al guardarlo, la cuenta queda pagada y, si es de cada mes,
+  se anota sola la del mes siguiente. En **Inicio** sale el aviso de lo vencido y de lo que vence esta semana.
+- **🏦 Conciliación:** descarga del banco el estado de cuenta y súbelo. Sirve **Excel** (.xlsx o .xls, también los
+  .xls que en realidad son una página), **CSV** (con coma, punto y coma o tabulador) y **TXT** en columnas. La app
+  busca sola la fila de títulos y las columnas, aunque cada banco las llame distinto: fecha (o fecha valor u
+  operación), referencia (o número de documento o comprobante), descripción o concepto, y el dinero en columnas de
+  **débito y crédito**, en **una columna con signo** (los cargos en negativo, entre paréntesis o con «D» al final) o
+  con una columna de **tipo** (C/D, NC/ND, crédito/débito). Si la referencia viene dentro de la descripción
+  («PAGO MOVIL … REF 445566»), también la toma, sin confundirla con un teléfono. Las fechas pueden venir como
+  07/10/2026, 07-OCT-2026 o 7 de octubre de 2026. Las filas de saldo inicial o de totales no se cuentan. Si alguna
+  columna no la reconoce, elígela en **⚙️ Columnas**: la app **recuerda el formato de ese banco** en este equipo para
+  la próxima vez. Si el Excel trae varias hojas, eliges la hoja. Compara cada abono con los cobros por
+  **transferencia o pago móvil** y te dice:
+  - **❓ Entró al banco y no está registrado:** dinero que llegó y no aparece en ningún recibo. **➕ Registrar** abre
+    «Nuevo pago» con la fecha, la referencia y el monto (pasado a $ con la tasa de ese día); solo falta el
+    estudiante y el concepto.
+  - **⚠️ La referencia coincide pero el monto no**, y **⚠️ Registrado y no aparece en el banco** (referencia mal
+    escrita o pago que no llegó).
+  - **🟡 Coinciden por monto y fecha** (sin la misma referencia: confírmalos) y **✅ Conciliados**.
+  - **Referencias repetidas** en los recibos (la misma transferencia en dos recibos).
+
+  Los cobros por **punto de venta** no se comparan uno por uno: el banco los abona juntos al cerrar el lote.
+
 - **Nómina:** ver abajo.
 
 ## 👷 Nómina
@@ -238,6 +275,14 @@ pueda interesar»), el tratamiento (la ciudadana, el ciudadano o el(la) ciudadan
 equivalente en $, o solo una de las dos). El monto sale también en letras. La firma la directora: su nombre, su
 cédula y el RIF del plantel se ponen una sola vez en ⚙️ Configuración → 🏫 Institución (si faltan, sale una línea
 para escribirlos a mano). Para alguien que ya no trabaja aquí, dice «prestó sus servicios desde… hasta…».
+
+**🗓️ Asistencia** (pestaña de Nómina): elige el día y marca a cada uno: **P** presente, **R** retardo, **F** falta,
+**J** falta justificada o **Pm** permiso o reposo (tocar otra vez lo quita). A quien trabaja por horas, escribe las
+horas que dio ese día; a quien faltó, el motivo si quieres. **✓ Los demás, presentes** marca a todos los que faltan
+por marcar. Toca **💾 Guardar el día**. Abajo está el resumen del mes por trabajador, y **🖨️ Imprimir el mes** saca la
+planilla con cada día. Al **pagar la quincena** aparece su asistencia en ese período (faltas con el día y horas
+registradas). Si da horas de un solo nivel, **Usar … h** pone esas horas en el pago (lo decides tú). Las faltas no
+se descuentan solas: si corresponde, ponlo en «Otro descuento».
 
 **📚 Clases** (pestaña de Nómina): cada grado y año con su docente de aula, las materias, quién las da y a qué hora.
 Avisa los **choques de horario** (un profesor en dos clases a la vez, o un año con dos materias a la misma hora), los

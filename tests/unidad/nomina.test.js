@@ -382,3 +382,21 @@ test("clases por grado y choques de horario", () => {
   );
   assert.doesNotMatch(choques.join("\n"), /Grado/);
 });
+
+test("asistencia: fechas de cada período y resumen de un trabajador", () => {
+  assert.deepEqual(f(`rangoPeriodo("2026-10-Q1")`), ["2026-10-01", "2026-10-15"]);
+  assert.deepEqual(f(`rangoPeriodo("2026-10-Q2")`), ["2026-10-16", "2026-10-31"]);
+  assert.deepEqual(f(`rangoPeriodo("2027-02-M")`), ["2027-02-01", "2027-02-28"]);
+  const dias = {
+    "2026-10-01": { fecha: "2026-10-01", registros: { t1: { estado: "presente", horas: 4 }, t2: { estado: "falta" } } },
+    "2026-10-02": { fecha: "2026-10-02", registros: { t1: { estado: "retardo", horas: 3.5 } } },
+    "2026-10-05": { fecha: "2026-10-05", registros: { t1: { estado: "falta", nota: "no avisó" } } },
+    "2026-10-16": { fecha: "2026-10-16", registros: { t1: { estado: "presente", horas: 4 } } },
+  };
+  const r = f(`resumenAsistencia(${JSON.stringify(dias)}, "t1", "2026-10-01", "2026-10-15")`);
+  assert.deepEqual(
+    [r.dias, r.presente, r.retardo, r.falta, r.justificada, r.permiso, r.horas, r.faltas],
+    [3, 1, 1, 1, 0, 0, 7.5, ["2026-10-05"]]
+  );
+  assert.equal(f(`resumenAsistencia(${JSON.stringify(dias)}, "t3", "2026-10-01", "2026-10-31")`).dias, 0);
+});

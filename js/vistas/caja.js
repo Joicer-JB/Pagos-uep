@@ -608,17 +608,8 @@ async function cajaCobrar() {
     alert(falta);
     return;
   }
-  for (const f of formas) {
-    if (
-      f.ref &&
-      metodoEnBs(f.metodo) &&
-      pagos.some(
-        (p) => p.metodo === f.metodo && p.referencia && String(p.referencia) === f.ref && p.fecha === todayStr()
-      ) &&
-      !confirm("⚠️ La referencia " + f.ref + " ya se registró hoy con este método.\n¿Seguro que es un cobro distinto?")
-    )
-      return;
-  }
+  // Una transferencia o pago móvil cuya referencia ya está en otro recibo (cualquier día del año)
+  for (const f of formas) if (f.ref && f.metodo === "Transferencia Bs" && !confirmarReferencia(f.ref)) return;
   caja.guardando = true;
   cajaPadCerrar();
   cajaActualizarTotal();

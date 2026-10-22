@@ -1,5 +1,27 @@
 # Historial de cambios
 
+## Octubre 2026 — Conciliación bancaria, cuentas por pagar, libro, asistencia y más
+
+- **🏦 Conciliación bancaria** (Finanzas): se sube el estado de cuenta del banco (Excel o CSV) y se compara con los
+  cobros por transferencia o pago móvil: conciliados, lo que entró y nadie registró (se registra desde ahí), montos
+  distintos, lo registrado que no está en el banco y referencias repetidas. Se imprime. Acepta los formatos de los
+  distintos bancos: Excel (también .xls en HTML), CSV y TXT; débito y crédito separados, monto con signo o con
+  columna de tipo; fechas con el nombre del mes; referencia dentro de la descripción. Si se corrigen las columnas, la
+  app recuerda el formato de ese banco.
+- **Aviso de referencia repetida** al cobrar (Caja y Nuevo pago) si la referencia ya está en otro recibo del año.
+  «Nuevo pago» pide y guarda la referencia.
+- **🧾 Estado de cuenta del representante** (ficha del estudiante): cuotas, recibos y total a pagar hoy; impreso,
+  como imagen o por WhatsApp.
+- **🧾 Cuentas por pagar** (Finanzas): vencimientos, repetición mensual, «✓ Pagar» registra el gasto y aviso en
+  Inicio. Nueva colección `cuentas_pagar`.
+- **📒 Libro de ingresos y egresos** (Finanzas): mes o año, en $ y Bs., con saldo y resumen por categoría; Excel e
+  impresión para el contador.
+- **🧮 Simulador de mensualidad** (Reportes): aumento, cobranza, retiro y aumento de nómina → resultado del mes y
+  mensualidad de equilibrio.
+- **🗓️ Asistencia del personal** (Nómina): presente, retardo, falta, justificada o permiso, y horas de quien trabaja
+  por horas; resumen e impresión del mes; al pagar la quincena se ve su asistencia. Nueva colección
+  `asistencia_personal`. **Hay que publicar las reglas de Firestore.**
+
 ## Octubre 2026 — Constancia de trabajo
 
 - En la ficha del trabajador, **📜 Constancia**: constancia de trabajo con membrete, firmada por la directora, con la

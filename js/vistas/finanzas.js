@@ -50,6 +50,9 @@ function renderFinanzas() {
       ["resumen", "📊 Resumen"],
       ["gastos", "📉 Gastos"],
       ["flujo", "💹 Flujo de Caja"],
+      ["libro", "📒 Libro"],
+      ["porpagar", "🧾 Por pagar"],
+      ["conciliacion", "🏦 Conciliación"],
     ]
       .map(
         ([k, l]) => `
@@ -127,6 +130,9 @@ function renderFinanzas() {
       : ""
   }
 
+  ${st === "libro" ? renderLibroFinanzas(anio, mesPad) : ""}
+  ${st === "porpagar" ? renderCuentasPagar() : ""}
+  ${st === "conciliacion" ? renderConciliacion() : ""}
   ${
     st === "gastos"
       ? `
@@ -183,6 +189,10 @@ function renderFinanzas() {
 }
 function renderModalFinanza(m) {
   const isIng = m.subtipo === "ingreso";
+  // Al pagar una cuenta por pagar, el gasto ya viene lleno con sus datos
+  const pre = m.cuentaId ? cuentasPagar.find((c) => c.id === m.cuentaId) || null : null;
+  const enUsd = pre ? pre.moneda === "USD" : isIng;
+  if (pre) setTimeout(calcFin, 0);
   const categoriasGasto = ["Nómina", "Servicios", "Materiales", "Mantenimiento", "Transporte", "Alimentación", "Otros"];
   const categoriasIng = ["Donación", "Evento", "Subsidio", "Otros ingresos"];
   return `<div class="modal-bg"><div class="modal">
@@ -192,25 +202,25 @@ function renderModalFinanza(m) {
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field"><label class="field-label">Descripción *</label><input class="inp" id="fin-desc" placeholder="${isIng ? "Ej: Donación institución" : "Ej: Pago de agua"}"/></div>
+        <div class="field"><label class="field-label">Descripción *</label><input class="inp" id="fin-desc" placeholder="${isIng ? "Ej: Donación institución" : "Ej: Pago de agua"}" value="${pre ? escHtml(pre.descripcion) : ""}"/></div>
         <div class="form-row">
           <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="fin-fecha" max="${todayStr()}" value="${todayStr()}" onchange="actualizarTasaCampo('fin',calcFin)"/></div>
           <div class="field"><label class="field-label">Categoría</label>
             <select class="inp" id="fin-cat">
-              ${(isIng ? categoriasIng : categoriasGasto).map((c) => `<option value="${c}">${c}</option>`).join("")}
+              ${(isIng ? categoriasIng : categoriasGasto).map((c) => `<option value="${c}" ${pre && pre.categoria === c ? "selected" : ""}>${c}</option>`).join("")}
             </select>
           </div>
         </div>
         <div class="field"><label class="field-label">Monto * <span style="font-weight:400;color:#888">(¿en qué moneda lo escribes?)</span></label>
           <div class="metodo-row" style="margin-bottom:0.4rem">
-            <button type="button" class="metodo-btn ${isIng ? "" : "selected"}" id="fin-m-ves" onclick="selMonedaFin('VES')">🇻🇪 Bolívares (Bs.)</button>
-            <button type="button" class="metodo-btn ${isIng ? "selected" : ""}" id="fin-m-usd" onclick="selMonedaFin('USD')">💵 Dólares (ref.)</button>
+            <button type="button" class="metodo-btn ${enUsd ? "" : "selected"}" id="fin-m-ves" onclick="selMonedaFin('VES')">🇻🇪 Bolívares (Bs.)</button>
+            <button type="button" class="metodo-btn ${enUsd ? "selected" : ""}" id="fin-m-usd" onclick="selMonedaFin('USD')">💵 Dólares (ref.)</button>
           </div>
-          <div style="position:relative"><span id="fin-simbolo" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:${isIng ? "#1a9e5c" : "#e53e3e"};font-weight:700">${isIng ? "$" : "Bs."}</span>
-          <input class="inp" id="fin-monto" placeholder="0,00" style="padding-left:3rem" oninput="fmtInput(this);calcFin()"/></div></div>
+          <div style="position:relative"><span id="fin-simbolo" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:${isIng ? "#1a9e5c" : "#e53e3e"};font-weight:700">${enUsd ? "$" : "Bs."}</span>
+          <input class="inp" id="fin-monto" placeholder="0,00" style="padding-left:3rem" oninput="fmtInput(this);calcFin()" value="${pre ? String(pre.monto).replace(".", ",") : ""}"/></div></div>
         ${campoTasaHTML("fin", null, "calcFin()")}
         <div id="fin-equiv" style="display:none;background:#e8f0fe;border-radius:10px;padding:0.65rem 0.85rem;font-size:0.82rem;color:#003366"></div>
-        <div class="field"><label class="field-label">Responsable</label><input class="inp" id="fin-resp" placeholder="Quién realizó el gasto/ingreso"/></div>
+        <div class="field"><label class="field-label">Responsable</label><input class="inp" id="fin-resp" placeholder="Quién realizó el gasto/ingreso" value="${pre ? escHtml(pre.proveedor) : ""}"/></div>
         <div class="field"><label class="field-label">Observaciones</label><textarea class="inp" id="fin-obs" rows="2" placeholder="Detalles adicionales"></textarea></div>
         <div id="fin-err"></div>
       </div>
@@ -471,6 +481,7 @@ async function guardarFinanza(tipo) {
     ponerEnLista(finanzas, datos);
     aplicarTasaEditada("fin", fecha, c.tasa);
     alertaFinanza(datos);
+    if (modalActual && modalActual.cuentaId) await marcarCuentaPagada(modalActual.cuentaId, datos);
     cerrarModal();
   } catch (e) {
     err(e.message);
@@ -493,4 +504,604 @@ async function eliminarFinanza(id) {
   } catch (e) {
     alert("Error: " + e.message);
   }
+}
+
+// ---- 📒 Libro de ingresos y egresos (del mes elegido arriba, o del año completo)
+let libroAnual = false;
+const rangoLibro = (anio, mesPad) =>
+  libroAnual
+    ? [anio + "-01-01", anio + "-12-31", "Año " + anio]
+    : [anio + "-" + mesPad + "-01", anio + "-" + mesPad + "-31", MESES[Number(mesPad) - 1] + " " + anio];
+const metodosLibro = (r) => r.metodos.map((m) => ETIQ_METODO[m] || m).join(" + ");
+function renderLibroFinanzas(anio, mesPad) {
+  const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
+  const L = libroIngresosEgresos(desde, hasta);
+  const cat = (l, color) =>
+    l
+      .map(
+        (c) =>
+          `<div class="info-row"><span style="color:#555">${escHtml(c.categoria)} <span style="color:#999">(${c.n})</span></span><span style="font-weight:700;color:${color}">${fmt(c.usd)} <small style="color:#888;font-weight:400">· ${fmtBs(c.bs)}</small></span></div>`
+      )
+      .join("") || `<p style="font-size:0.8rem;color:#aaa">Nada</p>`;
+  return `
+  <div class="card" style="padding:0.7rem 0.9rem">
+    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+      <label style="display:flex;gap:0.4rem;align-items:center;font-size:0.8rem;flex:1"><input type="checkbox" id="libro-anual" ${libroAnual ? "checked" : ""} onchange="libroAnual=this.checked;renderTabContent()"/> Todo el año ${escHtml(anio)}</label>
+      <button class="btn btn-success btn-sm" onclick="exportarLibro('${anio}','${mesPad}')">📥 Excel</button>
+      <button class="btn btn-print btn-sm" onclick="imprimirLibro('${anio}','${mesPad}')">🖨️ Imprimir</button>
+    </div>
+    <div style="font-size:0.72rem;color:#888;margin-top:0.3rem">Cada cobro (un renglón por recibo), ingreso y gasto de ${escHtml(nombre)} en orden de fecha, con el saldo. En bolívares a la tasa de cada operación.</div>
+  </div>
+  <div class="stats-grid libro-totales">
+    <div class="stat-card green"><div class="stat-val">${fmt(L.ingresos)}</div><div class="stat-label">Ingresos · ${fmtBs(L.ingresosBs)}</div></div>
+    <div class="stat-card red"><div class="stat-val">${fmt(L.egresos)}</div><div class="stat-label">Egresos · ${fmtBs(L.egresosBs)}</div></div>
+    <div class="stat-card ${L.neto >= 0 ? "blue" : "red"}"><div class="stat-val">${fmt(L.neto)}</div><div class="stat-label">Resultado · ${fmtBs(L.netoBs)}</div></div>
+    <div class="stat-card"><div class="stat-val">${L.filas.length}</div><div class="stat-label">Movimientos${L.sinTasa ? ` · ⚠️ ${L.sinTasa} sin tasa` : ""}</div></div>
+  </div>
+  <div class="card"><div class="card-title"><div class="card-bar"></div><h2>Ingresos por categoría</h2></div>${cat(L.catIngresos, "#1a9e5c")}</div>
+  <div class="card"><div class="card-title"><div class="card-bar"></div><h2>Egresos por categoría</h2></div>${cat(L.catEgresos, "#e53e3e")}</div>
+  <div class="card" style="padding:0.5rem"><div style="overflow-x:auto">
+    <table class="libro-tabla" style="width:100%;border-collapse:collapse;font-size:0.72rem;min-width:640px">
+      <tr style="text-align:left;color:#555;border-bottom:1.5px solid #003366"><th>Fecha</th><th>Doc.</th><th>Concepto</th><th>Tercero</th><th style="text-align:right">Ingreso</th><th style="text-align:right">Egreso</th><th style="text-align:right">Saldo</th></tr>
+      ${
+        L.filas
+          .map(
+            (
+              r
+            ) => `<tr style="border-bottom:1px dashed #e2e8f0"><td style="white-space:nowrap">${escHtml(fechaCorta(r.fecha))}</td><td style="white-space:nowrap">${escHtml(r.doc)}</td><td>${escHtml(r.concepto)}<div style="color:#999">${escHtml(r.categoria)}${r.metodos.length ? " · " + escHtml(metodosLibro(r)) : ""}</div></td><td>${escHtml(r.tercero)}</td>
+        <td style="text-align:right;color:#1a9e5c;white-space:nowrap">${r.tipo === "ingreso" ? fmt(r.usd) + `<div style="color:#999">${fmtBs(r.bs)}</div>` : ""}</td>
+        <td style="text-align:right;color:#e53e3e;white-space:nowrap">${r.tipo === "gasto" ? fmt(r.usd) + `<div style="color:#999">${fmtBs(r.bs)}</div>` : ""}</td>
+        <td style="text-align:right;font-weight:700;white-space:nowrap">${fmt(r.saldo)}</td></tr>`
+          )
+          .join("") || `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:1rem">Sin movimientos</td></tr>`
+      }
+    </table></div></div>`;
+}
+function exportarLibro(anio, mesPad) {
+  const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
+  const L = libroIngresosEgresos(desde, hasta);
+  const filas = [
+    [EMPRESA + " · Libro de ingresos y egresos · " + nombre],
+    [],
+    [
+      "Fecha",
+      "Documento",
+      "Tipo",
+      "Categoría",
+      "Concepto",
+      "Tercero",
+      "Método",
+      "Ingreso $",
+      "Egreso $",
+      "Tasa BCV",
+      "Ingreso Bs.",
+      "Egreso Bs.",
+      "Saldo $",
+      "Saldo Bs.",
+    ],
+    ...L.filas.map((r) => [
+      fechaCorta(r.fecha),
+      r.doc,
+      r.tipo === "ingreso" ? "Ingreso" : "Egreso",
+      r.categoria,
+      r.concepto,
+      r.tercero,
+      metodosLibro(r),
+      r.tipo === "ingreso" ? r.usd : "",
+      r.tipo === "gasto" ? r.usd : "",
+      r.tasa || "",
+      r.tipo === "ingreso" ? r.bs : "",
+      r.tipo === "gasto" ? r.bs : "",
+      r.saldo,
+      r.saldoBs,
+    ]),
+    [],
+    ["", "", "", "", "TOTALES", "", "", L.ingresos, L.egresos, "", L.ingresosBs, L.egresosBs, L.neto, L.netoBs],
+  ];
+  const resumen = [
+    ["Resumen · " + nombre],
+    [],
+    ["Tipo", "Categoría", "Movimientos", "$", "Bs."],
+    ...L.catIngresos.map((c) => ["Ingreso", c.categoria, c.n, c.usd, c.bs]),
+    ...L.catEgresos.map((c) => ["Egreso", c.categoria, c.n, c.usd, c.bs]),
+    [],
+    ["", "Total ingresos", "", L.ingresos, L.ingresosBs],
+    ["", "Total egresos", "", L.egresos, L.egresosBs],
+    ["", "Resultado", "", L.neto, L.netoBs],
+  ];
+  const wb = XLSX.utils.book_new();
+  const hoja = XLSX.utils.aoa_to_sheet(filas);
+  hoja["!cols"] = [10, 12, 8, 22, 40, 26, 18, 11, 11, 10, 14, 14, 12, 14].map((wch) => ({ wch }));
+  XLSX.utils.book_append_sheet(wb, hoja, "Libro");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), "Resumen");
+  XLSX.writeFile(wb, "libro_ingresos_egresos_" + (libroAnual ? anio : anio + "-" + mesPad) + ".xlsx");
+}
+function imprimirLibro(anio, mesPad) {
+  const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
+  const L = libroIngresosEgresos(desde, hasta);
+  const w = abrirVentanaImpresion("width=1000,height=800");
+  if (!w) return alert("Permite las ventanas emergentes para imprimir");
+  w.document
+    .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Libro de ingresos y egresos ${escHtml(nombre)}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;background:#fff;padding:0.8rem}
+  .hdr{display:flex;align-items:center;gap:0.8rem;border-bottom:2px solid #003366;padding-bottom:0.5rem;margin-bottom:0.6rem}.hdr img{width:42px;height:42px;object-fit:contain}
+  table{width:100%;border-collapse:collapse;font-size:0.7rem}th,td{padding:0.22rem 0.3rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
+  th{font-size:0.6rem;text-transform:uppercase;color:#555;border-bottom:1.5px solid #003366}.n{text-align:right;white-space:nowrap}
+  tfoot td{font-weight:800;border-top:1.5px solid #003366}tr{break-inside:avoid}@page{size:letter landscape;margin:10mm}@media print{.no-print{display:none}}</style></head><body>
+  <div class="hdr"><img src="data:image/png;base64,${LOGO}" alt="Logo"/><div>
+    <div style="font-size:0.58rem;letter-spacing:2px;color:#003366;font-weight:700;text-transform:uppercase">Libro de ingresos y egresos · ${escHtml(nombre)}</div>
+    <div style="font-size:0.9rem;font-family:Georgia,serif;color:#003366">${EMPRESA}</div><div style="font-size:0.62rem;color:#555">${EMPRESA_SUB} · impreso el ${escHtml(fechaCorta(todayStr()))}</div></div></div>
+  <table><thead><tr><th>Fecha</th><th>Doc.</th><th>Categoría</th><th>Concepto</th><th>Tercero</th><th class="n">Ingreso $</th><th class="n">Egreso $</th><th class="n">Ingreso Bs.</th><th class="n">Egreso Bs.</th><th class="n">Saldo $</th></tr></thead>
+  <tbody>${L.filas
+    .map(
+      (r) =>
+        `<tr><td>${escHtml(fechaCorta(r.fecha))}</td><td>${escHtml(r.doc)}</td><td>${escHtml(r.categoria)}</td><td>${escHtml(r.concepto)}</td><td>${escHtml(r.tercero)}</td><td class="n">${r.tipo === "ingreso" ? fmt(r.usd) : ""}</td><td class="n">${r.tipo === "gasto" ? fmt(r.usd) : ""}</td><td class="n">${r.tipo === "ingreso" ? fmtBs(r.bs) : ""}</td><td class="n">${r.tipo === "gasto" ? fmtBs(r.bs) : ""}</td><td class="n">${fmt(r.saldo)}</td></tr>`
+    )
+    .join("")}</tbody>
+  <tfoot><tr><td colspan="5">Totales · resultado ${fmt(L.neto)} (${fmtBs(L.netoBs)})</td><td class="n">${fmt(L.ingresos)}</td><td class="n">${fmt(L.egresos)}</td><td class="n">${fmtBs(L.ingresosBs)}</td><td class="n">${fmtBs(L.egresosBs)}</td><td class="n">${fmt(L.neto)}</td></tr></tfoot></table>
+  <div class="no-print" style="text-align:center;padding:0.75rem"><button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.6rem 1.4rem;border-radius:8px;font-weight:700">🖨️ Imprimir / Guardar PDF</button></div>
+  </body></html>`);
+  w.document.close();
+}
+
+// ---- 🧾 Cuentas por pagar
+const ETIQ_EST_CUENTA = {
+  vencida: ["badge-red", "⚠️ Vencida"],
+  "por-vencer": ["badge-gold", "⏰ Vence pronto"],
+  proxima: ["badge-blue", "📅 Pendiente"],
+  "sin-fecha": ["badge-gray", "Sin fecha"],
+};
+const montoCuenta = (c) => (c.moneda === "VES" ? fmtBs(c.monto) : fmt(c.monto));
+function renderCuentasPagar() {
+  const r = resumenCuentasPagar();
+  const pagadas = cuentasPagar
+    .filter((c) => c.estado === "pagada")
+    .sort((a, b) => ((a.pagadaEl || "") < (b.pagadaEl || "") ? 1 : -1))
+    .slice(0, 8);
+  return `
+  <div class="stats-grid">
+    <div class="stat-card red"><div class="stat-val">${fmt(r.totalVencidas)}</div><div class="stat-label">Vencidas (${r.vencidas.length})</div></div>
+    <div class="stat-card gold"><div class="stat-val">${fmt(r.totalSemana)}</div><div class="stat-label">Vencen en 7 días (${r.semana.length})</div></div>
+    <div class="stat-card"><div class="stat-val">${fmt(r.total)}</div><div class="stat-label">Total por pagar (${r.pendientes.length})</div></div>
+  </div>
+  <button class="btn btn-primary btn-full" style="margin-bottom:0.75rem" onclick="abrirModal({tipo:'nuevo-cuenta-pagar'})">➕ Nueva cuenta por pagar</button>
+  <div class="list">${
+    r.pendientes
+      .map((c) => {
+        const [badge, etiqueta] = ETIQ_EST_CUENTA[c.est];
+        return `<div class="list-item cuenta-pagar" style="border-left-color:${c.est === "vencida" ? "#e53e3e" : c.est === "por-vencer" ? "#b8860b" : "#00509e"}">
+      <div class="item-row">
+        <div style="flex:1;min-width:0"><div class="item-name">${escHtml(c.descripcion)}</div>
+          <div class="item-sub">${[escHtml(c.proveedor || c.categoria || ""), c.vence ? "vence el " + escHtml(fechaCorta(c.vence)) : "", c.recurrente === "mensual" ? "🔁 cada mes" : ""].filter(Boolean).join(" · ")}</div>
+          <div style="margin-top:3px"><span class="badge ${badge}">${etiqueta}</span></div></div>
+        <div class="item-right"><div class="item-amount" style="color:#e53e3e">${montoCuenta(c)}</div>${c.moneda === "VES" && c.usd != null ? `<div style="font-size:0.68rem;color:#888">≈ ${fmt(c.usd)}</div>` : ""}
+          <div style="display:flex;gap:0.25rem;margin-top:4px;justify-content:flex-end">
+            <button class="btn btn-success btn-sm" style="font-size:0.7rem" onclick="abrirModal({tipo:'nuevo-finanza',subtipo:'gasto',cuentaId:'${c.id}'})">✓ Pagar</button>
+            <button class="btn btn-gray btn-sm" style="font-size:0.7rem" title="Editar" onclick="abrirModal({tipo:'editar-cuenta-pagar',id:'${c.id}'})">✏️</button>
+          </div></div>
+      </div></div>`;
+      })
+      .join("") || `<div class="empty"><div class="empty-icon">🧾</div><p>No hay cuentas por pagar</p></div>`
+  }</div>
+  ${
+    pagadas.length
+      ? `<div class="card" style="margin-top:0.75rem"><div class="card-title"><div class="card-bar"></div><h2>Pagadas hace poco</h2></div>${pagadas
+          .map(
+            (c) =>
+              `<div class="info-row"><span style="color:#555">✓ ${escHtml(c.descripcion)} <span style="color:#999">· ${escHtml(fechaCorta(c.pagadaEl || ""))}</span></span><span style="font-weight:700">${montoCuenta(c)}</span></div>`
+          )
+          .join("")}</div>`
+      : ""
+  }`;
+}
+function renderModalCuentaPagar(m) {
+  const c = m.id ? cuentasPagar.find((x) => x.id === m.id) || {} : {};
+  const cats = [
+    "Servicios",
+    "Alquiler",
+    "Impuestos",
+    "Materiales",
+    "Mantenimiento",
+    "Transporte",
+    "Alimentación",
+    "Otros",
+  ];
+  return `<div class="modal-bg"><div class="modal">
+    <div class="modal-header"><div><h3>🧾 ${c.id ? "Editar" : "Nueva"} cuenta por pagar</h3><p>Lo que hay que pagar y cuándo vence</p></div><button class="modal-close-x" onclick="cerrarModal()">✕</button></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field"><label class="field-label">¿Qué es? *</label><input class="inp" id="cp-desc" placeholder="Ej: Luz (Corpoelec), alquiler, impuesto municipal" value="${escHtml(c.descripcion) || ""}"/></div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">A quién se le paga</label><input class="inp" id="cp-prov" placeholder="Ej: Corpoelec" value="${escHtml(c.proveedor) || ""}"/></div>
+        <div class="field"><label class="field-label">Categoría</label><select class="inp" id="cp-cat">${cats.map((x) => `<option ${c.categoria === x ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Monto *</label><input class="inp" id="cp-monto" inputmode="decimal" placeholder="0,00" value="${c.monto ? String(c.monto).replace(".", ",") : ""}" oninput="fmtInput(this)"/></div>
+        <div class="field"><label class="field-label">Moneda</label><select class="inp" id="cp-moneda"><option value="USD" ${c.moneda !== "VES" ? "selected" : ""}>$ (dólares)</option><option value="VES" ${c.moneda === "VES" ? "selected" : ""}>Bs. (bolívares)</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Vence el *</label><input class="inp" type="date" id="cp-vence" value="${escHtml(c.vence) || ""}"/></div>
+        <div class="field"><label class="field-label">¿Se repite?</label><select class="inp" id="cp-rec"><option value="no">No, es una sola vez</option><option value="mensual" ${c.recurrente === "mensual" ? "selected" : ""}>🔁 Cada mes</option></select></div>
+      </div>
+      <div class="field"><label class="field-label">Nota</label><input class="inp" id="cp-nota" placeholder="Ej: número de contrato o de cliente" value="${escHtml(c.nota) || ""}"/></div>
+      <div id="cp-err"></div>
+    </div></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="guardarCuentaPagar('${c.id || ""}')">✓ Guardar</button>
+      ${c.id ? `<button class="btn btn-danger btn-sm" onclick="eliminarCuentaPagar('${c.id}')">🗑️</button>` : ""}
+      <button class="btn btn-gray" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div></div>`;
+}
+async function guardarCuentaPagar(id) {
+  const val = (x) => document.getElementById(x).value.trim();
+  const datos = {
+    descripcion: val("cp-desc"),
+    proveedor: val("cp-prov"),
+    categoria: val("cp-cat"),
+    monto: r2(parseFmt(val("cp-monto"))),
+    moneda: val("cp-moneda") === "VES" ? "VES" : "USD",
+    vence: val("cp-vence"),
+    recurrente: val("cp-rec") === "mensual" ? "mensual" : "no",
+    nota: val("cp-nota"),
+  };
+  if (!datos.descripcion || !(datos.monto > 0) || !datos.vence)
+    return mostrarError("cp-err", "Completa qué es, el monto y cuándo vence");
+  try {
+    if (id) {
+      await db.collection("cuentas_pagar").doc(id).update(datos);
+      ponerEnLista(cuentasPagar, { id, ...datos });
+    } else {
+      const nueva = { ...datos, estado: "pendiente", registradoPor: correoUsuario() };
+      const ref = await db.collection("cuentas_pagar").add(nueva);
+      cuentasPagar.push({ id: ref.id, ...nueva });
+    }
+    cerrarModal();
+    renderTabContent();
+  } catch (e) {
+    mostrarError("cp-err", e.message);
+  }
+}
+async function eliminarCuentaPagar(id) {
+  if (!confirm("¿Borrar esta cuenta por pagar? (No borra ningún gasto ya registrado)")) return;
+  try {
+    await db.collection("cuentas_pagar").doc(id).delete();
+    cuentasPagar = cuentasPagar.filter((c) => c.id !== id);
+    cerrarModal();
+    renderTabContent();
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+// Al registrar el gasto de una cuenta: queda pagada y, si es de cada mes, se anota la del mes que viene
+async function marcarCuentaPagada(id, gasto) {
+  const c = cuentasPagar.find((x) => x.id === id);
+  if (!c) return;
+  const pago = { estado: "pagada", pagadaEl: gasto.fecha, gastoId: gasto.id || "" };
+  const lote = db.batch();
+  lote.update(db.collection("cuentas_pagar").doc(id), pago);
+  let siguiente = null;
+  if (c.recurrente === "mensual" && c.vence) {
+    const ref = db.collection("cuentas_pagar").doc();
+    siguiente = {
+      descripcion: c.descripcion,
+      proveedor: c.proveedor || "",
+      categoria: c.categoria || "",
+      monto: c.monto,
+      moneda: c.moneda,
+      vence: venceSiguiente(c.vence),
+      recurrente: "mensual",
+      nota: c.nota || "",
+      estado: "pendiente",
+      registradoPor: correoUsuario(),
+    };
+    lote.set(ref, siguiente);
+    siguiente.id = ref.id;
+  }
+  try {
+    await lote.commit();
+    Object.assign(c, pago);
+    if (siguiente) cuentasPagar.push(siguiente);
+  } catch (e) {
+    alert("El gasto se registró, pero no se pudo marcar la cuenta como pagada: " + e.message);
+  }
+}
+
+// ---- 🏦 Conciliación bancaria (ver servicios/conciliacion.js). No se guarda nada: se sube el estado de cuenta, se
+// revisa y, si hace falta, se registra lo que falta.
+let conc = null; // { nombre, hojas: [{ nombre, filas }], hoja, filas, mapa, resultado, error }
+const ETIQ_COL_BANCO = {
+  fecha: "Fecha *",
+  referencia: "Referencia",
+  descripcion: "Descripción",
+  credito: "Crédito / abono",
+  debito: "Débito / cargo",
+  monto: "Monto (si va todo en una columna)",
+  tipo: "Tipo (C/D, crédito/débito)",
+};
+// Los archivos de texto se leen como texto (UTF-8 o, si trae caracteres raros, como los guarda Windows); los de
+// Excel con la biblioteca de hojas de cálculo (también lee .xls que en realidad son páginas HTML)
+const esTextoBanco = (archivo) =>
+  /\.(csv|txt|tsv|prn)$/i.test(archivo.name || "") || /^text\//.test(archivo.type || "");
+function leerComoTexto(archivo, codificacion) {
+  return new Promise((ok, no) => {
+    const r = new FileReader();
+    r.onload = () => ok(r.result);
+    r.onerror = () => no(new Error("no se pudo leer el archivo"));
+    r.readAsText(archivo, codificacion);
+  });
+}
+async function hojasDeArchivo(archivo) {
+  if (esTextoBanco(archivo)) {
+    let texto = await leerComoTexto(archivo, "utf-8");
+    if (texto.includes("�")) texto = await leerComoTexto(archivo, "windows-1252");
+    return [{ nombre: archivo.name, filas: filasDeTexto(texto) }];
+  }
+  const datos = new Uint8Array(await archivo.arrayBuffer());
+  // raw: los textos de un CSV o HTML no se convierten en fechas a la manera de EE. UU. (mes/día)
+  const libro = XLSX.read(datos, { type: "array", cellDates: true, raw: true });
+  const hojas = libro.SheetNames.map((n) => ({
+    nombre: n,
+    filas: XLSX.utils.sheet_to_json(libro.Sheets[n], { header: 1, raw: true, defval: "" }),
+  }));
+  if (hojas.some((h) => detectarColumnas(h.filas))) return hojas;
+  // un «.xls» que en realidad es texto separado por tabuladores
+  const texto = new TextDecoder("utf-8").decode(datos);
+  const comoTexto = filasDeTexto(texto.includes("�") ? new TextDecoder("windows-1252").decode(datos) : texto);
+  return detectarColumnas(comoTexto) ? [{ nombre: archivo.name, filas: comoTexto }] : hojas;
+}
+async function leerEstadoCuenta(archivo) {
+  if (!archivo) return;
+  try {
+    const hojas = await hojasDeArchivo(archivo);
+    const i = Math.max(
+      0,
+      hojas.findIndex((h) => detectarColumnas(h.filas))
+    );
+    conc = { nombre: archivo.name, hojas, hoja: i };
+    elegirHojaBanco(i);
+  } catch (e) {
+    conc = { nombre: archivo.name, error: "No se pudo leer el archivo: " + e.message };
+    renderTabContent();
+  }
+}
+function elegirHojaBanco(i) {
+  conc.hoja = Number(i) || 0;
+  conc.filas = (conc.hojas[conc.hoja] || {}).filas || [];
+  conc.mapa = detectarColumnas(conc.filas) || { fila: 0, col: {} };
+  conciliarActual();
+  renderTabContent();
+}
+function conciliarActual() {
+  if (!conc || !conc.filas) return;
+  const { col } = conc.mapa;
+  conc.resultado = null;
+  conc.error = "";
+  if (col.fecha == null || (col.credito == null && col.monto == null))
+    return void (conc.error = "Elige qué columna es la fecha y cuál trae los abonos (crédito o monto).");
+  const entradas = movimientosBanco(conc.filas, conc.mapa);
+  if (!entradas.length) return void (conc.error = "No se encontraron abonos (dinero que entró) en el archivo.");
+  conc.resultado = conciliarBanco(entradas, cobrosPorTransferencia());
+}
+function cambiarColumnaBanco(k, v) {
+  if (v === "") delete conc.mapa.col[k];
+  else conc.mapa.col[k] = Number(v);
+  recordarFormatoBanco(conc.filas[conc.mapa.fila], conc.mapa.col); // la próxima vez, este formato sale solo
+  conc.mapa.recordado = true;
+  conciliarActual();
+  renderTabContent();
+}
+function cambiarFilaTitulos(v) {
+  conc.mapa = { fila: Number(v), col: columnasDeFila(conc.filas, Number(v)) };
+  conciliarActual();
+  renderTabContent();
+}
+// Abre «Nuevo pago» con lo que dice el banco (fecha, referencia y el monto pasado a $ con la tasa de ese día)
+function registrarDesdeBanco(i) {
+  const e = conc && conc.resultado && conc.resultado.sinRegistrar[i];
+  if (!e) return;
+  const t = tasaDe(e.fecha);
+  pagoPrefill = {
+    fecha: e.fecha,
+    metodo: "Transferencia Bs",
+    referencia: e.referencia,
+    total: t ? r2(e.monto / t.valor) : "",
+    desc:
+      "Recibido en el banco el " +
+      fechaCorta(e.fecha) +
+      ": " +
+      fmtBs(e.monto) +
+      (e.descripcion ? " (" + e.descripcion + ")" : ""),
+  };
+  _metodoPago = "Transferencia Bs";
+  tabActual = "pagos";
+  subTab.pagos = "nuevo";
+  render();
+}
+function renderConciliacion() {
+  const repetidas = referenciasRepetidas();
+  const htmlRepetidas = repetidas.length
+    ? `<div class="card conc-repetidas"><div class="card-title"><div class="card-bar"></div><h2>⚠️ Referencias repetidas en los recibos (${repetidas.length})</h2></div>
+      <div style="font-size:0.75rem;color:#666;margin-bottom:0.4rem">La misma transferencia registrada en más de un recibo: puede ser un error o un comprobante usado dos veces.</div>
+      ${repetidas
+        .map(
+          (g) =>
+            `<div class="info-row"><span><strong>Ref. ${escHtml(g.ref)}</strong></span><span style="text-align:right;font-size:0.78rem">${g.recibos.map((r) => `${escHtml(r.factura)} · ${escHtml(r.nombre)} · ${escHtml(fechaCorta(r.fecha))} · ${fmt(r.total)}`).join("<br/>")}</span></div>`
+        )
+        .join("")}</div>`
+    : "";
+  const cabecera = `<div class="card">
+    <div class="card-title"><div class="card-bar"></div><h2>🏦 Conciliación bancaria</h2></div>
+    <div style="font-size:0.78rem;color:#555;margin-bottom:0.5rem">Descarga el estado de cuenta de tu banco en <strong>Excel o CSV</strong> y súbelo aquí. La app compara cada abono con los cobros registrados por <strong>transferencia o pago móvil</strong> (por la referencia y el monto, o por el monto y la fecha). Los cobros por punto de venta no se comparan uno por uno: el banco los abona juntos al cerrar el lote.</div>
+    <input class="inp" type="file" id="conc-archivo" accept=".xlsx,.xls,.csv,.txt" onchange="leerEstadoCuenta(this.files[0])"/>
+    ${conc ? `<div style="font-size:0.75rem;color:#888;margin-top:0.3rem">📄 ${escHtml(conc.nombre)}</div>` : ""}
+  </div>`;
+  if (!conc) return cabecera + htmlRepetidas;
+  if (!conc.filas)
+    return cabecera + `<div class="alert-item alert-mora"><div>${escHtml(conc.error)}</div></div>` + htmlRepetidas;
+  const titulos = conc.filas[conc.mapa.fila] || [];
+  const opciones = (k) =>
+    `<option value="">— ninguna —</option>` +
+    titulos
+      .map(
+        (t, j) =>
+          `<option value="${j}" ${conc.mapa.col[k] === j ? "selected" : ""}>${escHtml(String(t || "Columna " + (j + 1)))}</option>`
+      )
+      .join("");
+  const columnas = `<details class="card conc-columnas" ${conc.resultado ? "" : "open"}><summary style="cursor:pointer;font-weight:700;color:#003366;font-size:0.85rem">⚙️ Columnas del archivo ${conc.mapa.recordado ? "(formato recordado de este banco)" : conc.resultado ? "(detectadas)" : ""}</summary>
+    <div style="font-size:0.72rem;color:#888;margin-top:0.3rem">Si alguna columna no es la correcta, elígela: la app recuerda el formato de cada banco para la próxima vez.</div>
+    <div class="form-grid" style="margin-top:0.5rem">
+      ${
+        conc.hojas && conc.hojas.length > 1
+          ? `<div class="field"><label class="field-label">Hoja</label><select class="inp" id="conc-hoja" onchange="elegirHojaBanco(this.value)">${conc.hojas
+              .map((h, i) => `<option value="${i}" ${i === conc.hoja ? "selected" : ""}>${escHtml(h.nombre)}</option>`)
+              .join("")}</select></div>`
+          : ""
+      }
+      <div class="field"><label class="field-label">Fila de los títulos</label><select class="inp" id="conc-fila" onchange="cambiarFilaTitulos(this.value)">${conc.filas
+        .slice(0, 40)
+        .map(
+          (f, i) =>
+            `<option value="${i}" ${i === conc.mapa.fila ? "selected" : ""}>Fila ${i + 1}: ${escHtml((f || []).filter(Boolean).slice(0, 4).join(" · ").slice(0, 60))}</option>`
+        )
+        .join("")}</select></div>
+      <div class="form-row" style="flex-wrap:wrap">${Object.entries(ETIQ_COL_BANCO)
+        .map(
+          ([k, l]) =>
+            `<div class="field"><label class="field-label">${l}</label><select class="inp" id="conc-col-${k}" onchange="cambiarColumnaBanco('${k}',this.value)">${opciones(k)}</select></div>`
+        )
+        .join("")}</div>
+    </div></details>`;
+  const r = conc.resultado;
+  if (!r)
+    return (
+      cabecera + columnas + `<div class="alert-item alert-info"><div>${escHtml(conc.error)}</div></div>` + htmlRepetidas
+    );
+  const linea = (izq, der, extra) =>
+    `<div class="list-item" style="padding:0.55rem 0.75rem"><div class="item-row"><div style="flex:1;min-width:0;font-size:0.8rem">${izq}</div><div class="item-right" style="font-size:0.8rem">${der}${extra || ""}</div></div></div>`;
+  const cobroTxt = (c) =>
+    `${escHtml(c.factura)} · ${escHtml(c.nombre)} · ${escHtml(fechaCorta(c.fecha))}${c.referencia ? " · ref " + escHtml(c.referencia) : ""}`;
+  const banco = (e) =>
+    `🏦 ${escHtml(fechaCorta(e.fecha))}${e.referencia ? " · ref " + escHtml(e.referencia) : ""}${e.descripcion ? `<div style="color:#888;font-size:0.72rem">${escHtml(e.descripcion)}</div>` : ""}`;
+  const seccion = (clase, titulo, ayuda, items) =>
+    items.length
+      ? `<div class="card ${clase}"><div class="card-title"><div class="card-bar"></div><h2>${titulo}</h2></div><div style="font-size:0.75rem;color:#666;margin-bottom:0.4rem">${ayuda}</div><div class="list">${items.join("")}</div></div>`
+      : "";
+  return (
+    cabecera +
+    columnas +
+    `<div class="stats-grid conc-resumen">
+      <div class="stat-card"><div class="stat-val">${r.entradas}</div><div class="stat-label">Abonos del ${escHtml(fechaCorta(r.desde))} al ${escHtml(fechaCorta(r.hasta))} · ${fmtBs(r.totalBanco)}</div></div>
+      <div class="stat-card green"><div class="stat-val">${r.conciliados.length + r.porMonto.length}</div><div class="stat-label">✅ Coinciden con un recibo</div></div>
+      <div class="stat-card red"><div class="stat-val">${r.sinRegistrar.length}</div><div class="stat-label">❓ Sin registrar · ${fmtBs(r.totalSinRegistrar)}</div></div>
+      <div class="stat-card gold"><div class="stat-val">${r.noEnBanco.length + r.montoDistinto.length}</div><div class="stat-label">⚠️ Por revisar</div></div>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.6rem"><button class="btn btn-gray btn-sm" onclick="conciliarActual();renderTabContent()">🔄 Volver a comparar</button><button class="btn btn-print btn-sm" onclick="imprimirConciliacion()">🖨️ Imprimir</button></div>` +
+    seccion(
+      "conc-sin-registrar",
+      "❓ Entró al banco y no está registrado (" + r.sinRegistrar.length + ")",
+      "Dinero que llegó a la cuenta y no aparece en ningún recibo. Averigua de quién es y regístralo.",
+      r.sinRegistrar.map((e, i) =>
+        linea(
+          banco(e),
+          `<strong>${fmtBs(e.monto)}</strong>`,
+          `<div><button class="btn btn-primary btn-sm" style="margin-top:4px;font-size:0.7rem" onclick="registrarDesdeBanco(${i})">➕ Registrar</button></div>`
+        )
+      )
+    ) +
+    seccion(
+      "conc-monto-distinto",
+      "⚠️ La referencia coincide pero el monto no (" + r.montoDistinto.length + ")",
+      "El banco recibió otro monto: revisa si pagó de menos o si se registró mal.",
+      r.montoDistinto.map((x) =>
+        linea(
+          banco(x.entrada) + `<div>🧾 ${cobroTxt(x.cobro)}</div>`,
+          `Banco <strong>${fmtBs(x.entrada.monto)}</strong><div>Recibo ${fmtBs(x.cobro.bs)}</div>`
+        )
+      )
+    ) +
+    seccion(
+      "conc-no-banco",
+      "⚠️ Registrado y no aparece en el banco (" + r.noEnBanco.length + ")",
+      "Cobros por transferencia del período que no están en el estado de cuenta: puede que la referencia esté mal escrita o que el pago no haya llegado.",
+      r.noEnBanco.map((c) => linea(`🧾 ${cobroTxt(c)}`, `<strong>${fmtBs(c.bs)}</strong>`))
+    ) +
+    seccion(
+      "conc-por-monto",
+      "🟡 Coinciden por monto y fecha (" + r.porMonto.length + ")",
+      "No tienen la misma referencia, pero el monto y la fecha cuadran con un solo recibo. Confírmalos.",
+      r.porMonto.map((x) =>
+        linea(banco(x.entrada) + `<div>🧾 ${cobroTxt(x.cobro)}</div>`, `<strong>${fmtBs(x.entrada.monto)}</strong>`)
+      )
+    ) +
+    seccion(
+      "conc-ok",
+      "✅ Conciliados (" + r.conciliados.length + ")",
+      "La referencia y el monto coinciden con un recibo.",
+      r.conciliados.map((x) =>
+        linea(banco(x.entrada) + `<div>🧾 ${cobroTxt(x.cobro)}</div>`, `<strong>${fmtBs(x.entrada.monto)}</strong>`)
+      )
+    ) +
+    htmlRepetidas
+  );
+}
+function imprimirConciliacion() {
+  const r = conc && conc.resultado;
+  if (!r) return;
+  const w = abrirVentanaImpresion("width=900,height=900");
+  if (!w) return alert("Permite las ventanas emergentes para imprimir");
+  const tabla = (titulo, filas) =>
+    filas.length
+      ? `<h2>${titulo}</h2><table>${filas.map((f) => `<tr>${f.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</table>`
+      : "";
+  const cobroTxt = (c) => `${escHtml(c.factura)} · ${escHtml(c.nombre)} · ${escHtml(fechaCorta(c.fecha))}`;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Conciliación bancaria</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;background:#fff;padding:1rem;max-width:900px;margin:0 auto}
+  h1{font-size:0.95rem;color:#003366}h2{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#003366;margin:0.8rem 0 0.3rem}
+  table{width:100%;border-collapse:collapse;font-size:0.75rem}td{padding:0.25rem 0.35rem;border-bottom:1px solid #ddd}td:last-child{text-align:right;white-space:nowrap}
+  @media print{.no-print{display:none}}</style></head><body>
+  <h1>${EMPRESA} · Conciliación bancaria del ${escHtml(fechaCorta(r.desde))} al ${escHtml(fechaCorta(r.hasta))}</h1>
+  <p style="font-size:0.75rem;color:#555">Archivo: ${escHtml(conc.nombre)} · ${r.entradas} abonos por ${fmtBs(r.totalBanco)} · impreso el ${escHtml(fechaCorta(todayStr()))}</p>
+  ${tabla(
+    "Entró al banco y no está registrado",
+    r.sinRegistrar.map((e) => [
+      escHtml(fechaCorta(e.fecha)),
+      escHtml(e.referencia),
+      escHtml(e.descripcion),
+      fmtBs(e.monto),
+    ])
+  )}
+  ${tabla(
+    "La referencia coincide pero el monto no",
+    r.montoDistinto.map((x) => [
+      escHtml(fechaCorta(x.entrada.fecha)),
+      escHtml(x.entrada.referencia),
+      cobroTxt(x.cobro),
+      "Banco " + fmtBs(x.entrada.monto) + " · recibo " + fmtBs(x.cobro.bs),
+    ])
+  )}
+  ${tabla(
+    "Registrado y no aparece en el banco",
+    r.noEnBanco.map((c) => [cobroTxt(c), "ref " + escHtml(c.referencia || "—"), fmtBs(c.bs)])
+  )}
+  ${tabla(
+    "Coinciden por monto y fecha",
+    r.porMonto.map((x) => [
+      escHtml(fechaCorta(x.entrada.fecha)),
+      escHtml(x.entrada.referencia),
+      cobroTxt(x.cobro),
+      fmtBs(x.entrada.monto),
+    ])
+  )}
+  ${tabla(
+    "Conciliados",
+    r.conciliados.map((x) => [
+      escHtml(fechaCorta(x.entrada.fecha)),
+      escHtml(x.entrada.referencia),
+      cobroTxt(x.cobro),
+      fmtBs(x.entrada.monto),
+    ])
+  )}
+  <div class="no-print" style="text-align:center;padding:0.75rem"><button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.6rem 1.4rem;border-radius:8px;font-weight:700">🖨️ Imprimir / Guardar PDF</button></div>
+  </body></html>`);
+  w.document.close();
 }

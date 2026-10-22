@@ -147,6 +147,34 @@ test("documentos del personal: director y administradora los adjuntan, ven y qui
   }
 });
 
+test("asistencia del personal: solo director y administradora", async () => {
+  const diaAsist = { fecha: "2026-10-07", registros: { trab1: { estado: "presente" } } };
+  for (const rol of ["director", "administradora"]) {
+    const db = como(rol);
+    await assertSucceeds(setDoc(doc(db, "asistencia_personal/2026-10-07"), diaAsist));
+    await assertSucceeds(getDoc(doc(db, "asistencia_personal/2026-10-07")));
+  }
+  for (const rol of ["docente", "desconocido"]) {
+    await assertFails(getDoc(doc(como(rol), "asistencia_personal/2026-10-07")));
+    await assertFails(setDoc(doc(como(rol), "asistencia_personal/2026-10-08"), diaAsist));
+  }
+});
+
+test("cuentas por pagar: solo director y administradora", async () => {
+  const cuenta = { descripcion: "Luz", monto: 20, moneda: "USD", vence: "2026-10-31", estado: "pendiente" };
+  for (const rol of ["director", "administradora"]) {
+    const db = como(rol);
+    await assertSucceeds(setDoc(doc(db, "cuentas_pagar/c-" + rol), cuenta));
+    await assertSucceeds(updateDoc(doc(db, "cuentas_pagar/c-" + rol), { estado: "pagada" }));
+    await assertSucceeds(getDocs(collection(db, "cuentas_pagar")));
+    await assertSucceeds(deleteDoc(doc(db, "cuentas_pagar/c-" + rol)));
+  }
+  for (const rol of ["docente", "desconocido"]) {
+    await assertFails(getDocs(collection(como(rol), "cuentas_pagar")));
+    await assertFails(setDoc(doc(como(rol), "cuentas_pagar/x"), cuenta));
+  }
+});
+
 test("administradora: carga la tasa BCV pero no el resto de la configuración", async () => {
   const db = como("administradora");
   await assertSucceeds(setDoc(doc(db, "config/tasasBCV"), { tasas: { "2026-10-07": 184.5 } }, { merge: true }));

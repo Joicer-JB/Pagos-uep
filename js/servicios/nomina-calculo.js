@@ -459,3 +459,39 @@ function choquesHorario(lista) {
     }
   return choques;
 }
+
+// ---- Asistencia del personal: un documento por día en «asistencia_personal» (id = fecha), con lo de cada uno:
+// registros = { trabId: { estado, horas?, nota? } }. Las horas son las que dio ese día quien trabaja por horas.
+const ESTADOS_ASISTENCIA = {
+  presente: { corto: "P", nombre: "Presente", color: "#1a9e5c" },
+  retardo: { corto: "R", nombre: "Retardo", color: "#b8860b" },
+  falta: { corto: "F", nombre: "Falta", color: "#e53e3e" },
+  justificada: { corto: "J", nombre: "Falta justificada", color: "#00509e" },
+  permiso: { corto: "Pm", nombre: "Permiso o reposo", color: "#6b46c1" },
+};
+// Fechas de un período de pago: 1ra quincena 1–15, 2da quincena 16–fin de mes, mes completo
+function rangoPeriodo(periodo) {
+  const x = partesPeriodo(periodo);
+  if (!x) return null;
+  const fin = new Date(Number(x.ym.slice(0, 4)), Number(x.ym.slice(5, 7)), 0).getDate();
+  return x.tipo === "Q1"
+    ? [x.ym + "-01", x.ym + "-15"]
+    : x.tipo === "Q2"
+      ? [x.ym + "-16", x.ym + "-" + fin]
+      : [x.ym + "-01", x.ym + "-" + fin];
+}
+// Lo de un trabajador entre dos fechas: días por estado y horas
+function resumenAsistencia(dias, trabId, desde, hasta) {
+  const r = { dias: 0, horas: 0, presente: 0, retardo: 0, falta: 0, justificada: 0, permiso: 0, faltas: [] };
+  Object.values(dias || {}).forEach((d) => {
+    if (!d || !d.fecha || d.fecha < desde || d.fecha > hasta) return;
+    const x = (d.registros || {})[trabId];
+    if (!x || !ESTADOS_ASISTENCIA[x.estado]) return;
+    r.dias++;
+    r[x.estado]++;
+    r.horas = r2(r.horas + (Number(x.horas) || 0));
+    if (x.estado === "falta") r.faltas.push(d.fecha);
+  });
+  r.faltas.sort();
+  return r;
+}

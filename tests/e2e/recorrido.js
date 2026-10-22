@@ -303,6 +303,7 @@ const PASOS = {
     await r.foto("gasto guardado");
     await r.llamar("modalActual && cerrarModal()");
     await r.abrirCada("abrirModal({tipo:'ver-finanza'", 2);
+    await r.llamar("subTab.finanzas='flujo';renderTabContent()"); // los botones de imprimir están en «Flujo de Caja»
     for (let i = 0; i < 4; i++) {
       if ((await pagina.locator(`[onclick^="imprimirFlujoCaja("]`).count()) > i) {
         await r.clic("imprimirFlujoCaja(", i);

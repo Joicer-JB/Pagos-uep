@@ -94,6 +94,8 @@ js/
     indicadores.js         Tablero financiero: cobranza por mes, antigüedad de la deuda, proyección y equilibrio
     nomina-calculo.js      Nómina: quincenas o mes, horas de clase, lo que corresponde, adelantos y préstamos
     documentos-personal.js Documentos del personal (certificado de salud, título…) guardados en Firestore
+    conciliacion.js        Referencias de pago repetidas y conciliación con el estado de cuenta del banco
+    contabilidad.js        Libro de ingresos y egresos y cuentas por pagar
     cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día;
                            sin internet, recibo provisional que luego recibe su número
     bitacora.js            Quién registró cada pago y bitácora de lo que se borra (la ve el director)
@@ -174,6 +176,9 @@ Las reglas están en [`firestore.rules`](firestore.rules), con comentarios. Resu
 - **Documentos del personal** (`documentos_trabajadores`: certificado de salud, título, cédula…): solo director y
   administradora los adjuntan, ven y quitan; nadie los modifica. Hasta que publiques las reglas nuevas, al adjuntar
   un documento sale «Missing or insufficient permissions».
+- **Cuentas por pagar** (`cuentas_pagar`) y **asistencia del personal** (`asistencia_personal`, un documento por
+  día): solo director y administradora. Sin las reglas nuevas, la lista de cuentas por pagar sale vacía y la
+  asistencia no se puede guardar.
 - **Contador de recibos** (`config/contadores`): director y administradora lo avanzan al cobrar, solo de
   1 en 1. Mientras no publiques las reglas nuevas, la app sigue cobrando con la numeración anterior.
 

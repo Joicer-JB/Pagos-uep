@@ -144,3 +144,26 @@ test("sin cuotas configuradas, o viendo un año anterior, no hay tablero", () =>
   poner("cobCfg", null);
   assert.equal(f(`indicadoresFinancieros("${HOY}")`), null);
 });
+
+test("simulador de mensualidad: aumento, cobranza, retiro y nómina", () => {
+  const eq = { estudiantes: 100, promedio: 40, ingresoMes: 4000, nomina: 2500, otrosGastos: 700, costoMes: 3200 };
+  const r = f(`simularMensualidad(${JSON.stringify(eq)}, { aumento: 10, cobranza: 80, retiro: 5, aumentoNomina: 0 })`);
+  assert.equal(r.promedio, 44);
+  assert.equal(r.estudiantes, 95);
+  assert.equal(r.facturado, 4180);
+  assert.equal(r.cobrado, 3344); // 95 × 44 × 80 %
+  assert.equal(r.margen, 144);
+  assert.equal(r.actual.cobrado, 3200);
+  assert.equal(r.actual.margen, 0);
+  assert.equal(r.diferencia, 144);
+  assert.equal(r.cubreNomina, true);
+  assert.equal(r.equilibrio, 42.11); // 3200 / (95 × 0,8)
+  assert.equal(r.aumentoNecesario, 5.3);
+  // si además sube la nómina un 20 %
+  const n = f(`simularMensualidad(${JSON.stringify(eq)}, { aumento: 10, cobranza: 80, retiro: 5, aumentoNomina: 20 })`);
+  assert.equal(n.nomina, 3000);
+  assert.equal(n.margen, -356);
+  assert.equal(n.equilibrio, 48.68);
+  // sin estudiantes no hay mensualidad de equilibrio
+  assert.equal(f(`simularMensualidad(${JSON.stringify(eq)}, { aumento: 0, cobranza: 0 })`).equilibrio, null);
+});

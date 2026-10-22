@@ -155,3 +155,36 @@ function indicadoresFinancieros(hoy) {
     },
   };
 }
+
+// ---- Simulador de mensualidad: qué pasa con el mes si sube la mensualidad (y si se va algún estudiante por eso,
+// si cambia la cobranza o si sube la nómina). Parte del punto de equilibrio de indicadoresFinancieros.
+// op = { aumento: % de la mensualidad, cobranza: % que paga, retiro: % de estudiantes que se irían,
+//        aumentoNomina: % de aumento de la nómina }
+function simularMensualidad(eq, op) {
+  const pct = (v) => (Number(v) || 0) / 100;
+  const cobranza = Math.min(1, Math.max(0, pct(op.cobranza)));
+  const estudiantes = Math.max(0, Math.round(eq.estudiantes * (1 - Math.min(1, Math.max(0, pct(op.retiro))))));
+  const promedio = r2(eq.promedio * (1 + pct(op.aumento)));
+  const nomina = r2(eq.nomina * (1 + pct(op.aumentoNomina)));
+  const costo = r2(nomina + eq.otrosGastos);
+  const facturado = r2(estudiantes * promedio);
+  const cobrado = r2(facturado * cobranza);
+  const actualCobrado = r2(eq.ingresoMes * cobranza);
+  // La mensualidad promedio con la que se cubren los costos (con esos estudiantes y esa cobranza)
+  const equilibrio = estudiantes > 0 && cobranza > 0 ? r2(costo / (estudiantes * cobranza)) : null;
+  return {
+    estudiantes,
+    promedio,
+    nomina,
+    costo,
+    facturado,
+    cobrado,
+    margen: r2(cobrado - costo),
+    cubreNomina: cobrado >= nomina - 0.004,
+    actual: { promedio: eq.promedio, cobrado: actualCobrado, margen: r2(actualCobrado - eq.costoMes) },
+    diferencia: r2(cobrado - actualCobrado),
+    equilibrio,
+    aumentoNecesario:
+      equilibrio != null && eq.promedio > 0 ? Math.round((equilibrio / eq.promedio - 1) * 1000) / 10 : null,
+  };
+}
