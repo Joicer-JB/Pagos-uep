@@ -50,6 +50,7 @@ function renderFinanzas() {
       ["resumen", "📊 Resumen"],
       ["gastos", "📉 Gastos"],
       ["flujo", "💹 Flujo de Caja"],
+      ["libro", "📒 Libro"],
     ]
       .map(
         ([k, l]) => `
@@ -127,6 +128,7 @@ function renderFinanzas() {
       : ""
   }
 
+  ${st === "libro" ? renderLibroFinanzas(anio, mesPad) : ""}
   ${
     st === "gastos"
       ? `
@@ -493,4 +495,142 @@ async function eliminarFinanza(id) {
   } catch (e) {
     alert("Error: " + e.message);
   }
+}
+
+// ---- 📒 Libro de ingresos y egresos (del mes elegido arriba, o del año completo)
+let libroAnual = false;
+const rangoLibro = (anio, mesPad) =>
+  libroAnual
+    ? [anio + "-01-01", anio + "-12-31", "Año " + anio]
+    : [anio + "-" + mesPad + "-01", anio + "-" + mesPad + "-31", MESES[Number(mesPad) - 1] + " " + anio];
+const metodosLibro = (r) => r.metodos.map((m) => ETIQ_METODO[m] || m).join(" + ");
+function renderLibroFinanzas(anio, mesPad) {
+  const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
+  const L = libroIngresosEgresos(desde, hasta);
+  const cat = (l, color) =>
+    l
+      .map(
+        (c) =>
+          `<div class="info-row"><span style="color:#555">${escHtml(c.categoria)} <span style="color:#999">(${c.n})</span></span><span style="font-weight:700;color:${color}">${fmt(c.usd)} <small style="color:#888;font-weight:400">· ${fmtBs(c.bs)}</small></span></div>`
+      )
+      .join("") || `<p style="font-size:0.8rem;color:#aaa">Nada</p>`;
+  return `
+  <div class="card" style="padding:0.7rem 0.9rem">
+    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+      <label style="display:flex;gap:0.4rem;align-items:center;font-size:0.8rem;flex:1"><input type="checkbox" id="libro-anual" ${libroAnual ? "checked" : ""} onchange="libroAnual=this.checked;renderTabContent()"/> Todo el año ${escHtml(anio)}</label>
+      <button class="btn btn-success btn-sm" onclick="exportarLibro('${anio}','${mesPad}')">📥 Excel</button>
+      <button class="btn btn-print btn-sm" onclick="imprimirLibro('${anio}','${mesPad}')">🖨️ Imprimir</button>
+    </div>
+    <div style="font-size:0.72rem;color:#888;margin-top:0.3rem">Cada cobro (un renglón por recibo), ingreso y gasto de ${escHtml(nombre)} en orden de fecha, con el saldo. En bolívares a la tasa de cada operación.</div>
+  </div>
+  <div class="stats-grid libro-totales">
+    <div class="stat-card green"><div class="stat-val">${fmt(L.ingresos)}</div><div class="stat-label">Ingresos · ${fmtBs(L.ingresosBs)}</div></div>
+    <div class="stat-card red"><div class="stat-val">${fmt(L.egresos)}</div><div class="stat-label">Egresos · ${fmtBs(L.egresosBs)}</div></div>
+    <div class="stat-card ${L.neto >= 0 ? "blue" : "red"}"><div class="stat-val">${fmt(L.neto)}</div><div class="stat-label">Resultado · ${fmtBs(L.netoBs)}</div></div>
+    <div class="stat-card"><div class="stat-val">${L.filas.length}</div><div class="stat-label">Movimientos${L.sinTasa ? ` · ⚠️ ${L.sinTasa} sin tasa` : ""}</div></div>
+  </div>
+  <div class="card"><div class="card-title"><div class="card-bar"></div><h2>Ingresos por categoría</h2></div>${cat(L.catIngresos, "#1a9e5c")}</div>
+  <div class="card"><div class="card-title"><div class="card-bar"></div><h2>Egresos por categoría</h2></div>${cat(L.catEgresos, "#e53e3e")}</div>
+  <div class="card" style="padding:0.5rem"><div style="overflow-x:auto">
+    <table class="libro-tabla" style="width:100%;border-collapse:collapse;font-size:0.72rem;min-width:640px">
+      <tr style="text-align:left;color:#555;border-bottom:1.5px solid #003366"><th>Fecha</th><th>Doc.</th><th>Concepto</th><th>Tercero</th><th style="text-align:right">Ingreso</th><th style="text-align:right">Egreso</th><th style="text-align:right">Saldo</th></tr>
+      ${
+        L.filas
+          .map(
+            (
+              r
+            ) => `<tr style="border-bottom:1px dashed #e2e8f0"><td style="white-space:nowrap">${escHtml(fechaCorta(r.fecha))}</td><td style="white-space:nowrap">${escHtml(r.doc)}</td><td>${escHtml(r.concepto)}<div style="color:#999">${escHtml(r.categoria)}${r.metodos.length ? " · " + escHtml(metodosLibro(r)) : ""}</div></td><td>${escHtml(r.tercero)}</td>
+        <td style="text-align:right;color:#1a9e5c;white-space:nowrap">${r.tipo === "ingreso" ? fmt(r.usd) + `<div style="color:#999">${fmtBs(r.bs)}</div>` : ""}</td>
+        <td style="text-align:right;color:#e53e3e;white-space:nowrap">${r.tipo === "gasto" ? fmt(r.usd) + `<div style="color:#999">${fmtBs(r.bs)}</div>` : ""}</td>
+        <td style="text-align:right;font-weight:700;white-space:nowrap">${fmt(r.saldo)}</td></tr>`
+          )
+          .join("") || `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:1rem">Sin movimientos</td></tr>`
+      }
+    </table></div></div>`;
+}
+function exportarLibro(anio, mesPad) {
+  const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
+  const L = libroIngresosEgresos(desde, hasta);
+  const filas = [
+    [EMPRESA + " · Libro de ingresos y egresos · " + nombre],
+    [],
+    [
+      "Fecha",
+      "Documento",
+      "Tipo",
+      "Categoría",
+      "Concepto",
+      "Tercero",
+      "Método",
+      "Ingreso $",
+      "Egreso $",
+      "Tasa BCV",
+      "Ingreso Bs.",
+      "Egreso Bs.",
+      "Saldo $",
+      "Saldo Bs.",
+    ],
+    ...L.filas.map((r) => [
+      fechaCorta(r.fecha),
+      r.doc,
+      r.tipo === "ingreso" ? "Ingreso" : "Egreso",
+      r.categoria,
+      r.concepto,
+      r.tercero,
+      metodosLibro(r),
+      r.tipo === "ingreso" ? r.usd : "",
+      r.tipo === "gasto" ? r.usd : "",
+      r.tasa || "",
+      r.tipo === "ingreso" ? r.bs : "",
+      r.tipo === "gasto" ? r.bs : "",
+      r.saldo,
+      r.saldoBs,
+    ]),
+    [],
+    ["", "", "", "", "TOTALES", "", "", L.ingresos, L.egresos, "", L.ingresosBs, L.egresosBs, L.neto, L.netoBs],
+  ];
+  const resumen = [
+    ["Resumen · " + nombre],
+    [],
+    ["Tipo", "Categoría", "Movimientos", "$", "Bs."],
+    ...L.catIngresos.map((c) => ["Ingreso", c.categoria, c.n, c.usd, c.bs]),
+    ...L.catEgresos.map((c) => ["Egreso", c.categoria, c.n, c.usd, c.bs]),
+    [],
+    ["", "Total ingresos", "", L.ingresos, L.ingresosBs],
+    ["", "Total egresos", "", L.egresos, L.egresosBs],
+    ["", "Resultado", "", L.neto, L.netoBs],
+  ];
+  const wb = XLSX.utils.book_new();
+  const hoja = XLSX.utils.aoa_to_sheet(filas);
+  hoja["!cols"] = [10, 12, 8, 22, 40, 26, 18, 11, 11, 10, 14, 14, 12, 14].map((wch) => ({ wch }));
+  XLSX.utils.book_append_sheet(wb, hoja, "Libro");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), "Resumen");
+  XLSX.writeFile(wb, "libro_ingresos_egresos_" + (libroAnual ? anio : anio + "-" + mesPad) + ".xlsx");
+}
+function imprimirLibro(anio, mesPad) {
+  const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
+  const L = libroIngresosEgresos(desde, hasta);
+  const w = abrirVentanaImpresion("width=1000,height=800");
+  if (!w) return alert("Permite las ventanas emergentes para imprimir");
+  w.document
+    .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Libro de ingresos y egresos ${escHtml(nombre)}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;background:#fff;padding:0.8rem}
+  .hdr{display:flex;align-items:center;gap:0.8rem;border-bottom:2px solid #003366;padding-bottom:0.5rem;margin-bottom:0.6rem}.hdr img{width:42px;height:42px;object-fit:contain}
+  table{width:100%;border-collapse:collapse;font-size:0.7rem}th,td{padding:0.22rem 0.3rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
+  th{font-size:0.6rem;text-transform:uppercase;color:#555;border-bottom:1.5px solid #003366}.n{text-align:right;white-space:nowrap}
+  tfoot td{font-weight:800;border-top:1.5px solid #003366}tr{break-inside:avoid}@page{size:letter landscape;margin:10mm}@media print{.no-print{display:none}}</style></head><body>
+  <div class="hdr"><img src="data:image/png;base64,${LOGO}" alt="Logo"/><div>
+    <div style="font-size:0.58rem;letter-spacing:2px;color:#003366;font-weight:700;text-transform:uppercase">Libro de ingresos y egresos · ${escHtml(nombre)}</div>
+    <div style="font-size:0.9rem;font-family:Georgia,serif;color:#003366">${EMPRESA}</div><div style="font-size:0.62rem;color:#555">${EMPRESA_SUB} · impreso el ${escHtml(fechaCorta(todayStr()))}</div></div></div>
+  <table><thead><tr><th>Fecha</th><th>Doc.</th><th>Categoría</th><th>Concepto</th><th>Tercero</th><th class="n">Ingreso $</th><th class="n">Egreso $</th><th class="n">Ingreso Bs.</th><th class="n">Egreso Bs.</th><th class="n">Saldo $</th></tr></thead>
+  <tbody>${L.filas
+    .map(
+      (r) =>
+        `<tr><td>${escHtml(fechaCorta(r.fecha))}</td><td>${escHtml(r.doc)}</td><td>${escHtml(r.categoria)}</td><td>${escHtml(r.concepto)}</td><td>${escHtml(r.tercero)}</td><td class="n">${r.tipo === "ingreso" ? fmt(r.usd) : ""}</td><td class="n">${r.tipo === "gasto" ? fmt(r.usd) : ""}</td><td class="n">${r.tipo === "ingreso" ? fmtBs(r.bs) : ""}</td><td class="n">${r.tipo === "gasto" ? fmtBs(r.bs) : ""}</td><td class="n">${fmt(r.saldo)}</td></tr>`
+    )
+    .join("")}</tbody>
+  <tfoot><tr><td colspan="5">Totales · resultado ${fmt(L.neto)} (${fmtBs(L.netoBs)})</td><td class="n">${fmt(L.ingresos)}</td><td class="n">${fmt(L.egresos)}</td><td class="n">${fmtBs(L.ingresosBs)}</td><td class="n">${fmtBs(L.egresosBs)}</td><td class="n">${fmt(L.neto)}</td></tr></tfoot></table>
+  <div class="no-print" style="text-align:center;padding:0.75rem"><button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.6rem 1.4rem;border-radius:8px;font-weight:700">🖨️ Imprimir / Guardar PDF</button></div>
+  </body></html>`);
+  w.document.close();
 }
