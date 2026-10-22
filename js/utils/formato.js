@@ -80,6 +80,11 @@ const fechaCorta = (s) => {
   return d + "/" + m + "/" + y;
 };
 const hoyLocal = () => todayStr();
+// «2015-09-15» → «15 de septiembre de 2015»
+const fechaLarga = (s) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+  return m ? Number(m[3]) + " de " + MESES[Number(m[2]) - 1].toLowerCase() + " de " + m[1] : "";
+};
 // Días entre dos fechas "YYYY-MM-DD" (b - a)
 const diasEntre = (a, b) => Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 86400000);
 // Suma k meses a un mes "YYYY-MM"

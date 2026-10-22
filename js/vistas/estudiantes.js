@@ -367,7 +367,7 @@ function imprimirConstancia(estId) {
       <div style="font-size:8pt;color:#555">REPÚBLICA BOLIVARIANA DE VENEZUELA</div>
       <div style="font-size:8pt;color:#555">MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</div>
       <div class="org-name">${EMPRESA}</div>
-      <div class="org-sub">${EMPRESA_SUB} · R.I.F.: J-XXXXXXXXX-X</div>
+      <div class="org-sub">${EMPRESA_SUB}${configInst.rif ? " · R.I.F.: " + escHtml(configInst.rif) : ""}</div>
     </div>
     <img src="data:image/png;base64,${LOGO}" class="logo" alt="Logo"/>
   </div>

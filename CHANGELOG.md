@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## Octubre 2026 — Constancia de trabajo
+
+- En la ficha del trabajador, **📜 Constancia**: constancia de trabajo con membrete, firmada por la directora, con la
+  fecha de ingreso, el cargo (y las clases que da, si se quiere) y el salario en bolívares a la tasa BCV del día y su
+  equivalente en $, con el monto en letras. Se elige a quién va dirigida, el tratamiento, qué salario mostrar (o
+  ninguno) y la moneda. Para quien ya no trabaja: «prestó sus servicios desde… hasta…».
+- ⚙️ Configuración → Institución: **RIF del plantel** y **cédula de la directora**. La constancia de estudio ya no
+  dice «R.I.F.: J-XXXXXXXXX-X»: pone el RIF guardado (o nada, si no está).
+
 ## Octubre 2026 — Nómina: horas de clase, datos del personal y documentos
 
 - **Horas de clase:** cada trabajador puede tener sueldo fijo, horas de clase o las dos cosas (por ejemplo, la

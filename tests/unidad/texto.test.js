@@ -77,3 +77,26 @@ test("sinAcento y claveNombre: comparan nombres sin importar tildes ni mayúscul
   assert.equal(f('claveNombre("  José   PÉREZ-López ")'), "jose perez lopez");
   assert.equal(f('claveNombre("Ana María") === claveNombre("ana maria")'), true);
 });
+
+test("números en letras para documentos formales", () => {
+  const casos = [
+    [0, "cero"],
+    [1, "un"],
+    [15, "quince"],
+    [21, "veintiún"],
+    [31, "treinta y un"],
+    [100, "cien"],
+    [101, "ciento un"],
+    [999, "novecientos noventa y nueve"],
+    [1000, "mil"],
+    [2026, "dos mil veintiséis"],
+    [21000, "veintiún mil"],
+    [73800, "setenta y tres mil ochocientos"],
+    [1000000, "un millón"],
+    [2500300, "dos millones quinientos mil trescientos"],
+  ];
+  for (const [n, letras] of casos) assert.equal(f(`numeroEnLetras(${n})`), letras, String(n));
+  assert.equal(f(`montoEnLetras(73800.5, "bolívares")`), "setenta y tres mil ochocientos bolívares con 50/100");
+  assert.equal(f(`montoEnLetras(1000000, "bolívares")`), "un millón de bolívares con 00/100");
+  assert.equal(f(`montoEnLetras(400, "dólares")`), "cuatrocientos dólares con 00/100");
+});

@@ -136,6 +136,7 @@ function renderModal() {
   if (m.tipo === "nuevo-finanza") return renderModalFinanza(m);
   if (m.tipo === "ver-finanza") return renderModalVerFinanza(m);
   if (m.tipo === "ver-trabajador") return renderModalVerTrabajador(m);
+  if (m.tipo === "constancia-trabajo") return renderModalConstanciaTrabajo(m);
   if (m.tipo === "pago-nomina") return renderModalPagoNomina(m);
   if (m.tipo === "adelanto-nomina") return renderModalAdelantoNomina(m);
   if (m.tipo === "prestamo-nomina") return renderModalPrestamoNomina(m);
