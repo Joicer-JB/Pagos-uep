@@ -20,6 +20,7 @@ rules_version = '2';
 //      pago, un ingreso/gasto o un estudiante exige dejar su anotación en la "bitacora", que nadie puede cambiar.
 //   6. (Octubre 2026) Sin conexión: un recibo cobrado sin internet (número provisional, pendiente: true) recibe
 //      después su número correlativo; es el único cambio que se permite a un pago ya registrado.
+//   7. (Octubre 2026) Documentos del personal: "documentos_trabajadores" (solo director y administradora).
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -112,6 +113,17 @@ service cloud.firestore {
     match /trabajadores/{id} {
       allow read, create, update: if isStaff();
       allow delete:               if isDirector();
+    }
+    // Documentos del personal (certificado de salud, título, cédula…), en trozos <adjunto>_<n>. No se modifican: se
+    // adjunta otro y se quita el viejo.
+    match /documentos_trabajadores/{id} {
+      allow read:   if isStaff();
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(['trabajadorId', 'adjuntoId', 'parte', 'partes', 'tipo', 'datos'])
+        && request.resource.data.datos is string
+        && id == request.resource.data.adjuntoId + '_' + string(request.resource.data.parte);
+      allow update: if false;
+      allow delete: if isStaff();
     }
 
     // ───────────── Notas ─────────────

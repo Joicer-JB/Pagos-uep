@@ -81,7 +81,7 @@ function alertaFinanza(f) {
 }
 // Aviso de trabajador registrado o actualizado
 function alertaNomina(t, accion) {
-  const total = (t.salario || 0) + (t.bonoAlimentacion || 0) + (t.bonoProductividad || 0) - (t.descuento || 0);
+  const total = netoMensual(t); // con las horas de clase
   const asunto = accion + " Nómina: " + t.nombre;
   const msg =
     "🏫 " +
@@ -105,6 +105,11 @@ function alertaNomina(t, accion) {
     "⭐ Bono productividad: " +
     fmt(t.bonoProductividad || 0) +
     "\n" +
+    (horasDe(t).length
+      ? horasDe(t)
+          .map((h) => "⏱️ Horas de " + h.nivel + ": " + detalleHoras(h.horas, h.tarifa) + " al mes\n")
+          .join("")
+      : "") +
     "➖ Descuento: " +
     fmt(t.descuento || 0) +
     "\n" +

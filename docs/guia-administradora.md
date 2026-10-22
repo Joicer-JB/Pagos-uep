@@ -209,14 +209,37 @@ También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
 
 ## 👷 Nómina
 
-**Ficha del trabajador** (➕ Nuevo o ✏️): salario base **mensual**, bonos mensuales, una **deducción fija mensual**
-(por ejemplo caja de ahorro o IVSS, con su nombre) y **cómo se le paga**: por quincenas (la mitad en cada una) o una
-vez al mes. Si alguien deja de trabajar, edítalo y marca «Ya no trabaja aquí»: se conserva su historial.
+**Ficha del trabajador** (➕ Nuevo o ✏️):
+
+- **Datos personales:** cédula, RIF (se escribe como V-12345678-9), teléfono, fecha de ingreso a la escuela (la ficha
+  dice cuántos años lleva), cargo o funciones y **títulos obtenidos** (uno por línea).
+- **💼 Sueldo fijo:** salario base **mensual**, bonos mensuales, una **deducción fija mensual** (por ejemplo caja de
+  ahorro o IVSS, con su nombre) y **cómo se le paga**: por quincenas (la mitad en cada una) o una vez al mes. Si solo
+  trabaja por horas, deja el salario vacío.
+- **⏱️ Horas de clase:** para los profesores que cobran por hora (todos los de Media general) y para quien tiene un
+  cargo fijo y además da horas (por ejemplo, la coordinadora de Primaria que en la tarde da clases en Media general:
+  sueldo fijo **y** horas, en la misma ficha). Toca **+ Agregar horas de clase**, elige el nivel, las **horas que da al
+  mes** y **lo que vale la hora**: Media general sale en $ 2,50 y Primaria en $ 2,00, y se puede cambiar. Cada nivel
+  va con su tarifa: el profesor de deporte lleva una fila de Primaria a $ 2,00 y otra de Media general a $ 2,50.
+- **🏦 Cuentas para pagarle:** hasta dos (la primera es la principal): número de cuenta de 20 dígitos (el banco se
+  llena solo con los 4 primeros) o el teléfono del **pago móvil**, tipo y, si la cuenta es de otra persona, su
+  titular y cédula. La app avisa si a la cuenta le faltan dígitos o si no es del banco escrito.
+
+Si alguien deja de trabajar, edítalo y marca «Ya no trabaja aquí»: se conserva su historial. En la lista, cada uno
+dice si es de **sueldo fijo**, **por horas** o **fijo + horas**.
+
+**📎 Documentos (certificado de salud, título, cédula, RIF):** en la ficha del trabajador (toca su nombre), en
+**Documentos**, elige cuál es, la **fecha en que vence** (el certificado de salud), toma la foto o elige el PDF y toca
+**📎 Adjuntar**. Con **🖨️ Ver** lo abres para imprimirlo cuando lo necesites. Las fotos se achican solas; un PDF
+puede pesar hasta 4 MB. Si el certificado de salud está **vencido** o vence en menos de 30 días, sale un aviso arriba
+de la lista del personal y en la ficha. **📄 Ficha** imprime todos sus datos, sueldo, cuentas y documentos.
 
 **💳 Pagar nómina:**
 
 1. Elige el trabajador y el período: **1ra quincena**, **2da quincena** o **mes completo**, y el mes. Se llenan solos
-   el salario y los bonos de ese período (la mitad si es una quincena).
+   el salario y los bonos de ese período (la mitad si es una quincena). Si da **horas de clase**, aparecen sus horas
+   de la quincena (la mitad de las del mes): **cámbialas por las que trabajó** (si faltó o dio horas de más) y el
+   monto se calcula solo. Elige también **a qué cuenta** se le paga: sale en el recibo.
 2. En **Deducciones** aparecen solas la deducción fija, los **adelantos** que tiene por descontar y la **cuota de cada
    préstamo**. Puedes cambiar un monto o desmarcar una deducción (por ejemplo, no cobrar la cuota esta quincena), y
    agregar otro descuento con su motivo (por ejemplo, una inasistencia).
@@ -236,6 +259,10 @@ entregado en el mes (adelantos, pagos y préstamos).
 
 Si se borra un pago (director), los adelantos y cuotas que descontaba vuelven a quedar pendientes. Cada recibo
 tiene un número fijo (NOM-…), así sale igual al reimprimirlo.
+
+**Recibos «2 por hoja»:** marca **🖨️ Imprimir 2 por hoja (original y copia)** (debajo de los botones de Nómina, o
+en el formulario de pago) y los recibos de nómina salen con el original y la copia en una hoja carta, para que el
+trabajador se lleve uno y el otro, firmado, quede en el archivo. Sin marcar, salen como siempre.
 
 ## Si algo no funciona
 

@@ -32,8 +32,25 @@ function periodoSugerido(t, hoy) {
   return periodoDe(ym, Number(hoy.slice(8, 10)) <= 15 ? "Q1" : "Q2");
 }
 const fraccionPeriodo = (tipo) => (tipo === "M" ? 1 : 0.5);
-// Lo que gana un trabajador al mes (salario + bonos), antes de deducciones
-const devengadoMensual = (t) => r2((t.salario || 0) + (t.bonoAlimentacion || 0) + (t.bonoProductividad || 0));
+// Horas de clase: quien trabaja por horas (o tiene sueldo fijo y además da horas) lleva en su ficha
+// horas = [{nivel, horas (al mes), tarifa ($ la hora)}]. Cada nivel puede ir a su tarifa (p. ej. Primaria a $ 2,00 y
+// Media general a $ 2,50). En cada pago se escriben las horas que trabajó en ese período.
+const NIVELES_HORAS = ["Media general", "Primaria", "Inicial", "Otro"];
+const TARIFA_HORA = { "Media general": 2.5, Primaria: 2, Inicial: 2 }; // lo que se sugiere al agregar horas
+const horasDe = (t) => (t && Array.isArray(t.horas) ? t.horas.filter((h) => h && h.horas > 0 && h.tarifa > 0) : []);
+const montoHorasMes = (t) => r2(horasDe(t).reduce((s, h) => s + h.horas * h.tarifa, 0));
+const conceptoHoras = (nivel) => "Horas de " + (nivel || "clase");
+function tipoPagoTrabajador(t) {
+  const fijo = (t.salario || 0) > 0,
+    horas = horasDe(t).length > 0;
+  return fijo && horas ? "mixto" : horas ? "horas" : "fijo";
+}
+const ETIQ_TIPO_PAGO = { fijo: "💼 Sueldo fijo", horas: "⏱️ Por horas", mixto: "💼 Fijo + ⏱️ horas" };
+// «20 h × $ 2,50»
+const detalleHoras = (horas, tarifa) => String(r2(horas)).replace(".", ",") + " h × " + fmt(tarifa);
+// Lo que gana un trabajador al mes (salario + bonos + horas), antes de deducciones
+const devengadoMensual = (t) =>
+  r2((t.salario || 0) + (t.bonoAlimentacion || 0) + (t.bonoProductividad || 0) + montoHorasMes(t));
 const netoMensual = (t) => r2(devengadoMensual(t) - (t.descuento || 0));
 
 // Movimientos de nómina de un trabajador (los pagos viejos, sin «nomina», cuentan como pagos)
@@ -109,8 +126,8 @@ function prestamosDe(trabId) {
 }
 const sumaDe = (l, k) => r2(l.reduce((s, x) => s + (x[k] || 0), 0));
 
-// Lo que corresponde en un período: asignaciones (salario y bonos; la mitad si es una quincena) y deducciones (la
-// deducción fija, los adelantos por descontar y la cuota de cada préstamo con saldo)
+// Lo que corresponde en un período: asignaciones (salario, bonos y horas; la mitad si es una quincena) y deducciones
+// (la deducción fija, los adelantos por descontar y la cuota de cada préstamo con saldo)
 function sugerenciaPago(t, periodo) {
   const x = partesPeriodo(periodo),
     f = fraccionPeriodo(x ? x.tipo : "M");
@@ -121,6 +138,10 @@ function sugerenciaPago(t, periodo) {
   ]
     .map(([concepto, v]) => ({ concepto, monto: r2((v || 0) * f) }))
     .filter((a) => a.monto > 0);
+  horasDe(t).forEach((h) => {
+    const horas = r2(h.horas * f);
+    asignaciones.push({ concepto: conceptoHoras(h.nivel), monto: r2(horas * h.tarifa), horas, tarifa: h.tarifa });
+  });
   const deducciones = [];
   if (t.descuento > 0)
     deducciones.push({
@@ -161,10 +182,14 @@ function choquePeriodo(trabId, periodo, sinId) {
     return !!y && y.ym === x.ym && (y.tipo === x.tipo || y.tipo === "M" || x.tipo === "M");
   });
 }
+// Los períodos de un mes que aún no se le pagan (por quincenas: 1ra y 2da; mensual: el mes)
+const periodosPendientes = (t, ym) =>
+  (t.frecuencia === "mensual" ? ["M"] : ["Q1", "Q2"]).filter(
+    (tipo) => !choquePeriodo(t.id, periodoDe(ym, tipo)).length
+  );
 // El próximo período por pagar de un mes: nada si ya está todo pagado
 function siguientePeriodo(t, ym) {
-  const opciones = t.frecuencia === "mensual" ? ["M"] : ["Q1", "Q2"];
-  const libre = opciones.find((tipo) => !choquePeriodo(t.id, periodoDe(ym, tipo)).length);
+  const libre = periodosPendientes(t, ym)[0];
   return libre ? periodoDe(ym, libre) : "";
 }
 
@@ -193,7 +218,8 @@ function resumenNominaMes(ym) {
           "monto"
         ),
         entregado: sumaDe(delMes, "monto"),
-        porPagar: r2(Math.max(0, devengado - bruto)),
+        // Lo que falta: lo que gana en los períodos que aún no se pagan (si un pago llevó menos horas, no queda «debiendo»)
+        porPagar: r2(devengado * periodosPendientes(t, ym).reduce((s, tipo) => s + fraccionPeriodo(tipo), 0)),
         periodos: pagos.map((f) => (partesPeriodo(periodoDePago(f)) || {}).tipo).filter(Boolean),
         siguiente: siguientePeriodo(t, ym),
         adelantosPendientes: sumaDe(adelantosPendientes(t.id), "pendiente"),
@@ -210,5 +236,90 @@ function resumenNominaMes(ym) {
     porPagar: total("porPagar"),
     adelantosPendientes: total("adelantosPendientes"),
     saldoPrestamos: total("saldoPrestamos"),
+  };
+}
+
+// ---- Datos del trabajador: cuentas bancarias, antigüedad y certificado de salud
+// Código de banco = los 4 primeros dígitos de la cuenta (20 dígitos)
+const BANCOS_VE = {
+  "0102": "Banco de Venezuela",
+  "0104": "Venezolano de Crédito",
+  "0105": "Mercantil",
+  "0108": "Provincial",
+  "0114": "Bancaribe",
+  "0115": "Exterior",
+  "0128": "Caroní",
+  "0134": "Banesco",
+  "0137": "Sofitasa",
+  "0138": "Plaza",
+  "0151": "BFC Fondo Común",
+  "0156": "100% Banco",
+  "0157": "DelSur",
+  "0163": "Banco del Tesoro",
+  "0166": "Banco Agrícola",
+  "0168": "Bancrecer",
+  "0171": "Banco Activo",
+  "0172": "Bancamiga",
+  "0174": "Banplus",
+  "0175": "Banco Digital de los Trabajadores",
+  "0177": "Banfanb",
+  "0191": "BNC Nacional de Crédito",
+};
+const TIPOS_CUENTA = ["Corriente", "Ahorro", "Pago móvil"];
+const soloDigitos = (v) => String(v || "").replace(/\D/g, "");
+const bancoDeCuenta = (numero) => BANCOS_VE[soloDigitos(numero).slice(0, 4)] || "";
+const cuentasDe = (t) => (t && Array.isArray(t.cuentas) ? t.cuentas.filter((c) => c && soloDigitos(c.numero)) : []);
+// «Banesco · Corriente · ****1234» (en el recibo no va el número completo)
+const cuentaCorta = (c) =>
+  [c.banco, c.tipo, (c.tipo === "Pago móvil" ? "" : "****") + soloDigitos(c.numero).slice(-4)]
+    .filter(Boolean)
+    .join(" · ");
+// Qué está mal en una cuenta (vacío si está bien)
+function revisarCuenta(c) {
+  const n = soloDigitos(c.numero);
+  if (!n) return "";
+  if (c.tipo === "Pago móvil")
+    return /^04\d{9}$/.test(n) ? "" : "el teléfono del pago móvil debe tener 11 dígitos (04xx…)";
+  if (n.length !== 20) return "la cuenta debe tener 20 dígitos (tiene " + n.length + ")";
+  const banco = bancoDeCuenta(n);
+  if (banco && c.banco && sinAcento(banco).toLowerCase() !== sinAcento(c.banco).toLowerCase())
+    return "los primeros 4 dígitos (" + n.slice(0, 4) + ") son de " + banco + ", no de " + c.banco;
+  return "";
+}
+// RIF: V-12345678-9 (también E, J, P o G)
+const normalizarRif = (v) => {
+  const x = String(v || "")
+    .toUpperCase()
+    .replace(/[^VEJPG0-9]/g, "");
+  const m = /^([VEJPG])(\d{8})(\d)$/.exec(x);
+  return m
+    ? m[1] + "-" + m[2] + "-" + m[3]
+    : String(v || "")
+        .trim()
+        .toUpperCase();
+};
+const rifValido = (v) => !v || /^[VEJPG]-\d{8}-\d$/.test(v);
+// Años completos en la escuela
+function antiguedad(fechaIngreso, hoy) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaIngreso || "")) return null;
+  hoy = hoy || todayStr();
+  let n = Number(hoy.slice(0, 4)) - Number(fechaIngreso.slice(0, 4));
+  if (hoy.slice(5) < fechaIngreso.slice(5)) n--;
+  return Math.max(0, n);
+}
+// Certificado de salud: el último que se adjuntó y si está vigente, por vencer (30 días) o vencido
+const DIAS_AVISO_CERTIFICADO = 30;
+function estadoCertificado(t, hoy) {
+  hoy = hoy || todayStr();
+  const c = (Array.isArray(t.adjuntos) ? t.adjuntos : [])
+    .filter((a) => a.clase === "salud")
+    .sort((a, b) => ((a.vence || a.fecha || "") < (b.vence || b.fecha || "") ? 1 : -1))[0];
+  if (!c) return { estado: "falta", adjunto: null };
+  if (!c.vence) return { estado: "sin-fecha", adjunto: c };
+  const dias = diasEntre(hoy, c.vence);
+  return {
+    estado: c.vence < hoy ? "vencido" : dias <= DIAS_AVISO_CERTIFICADO ? "por-vencer" : "vigente",
+    adjunto: c,
+    dias,
   };
 }

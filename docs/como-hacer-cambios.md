@@ -6,20 +6,20 @@ pruebas automáticas avisan si algo se rompió.
 
 ## 1. Encuentra el archivo
 
-| Quiero cambiar…                                         | Archivo                                             |
-| ------------------------------------------------------- | --------------------------------------------------- |
-| Correos de director/administradora, nombre, EmailJS     | `js/config.js` (y los correos en `firestore.rules`) |
-| Colores, tamaños, estilos                               | `css/estilos.css`                                   |
-| Una pestaña (Caja, Pagos, Cobranza, Notas…)             | `js/vistas/<pestaña>.js`                            |
-| El recibo de pago                                       | `js/vistas/pagos.js`                                |
-| El boletín                                              | `js/vistas/boletin.js`                              |
-| Cómo se calculan cuotas, mora y recargos                | `js/servicios/cuotas.js`                            |
-| Tablero financiero (indicadores de Reportes)            | `js/servicios/indicadores.js`                       |
-| Cálculos de la nómina (quincenas, adelantos, préstamos) | `js/servicios/nomina-calculo.js`                    |
-| Tasa BCV y conversión a Bs.                             | `js/servicios/tasa-bcv.js`                          |
-| Formato de montos y fechas                              | `js/utils/formato.js`                               |
-| Grados y áreas                                          | `js/utils/grados.js`                                |
-| Quién puede leer o escribir en la base de datos         | `firestore.rules` (y publicarlas en Firebase)       |
+| Quiero cambiar…                                                | Archivo                                                                      |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Correos de director/administradora, nombre, EmailJS            | `js/config.js` (y los correos en `firestore.rules`)                          |
+| Colores, tamaños, estilos                                      | `css/estilos.css`                                                            |
+| Una pestaña (Caja, Pagos, Cobranza, Notas…)                    | `js/vistas/<pestaña>.js`                                                     |
+| El recibo de pago                                              | `js/vistas/pagos.js`                                                         |
+| El boletín                                                     | `js/vistas/boletin.js`                                                       |
+| Cómo se calculan cuotas, mora y recargos                       | `js/servicios/cuotas.js`                                                     |
+| Tablero financiero (indicadores de Reportes)                   | `js/servicios/indicadores.js`                                                |
+| Cálculos de la nómina (quincenas, horas, adelantos, préstamos) | `js/servicios/nomina-calculo.js` (tarifas por hora sugeridas: `TARIFA_HORA`) |
+| Tasa BCV y conversión a Bs.                                    | `js/servicios/tasa-bcv.js`                                                   |
+| Formato de montos y fechas                                     | `js/utils/formato.js`                                                        |
+| Grados y áreas                                                 | `js/utils/grados.js`                                                         |
+| Quién puede leer o escribir en la base de datos                | `firestore.rules` (y publicarlas en Firebase)                                |
 
 Si no sabes dónde está algo, en GitHub pulsa la tecla `t` y escribe el nombre de la función, o busca un
 texto que se vea en pantalla con la lupa del repositorio.

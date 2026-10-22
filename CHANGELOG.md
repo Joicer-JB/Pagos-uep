@@ -1,5 +1,21 @@
 # Historial de cambios
 
+## Octubre 2026 — Nómina: horas de clase, datos del personal y documentos
+
+- **Horas de clase:** cada trabajador puede tener sueldo fijo, horas de clase o las dos cosas (por ejemplo, la
+  coordinadora de Primaria que también da clases en Media general). Cada nivel va con lo que vale su hora (Media
+  general $ 2,50 y Primaria $ 2,00 por defecto, y se pueden cambiar por trabajador). Al pagar la quincena se
+  escriben las horas que trabajó y el recibo muestra «Horas de Media general (18 h × $ 2,50)».
+- **Datos del personal:** RIF, teléfono, títulos obtenidos, fecha de ingreso (con los años en la escuela) y hasta dos
+  cuentas bancarias o pago móvil (el banco sale de los 4 primeros dígitos y se revisa el número). Al pagar se elige
+  la cuenta y sale en el recibo. No se puede repetir la cédula de otro trabajador.
+- **Documentos:** se adjuntan el certificado de salud (con su vencimiento), título, cédula, RIF u otro (foto o PDF
+  de hasta 4 MB) para verlos o imprimirlos. Aviso de certificados vencidos o por vencer. **📄 Ficha** del
+  trabajador para imprimir. Nueva colección `documentos_trabajadores`: **hay que publicar las reglas de Firestore**.
+- **Recibos de nómina «2 por hoja»** (original y copia), solo si se marca la casilla.
+- La nómina del mes calcula lo que falta por los períodos que aún no se pagan (antes, una quincena con menos horas
+  quedaba como deuda). El tablero financiero y los avisos por correo cuentan las horas de clase.
+
 ## Octubre 2026 — Recibo «2 por hoja» (original y copia)
 
 - En el recibo de pago hay una casilla **🖨️ Imprimir 2 por hoja (original y copia)**. Solo si se marca, sale una

@@ -120,6 +120,33 @@ test("administradora: registra y edita, pero no borra", async () => {
   await assertFails(deleteDoc(doc(db, "trabajadores/trab1")));
 });
 
+test("documentos del personal: director y administradora los adjuntan, ven y quitan; nadie los modifica", async () => {
+  const trozo = (parte = 0, extra = {}) => ({
+    trabajadorId: "trab1",
+    adjuntoId: "adj1",
+    parte,
+    partes: 1,
+    tipo: "image/jpeg",
+    datos: "QUJD",
+    ...extra,
+  });
+  for (const rol of ["director", "administradora"]) {
+    const db = como(rol);
+    await assertSucceeds(setDoc(doc(db, "documentos_trabajadores/adj1_0"), trozo()));
+    await assertSucceeds(getDoc(doc(db, "documentos_trabajadores/adj1_0")));
+    await assertFails(updateDoc(doc(db, "documentos_trabajadores/adj1_0"), { datos: "WFla" }));
+    await assertFails(setDoc(doc(db, "documentos_trabajadores/adj1_1"), trozo(0))); // el id no es <adjunto>_<parte>
+    await assertFails(setDoc(doc(db, "documentos_trabajadores/adj1_2"), trozo(2, { otro: "campo" })));
+    await assertSucceeds(deleteDoc(doc(db, "documentos_trabajadores/adj1_0")));
+  }
+  await assertSucceeds(setDoc(doc(como("director"), "documentos_trabajadores/adj1_0"), trozo()));
+  for (const rol of ["docente", "docenteFijo", "desconocido"]) {
+    await assertFails(getDoc(doc(como(rol), "documentos_trabajadores/adj1_0")));
+    await assertFails(setDoc(doc(como(rol), "documentos_trabajadores/adj2_0"), trozo(0, { adjuntoId: "adj2" })));
+    await assertFails(deleteDoc(doc(como(rol), "documentos_trabajadores/adj1_0")));
+  }
+});
+
 test("administradora: carga la tasa BCV pero no el resto de la configuración", async () => {
   const db = como("administradora");
   await assertSucceeds(setDoc(doc(db, "config/tasasBCV"), { tasas: { "2026-10-07": 184.5 } }, { merge: true }));

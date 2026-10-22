@@ -105,12 +105,7 @@ function indicadoresFinancieros(hoy) {
   const gastosAnio = finanzas.filter((f) => f.tipo === "gasto" && f.fecha >= inicio && f.fecha <= hoy);
   const sumar = (l) => r2(l.reduce((s, f) => s + (f.monto || 0), 0));
   const nominaPersonal = r2(
-    trabajadores
-      .filter((t) => t.activo !== false)
-      .reduce(
-        (s, t) => s + (t.salario || 0) + (t.bonoAlimentacion || 0) + (t.bonoProductividad || 0) - (t.descuento || 0),
-        0
-      )
+    trabajadores.filter((t) => t.activo !== false).reduce((s, t) => s + netoMensual(t), 0) // con las horas de clase
   );
   const nominaPagada = r2(sumar(gastosAnio.filter((f) => f.categoria === "Nómina")) / nMeses);
   const nomina = nominaPersonal > 0 ? nominaPersonal : nominaPagada;
