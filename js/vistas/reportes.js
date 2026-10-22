@@ -24,6 +24,7 @@ function renderReportes() {
 
   return `
   ${htmlTableroFinanciero()}
+  ${htmlSimulador()}
   <div class="stats-grid">
     <div class="stat-card green"><div class="stat-val">${fmt(totalPagos)}</div><div class="stat-label">💰 Total Recaudado</div></div>
     <div class="stat-card red"><div class="stat-val">${fmt(totalGastos)}</div><div class="stat-label">📉 Total Gastos (con la nómina pagada)</div></div>
@@ -197,4 +198,59 @@ function htmlTableroFinanciero() {
           : `<div style="font-size:0.75rem;color:#888;margin-top:0.4rem">Registra la nómina del personal o los gastos en 📒 Finanzas para calcular el punto de equilibrio.</div>`
     }
   </div>`;
+}
+
+// ---- 🧮 Simulador de mensualidad (con los costos y la cobranza del tablero financiero)
+const simulador = { aumento: 10, cobranza: null, retiro: 0, aumentoNomina: 0 };
+function htmlSimulador() {
+  const t = indicadoresFinancieros();
+  if (!t || !(t.equilibrio.estudiantes > 0)) return "";
+  if (simulador.cobranza == null) simulador.cobranza = t.indice == null ? 100 : Math.round(t.indice * 100);
+  const campo = (k, etiqueta, ayuda) =>
+    `<div class="field"><label class="field-label">${etiqueta}</label><div style="position:relative"><input class="inp" id="sim-${k}" inputmode="decimal" value="${simulador[k]}" oninput="simulador.${k}=numeroSim(this.value);pintarSimulador()" style="padding-right:2rem"/><span style="position:absolute;right:0.8rem;top:50%;transform:translateY(-50%);color:#888">%</span></div><div style="font-size:0.68rem;color:#888;margin-top:2px">${ayuda}</div></div>`;
+  return `<div class="card simulador">
+    <div class="card-title"><div class="card-bar"></div><h2>🧮 Simulador de mensualidad</h2></div>
+    <div style="font-size:0.75rem;color:#666;margin-bottom:0.5rem">¿Qué pasa con el mes si sube la mensualidad? Parte de los costos y la cobranza de este año (tablero de arriba).</div>
+    <div class="form-row">
+      ${campo("aumento", "Aumento de la mensualidad", "Mensualidad promedio hoy: " + fmt(t.equilibrio.promedio))}
+      ${campo("cobranza", "¿Cuántos pagan?", "Hoy pagan el " + (t.indice == null ? "—" : Math.round(t.indice * 100) + " %"))}
+    </div>
+    <div class="form-row">
+      ${campo("retiro", "Estudiantes que se irían", "Por el aumento (estimado)")}
+      ${campo("aumentoNomina", "Aumento de la nómina", "Si también sube el sueldo del personal")}
+    </div>
+    <div id="sim-res">${htmlResultadoSimulador(t)}</div>
+  </div>`;
+}
+const numeroSim = (v) =>
+  Number(
+    String(v || "")
+      .replace(",", ".")
+      .replace(/[^\d.-]/g, "")
+  ) || 0;
+function pintarSimulador() {
+  const t = indicadoresFinancieros(),
+    out = document.getElementById("sim-res");
+  if (t && out) out.innerHTML = htmlResultadoSimulador(t);
+}
+function htmlResultadoSimulador(t) {
+  const eq = t.equilibrio,
+    r = simularMensualidad(eq, simulador);
+  const fila = (l, v, nota) =>
+    `<div class="info-row"><span style="color:#555">${l}${nota ? `<div style="font-size:0.68rem;color:#999">${nota}</div>` : ""}</span><span style="font-weight:700;text-align:right">${v}</span></div>`;
+  const color = (v) =>
+    `<span style="color:${v >= 0 ? "#1a9e5c" : "#e53e3e"}">${v >= 0 ? "sobran " + fmt(v) : "faltan " + fmt(-v)}</span>`;
+  const meses = (cobCfg && cobCfg.cuotas) || 10;
+  return `
+    ${fila("Nueva mensualidad promedio", fmt(r.promedio), "antes " + fmt(r.actual.promedio))}
+    ${fila("Estudiantes que pagarían", r.estudiantes + " de " + eq.estudiantes + " · el " + simulador.cobranza + " % al día")}
+    ${fila("Entraría al mes", fmt(r.cobrado), (r.diferencia >= 0 ? "+" : "−") + fmt(Math.abs(r.diferencia)) + " que hoy")}
+    ${fila("Costos del mes", fmt(r.costo), "nómina " + fmt(r.nomina) + " + otros gastos " + fmt(eq.otrosGastos))}
+    ${fila("<strong>Resultado del mes</strong>", color(r.margen), "hoy: " + (r.actual.margen >= 0 ? "sobran " : "faltan ") + fmt(Math.abs(r.actual.margen)))}
+    ${fila("En el año escolar (" + meses + " cuotas)", color(r2(r.margen * meses)))}
+    <div class="alert-item ${r.margen >= 0 ? "alert-info" : "alert-mora"} sim-conclusion" style="margin-top:0.5rem"><div>${
+      r.margen >= 0
+        ? `✅ Con este aumento se cubren los costos del mes${r.cubreNomina ? " y la nómina" : ""}.`
+        : `⚠️ Con este aumento no alcanza${r.cubreNomina ? " para todos los costos (la nómina sí se cubre)" : ", ni siquiera para la nómina"}.`
+    }${r.equilibrio != null ? ` Para cubrir los costos, la mensualidad promedio debería ser <strong>${fmt(r.equilibrio)}</strong>${r.aumentoNecesario != null ? ` (${r.aumentoNecesario > 0 ? "un aumento del " + String(r.aumentoNecesario).replace(".", ",") + " %" : "no hace falta aumentar"})` : ""}.` : ""}</div></div>`;
 }

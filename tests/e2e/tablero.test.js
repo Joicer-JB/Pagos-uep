@@ -52,3 +52,26 @@ test("sin cuotas configuradas, el tablero explica dónde configurarlas", async (
   assert.match(await texto(".tablero-financiero"), /Cuotas del año/);
   await llamar(`cobCfg = window.__cobCfg; renderTabContent()`);
 });
+
+test("simulador de mensualidad: al cambiar el aumento se recalcula lo que entraría y la mensualidad de equilibrio", async () => {
+  await llamar(`renderTabContent()`);
+  const eq = await llamar(`JSON.parse(JSON.stringify(indicadoresFinancieros().equilibrio))`);
+  await s.pagina.fill("#sim-cobranza", "100");
+  await s.pagina.fill("#sim-aumento", "20");
+  const r = await llamar(
+    `JSON.parse(JSON.stringify(simularMensualidad(indicadoresFinancieros().equilibrio, simulador)))`
+  );
+  assert.equal(r.promedio, Math.round(eq.promedio * 1.2 * 100) / 100);
+  const res = await texto("#sim-res");
+  assert.ok(
+    res.includes(
+      "Nueva mensualidad promedioantes " + (await llamar(`fmt(${eq.promedio})`)) + (await llamar(`fmt(${r.promedio})`))
+    ),
+    res
+  );
+  assert.ok(res.includes(await llamar(`fmt(${r.cobrado})`)));
+  assert.match(await texto(".sim-conclusion"), /(se cubren|no alcanza)/);
+  await s.pagina.fill("#sim-retiro", "100"); // si se fueran todos
+  assert.match(await texto("#sim-res"), /Estudiantes que pagarían0 de/);
+  assert.deepEqual(s.errores, []);
+});
