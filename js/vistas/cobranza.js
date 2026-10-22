@@ -810,3 +810,161 @@ function enviarRecordatorios() {
   );
   alert("✅ Resumen enviado a notijosefajoaquina@gmail.com");
 }
+
+// ---- Estado de cuenta del representante: cuotas del año (pagadas, vencidas y por vencer), inscripción, recargos,
+// deuda anterior y los recibos del año. Se imprime (o se comparte como imagen desde el teléfono) o va por WhatsApp.
+function estadoCuenta(e, hoy) {
+  hoy = hoy || todayStr();
+  const c = calcCuotas(e, hoy);
+  const desde = cobCfgActiva() ? cobCfg.primerMes + "-01" : (anioVistaObj() || {}).inicio || "";
+  const porRecibo = new Map();
+  pagosDeEstudiante(e)
+    .filter((p) => p.fecha && (!desde || p.fecha >= desde))
+    .forEach((p) => {
+      const k = p.factura || p.id;
+      const r = porRecibo.get(k) || {
+        factura: p.factura || "",
+        fecha: p.fecha,
+        conceptos: [],
+        metodos: [],
+        total: 0,
+        bs: 0,
+      };
+      const concepto = p.concepto + (p.mes && p.concepto === "Mensualidad" ? " " + p.mes : "");
+      if (!r.conceptos.includes(concepto)) r.conceptos.push(concepto);
+      if (p.metodo && !r.metodos.includes(p.metodo)) r.metodos.push(p.metodo);
+      r.total = r2(r.total + (p.total || 0));
+      const b = bsDe(p, p.total);
+      if (b.bs != null) r.bs = r2(r.bs + b.bs);
+      porRecibo.set(k, r);
+    });
+  const recibos = [...porRecibo.values()].sort((a, b) => (a.fecha < b.fecha ? -1 : 1));
+  const deudaAnt = deudaManual(e);
+  const porVencer = c ? r2(c.lista.filter((q) => !q.vencida).reduce((s, q) => s + Math.max(0, q.pendiente), 0)) : 0;
+  const tasa = tasaDe(hoy);
+  const totalHoy = r2((c ? c.total : 0) + deudaAnt);
+  return {
+    e,
+    hoy,
+    c,
+    recibos,
+    pagado: r2(recibos.reduce((s, r) => s + r.total, 0)),
+    deudaAnt,
+    porVencer,
+    totalHoy,
+    tasa,
+    totalHoyBs: tasa ? r2(totalHoy * tasa.valor) : null,
+  };
+}
+const estadoCuota = (q) =>
+  q.monto <= 0
+    ? "Exonerado"
+    : q.pendiente <= 0.004
+      ? "✓ Pagada" + (q.fechaPago ? " el " + fechaCorta(q.fechaPago) : "")
+      : q.vencida
+        ? q.pagado > 0
+          ? "Abonado " + fmt(q.pagado) + " · vencida"
+          : "Vencida"
+        : q.pagado > 0
+          ? "Abonado " + fmt(q.pagado)
+          : "Por vencer";
+function imprimirEstadoCuenta(estId) {
+  const e = estudiantes.find((x) => x.id === estId);
+  if (!e) return;
+  const x = estadoCuenta(e);
+  const c = x.c;
+  const w = abrirVentanaImpresion("width=720,height=1000");
+  if (!w) return alert("Permite las ventanas emergentes para imprimir");
+  const fila = (cols, clase) =>
+    `<tr${clase ? ` class="${clase}"` : ""}>${cols.map((v) => `<td>${v}</td>`).join("")}</tr>`;
+  w.document
+    .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Estado de cuenta - ${escHtml(e.nombre)}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;background:#fff;max-width:720px;margin:0 auto;padding:1rem 1.3rem}
+  .hdr{display:flex;align-items:center;gap:0.9rem;padding-bottom:0.6rem;border-bottom:2px solid #003366;margin-bottom:0.7rem}.hdr img{width:48px;height:48px;object-fit:contain}
+  .datos{display:grid;grid-template-columns:1fr 1fr;gap:0.2rem 1rem;font-size:0.8rem;border-left:3px solid #003366;padding-left:0.7rem;margin-bottom:0.7rem}
+  .datos span{color:#666;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.5px;display:block}
+  h2{font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:#003366;margin:0.8rem 0 0.3rem}
+  table{width:100%;border-collapse:collapse;font-size:0.78rem}td,th{padding:0.28rem 0.35rem;border-bottom:1px dashed #ccc;text-align:left}th{font-size:0.65rem;color:#555;text-transform:uppercase;border-bottom:1.5px solid #003366}
+  td:nth-child(n+3){text-align:right}tr.venc td{color:#b00020;font-weight:600}tr.ok td{color:#1a7a4a}
+  .tot{border:1.5px solid #003366;border-radius:6px;padding:0.6rem 0.9rem;margin-top:0.8rem}
+  .tot div{display:flex;justify-content:space-between;font-size:0.82rem;padding:2px 0}.tot .g{font-size:1rem;font-weight:800;border-top:1px solid #ccc;margin-top:3px;padding-top:5px}
+  .nota{font-size:0.68rem;color:#777;margin-top:0.6rem;text-align:center}@media print{.no-print{display:none}}</style></head><body>
+  <div class="hdr"><img src="data:image/png;base64,${LOGO}" alt="Logo"/><div>
+    <div style="font-size:0.58rem;letter-spacing:2px;color:#003366;font-weight:700;text-transform:uppercase">Estado de cuenta</div>
+    <div style="font-size:0.95rem;font-family:Georgia,serif;color:#003366">${EMPRESA}</div><div style="font-size:0.65rem;color:#555">${EMPRESA_SUB} · al ${escHtml(fechaCorta(x.hoy))}</div></div></div>
+  <div class="datos">
+    <div><span>Estudiante</span><strong>${escHtml(e.nombre)}</strong></div><div><span>Cédula</span>${escHtml(e.cedula) || "N/A"}</div>
+    <div><span>Grado</span>${escHtml(e.grado) || "N/A"}${e.seccion ? " «" + escHtml(e.seccion) + "»" : ""}</div><div><span>Representante</span>${escHtml(e.acudiente) || "N/A"}</div>
+  </div>
+  ${
+    c
+      ? `<h2>📅 Mensualidades del año escolar</h2><table><tr><th>Mes</th><th>Vence</th><th>Cuota</th><th>Pagado</th><th>Debe</th><th>Estado</th></tr>
+    ${c.inscripcion ? fila([escHtml(c.inscripcion.concepto || "Inscripción"), "—", fmt(c.inscripcion.monto), fmt(c.inscripcion.pagado), fmt(c.inscripcion.pendiente), c.inscripcion.pendiente > 0.004 ? "Pendiente" : "✓ Pagada"], c.inscripcion.pendiente > 0.004 ? "venc" : "ok") : ""}
+    ${c.lista.map((q) => fila([escHtml(q.mes), escHtml(fechaCorta(q.vence)), fmt(q.monto), fmt(q.pagado), fmt(Math.max(0, q.pendiente)), escHtml(estadoCuota(q)) + (q.recargo ? " · recargo " + fmt(q.recargo) : "")], q.monto > 0 && q.pendiente > 0.004 && q.vencida ? "venc" : q.pendiente <= 0.004 ? "ok" : "")).join("")}
+    </table>`
+      : ""
+  }
+  <h2>🧾 Pagos del año</h2>
+  ${
+    x.recibos.length
+      ? `<table><tr><th>Fecha</th><th>Recibo</th><th>Concepto</th><th>$</th><th>Bs.</th></tr>${x.recibos
+          .map((r) =>
+            fila([
+              escHtml(fechaCorta(r.fecha)),
+              escHtml(r.factura),
+              escHtml(r.conceptos.join(" + ")),
+              fmt(r.total),
+              r.bs ? fmtBs(r.bs) : "—",
+            ])
+          )
+          .join("")}</table>`
+      : `<p style="font-size:0.8rem;color:#888">Sin pagos en el año</p>`
+  }
+  <div class="tot">
+    <div><span>Pagado en el año</span><strong>${fmt(x.pagado)}</strong></div>
+    ${c ? `<div><span>Cuotas vencidas por pagar</span><strong>${fmt(c.saldo)}</strong></div>` : ""}
+    ${c && c.obligPend > 0.004 ? `<div><span>Inscripción por pagar</span><strong>${fmt(c.obligPend)}</strong></div>` : ""}
+    ${c && c.recargoPend > 0.004 ? `<div><span>Recargos por pagar</span><strong>${fmt(c.recargoPend)}</strong></div>` : ""}
+    ${x.deudaAnt > 0 ? `<div><span>Deuda anterior</span><strong>${fmt(x.deudaAnt)}</strong></div>` : ""}
+    <div class="g"><span>Total a pagar hoy</span><span>${fmt(x.totalHoy)}${x.totalHoyBs != null ? ` · ${fmtBs(x.totalHoyBs)}` : ""}</span></div>
+    ${x.porVencer > 0.004 ? `<div><span>Por vencer en el resto del año</span><span>${fmt(x.porVencer)}</span></div>` : ""}
+    ${c && c.aFavor > 0.004 ? `<div><span>Saldo a favor</span><strong style="color:#1a7a4a">${fmt(c.aFavor)}</strong></div>` : ""}
+  </div>
+  <p class="nota">Montos en dólares de referencia${x.tasa ? `; en bolívares a la tasa BCV del ${escHtml(fechaCorta(x.tasa.fecha))} (Bs. ${fmtTasa(x.tasa.valor)})` : ""}. Si ya pagó y no aparece, envíenos el comprobante.</p>
+  <div class="no-print" style="text-align:center;padding:0.75rem"><button onclick="window.print()" style="background:#003366;color:#fff;border:none;padding:0.65rem 1.5rem;border-radius:8px;font-weight:700">🖨️ Imprimir / Guardar PDF</button></div>
+  </body></html>`);
+  w.document.close();
+}
+// El mismo estado de cuenta, resumido para WhatsApp
+function textoEstadoCuenta(x) {
+  const { e, c } = x;
+  const vencidas = c ? c.pendientes.map((q) => q.mes.split(" ")[0] + " " + fmt(q.pendiente)) : [];
+  const l = [
+    `🏫 *${EMPRESA}*`,
+    `📄 *Estado de cuenta* al ${fechaCorta(x.hoy)}`,
+    `👤 ${e.nombre}${e.grado ? " · " + e.grado : ""}`,
+    "━━━━━━━━━━━━━━━━━━",
+    `✅ Pagado en el año: *${fmt(x.pagado)}*`,
+  ];
+  if (vencidas.length) l.push(`⚠️ Cuotas vencidas: ${vencidas.join(", ")}`);
+  if (c && c.obligPend > 0.004) l.push(`🎟️ ${c.inscripcion.concepto || "Inscripción"} por pagar: ${fmt(c.obligPend)}`);
+  if (c && c.recargoPend > 0.004) l.push(`⏰ Recargos: ${fmt(c.recargoPend)}`);
+  if (x.deudaAnt > 0) l.push(`📌 Deuda anterior: ${fmt(x.deudaAnt)}`);
+  l.push(
+    x.totalHoy > 0.004
+      ? `💰 *Total a pagar hoy: ${fmt(x.totalHoy)}*${x.totalHoyBs != null ? ` (${fmtBs(x.totalHoyBs)})` : ""}`
+      : "🎉 *Está al día.* ¡Gracias!"
+  );
+  if (c && c.proxima)
+    l.push(`📅 Próxima cuota: ${c.proxima.mes} ${fmt(c.proxima.pendiente)} (vence el ${fechaCorta(c.proxima.vence)})`);
+  if (c && c.aFavor > 0.004) l.push(`💚 Saldo a favor: ${fmt(c.aFavor)}`);
+  l.push("━━━━━━━━━━━━━━━━━━", "Si ya pagó y no aparece, envíenos el comprobante.");
+  return l.join("\n");
+}
+function whatsappEstadoCuenta(estId) {
+  const e = estudiantes.find((x) => x.id === estId);
+  if (!e) return;
+  const tel = telDe(e);
+  if (!tel.wa) return alert("Este estudiante no tiene un teléfono válido para WhatsApp");
+  window.open("https://wa.me/" + tel.wa + "?text=" + encodeURIComponent(textoEstadoCuenta(estadoCuenta(e))), "_blank");
+}

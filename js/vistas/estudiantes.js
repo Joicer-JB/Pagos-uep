@@ -304,6 +304,8 @@ function renderModalVerEstudiante(m) {
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary" style="flex:1" onclick="cerrarModal();subTab.pagos='nuevo';tabActual='pagos';_metodoPago='Dólares Efectivo';window._pagoEstId='${e.id}';window._pagoCedula='${escJs(e.cedula) || ""}';render();setTimeout(()=>{const n=document.getElementById('p-nombre');if(n)n.value='${escJs(e.nombre)}';const c=document.getElementById('p-cedula');if(c)c.value='${escJs(e.cedula) || ""}';const t=document.getElementById('p-tel');if(t)t.value='${escJs(e.telefono) || ""}';},150)">💰 Registrar Pago</button>
+        <button class="btn btn-print btn-sm" onclick="imprimirEstadoCuenta('${e.id}')">🧾 Estado de cuenta</button>
+        <button class="btn btn-whatsapp btn-sm" title="Estado de cuenta por WhatsApp" onclick="whatsappEstadoCuenta('${e.id}')">💬</button>
         <button class="btn btn-print btn-sm" onclick="imprimirConstancia('${e.id}')">📄 Constancia</button>
         <button class="btn btn-gray btn-sm" onclick="abrirModal({tipo:'editar-estudiante',id:'${e.id}'})">✏️</button>
         <button class="btn btn-gray" onclick="cerrarModal()">Cerrar</button>
