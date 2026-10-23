@@ -20,7 +20,12 @@ function renderNotas() {
     rolUsuario === "docente" && !estudiantes.length
       ? `<div class="card" style="background:#fff8e1;color:#7a5c00;font-size:0.82rem">⏳ La lista de estudiantes todavía no está lista. Pide al director o a la administradora que entre a la plataforma (se prepara sola) y luego vuelve a entrar.</div>`
       : "";
-  return `${sinFichas}
+  const vistas = `<div class="stabs">
+    <button class="stab ${filtros.notasVista !== "sabana" ? "active" : ""}" onclick="filtros.notasVista='estudiante';renderTabContent()">📝 Por estudiante</button>
+    <button class="stab ${filtros.notasVista === "sabana" ? "active" : ""}" onclick="filtros.notasVista='sabana';renderTabContent()">📋 Sábana de notas</button>
+  </div>`;
+  if (filtros.notasVista === "sabana") return sinFichas + vistas + renderSabana();
+  return `${sinFichas}${vistas}
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>📝 Consultar Notas</h2></div>
     <div class="form-grid">
@@ -77,10 +82,11 @@ function renderNotas() {
   }`;
 }
 // ── Media General ──
+// Cada materia con las evaluaciones de su plan (nombre y %), y la nota del lapso (con el ajuste del consejo, si hubo)
 function renderTablaNotasMedia(est, lapso) {
-  const key = `${est.id}_${lapso}`;
-  const notasEst = notas[key] || {};
+  const notasEst = notas[`${est.id}_${lapso}`] || {};
   const areas = getAreas(est.grado);
+  const puedePlan = !soloLectura() && (rolUsuario === "director" || rolUsuario === "docente");
 
   return `
   <div class="card">
@@ -91,25 +97,24 @@ function renderTablaNotasMedia(est, lapso) {
       <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
         <thead><tr style="background:#f0f4ff">
           <th style="text-align:left;padding:0.5rem 0.6rem;color:#003366">Materia</th>
-          <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center">Eval 1</th>
-          <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center">Eval 2</th>
-          <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center">Eval 3</th>
-          <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center">Prom</th>
+          <th style="text-align:left;padding:0.5rem 0.4rem;color:#003366">Evaluaciones</th>
+          <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center">Nota del lapso</th>
         </tr></thead>
         <tbody>
           ${areas
             .map((m) => {
-              const v1 = notasEst[m + "_1"] || "",
-                v2 = notasEst[m + "_2"] || "",
-                v3 = notasEst[m + "_3"] || "";
-              const vals = [v1, v2, v3].filter((v) => v !== "");
-              const prom = vals.length
-                ? Math.round((vals.reduce((a, b) => a + parseFloat(b), 0) / vals.length) * 10) / 10
-                : null;
+              const evals = planEvaluacion(est.grado, m, lapso);
+              const info = notaLapsoDe(est, m, lapso);
+              const prom = info.nota;
               return `<tr style="border-bottom:1px dashed #eef2f9">
-              <td style="padding:0.45rem 0.6rem;font-weight:600;color:#333">${escHtml(m)}</td>
-              ${[m + "_1", m + "_2", m + "_3"].map((k) => `<td style="padding:0.3rem"><input class="nota-input" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${notasEst[k] || ""}" placeholder="-" onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(k)}',this.value)"/></td>`).join("")}
-              <td style="padding:0.3rem;text-align:center"><span class="promedio-badge" style="background:${prom === null ? "#f1f3f5" : prom >= 18 ? "#e6f7ef" : prom >= 14 ? "#fff8e1" : "#fef0f0"};color:${prom === null ? "#888" : colorNota(prom)}">${prom !== null ? prom : "-"}</span></td>
+              <td style="padding:0.45rem 0.6rem;font-weight:600;color:#333;vertical-align:top">${escHtml(m)}${puedePlan ? `<div><button class="btn btn-gray btn-sm" style="margin-top:0.3rem;font-size:0.68rem;padding:0.15rem 0.45rem" onclick="abrirPlanEvaluacion('${escJs(est.grado)}','${escJs(m)}','${lapso}')">⚙️ Plan${tienePorcentajes(evals) ? "" : " de evaluación"}</button></div>` : ""}</td>
+              <td style="padding:0.3rem"><div class="evals-fila">${evals
+                .map((ev) => {
+                  const k = m + "_" + ev.n;
+                  return `<label class="eval-celda"><span>${escHtml(ev.nombre)}${Number(ev.peso) > 0 ? " · " + ev.peso + "%" : ""}</span><input class="nota-input" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] || "")}" placeholder="-" onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(k)}',this.value)"/></label>`;
+                })
+                .join("")}</div></td>
+              <td style="padding:0.3rem;text-align:center;vertical-align:top"><span class="promedio-badge" style="background:${prom === null ? "#f1f3f5" : prom >= 18 ? "#e6f7ef" : prom >= 14 ? "#fff8e1" : "#fef0f0"};color:${prom === null ? "#888" : colorNota(prom)}">${prom !== null ? prom : "-"}${info.ajuste ? "<sup>C</sup>" : ""}</span>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo (antes ${info.ajuste.original ?? "-"})</div>` : ""}</td>
             </tr>`;
             })
             .join("")}
@@ -117,6 +122,89 @@ function renderTablaNotasMedia(est, lapso) {
       </table>
     </div>
   </div>`;
+}
+// ── Plan de evaluación (director y docentes): evaluaciones de una materia en un lapso, con su porcentaje ──
+function abrirPlanEvaluacion(grado, materia, lapso) {
+  if (soloLectura()) return alert("Estás viendo un año anterior (solo consulta).");
+  abrirModal({
+    tipo: "plan-eval",
+    grado,
+    materia,
+    lapso,
+    filas: planEvaluacion(grado, materia, lapso).map((e) => ({ ...e })),
+    ultimoN: ultimoNPlan(grado, materia, lapso),
+  });
+}
+const sumaPlan = (filas) => Math.round(filas.reduce((a, f) => a + (Number(f.peso) || 0), 0) * 100) / 100;
+function textoSumaPlan(filas) {
+  const s = sumaPlan(filas);
+  if (!s) return "Sin porcentajes: la nota del lapso es el promedio de las evaluaciones.";
+  return s === 100 ? "✅ Los porcentajes suman 100%." : `⚠️ Los porcentajes suman ${s}%: deben sumar 100%.`;
+}
+function renderModalPlanEval(m) {
+  return `<div class="modal-bg" onclick="if(event.target.classList.contains('modal-bg'))cerrarModal()">
+    <div class="modal">
+      <div class="modal-header"><div><h3>⚙️ Plan de evaluación</h3><p>${escHtml(m.materia)} · ${escHtml(m.grado)} · ${escHtml(m.lapso)}</p></div>
+        <button class="modal-close-x" onclick="cerrarModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="ayuda" style="margin-bottom:0.6rem">Cada evaluación con su nombre y su porcentaje (deben sumar 100%). Si no pones porcentajes, todas valen igual.</div>
+        ${m.filas
+          .map(
+            (f, i) => `<div class="form-row plan-fila" style="align-items:flex-end;margin-bottom:0.4rem">
+          <div class="field" style="flex:3"><label class="field-label">Evaluación ${i + 1}</label><input class="inp" id="plan-nombre-${i}" value="${escHtml(f.nombre)}" placeholder="Ej.: Prueba escrita" onchange="modalActual.filas[${i}].nombre=this.value"/></div>
+          <div class="field" style="flex:1"><label class="field-label">%</label><input class="inp" type="number" min="0" max="100" step="1" id="plan-peso-${i}" value="${Number(f.peso) || ""}" placeholder="-" oninput="modalActual.filas[${i}].peso=this.value;document.getElementById('plan-suma').textContent=textoSumaPlan(modalActual.filas)"/></div>
+          <button class="btn btn-gray btn-sm" title="Quitar" onclick="quitarFilaPlan(${i})">🗑️</button>
+        </div>`
+          )
+          .join("")}
+        <button class="btn btn-gray btn-sm" onclick="agregarFilaPlan()">➕ Agregar evaluación</button>
+        <div id="plan-suma" style="font-size:0.78rem;margin-top:0.6rem;color:#555">${textoSumaPlan(m.filas)}</div>
+        <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.8rem;margin-top:0.6rem;cursor:pointer"><input type="checkbox" id="plan-todos"/> Usar este mismo plan en los ${LAPSOS.length} lapsos</label>
+        <div id="plan-res"></div>
+        <div class="modal-actions" style="display:flex;gap:0.5rem;margin-top:0.8rem">
+          <button class="btn btn-gray" style="flex:1" onclick="cerrarModal()">Cancelar</button>
+          <button class="btn btn-primary" style="flex:2" onclick="guardarPlanModal()">💾 Guardar plan</button>
+        </div>
+      </div>
+    </div></div>`;
+}
+function agregarFilaPlan() {
+  const m = modalActual;
+  m.ultimoN += 1;
+  m.filas.push({ n: m.ultimoN, nombre: "", peso: 0 });
+  render();
+}
+function quitarFilaPlan(i) {
+  const m = modalActual,
+    f = m.filas[i];
+  const conNota = estudiantes.filter(
+    (e) => e.grado === m.grado && notaNum((notas[`${e.id}_${m.lapso}`] || {})[m.materia + "_" + f.n]) !== null
+  ).length;
+  if (
+    conNota &&
+    !confirm(
+      `«${f.nombre || "Esta evaluación"}» ya tiene nota de ${conNota} estudiante(s). Si la quitas, esas notas dejan de contar. ¿Quitarla?`
+    )
+  )
+    return;
+  m.filas.splice(i, 1);
+  render();
+}
+async function guardarPlanModal() {
+  const m = modalActual;
+  const filas = m.filas.map((f, i) => ({ ...f, nombre: String(f.nombre || "").trim() || "Eval " + (i + 1) }));
+  const suma = sumaPlan(filas);
+  if (!filas.length) return mostrarError("plan-res", "Agrega al menos una evaluación");
+  if (filas.some((f) => Number(f.peso) < 0)) return mostrarError("plan-res", "Un porcentaje no puede ser negativo");
+  if (suma && suma !== 100) return mostrarError("plan-res", `Los porcentajes suman ${suma}%: deben sumar 100%`);
+  const lapsos = document.getElementById("plan-todos").checked ? LAPSOS : [m.lapso];
+  try {
+    await guardarPlanEvaluacion(m.grado, m.materia, lapsos, filas);
+    cerrarModal();
+    mostrarToast("✅ Plan de evaluación guardado");
+  } catch (e) {
+    mostrarError("plan-res", "No se pudo guardar: " + e.message);
+  }
 }
 // ── Primaria y Preescolar ──
 function renderTablaNotasPrimaria(est, lapso) {
@@ -180,22 +268,10 @@ function renderNotaFinal(est) {
   const nivel = getNivel(est.grado);
   const areas = getAreas(est.grado);
   if (nivel === "media") {
-    const promediosPorMateria = areas.map((m) => {
-      let vals = [];
-      LAPSOS.forEach((lapso) => {
-        const k = `${est.id}_${lapso}`;
-        const notasEst = notas[k] || {};
-        [1, 2, 3].forEach((n) => {
-          const v = notasEst[m + "_" + n];
-          if (v !== undefined && v !== "") vals.push(parseFloat(v));
-        });
-      });
-      const prom = vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null;
-      return { materia: m, prom };
-    });
-    const conNota = promediosPorMateria.filter((p) => p.prom !== null);
-    if (conNota.length === 0) return "";
-    const notaFinalGen = Math.round((conNota.reduce((a, p) => a + p.prom, 0) / conNota.length) * 10) / 10;
+    const defs = areas.map((m) => ({ m, d: definitivaDe(est, m) }));
+    const notaFinalGen = promedioEstudiante(est, areas);
+    if (notaFinalGen === null) return "";
+    const marca = (x) => (x.ajuste ? "<sup title='Ajustada por el consejo'>C</sup>" : "");
     return `
     <div class="card" style="margin-top:0.85rem">
       <div class="card-title"><div class="card-bar"></div><h2>🏆 Nota Final</h2></div>
@@ -208,31 +284,19 @@ function renderNotaFinal(est) {
           <th style="padding:0.45rem;color:#003366;text-align:center">🏆 Final</th>
         </tr></thead>
         <tbody>
-          ${areas
-            .map((m) => {
-              const promLapsos = LAPSOS.map((lapso) => {
-                const k = `${est.id}_${lapso}`;
-                const notasEst = notas[k] || {};
-                const vals = [notasEst[m + "_1"], notasEst[m + "_2"], notasEst[m + "_3"]].filter(
-                  (v) => v !== undefined && v !== ""
-                );
-                return vals.length
-                  ? Math.round((vals.reduce((a, b) => a + parseFloat(b), 0) / vals.length) * 10) / 10
-                  : null;
-              });
-              const validos = promLapsos.filter((v) => v !== null);
-              const notaFinal = validos.length
-                ? Math.round((validos.reduce((a, b) => a + b, 0) / validos.length) * 10) / 10
-                : null;
+          ${defs
+            .map(({ m, d }) => {
+              const notaFinal = d.nota;
               return `<tr style="border-bottom:1px dashed #eef2f9">
               <td style="padding:0.4rem 0.6rem;font-weight:600;color:#333;font-size:0.78rem">${escHtml(m)}</td>
-              ${promLapsos.map((p) => `<td style="padding:0.3rem;text-align:center;font-size:0.78rem;color:${p === null ? "#ccc" : colorNota(p)}">${p !== null ? p : "-"}</td>`).join("")}
-              <td style="padding:0.3rem;text-align:center"><span style="padding:0.25rem 0.5rem;border-radius:8px;font-weight:800;font-size:0.8rem;background:${notaFinal === null ? "#f1f3f5" : notaFinal >= 18 ? "#e6f7ef" : notaFinal >= 14 ? "#fff8e1" : "#fef0f0"};color:${notaFinal === null ? "#888" : colorNota(notaFinal)}">${notaFinal !== null ? notaFinal : "-"}</span></td>
+              ${d.lapsos.map((x) => `<td style="padding:0.3rem;text-align:center;font-size:0.78rem;color:${x.nota === null ? "#ccc" : colorNota(x.nota)}">${x.nota !== null ? x.nota : "-"}${marca(x)}</td>`).join("")}
+              <td style="padding:0.3rem;text-align:center"><span style="padding:0.25rem 0.5rem;border-radius:8px;font-weight:800;font-size:0.8rem;background:${notaFinal === null ? "#f1f3f5" : notaFinal >= 18 ? "#e6f7ef" : notaFinal >= 14 ? "#fff8e1" : "#fef0f0"};color:${notaFinal === null ? "#888" : colorNota(notaFinal)}">${notaFinal !== null ? notaFinal : "-"}${marca(d)}</span></td>
             </tr>`;
             })
             .join("")}
         </tbody>
       </table>
+      ${defs.some(({ d }) => d.ajuste || d.lapsos.some((x) => x.ajuste)) ? `<div style="font-size:0.7rem;color:#7a5c00;margin-top:0.4rem">C = nota cambiada por decisión del consejo (ver la sábana de notas).</div>` : ""}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.85rem;padding:0.85rem 1rem;background:linear-gradient(135deg,#003366,#00509e);border-radius:10px;color:#fff">
         <span style="color:#ffd700;font-weight:700">🏆 NOTA FINAL GENERAL</span>
         <span style="font-size:1.4rem;font-weight:800;font-family:Georgia,serif;color:${notaFinalGen >= 18 ? "#7fff9f" : notaFinalGen >= 14 ? "#ffd700" : "#ff6b6b"}">${notaFinalGen}</span>
@@ -291,12 +355,13 @@ function updateNotaLocal(estId, lapso, key, val) {
 }
 async function guardarNotas(estId, lapso) {
   const key = `${estId}_${lapso}`;
-  const datos = notas[key] || {};
+  // Los ajustes del consejo («consejo») no se tocan aquí: son del director (ver servicios/calificaciones.js)
+  const { consejo, ...datos } = notas[key] || {};
   try {
     await db
       .collection("notas")
       .doc(key)
-      .set({ estId, lapso, ...datos, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      .set({ estId, lapso, ...datos, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
     alert("✅ Notas guardadas correctamente");
   } catch (e) {
     alert("Error: " + e.message);

@@ -19,14 +19,10 @@ function imprimirBoletinMedia(est) {
   const buildRows = () =>
     getAreas(est.grado)
       .map((m) => {
-        const promLapsos = LAPSOS.map((lapso) => {
-          const k = `${estId}_${lapso}`;
-          const n = notas[k] || {};
-          const vals = [n[m + "_1"], n[m + "_2"], n[m + "_3"]].filter((v) => v !== undefined && v !== "");
-          return vals.length ? Math.round((vals.reduce((a, b) => a + parseFloat(b), 0) / vals.length) * 10) / 10 : null;
-        });
-        const validos = promLapsos.filter((v) => v !== null);
-        const nf = validos.length ? Math.round((validos.reduce((a, b) => a + b, 0) / validos.length) * 10) / 10 : null;
+        // Notas de cada lapso y definitiva, ya con los ajustes del consejo (servicios/calificaciones.js)
+        const def = definitivaDe(est, m);
+        const promLapsos = def.lapsos.map((x) => x.nota);
+        const nf = def.nota;
         const inaLapsos = LAPSOS.map((lapso) => {
           const k = `${estId}_${lapso}`;
           return (notas[k] || {})[m + "_ina"] || 0;
@@ -62,13 +58,7 @@ function imprimirBoletinMedia(est) {
       .join("");
 
   const materiasPendientes = getAreas(est.grado).filter((m) => {
-    const validos = LAPSOS.map((lapso) => {
-      const k = `${estId}_${lapso}`;
-      const n = notas[k] || {};
-      const vals = [n[m + "_1"], n[m + "_2"], n[m + "_3"]].filter((v) => v !== undefined && v !== "");
-      return vals.length ? vals.reduce((a, b) => a + parseFloat(b), 0) / vals.length : null;
-    }).filter((v) => v !== null);
-    const nf = validos.length ? validos.reduce((a, b) => a + b, 0) / validos.length : null;
+    const nf = definitivaDe(est, m).nota;
     return nf !== null && nf < 10;
   });
 

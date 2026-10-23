@@ -228,6 +228,42 @@ test("docente: lee las fichas de estudiantes y la configuración, carga notas, y
   }
 });
 
+test("notas: solo el director cambia notas por decisión del consejo; los docentes arman el plan de evaluación", async () => {
+  const ajuste = { nota: 10, original: 9, motivo: "Consejo", por: CUENTAS.director.email, fecha: "2026-12-12" };
+  await entorno.withSecurityRulesDisabled((ctx) =>
+    setDoc(doc(ctx.firestore(), "notas/est1_Lapso 3"), {
+      estId: "est1",
+      Matemáticas_1: "9",
+      consejo: { Matemáticas: ajuste },
+    })
+  );
+  for (const rol of ["docente", "docenteFijo"]) {
+    const db = como(rol);
+    // No pueden poner, cambiar ni quitar un cambio del consejo
+    await assertFails(setDoc(doc(db, "notas/est1_Definitiva"), { estId: "est1", consejo: { Matemáticas: ajuste } }));
+    await assertFails(updateDoc(doc(db, "notas/est1_Lapso 3"), { "consejo.Matemáticas.nota": 20 }));
+    await assertFails(updateDoc(doc(db, "notas/est1_Lapso 3"), { consejo: {} }));
+    await assertFails(setDoc(doc(db, "notas/est1_Lapso 3"), { estId: "est1", Matemáticas_1: "9" })); // lo borraría
+    // Sí sus notas en ese mismo documento (como guarda la app: sin tocar «consejo»)
+    await assertSucceeds(setDoc(doc(db, "notas/est1_Lapso 3"), { Matemáticas_1: "12" }, { merge: true }));
+    // Y el plan de evaluación del grado
+    await assertSucceeds(
+      setDoc(
+        doc(db, "notas/plan__1er Año"),
+        { tipo: "plan", materias: { Matemáticas: { "Lapso 1": { evals: [{ n: 1, nombre: "Prueba", peso: 100 }] } } } },
+        { merge: true }
+      )
+    );
+  }
+  const director = como("director");
+  await assertSucceeds(
+    setDoc(doc(director, "notas/est1_Definitiva"), { estId: "est1", consejo: { Matemáticas: ajuste } }, { merge: true })
+  );
+  await assertSucceeds(updateDoc(doc(director, "notas/est1_Lapso 3"), { "consejo.Matemáticas.nota": 11 }));
+  // La administradora no ve notas
+  await assertFails(getDoc(doc(como("administradora"), "notas/est1_Definitiva")));
+});
+
 test("docente: ve su perfil pero no puede cambiarse el rol", async () => {
   const db = como("docente");
   await assertSucceeds(getDoc(doc(db, "usuarios/uid-docente")));

@@ -220,6 +220,13 @@ const ACCIONES_BUSQ = [
   ],
   ["📈", "Gráficas", "graficas", "graficas graficos"],
   ["📝", "Notas y boletines", "notas", "notas boletines calificaciones"],
+  [
+    "📋",
+    "Sábana de notas (media general)",
+    "notas",
+    "sabana sabanas notas consejo seccion evaluaciones definitiva",
+    () => ((filtros.notasVista = "sabana"), setTab("notas")),
+  ],
   ["📥", "Importar matrícula desde Excel", "importar", "importar excel matricula"],
   ["💾", "Respaldo", "config", "respaldo copia seguridad backup", ir("config", "anio")],
   ["📲", "Avisos al teléfono", "config", "avisos notificaciones telefono celular alertas", ir("config", "avisos")],

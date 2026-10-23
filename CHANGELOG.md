@@ -1,5 +1,20 @@
 # Historial de cambios
 
+## Octubre 2026 — 📋 Sábana de notas (media general)
+
+- **📝 Notas → 📋 Sábana de notas:** todas las notas de un año (o sección) en una tabla, para el consejo de sección
+  con los docentes: por materia 1er, 2do y 3er lapso y definitiva, y el promedio del estudiante; o un lapso; o el
+  **detalle por materia** con cada evaluación que puso el profesor. Promedio de la sección y reprobados por columna.
+  Se imprime en hoja horizontal y se descarga en Excel. Al tocar un estudiante, todas sus evaluaciones.
+- **Plan de evaluación** por materia y lapso (⚙️ junto a cada materia): las evaluaciones que haga cada profesor, con
+  nombre y porcentaje (deben sumar 100%). Sin plan, siguen siendo 3 evaluaciones que valen igual. Las notas siguen
+  con un decimal.
+- **Cambios por decisión del consejo (solo el director):** se toca la nota de un lapso o la definitiva, con el
+  motivo y el acta. Queda la nota original, quién y cuándo; la definitiva, la nota final y el boletín usan la nota
+  nueva. Los cálculos de Notas, la sábana y el boletín están ahora en un solo lugar (`js/servicios/calificaciones.js`).
+- **Reglas de Firestore:** los docentes ya no pueden poner ni tocar los cambios del consejo (campo `consejo` de
+  `notas`). **Hay que publicar las reglas.**
+
 ## Octubre 2026 — App Check y avisos listos
 
 - **App Check encendido:** la plataforma se identifica ante Firebase con reCAPTCHA v3 (invisible). Falta que el
