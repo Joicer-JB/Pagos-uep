@@ -55,6 +55,10 @@ ${eventoInstalar ? `<button class="logout-btn" style="margin-left:0.4rem" onclic
 ${bannerTasa()}
 <div class="content" id="tab-content">${renderTab()}</div>
   ${modalActual ? renderModal() : ""}`;
+  // En el teléfono las pestañas no caben: la elegida queda a la vista
+  const pestanas = app.querySelector(".tabs"),
+    elegida = pestanas && pestanas.querySelector(".tab.active");
+  if (elegida) pestanas.scrollLeft = elegida.offsetLeft - (pestanas.clientWidth - elegida.offsetWidth) / 2;
   const rl = document.getElementById("rol-lbl");
   if (rl)
     rl.textContent =

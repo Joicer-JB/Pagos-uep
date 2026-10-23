@@ -1,5 +1,23 @@
 // Pestaña Pagos: lista de pagos, formulario de nuevo pago, recibo (ver, imprimir, WhatsApp) y eliminación.
 
+const pagosDeHoy = () => pagos.filter((p) => p.fecha === todayStr());
+// Recuadro azul con el total, los recibos y lo que entró por cada método de pago
+function htmlRecaudo(titulo, lista) {
+  const tm = totalesMetodo(lista),
+    sin = METODOS.reduce((x, [m]) => x + tm[m].sinTasa, 0),
+    recibos = new Set(lista.map((p) => p.factura || p.id)).size;
+  return `<div class="recaudo-box">
+    <div>
+      <div style="font-size:0.65rem;color:#adc8ff">${titulo}</div>
+      <div style="font-size:1.3rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(lista.reduce((s, p) => s + (p.total || 0), 0))}</div>
+      <div style="font-size:0.68rem;color:#adc8ff">${recibos} recibo${recibos !== 1 ? "s" : ""}</div>
+    </div>
+    <div style="text-align:right;font-size:0.72rem;color:#adc8ff">
+      ${METODOS.map(([m, etq], i) => `<div style="margin-top:${i ? 2 : 0}px">${etq}: ${txtMetodo(tm[m])}</div>`).join("")}
+      ${sin ? `<div style="margin-top:4px;color:#ffd700;font-size:0.62rem">⚠️ ${sin} pago(s) sin tasa BCV no suman en Bs.</div>` : ""}
+    </div>
+  </div>`;
+}
 function renderPagos() {
   const st = subTab.pagos;
   let filtrados = pagos
@@ -22,12 +40,12 @@ function renderPagos() {
       if (tA !== tB) return tB - tA;
       return (b.fecha || "").localeCompare(a.fecha || "");
     });
-  const totalFiltrado = filtrados.reduce((s, p) => s + p.total, 0);
   return `
   <div class="stabs">
     ${[
       ["lista", "📋 Lista"],
       ["nuevo", "➕ Nuevo Pago"],
+      ["lote", "⚡ Pagos viejos"],
     ]
       .map(
         ([k, l]) =>
@@ -38,7 +56,9 @@ function renderPagos() {
   ${
     st === "nuevo"
       ? renderFormPago(pagoPrefill || {})
-      : `
+      : st === "lote"
+        ? renderLotePagos()
+        : `
   <div class="card" style="padding:0.85rem">
     <div style="display:flex;gap:0.4rem;margin-bottom:0.5rem;flex-wrap:wrap">
       <input class="inp" id="search-input" style="flex:1;min-width:130px;padding:0.55rem 0.75rem;font-size:0.82rem" placeholder="🔍 Nombre, cédula, recibo..." value="${filtros.busq}" oninput="onBusqInput(this.value)"/>
@@ -50,30 +70,18 @@ function renderPagos() {
     </div>
   </div>
   ${
-    filtrados.length > 0 && rolUsuario === "director"
-      ? `
-  <div class="recaudo-box">
-    <div>
-      <div style="font-size:0.65rem;color:#adc8ff">${filtros.fecha ? "Recaudo del " + escHtml(filtros.fecha) : filtros.metodo ? "Recaudo - " + escHtml(filtros.metodo) : "Recaudo Total"}</div>
-      <div style="font-size:1.3rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(totalFiltrado)}</div>
-      <div style="font-size:0.68rem;color:#adc8ff">${filtrados.length} recibo${filtrados.length !== 1 ? "s" : ""}</div>
-    </div>
-    <div style="text-align:right;font-size:0.72rem;color:#adc8ff">
-      ${(() => {
-        const tm = totalesMetodo(filtrados);
-        const sin = METODOS.reduce((x, [m]) => x + tm[m].sinTasa, 0);
-        return (
-          METODOS.map(([m, etq], i) => `<div style="margin-top:${i ? 2 : 0}px">${etq}: ${txtMetodo(tm[m])}</div>`).join(
-            ""
-          ) +
-          (sin
-            ? `<div style="margin-top:4px;color:#ffd700;font-size:0.62rem">⚠️ ${sin} pago(s) sin tasa BCV no suman en Bs.</div>`
-            : "")
-        );
-      })()}
-    </div>
-  </div>`
-      : ""
+    rolUsuario === "director"
+      ? filtrados.length > 0
+        ? htmlRecaudo(
+            filtros.fecha
+              ? "Recaudo del " + escHtml(filtros.fecha)
+              : filtros.metodo
+                ? "Recaudo - " + escHtml(filtros.metodo)
+                : "Recaudo Total",
+            filtrados
+          )
+        : ""
+      : htmlRecaudo("Recaudo total de hoy · " + escHtml(fechaCorta(todayStr())), pagosDeHoy()) // la administradora: solo el del día
   }
   ${
     filtrados.length === 0

@@ -72,6 +72,7 @@ No hay que instalar ni compilar nada. Son archivos HTML, CSS y JavaScript que el
 index.html                 La página: carga los estilos y los scripts en orden
 css/estilos.css            Todos los estilos de pantalla
 css/animaciones.css        Animaciones y transiciones (se apagan con «reducir movimiento»)
+css/diseno.css             Capa de diseño: sombras, botones, campos, ventanas tipo app en el teléfono (misma paleta)
 assets/logo.png            Logo (para el README y el ícono de la pestaña)
 js/
   logo.js                  Logo en base64 (para recibos y constancias impresas)
@@ -105,7 +106,7 @@ js/
     conexion.js            Trabajo sin internet: escrituras sin esperar al servidor y aviso de conexión
     app-instalable.js      Registra sw.js y muestra el botón «📲 Instalar»
   vistas/                  Una pantalla por archivo
-    dashboard.js  caja.js  pagos.js  cobranza.js  estudiantes.js  finanzas.js
+    dashboard.js  caja.js  pagos.js (+ pagos-lote.js: ⚡ pagos viejos)  cobranza.js  estudiantes.js  finanzas.js
     nomina.js (pantalla) + nomina-recibos.js, nomina-trabajador.js, nomina-constancia.js,
       nomina-pagos.js y nomina-asistencia.js
     reportes.js  graficas.js  notas.js  boletin.js  configuracion.js  anio-escolar.js

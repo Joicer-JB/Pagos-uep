@@ -135,11 +135,34 @@ referencia ya está en otro recibo del año la app lo avisa antes de cobrar («y
 fecha»). Basta con que coincidan las últimas 6 cifras. En «Nuevo pago», con transferencia o punto, se escribe la
 referencia.
 
+- Arriba ves el **recaudo total de hoy**: cuánto se cobró hoy, cuántos recibos y cuánto por cada forma de pago
+  (el recaudo acumulado lo ve el director).
 - **➕ Nuevo Pago:** busca al estudiante por cédula, elige el concepto, el mes y el método, y escribe el
   total.
 - En la lista, toca un pago para ver el recibo, imprimirlo o enviarlo por WhatsApp.
 - Un pago registrado **no se puede modificar**. Si hay un error, pídele al director que lo borre y
   regístralo de nuevo.
+
+## ⚡ Pagos viejos: registrar muchos de una vez
+
+Si hay pagos que ya se cobraron y no se registraron (por ejemplo, las **inscripciones de septiembre**), usa
+**💰 Pagos → ⚡ Pagos viejos** en vez de hacerlos uno por uno:
+
+1. Elige qué vas a registrar: **🎓 Inscripciones** (con el primer mes, como en la Caja) o **📅 Mensualidad** de un mes.
+2. Pon la **fecha del pago** y la **forma de pago**. Debajo de la fecha ves la tasa BCV de ese día; si falta,
+   cárgala con 💱.
+3. Sale la lista de **quienes deben eso**, por grado. Busca por nombre, cédula o representante, o filtra por grado.
+4. **Marca a cada uno que pagó.** Si pagó otro día, con otra forma de pago o menos de lo que debía, cámbialo en su
+   renglón (si pagó menos, queda como abono). La fecha y la forma de pago que pongas se usan en el siguiente que
+   marques.
+5. Abajo ves cuántos marcaste y el total. Pulsa **💾 Registrar**: cada uno queda con **su recibo**, su fecha y la tasa
+   de ese día. Al final sale la lista de recibos, que puedes imprimir.
+
+Lo que marcas se queda guardado en la computadora hasta que lo registres, por si se cierra la página. Antes de
+registrar, la app revisa que no falten tasas, que nadie pague más de lo que debe y que no se repitan referencias.
+
+Para las **transferencias**, también puedes hacerlo desde el estado de cuenta del banco: el director lo sube en
+📒 Finanzas → 🏦 Conciliación, y lo que entró y nadie registró se registra desde ahí.
 
 ## Registrar un pago viejo (con otra fecha)
 

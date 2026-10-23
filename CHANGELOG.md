@@ -1,5 +1,18 @@
 # Historial de cambios
 
+## Octubre 2026 — Pagos viejos en lote, recaudo del día y diseño
+
+- **⚡ Pagos viejos** (💰 Pagos): para ponerse al día con lo cobrado y no registrado (como las inscripciones de
+  septiembre). Sale quién debe la inscripción (o la mensualidad de un mes); se marca a quienes pagaron, con su fecha,
+  forma de pago y referencia (se repiten de uno al siguiente), y se registran todos: cada uno con su recibo y la tasa
+  BCV de su fecha. Revisa tasas faltantes, montos de más y referencias repetidas; guarda lo marcado en el equipo
+  hasta registrarlo y deja imprimir la lista de recibos.
+- **Pagos:** el **recaudo total** solo lo ve el director; la administradora ve el **recaudo total de hoy** (monto,
+  recibos y cada forma de pago).
+- **Diseño** (los mismos colores): tarjetas y sombras más suaves, cifras alineadas, botones y campos más cómodos de
+  tocar, subpestaña elegida resaltada, las ventanas suben desde abajo en el teléfono, la pestaña elegida queda a la
+  vista, entrada con el escudo más grande y anillo de foco para usar con teclado (`css/diseno.css`).
+
 ## Octubre 2026 — Seguridad por roles, respaldo automático, flujo proyectado y resumen quincenal
 
 - **La administradora solo cobra:** entra a 🏠 Inicio, 💳 Caja y 💰 Pagos. Su Inicio muestra lo cobrado hoy por

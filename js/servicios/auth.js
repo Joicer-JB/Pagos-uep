@@ -4,6 +4,7 @@
 function renderLogin() {
   return `<div class="login-wrap"><div class="login-card">
   <div class="login-logo"><img src="data:image/png;base64,${LOGO}" alt="Logo"/><div><h1>${EMPRESA}</h1><p style="font-size:0.7rem;color:#888">${EMPRESA_SUB}</p></div></div>
+  <div class="login-bienvenida">Sistema de Gestión · entra con tu correo y tu contraseña</div>
   <div style="display:flex;flex-direction:column;gap:0.75rem">
     <div><label class="field-label">Correo electrónico</label><input class="inp" type="email" id="l-email" placeholder="tucorreo@gmail.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
     <div><label class="field-label">Contraseña</label><input class="inp" type="password" id="l-pwd" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/></div>
@@ -129,6 +130,7 @@ async function borrarCopiaDelEquipo() {
   }
   try {
     localStorage.removeItem("tasasBCV_local");
+    localStorage.removeItem(LOTE_BORRADOR);
   } catch (e) {}
   location.reload();
 }
