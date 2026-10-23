@@ -605,3 +605,176 @@ textarea.inp {
     max-width: 96px !important; /* su estilo en línea dice 130px */
   }
 }
+
+/* ---- Notas de media general: evaluaciones del plan ---- */
+.evals-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.eval-celda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.62rem;
+  color: #667;
+  max-width: 92px;
+  text-align: center;
+}
+
+/* ---- Sábana de notas ---- */
+.sabana-wrap {
+  contain: inline-size; /* la tabla ancha se desplaza aquí adentro, sin ensanchar la página */
+  width: 100%;
+  overflow: auto;
+  max-height: 72vh;
+  border: 1px solid #e6e9f0;
+  border-radius: 8px;
+}
+.sab-tabla {
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  width: max-content;
+  min-width: 100%;
+}
+.sab-tabla th,
+.sab-tabla td {
+  border: 1px solid #e1e6ef;
+  padding: 0.28rem 0.4rem;
+  text-align: center;
+  white-space: nowrap;
+}
+.sab-tabla thead th {
+  background: #003366;
+  color: #fff;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.sab-tabla thead tr:nth-child(2) th {
+  top: 1.75rem;
+  background: #00509e;
+  font-size: 0.66rem;
+}
+.sab-tabla td.sab-nombre {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+}
+.sab-est {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #003366;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: inherit;
+  text-align: left;
+}
+.sab-est:hover {
+  text-decoration: underline;
+}
+.sab-num,
+.sab-ced {
+  color: #888;
+}
+.sab-def,
+.sab-prom {
+  font-weight: 800;
+  background: #f0f4ff;
+}
+.sab-eval {
+  color: #555;
+}
+.sab-lapso {
+  font-weight: 700;
+  background: #f7f9ff;
+}
+.sab-rep {
+  color: #c0392b !important;
+  font-weight: 700;
+}
+.sab-parcial {
+  font-style: italic;
+  color: #888;
+}
+.sab-aj {
+  background: #fff8e1 !important;
+}
+.sab-tabla sup,
+.sab-detalle sup {
+  font-size: 0.55rem;
+  color: #7a5c00;
+  font-weight: 800;
+}
+.sab-toca {
+  cursor: pointer;
+}
+.sab-toca:hover {
+  outline: 2px solid #ffd700;
+  outline-offset: -2px;
+}
+.sab-tabla tfoot td {
+  background: #f7f8fb;
+  font-weight: 700;
+}
+.sab-pie-t {
+  text-align: left !important;
+}
+.sab-ajustes {
+  width: 100%;
+}
+.sab-ajustes td {
+  white-space: normal;
+}
+.sab-detalle {
+  border: 1px solid #e6e9f0;
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  margin-bottom: 0.5rem;
+}
+.sab-detalle-t {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #003366;
+}
+.sab-detalle-l {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  margin-top: 0.35rem;
+}
+.sab-detalle-lapso {
+  font-weight: 700;
+  color: #555;
+  min-width: 56px;
+}
+.sab-detalle-evals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex: 1;
+}
+.sab-chip {
+  background: #f0f4ff;
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.68rem;
+}
+.sab-aj-nota {
+  font-size: 0.66rem;
+  color: #7a5c00;
+}
+.sab-detalle-prom {
+  text-align: right;
+  font-size: 0.9rem;
+  color: #003366;
+  margin-top: 0.4rem;
+}

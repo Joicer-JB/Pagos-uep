@@ -58,6 +58,25 @@ debe y las acciones de la Caja y Pagos.
 6. **⚙️ Configuración → 🏫 Institución:** nombre, código, dirección, director y coordinadores. Salen en
    los boletines y las constancias.
 
+## Sábana de notas y consejo de sección (media general)
+
+En **📝 Notas → 📋 Sábana de notas** están todas las notas de un año (y sección, si hay varias), para discutirlas
+con los docentes. El boletín sigue siendo para los representantes.
+
+- **Ver:** todo el año (1er, 2do y 3er lapso, definitiva y promedio), un lapso, o el **detalle por materia** con
+  cada evaluación que puso el profesor y su porcentaje. Abajo salen el promedio de la sección y cuántos quedaron
+  por debajo de 10.
+- Toca el **nombre** de un estudiante para ver todas sus evaluaciones (y imprimirlas).
+- **Cambiar una nota por decisión del consejo (solo tú):** toca la nota (de un lapso o la definitiva), escribe
+  la nota nueva, el **motivo** y, si quieres, el acta. Queda la nota original, quién la cambió y cuándo; en la
+  sábana sale con una **C** y en la lista **🏛️ Cambios del consejo**. La definitiva y el boletín ya usan la nota
+  nueva. Para deshacerlo: toca la nota → **Quitar el cambio**.
+- Si después el profesor corrige sus notas, el cambio del consejo se mantiene y te avisa que la nota del
+  profesor cambió.
+- **🖨️ Imprimir** (hoja horizontal, con la lista de cambios y espacio para firmas) o **📥 Excel**.
+- Los docentes arman el **plan de evaluación** de cada materia (nombre y porcentaje de cada evaluación) en la
+  pestaña Notas, con **⚙️ Plan de evaluación**. Tú también puedes.
+
 ## Estudiantes repetidos
 
 Si un estudiante quedó dos o más veces (por ejemplo «Pérez, Ana» y «Ana Pérez», con o sin tilde), en la
@@ -92,6 +111,7 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 - Registrar y editar estudiantes, sus mensualidades y **exoneraciones** (no paga recargo, no paga inscripción,
   perdonar el recargo de un mes, deuda anterior).
 - **Corregir una tasa BCV** ya guardada e importar las tasas del Excel del BCV.
+- **Cambiar notas por decisión del consejo** (📋 Sábana de notas).
 - Ingresos y gastos, cuentas por pagar, conciliación, nómina, asistencia y documentos del personal.
 - Cambiar la configuración: cuotas, materias, indicadores e institución.
 - Importar matrícula, unificar grados escritos de formas distintas y pasar de grado.

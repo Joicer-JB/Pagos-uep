@@ -147,6 +147,9 @@ function renderModal() {
   if (m.tipo === "prestamo-nomina") return renderModalPrestamoNomina(m);
   if (m.tipo === "nuevo-docente") return renderModalDocente(null);
   if (m.tipo === "editar-docente") return renderModalDocente(m.id);
+  if (m.tipo === "plan-eval") return renderModalPlanEval(m);
+  if (m.tipo === "sabana-estudiante") return renderModalSabanaEstudiante(m);
+  if (m.tipo === "ajuste-consejo") return renderModalAjusteConsejo(m);
   return "";
 }
 // Abre un modal. En un año escolar anterior no deja abrir los de registrar o editar

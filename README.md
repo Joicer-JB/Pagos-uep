@@ -101,6 +101,8 @@ js/
     resumen-quincenal.js   Resumen de cada quincena para el director (deudores, al día, entradas y salidas)
     respaldo.js            Abrir (descifrar) los respaldos automáticos semanales
     avisos-telefono.js     Activar los avisos al teléfono en cada equipo (solo el director)
+    calificaciones.js      Notas de media general: plan de evaluación con %, nota del lapso, definitiva, cambios
+                           del consejo y promedio (lo usan Notas, la sábana y el boletín)
     cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día;
                            sin internet, recibo provisional que luego recibe su número
     bitacora.js            Quién registró cada pago y bitácora de lo que se borra (la ve el director)
@@ -110,7 +112,7 @@ js/
     dashboard.js  caja.js  pagos.js (+ pagos-lote.js: ⚡ pagos viejos)  cobranza.js  estudiantes.js  finanzas.js
     nomina.js (pantalla) + nomina-recibos.js, nomina-trabajador.js, nomina-constancia.js,
       nomina-pagos.js y nomina-asistencia.js
-    reportes.js  graficas.js  notas.js  boletin.js  configuracion.js  anio-escolar.js
+    reportes.js  graficas.js  notas.js  sabana.js (📋 sábana de notas)  boletin.js  configuracion.js  anio-escolar.js
     promocion.js  importar.js  duplicados.js  buscador.js (🔍 buscador inteligente)
   app.js                   Arranque: si ya hay una sesión abierta, entra directo
 sw.js                      Service worker: guarda la app para abrirla sin internet (app instalable)
