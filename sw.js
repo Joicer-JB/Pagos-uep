@@ -6,7 +6,7 @@
 // · Lo demás (Firestore, inicio de sesión, tasa del día) no pasa por aquí: Firestore guarda su propia copia.
 // Si cambias este archivo, cambia también VERSION: así el navegador instala el nuevo y borra la copia vieja.
 
-const VERSION = "v1";
+const VERSION = "v2"; // v2: archivos nuevos (nómina dividida, respaldo, proyección, App Check)
 const CACHE = "jjs-app-" + VERSION;
 const BIBLIOTECAS_FIJAS = [
   /^https:\/\/www\.gstatic\.com\/firebasejs\/\d+\.\d+\.\d+\//,

@@ -1,5 +1,28 @@
 # Historial de cambios
 
+## Octubre 2026 — Seguridad por roles, respaldo automático, flujo proyectado y resumen quincenal
+
+- **La administradora solo cobra:** entra a 🏠 Inicio, 💳 Caja y 💰 Pagos. Su Inicio muestra lo cobrado hoy por
+  método, quién debe (tocándolo se le cobra en la Caja) y los últimos pagos; no ve gastos, nómina ni el balance. No
+  registra ni edita estudiantes, ni exoneraciones, ni corrige tasas ya guardadas (sí carga la de un día que no la
+  tenga). Las **reglas de Firestore** lo exigen también: al cobrar, la deuda del estudiante solo puede bajar y con
+  el recibo de ese cobro (`ultimoCobro`, `deudaCobro`); finanzas, nómina, cuentas por pagar, asistencia, documentos
+  y notas son solo del director. **Un ingreso o gasto ya registrado no se modifica** (como los recibos). **Hay que
+  publicar las reglas de Firestore.**
+- **Computadora compartida (la de la administradora):** su sesión se cierra al cerrar el navegador y tras 30 minutos
+  sin usarla, y al salir se borra la copia local de los datos. Sin internet no deja salir si hay cobros sin subir.
+- **App Check** listo para activarse con la clave de reCAPTCHA (ver `docs/app-check.md`).
+- **Se quitó EmailJS:** ya no se envían avisos ni recibos por correo (los recordatorios siguen por WhatsApp).
+- **🔐 Respaldo automático cada viernes a las 5:00 pm** (GitHub Actions): copia completa y cifrada de la base de
+  datos, guardada 90 días; se abre en Configuración → Año escolar con su clave. Ver `docs/respaldo-automatico.md`.
+- **🔮 Flujo de caja proyectado** (Reportes): mes a mes hasta el próximo año escolar, con escenarios de cobranza,
+  deuda atrasada que se recupera, nómina, gastos, cuentas por pagar, utilidades y bono vacacional; avisa el primer
+  mes en que no alcanzaría. Se imprime.
+- **🗓️ Resumen quincenal** (solo el director): el 1 y el 16 de cada mes aparece en Inicio cuántos deben o tienen
+  mora, cuántos están al día, y lo que entró y salió en la quincena. Se imprime o se manda por WhatsApp; en Reportes
+  está el de cualquier quincena.
+- La pantalla de Nómina se dividió en seis archivos (`js/vistas/nomina*.js`), sin cambios en lo que hace.
+
 ## Octubre 2026 — Conciliación bancaria, cuentas por pagar, libro, asistencia y más
 
 - **🏦 Conciliación bancaria** (Finanzas): se sube el estado de cuenta del banco (Excel o CSV) y se compara con los

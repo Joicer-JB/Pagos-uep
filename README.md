@@ -29,20 +29,20 @@ Guías de uso por rol: [Director](docs/guia-director.md) · [Administradora](doc
 
 ## Qué hace cada rol
 
-| Pestaña                                                   | Director | Administradora |     Docente     |
-| --------------------------------------------------------- | :------: | :------------: | :-------------: |
-| 🏠 Inicio (resumen del mes, mora, últimos pagos)          |    ✅    |       ✅       |                 |
-| 💳 Caja (cobro rápido, cierre de caja)                    |    ✅    |       ✅       |                 |
-| 💰 Pagos (registro y recibos)                             |    ✅    |       ✅       |                 |
-| 🔔 Cobranza (por cobrar, recordatorios WhatsApp y correo) |    ✅    |       ✅       |                 |
-| 👨‍🎓 Estudiantes                                            |    ✅    |       ✅       |                 |
-| 📒 Finanzas (ingresos, gastos, flujo de caja)             |    ✅    |       ✅       |                 |
-| 👷 Nómina                                                 |    ✅    |       ✅       |                 |
-| 📊 Reportes y 📈 Gráficas                                 |    ✅    |       ✅       |                 |
-| 📝 Notas y boletines                                      |    ✅    |       ✅       | ✅ (solo Notas) |
-| 📥 Importar matrícula desde Excel                         |    ✅    |                |                 |
-| ⚙️ Configuración (docentes, materias, año escolar…)       |    ✅    |                |                 |
-| 🗑️ Borrar pagos, estudiantes, gastos o trabajadores       |    ✅    |                |                 |
+| Pestaña                                                                           | Director | Administradora |     Docente     |
+| --------------------------------------------------------------------------------- | :------: | :------------: | :-------------: |
+| 🏠 Inicio (director: resumen del mes y quincenal; administradora: lo cobrado hoy) |    ✅    |       ✅       |                 |
+| 💳 Caja (cobro rápido, cierre de caja)                                            |    ✅    |       ✅       |                 |
+| 💰 Pagos (registro y recibos)                                                     |    ✅    |       ✅       |                 |
+| 🔔 Cobranza (por cobrar, recordatorios por WhatsApp)                              |    ✅    |                |                 |
+| 👨‍🎓 Estudiantes (y exoneraciones)                                                  |    ✅    |                |                 |
+| 📒 Finanzas (ingresos, gastos, flujo de caja)                                     |    ✅    |                |                 |
+| 👷 Nómina                                                                         |    ✅    |                |                 |
+| 📊 Reportes (con el flujo proyectado) y 📈 Gráficas                               |    ✅    |                |                 |
+| 📝 Notas y boletines                                                              |    ✅    |                | ✅ (solo Notas) |
+| 📥 Importar matrícula desde Excel                                                 |    ✅    |                |                 |
+| ⚙️ Configuración (docentes, materias, año escolar…)                               |    ✅    |                |                 |
+| 🗑️ Borrar pagos, estudiantes, gastos o trabajadores                               |    ✅    |                |                 |
 
 **Quién es quién:**
 
@@ -75,7 +75,7 @@ css/animaciones.css        Animaciones y transiciones (se apagan con «reducir m
 assets/logo.png            Logo (para el README y el ícono de la pestaña)
 js/
   logo.js                  Logo en base64 (para recibos y constancias impresas)
-  config.js                ⚙️ Datos del colegio, ROLES, Firebase y EmailJS  ← lo que más se edita
+  config.js                ⚙️ Datos del colegio, ROLES, Firebase y App Check  ← lo que más se edita
   estado.js                Variables globales: sesión, datos cargados, pestaña y filtros
   interfaz.js              Cabecera, pestañas, modales, mensajes de error y avisos
   animaciones.js           Animaciones (pestañas, ventanas y «¡Pago realizado con éxito!»)
@@ -96,20 +96,25 @@ js/
     documentos-personal.js Documentos del personal (certificado de salud, título…) guardados en Firestore
     conciliacion.js        Referencias de pago repetidas y conciliación con el estado de cuenta del banco
     contabilidad.js        Libro de ingresos y egresos y cuentas por pagar
+    proyeccion.js          Flujo de caja proyectado mes a mes hasta el próximo año escolar
+    resumen-quincenal.js   Resumen de cada quincena para el director (deudores, al día, entradas y salidas)
+    respaldo.js            Abrir (descifrar) los respaldos automáticos semanales
     cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día;
                            sin internet, recibo provisional que luego recibe su número
     bitacora.js            Quién registró cada pago y bitácora de lo que se borra (la ve el director)
     conexion.js            Trabajo sin internet: escrituras sin esperar al servidor y aviso de conexión
     app-instalable.js      Registra sw.js y muestra el botón «📲 Instalar»
-    notificaciones.js      Avisos por correo al colegio (EmailJS)
   vistas/                  Una pantalla por archivo
-    dashboard.js  caja.js  pagos.js  cobranza.js  estudiantes.js  finanzas.js  nomina.js
+    dashboard.js  caja.js  pagos.js  cobranza.js  estudiantes.js  finanzas.js
+    nomina.js (pantalla) + nomina-recibos.js, nomina-trabajador.js, nomina-constancia.js,
+      nomina-pagos.js y nomina-asistencia.js
     reportes.js  graficas.js  notas.js  boletin.js  configuracion.js  anio-escolar.js
     promocion.js  importar.js  duplicados.js
   app.js                   Arranque: si ya hay una sesión abierta, entra directo
 sw.js                      Service worker: guarda la app para abrirla sin internet (app instalable)
 manifest.webmanifest       Nombre, colores e íconos de la app instalada (íconos en assets/iconos/)
 firestore.rules            Reglas de seguridad de la base de datos (ver abajo)
+herramientas/respaldo/     Respaldo automático semanal (lo corre GitHub Actions; ver docs/respaldo-automatico.md)
 tests/                     Pruebas automáticas (no se publican ni afectan a la app)
 ```
 
@@ -158,26 +163,27 @@ Las reglas están en [`firestore.rules`](firestore.rules), con comentarios. Resu
 
 - **Sin sesión, o con una cuenta que no tiene rol:** no puede leer ni escribir nada.
 - **Director:** acceso total.
-- **Administradora:** registra y edita pagos, estudiantes, finanzas y nómina, y carga la tasa BCV. No
-  puede borrar, ni cambiar el resto de la configuración.
+- **Administradora:** solo cobra. Lee estudiantes y pagos, registra pagos (y al cobrar baja la deuda anterior del
+  estudiante: solo esos campos, solo hacia abajo y con el recibo de ese cobro) y carga la tasa BCV de un día que no
+  la tenga. No registra ni edita estudiantes (ni sus exoneraciones), no lee ni escribe finanzas, nómina, cuentas por
+  pagar, asistencia, documentos del personal ni notas, no borra nada ni cambia la configuración.
 - **Docente:** lee las **fichas** de los estudiantes (`estudiantes_docentes`: nombre, cédula, fecha de
   nacimiento, grado, sección, año escolar y representante) y la configuración, y carga notas. **No** lee la
   colección `estudiantes` (teléfonos, correo, deuda, mensualidad, observaciones médicas), ni pagos, finanzas o
   nómina. Si el director lo desactiva, pierde el acceso.
-- **Fichas de docentes** (`estudiantes_docentes`): las escribe la app del director y de la administradora,
-  sola, al entrar y cada vez que cambia un estudiante. Las reglas solo aceptan los campos de la ficha.
+- **Fichas de docentes** (`estudiantes_docentes`): las escribe la app del director, sola, al entrar y cada vez que cambia un estudiante. Las reglas solo aceptan los campos de la ficha.
 - **Un pago ya registrado no se puede modificar**, ni siquiera por el director. Solo el director puede
-  borrarlo.
+  borrarlo. Lo mismo un **ingreso o gasto** de Finanzas.
 - **Auditoría:** cada pago e ingreso/gasto nuevo debe llevar la firma de quien lo registra (`registradoPor`, su
   propio correo). Borrar un pago, un ingreso/gasto o un estudiante exige dejar, en la misma escritura, su copia en
   la `bitacora`, que solo lee el director y nadie puede cambiar ni borrar.
 - **Recibos cobrados sin internet** (`pendiente: true`, número `PROV-…`): lo único que se les puede cambiar es
   ponerles su número correlativo, en la misma transacción que avanza el contador.
-- **Documentos del personal** (`documentos_trabajadores`: certificado de salud, título, cédula…): solo director y
-  administradora los adjuntan, ven y quitan; nadie los modifica. Hasta que publiques las reglas nuevas, al adjuntar
+- **Documentos del personal** (`documentos_trabajadores`: certificado de salud, título, cédula…): solo el director
+  los adjunta, ve y quita; nadie los modifica. Hasta que publiques las reglas nuevas, al adjuntar
   un documento sale «Missing or insufficient permissions».
 - **Cuentas por pagar** (`cuentas_pagar`) y **asistencia del personal** (`asistencia_personal`, un documento por
-  día): solo director y administradora. Sin las reglas nuevas, la lista de cuentas por pagar sale vacía y la
+  día): solo el director. Sin las reglas nuevas, la lista de cuentas por pagar sale vacía y la
   asistencia no se puede guardar.
 - **Contador de recibos** (`config/contadores`): director y administradora lo avanzan al cobrar, solo de
   1 en 1. Mientras no publiques las reglas nuevas, la app sigue cobrando con la numeración anterior.
@@ -197,20 +203,19 @@ Si no coinciden, esa persona entra a la app pero no puede ver ni guardar nada.
 
 Todo está en [`js/config.js`](js/config.js):
 
-| Qué                                   | Dónde                                    |
-| ------------------------------------- | ---------------------------------------- |
-| Nombre y ubicación del colegio        | `EMPRESA`, `EMPRESA_SUB`                 |
-| Correos del director y administradora | `ROLES` (y también en `firestore.rules`) |
-| Materias por defecto y lapsos         | `MATERIAS`, `LAPSOS`                     |
-| Proyecto de Firebase                  | `firebase.initializeApp({...})`          |
-| Avisos por correo (EmailJS)           | `EJS_SERVICE`, `EJS_TEMPLATE`, `EJS_KEY` |
-| Buzón del colegio                     | `CORREO_COLEGIO`                         |
+| Qué                                   | Dónde                                     |
+| ------------------------------------- | ----------------------------------------- |
+| Nombre y ubicación del colegio        | `EMPRESA`, `EMPRESA_SUB`                  |
+| Correos del director y administradora | `ROLES` (y también en `firestore.rules`)  |
+| Materias por defecto y lapsos         | `MATERIAS`, `LAPSOS`                      |
+| Proyecto de Firebase                  | `firebase.initializeApp({...})`           |
+| App Check (reCAPTCHA)                 | `APP_CHECK_CLAVE` (ver docs/app-check.md) |
 
 Lo demás (materias de cada año, indicadores, datos de la institución, cuotas y recargos, año escolar,
 docentes) se configura desde la propia app, en ⚙️ Configuración.
 
-La configuración de Firebase y la clave de EmailJS son **públicas por diseño**: viajan al navegador de
-todos los usuarios, así que no son secretas. La seguridad la dan las reglas de Firestore.
+La configuración de Firebase y la clave del sitio de reCAPTCHA son **públicas por diseño**: viajan al navegador
+de todos los usuarios, así que no son secretas. La seguridad la dan las reglas de Firestore y App Check.
 
 ---
 
@@ -273,7 +278,9 @@ npm run comparar -- antes.json despues.json
 - Si pasan **más de 14 días** sin respaldo, al director le aparece un aviso en 🏠 Inicio con el botón para
   descargarlo.
 - Al **cerrar el año escolar** se descarga un respaldo automático antes de cambiar nada.
-- Firebase también permite exportaciones programadas desde la consola de Google Cloud (plan Blaze).
+- **Respaldo automático cada viernes a las 5:00 pm** (GitHub Actions, `.github/workflows/respaldo.yml`): copia
+  completa y cifrada de toda la base de datos, guardada 90 días. Se activa una vez con dos secretos de GitHub; ver
+  [docs/respaldo-automatico.md](docs/respaldo-automatico.md).
 
 ---
 

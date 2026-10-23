@@ -106,21 +106,36 @@ test("nadie puede modificar un pago ya registrado (ni el director)", async () =>
   await assertFails(setDoc(doc(como("administradora"), "pagos/pag1"), { total: 1 }));
 });
 
-test("administradora: registra y edita, pero no borra", async () => {
+test("administradora: cobra (lee estudiantes y pagos, registra pagos) y no modifica nada más", async () => {
   const db = como("administradora");
   await assertSucceeds(getDocs(collection(db, "pagos")));
+  await assertSucceeds(getDocs(collection(db, "estudiantes")));
   await assertSucceeds(setDoc(doc(db, "pagos/nuevo"), { total: 10, ...firma("administradora") }));
-  await assertSucceeds(setDoc(doc(db, "estudiantes/est2"), { nombre: "Luis" }));
-  await assertSucceeds(updateDoc(doc(db, "estudiantes/est1"), { moraMonto: 0 }));
-  await assertSucceeds(setDoc(doc(db, "finanzas/nuevo"), { monto: 5, ...firma("administradora") }));
-  await assertSucceeds(updateDoc(doc(db, "trabajadores/trab1"), { salario: 170 }));
+  // estudiantes: ni registrarlos ni editarlos (mensualidad, exoneraciones, recargos perdonados, deuda...)
+  await assertFails(setDoc(doc(db, "estudiantes/est2"), { nombre: "Luis" }));
+  await assertFails(updateDoc(doc(db, "estudiantes/est1"), { nombre: "Otra" }));
+  await assertFails(updateDoc(doc(db, "estudiantes/est1"), { mensualidad: 1 }));
+  await assertFails(updateDoc(doc(db, "estudiantes/est1"), { sinRecargo: true }));
+  await assertFails(updateDoc(doc(db, "estudiantes/est1"), { sinInscripcion: true }));
+  await assertFails(updateDoc(doc(db, "estudiantes/est1"), { recargosPerdonados: { "2026-10": { motivo: "x" } } }));
+  await assertFails(updateDoc(doc(db, "estudiantes/est1"), { moraMonto: 0 }));
+  // finanzas, nómina, notas: ni verlas ni tocarlas
+  await assertFails(getDoc(doc(db, "finanzas/fin1")));
+  await assertFails(getDocs(collection(db, "finanzas")));
+  await assertFails(setDoc(doc(db, "finanzas/nuevo"), { monto: 5, ...firma("administradora") }));
+  await assertFails(getDoc(doc(db, "trabajadores/trab1")));
+  await assertFails(updateDoc(doc(db, "trabajadores/trab1"), { salario: 170 }));
+  await assertFails(setDoc(doc(db, "trabajadores/trab2"), { nombre: "Otro" }));
+  await assertFails(getDoc(doc(db, "notas/est1_Lapso 1")));
+  await assertFails(setDoc(doc(db, "notas/est1_Lapso 2"), { estId: "est1" }));
+  await assertFails(getDoc(doc(db, "notas_historial/x")));
+  // ni borrar
   await assertFails(borrarConBitacora(db, "administradora", "pagos", "pag1"));
   await assertFails(borrarConBitacora(db, "administradora", "estudiantes", "est1"));
-  await assertFails(borrarConBitacora(db, "administradora", "finanzas", "fin1"));
   await assertFails(deleteDoc(doc(db, "trabajadores/trab1")));
 });
 
-test("documentos del personal: director y administradora los adjuntan, ven y quitan; nadie los modifica", async () => {
+test("documentos del personal: el director los adjunta, ve y quita; nadie los modifica", async () => {
   const trozo = (parte = 0, extra = {}) => ({
     trabajadorId: "trab1",
     adjuntoId: "adj1",
@@ -130,8 +145,8 @@ test("documentos del personal: director y administradora los adjuntan, ven y qui
     datos: "QUJD",
     ...extra,
   });
-  for (const rol of ["director", "administradora"]) {
-    const db = como(rol);
+  {
+    const db = como("director");
     await assertSucceeds(setDoc(doc(db, "documentos_trabajadores/adj1_0"), trozo()));
     await assertSucceeds(getDoc(doc(db, "documentos_trabajadores/adj1_0")));
     await assertFails(updateDoc(doc(db, "documentos_trabajadores/adj1_0"), { datos: "WFla" }));
@@ -140,44 +155,49 @@ test("documentos del personal: director y administradora los adjuntan, ven y qui
     await assertSucceeds(deleteDoc(doc(db, "documentos_trabajadores/adj1_0")));
   }
   await assertSucceeds(setDoc(doc(como("director"), "documentos_trabajadores/adj1_0"), trozo()));
-  for (const rol of ["docente", "docenteFijo", "desconocido"]) {
+  for (const rol of ["administradora", "docente", "docenteFijo", "desconocido"]) {
     await assertFails(getDoc(doc(como(rol), "documentos_trabajadores/adj1_0")));
     await assertFails(setDoc(doc(como(rol), "documentos_trabajadores/adj2_0"), trozo(0, { adjuntoId: "adj2" })));
     await assertFails(deleteDoc(doc(como(rol), "documentos_trabajadores/adj1_0")));
   }
 });
 
-test("asistencia del personal: solo director y administradora", async () => {
+test("asistencia del personal: solo el director", async () => {
   const diaAsist = { fecha: "2026-10-07", registros: { trab1: { estado: "presente" } } };
-  for (const rol of ["director", "administradora"]) {
-    const db = como(rol);
-    await assertSucceeds(setDoc(doc(db, "asistencia_personal/2026-10-07"), diaAsist));
-    await assertSucceeds(getDoc(doc(db, "asistencia_personal/2026-10-07")));
-  }
-  for (const rol of ["docente", "desconocido"]) {
+  const db = como("director");
+  await assertSucceeds(setDoc(doc(db, "asistencia_personal/2026-10-07"), diaAsist));
+  await assertSucceeds(getDoc(doc(db, "asistencia_personal/2026-10-07")));
+  for (const rol of ["administradora", "docente", "desconocido"]) {
     await assertFails(getDoc(doc(como(rol), "asistencia_personal/2026-10-07")));
     await assertFails(setDoc(doc(como(rol), "asistencia_personal/2026-10-08"), diaAsist));
   }
 });
 
-test("cuentas por pagar: solo director y administradora", async () => {
+test("cuentas por pagar: solo el director", async () => {
   const cuenta = { descripcion: "Luz", monto: 20, moneda: "USD", vence: "2026-10-31", estado: "pendiente" };
-  for (const rol of ["director", "administradora"]) {
-    const db = como(rol);
-    await assertSucceeds(setDoc(doc(db, "cuentas_pagar/c-" + rol), cuenta));
-    await assertSucceeds(updateDoc(doc(db, "cuentas_pagar/c-" + rol), { estado: "pagada" }));
-    await assertSucceeds(getDocs(collection(db, "cuentas_pagar")));
-    await assertSucceeds(deleteDoc(doc(db, "cuentas_pagar/c-" + rol)));
-  }
-  for (const rol of ["docente", "desconocido"]) {
+  const db = como("director");
+  await assertSucceeds(setDoc(doc(db, "cuentas_pagar/c1"), cuenta));
+  await assertSucceeds(updateDoc(doc(db, "cuentas_pagar/c1"), { estado: "pagada" }));
+  await assertSucceeds(getDocs(collection(db, "cuentas_pagar")));
+  await assertSucceeds(deleteDoc(doc(db, "cuentas_pagar/c1")));
+  for (const rol of ["administradora", "docente", "desconocido"]) {
     await assertFails(getDocs(collection(como(rol), "cuentas_pagar")));
     await assertFails(setDoc(doc(como(rol), "cuentas_pagar/x"), cuenta));
   }
 });
 
-test("administradora: carga la tasa BCV pero no el resto de la configuración", async () => {
+test("administradora: carga la tasa BCV de un día sin tasa, pero no corrige las guardadas ni el resto de la configuración", async () => {
   const db = como("administradora");
   await assertSucceeds(setDoc(doc(db, "config/tasasBCV"), { tasas: { "2026-10-07": 184.5 } }, { merge: true }));
+  await assertSucceeds(
+    setDoc(doc(db, "config/tasasBCV"), { tasas: { "2026-10-08": 185 }, actualizado: "2026-10-08" }, { merge: true })
+  );
+  await assertFails(setDoc(doc(db, "config/tasasBCV"), { tasas: { "2026-10-07": 150 } }, { merge: true }));
+  await assertFails(setDoc(doc(db, "config/tasasBCV"), { tasas: {} })); // borrar las guardadas
+  await assertFails(setDoc(doc(db, "config/tasasBCV"), { otro: 1 }, { merge: true }));
+  await assertSucceeds(
+    setDoc(doc(como("director"), "config/tasasBCV"), { tasas: { "2026-10-07": 150 } }, { merge: true })
+  );
   await assertSucceeds(getDoc(doc(db, "config/institucion")));
   await assertFails(setDoc(doc(db, "config/institucion"), { nombre: "Otro" }));
   await assertFails(setDoc(doc(db, "config/cobranza"), { cuotas: 12 }));
@@ -222,9 +242,9 @@ test("docente desactivado: pierde el acceso", async () => {
   await assertFails(setDoc(doc(db, "notas/est1_Lapso 2"), { estId: "est1" }));
 });
 
-test("fichas de docentes: director y administradora las mantienen, solo con los campos permitidos", async () => {
-  for (const rol of ["director", "administradora"]) {
-    const db = como(rol);
+test("fichas de docentes: el director las mantiene, solo con los campos permitidos", async () => {
+  {
+    const db = como("director");
     const ficha = {
       nombre: "Luis",
       cedula: "V-1",
@@ -246,6 +266,8 @@ test("fichas de docentes: director y administradora las mantienen, solo con los 
     }
   }
   await assertFails(getDoc(doc(como("desconocido"), "estudiantes_docentes/est1")));
+  await assertFails(setDoc(doc(como("administradora"), "estudiantes_docentes/est2"), { nombre: "Luis" }));
+  await assertFails(deleteDoc(doc(como("administradora"), "estudiantes_docentes/est1")));
 });
 
 test("colecciones no previstas: cerradas para todos", async () => {
@@ -266,19 +288,55 @@ test("contador de recibos: director y administradora lo avanzan de 1 en 1; nadie
 
 test("cobro completo en una transacción (como lo hace la app): contador + pago + deuda del estudiante", async () => {
   const db = como("administradora");
-  await entorno.withSecurityRulesDisabled((ctx) =>
-    setDoc(doc(ctx.firestore(), "estudiantes/est1"), { nombre: "Ana", estado: "mora", moraMonto: 30 })
-  );
-  await assertSucceeds(
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "estudiantes/est1"), { nombre: "Ana", estado: "mora", moraMonto: 30.3 });
+    await setDoc(doc(ctx.firestore(), "estudiantes/est2"), { nombre: "Luis", estado: "mora", moraMonto: 50 });
+  });
+  // cobro: el pago dice cuánto bajó la deuda (deudaCobro) y el estudiante apunta a ese pago (ultimoCobro)
+  const cobrar = (pagoId, pago, cambiosEst, estId = "est1") =>
     runTransaction(db, async (tx) => {
       const c = await tx.get(doc(db, "config/contadores"));
-      const e = await tx.get(doc(db, "estudiantes/est1"));
+      await tx.get(doc(db, "estudiantes/" + estId));
       const n = ((c.exists() && c.data().recibo) || 0) + 1;
       tx.set(doc(db, "config/contadores"), { recibo: n }, { merge: true });
-      tx.set(doc(db, "pagos/nuevo"), { total: 30, factura: "FAC-" + n, deudaAplicada: 30, ...firma("administradora") });
-      tx.update(doc(db, "estudiantes/est1"), { moraMonto: e.data().moraMonto - 30, estado: "alsaldo" });
+      tx.set(doc(db, "pagos/" + pagoId), {
+        total: 10,
+        factura: "FAC-" + n,
+        estId: "est1",
+        ...firma("administradora"),
+        ...pago,
+      });
+      tx.update(doc(db, "estudiantes/" + estId), { ultimoCobro: pagoId, ...cambiosEst });
+    });
+  const abono = { deudaAplicada: 10.1, deudaCobro: 10.1 };
+  // la deuda no puede bajar más de lo que dice el recibo, ni subir, ni cambiar otra cosa del estudiante
+  await assertFails(cobrar("p1", abono, { moraMonto: 0, estado: "alsaldo" }));
+  await assertFails(cobrar("p1", { ...abono, deudaCobro: -5 }, { moraMonto: 35.3, estado: "mora" }));
+  await assertFails(cobrar("p1", abono, { moraMonto: 20.2, estado: "mora", mensualidad: 1 }));
+  await assertFails(cobrar("p1", abono, { moraMonto: 20.2, estado: "mora", sinRecargo: true }));
+  // el recibo tiene que ser de ese estudiante y registrado por ella
+  await assertFails(cobrar("p1", abono, { moraMonto: 39.9, estado: "mora" }, "est2"));
+  await assertFails(
+    cobrar("p1", { ...abono, registradoPor: "herrerajoicer@gmail.com" }, { moraMonto: 20.2, estado: "mora" })
+  );
+  await assertSucceeds(cobrar("p1", abono, { moraMonto: 20.2, estado: "mora" }));
+  await assertSucceeds(
+    cobrar(
+      "p2",
+      { total: 20.2, deudaAplicada: 20.2, deudaCobro: 20.2 },
+      { moraMonto: 0, estado: "alsaldo", moraConcepto: "" }
+    )
+  );
+  // sin recibo nuevo (apuntando a uno viejo) tampoco
+  await entorno.withSecurityRulesDisabled((ctx) =>
+    setDoc(doc(ctx.firestore(), "estudiantes/est1"), {
+      nombre: "Ana",
+      estado: "mora",
+      moraMonto: 30,
+      ultimoCobro: "p1",
     })
   );
+  await assertFails(updateDoc(doc(db, "estudiantes/est1"), { moraMonto: 19.9 }));
   // y el docente no puede hacerlo
   const dbDocente = como("docente");
   await assertFails(
@@ -289,15 +347,17 @@ test("cobro completo en una transacción (como lo hace la app): contador + pago 
 });
 
 test("auditoría: cada pago e ingreso/gasto nuevo lleva la firma de quien lo registra (la suya, no la de otro)", async () => {
-  const admin = como("administradora");
+  const admin = como("administradora"),
+    dir = como("director");
   await assertFails(setDoc(doc(admin, "pagos/sinfirma"), { total: 10 }));
   await assertFails(setDoc(doc(admin, "pagos/ajena"), { total: 10, ...firma("director") }));
   await assertSucceeds(setDoc(doc(admin, "pagos/propia"), { total: 10, ...firma("administradora") }));
-  await assertFails(setDoc(doc(admin, "finanzas/sinfirma"), { monto: 5 }));
-  await assertSucceeds(setDoc(doc(admin, "finanzas/propia"), { monto: 5, ...firma("administradora") }));
-  // al editar un ingreso/gasto no se puede cambiar quién lo registró
-  await assertFails(updateDoc(doc(como("director"), "finanzas/propia"), { registradoPor: "herrerajoicer@gmail.com" }));
-  await assertSucceeds(updateDoc(doc(como("director"), "finanzas/propia"), { observaciones: "ok" }));
+  await assertFails(setDoc(doc(dir, "finanzas/sinfirma"), { monto: 5 }));
+  await assertFails(setDoc(doc(dir, "finanzas/ajena"), { monto: 5, ...firma("administradora") }));
+  await assertSucceeds(setDoc(doc(dir, "finanzas/propia"), { monto: 5, ...firma("director") }));
+  // un ingreso/gasto registrado no se modifica (ni el director): si está mal, se borra y se registra de nuevo
+  await assertFails(updateDoc(doc(dir, "finanzas/propia"), { monto: 50 }));
+  await assertFails(updateDoc(doc(dir, "finanzas/propia"), { observaciones: "ok" }));
 });
 
 test("auditoría: no se puede borrar sin dejar la anotación en la bitácora, ni anotar a nombre de otro", async () => {

@@ -2,8 +2,8 @@
 
 // Carga de Firestore todo lo que necesita el rol actual y dibuja la pantalla.
 // Los docentes solo cargan las fichas de los estudiantes (sin datos privados, ver servicios/fichas-docentes.js)
-// y las notas; director y administradora cargan además pagos,
-// finanzas y nómina del año escolar que están viendo. En el año actual, pagos, estudiantes y finanzas
+// y las notas; la administradora, estudiantes y pagos (lo que necesita para cobrar); el director además finanzas,
+// nómina y notas del año escolar que está viendo. En el año actual, pagos, estudiantes y finanzas
 // quedan en tiempo real (ver servicios/tiempo-real.js).
 async function cargarTodo() {
   document.getElementById("app").innerHTML = '<div class="loading">⏳ Cargando datos del sistema...</div>';
@@ -16,22 +16,27 @@ async function cargarTodo() {
       trabajadores = [];
       finanzas = [];
     } else {
-      await Promise.all([cargarAnioEsc(), cargarTasas(), cargarCobCfg(), cargarCorreoCfg()]);
+      await Promise.all([cargarAnioEsc(), cargarTasas(), cargarCobCfg()]);
       const av = anioVistaObj();
+      const director = rolUsuario === "director";
       const notasQ = soloLectura()
         ? db.collection("notas_historial").where("anioArchivo", "==", anioVista).get()
         : db.collection("notas").get();
       const vivo = !soloLectura(); // los años anteriores no cambian: se leen una sola vez
       const leer = (q, aplicar) => (vivo ? escucharEnVivo(q, aplicar) : q.get());
+      // La administradora solo cobra: no lee finanzas, nómina ni notas (las reglas de Firestore tampoco la dejan)
+      const vacio = Promise.resolve({ docs: [] });
       [sp, se, st, sf, sn] = await Promise.all([
         leer(qRango("pagos", av), aplicarPagos),
         leer(db.collection("estudiantes").orderBy("nombre"), aplicarEstudiantes),
-        db.collection("trabajadores").orderBy("nombre").get(),
-        leer(qRango("finanzas", av), aplicarFinanzas),
-        notasQ,
+        director ? db.collection("trabajadores").orderBy("nombre").get() : vacio,
+        director ? leer(qRango("finanzas", av), aplicarFinanzas) : vacio,
+        director ? notasQ : vacio,
       ]);
       pagos = sp.docs.map((d) => ({ id: d.id, ...d.data() })).sort(porTimestampDesc);
-      cargarCuentasPagar(); // no detiene la carga: los avisos aparecen al llegar
+      if (director)
+        cargarCuentasPagar(); // no detiene la carga: los avisos aparecen al llegar
+      else cuentasPagar = [];
       trabajadores = st.docs.map((d) => ({ id: d.id, ...d.data() }));
       finanzas = sf.docs.map((d) => ({ id: d.id, ...d.data() }));
     }

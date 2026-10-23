@@ -1,4 +1,4 @@
-// Pestaña Cobranza: estudiantes por cobrar, recordatorios por WhatsApp y correo, recibo de cobranza en imagen.
+// Pestaña Cobranza: estudiantes por cobrar, recordatorios por WhatsApp, recibo de cobranza en imagen.
 
 let cobF = { busq: "", grado: "", orden: "monto", dias: 30, vista: "mora" };
 let _cobTimer = null;
@@ -372,181 +372,6 @@ async function enviarReciboCobranza(estId) {
   );
   await marcarRecordado(estId);
 }
-let correoCfg = null; // {templateRep}: plantilla de EmailJS para escribirle a los representantes
-async function cargarCorreoCfg() {
-  correoCfg = null;
-  try {
-    const s = await db.collection("config").doc("correo").get();
-    const t = s.exists ? String(s.data().templateRep || "").trim() : "";
-    if (/^template_[A-Za-z0-9]+$/.test(t)) correoCfg = { templateRep: t };
-  } catch (e) {
-    console.warn("correo cfg:", e.message);
-  }
-}
-async function guardarCorreoCfg() {
-  if (rolUsuario !== "director") {
-    alert("Solo el director puede configurar el correo");
-    return;
-  }
-  const t = document.getElementById("cr-template").value.trim();
-  if (!/^template_[A-Za-z0-9]+$/.test(t)) {
-    alert("El ID de la plantilla debe verse así: template_abc123x (cópialo de EmailJS → Email Templates)");
-    return;
-  }
-  try {
-    await db.collection("config").doc("correo").set({ templateRep: t });
-    correoCfg = { templateRep: t };
-    renderTabContent();
-    mostrarToast("✅ Plantilla de correo guardada");
-  } catch (e) {
-    alert("No se pudo guardar: " + e.message);
-  }
-}
-function htmlCfgCorreo() {
-  if (rolUsuario !== "director") return "";
-  const c = correoCfg;
-  return `<details class="card" ${c ? "" : "open"} style="padding:0.85rem">
-    <summary style="cursor:pointer;font-weight:700;color:${c ? "#003366" : "#c0392b"}">${c ? "✉️ Correo a representantes · plantilla configurada" : "⚠️ Configura el correo a representantes"}</summary>
-    <div style="font-size:0.76rem;color:#555;line-height:1.55;margin:0.5rem 0">En EmailJS crea una plantilla nueva (Email Templates → Create New Template) y llena: <b>To Email</b>: <code>{{to_email}}</code> · <b>Subject</b>: <code>{{subject}}</code> · <b>From Name</b>: <code>{{from_name}}</code> · <b>Reply To</b>: <code>{{reply_to}}</code> · en el contenido (modo código/HTML) escribe <code>{{{message_html}}}</code> con tres llaves. Guárdala y pega aquí su ID.</div>
-    <div class="field"><label class="field-label">ID de la plantilla</label><input class="inp" id="cr-template" placeholder="template_abc123x" value="${c ? c.templateRep : ""}"/></div>
-    <button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="guardarCorreoCfg()">💾 Guardar</button>
-  </details>`;
-}
-// Recibo para el cuerpo del correo (tablas con estilos en línea: lo leen bien Gmail, Outlook y el celular)
-function htmlReciboCobranza(m) {
-  const celda = "padding:10px 12px;border-bottom:1px solid #e8ecf4";
-  const fila = (f) =>
-    `<tr><td style="${celda}"><div style="font-weight:700;color:#222;font-size:15px">${escHtml(f.desc)}</div>${f.sub ? `<div style="color:#888;font-size:12px;margin-top:2px">${escHtml(f.sub)}</div>` : ""}</td><td align="right" style="${celda};font-weight:700;color:#222;white-space:nowrap">${escHtml(fmt(f.usd))}</td>${m.tasa ? `<td align="right" style="${celda};color:#222;white-space:nowrap">${escHtml(fmtBs(f.bs))}</td>` : ""}</tr>`;
-  const dato = (et, v) =>
-    v
-      ? `<tr><td style="padding:3px 0;color:#888;font-size:13px;width:130px">${et}</td><td style="padding:3px 0;color:#222;font-size:14px">${escHtml(v)}</td></tr>`
-      : "";
-  const th = "padding:9px 12px;color:#003366;font-weight:700;font-size:12px";
-  return `<div style="background:#f4f7ff;padding:16px;font-family:Arial,Helvetica,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:10px">
-<tr><td style="background:#003366;padding:22px 16px;text-align:center"><div style="color:#ffd700;font-size:22px;font-weight:700;font-family:Georgia,serif">${escHtml(m.empresa)}</div><div style="color:#adc8ff;font-size:13px;margin-top:4px">${escHtml(m.sub)}</div><div style="color:#ffffff;font-size:15px;font-weight:700;margin-top:10px">RECIBO DE COBRANZA</div></td></tr>
-<tr><td style="padding:18px 20px 6px"><table role="presentation" width="100%"><tr><td style="color:#003366;font-weight:700;font-size:13px">N° ${escHtml(m.numero)}</td><td align="right" style="color:#555;font-size:13px">Fecha: ${escHtml(m.fecha)}</td></tr></table></td></tr>
-<tr><td style="padding:0 20px 10px"><table role="presentation" width="100%">${dato("Estudiante", m.estudiante)}${dato("Grado", m.grado)}${dato("Representante", m.representante)}${dato("Cédula", m.cedula)}</table></td></tr>
-<tr><td style="padding:0 20px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr style="background:#eef3fb"><td style="${th}">DETALLE</td><td align="right" style="${th}">REF. ($)</td>${m.tasa ? `<td align="right" style="${th}">BOLÍVARES</td>` : ""}</tr>${m.filas.map(fila).join("")}</table></td></tr>
-<tr><td style="padding:18px 20px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#003366;border-radius:8px"><tr><td style="padding:14px 16px;color:#ffd700;font-weight:700;font-size:13px">TOTAL REFERENCIA (USD)</td><td align="right" style="padding:14px 16px;color:#ffd700;font-weight:700;font-size:20px;font-family:Georgia,serif">${escHtml(fmt(m.totalUsd))}</td></tr>${m.tasa ? `<tr><td style="padding:0 16px 6px;color:#adc8ff;font-size:13px">Tasa BCV del ${escHtml(fechaCorta(m.tasa.fecha))}</td><td align="right" style="padding:0 16px 6px;color:#ffffff;font-size:13px">Bs. ${escHtml(fmtTasa(m.tasa.valor))} por $1</td></tr><tr><td style="padding:6px 16px 14px;color:#ffd700;font-weight:700;font-size:13px">TOTAL EN BOLÍVARES</td><td align="right" style="padding:6px 16px 14px;color:#ffffff;font-weight:700;font-size:22px;font-family:Georgia,serif">${escHtml(fmtBs(m.totalBs))}</td></tr>` : `<tr><td colspan="2" style="padding:0 16px 14px;color:#adc8ff;font-size:13px">Pagadero en bolívares a la tasa BCV del día del pago</td></tr>`}</table></td></tr>
-<tr><td style="padding:0 20px 20px;color:#666;font-size:12px;line-height:1.5">El pago se recibe en bolívares a la tasa oficial BCV del día del pago. Si ya realizó el pago, por favor responda a este correo con el comprobante.<div style="text-align:center;color:#003366;font-weight:700;font-size:14px;margin-top:12px">¡Gracias por su atención!</div></td></tr>
-</table></div>`;
-}
-function textoReciboCobranza(m) {
-  const l = [
-    m.empresa + " — " + m.sub,
-    "RECIBO DE COBRANZA N° " + m.numero + "  ·  " + m.fecha,
-    "",
-    "Estudiante: " + m.estudiante,
-  ];
-  if (m.grado) l.push("Grado: " + m.grado);
-  if (m.representante) l.push("Representante: " + m.representante);
-  l.push("");
-  m.filas.forEach((f) =>
-    l.push(
-      "• " + f.desc + (f.sub ? " (" + f.sub + ")" : "") + ": " + fmt(f.usd) + (f.bs != null ? " — " + fmtBs(f.bs) : "")
-    )
-  );
-  l.push("", "TOTAL REFERENCIA (USD): " + fmt(m.totalUsd));
-  if (m.tasa)
-    l.push(
-      "Tasa BCV del " + fechaCorta(m.tasa.fecha) + ": Bs. " + fmtTasa(m.tasa.valor) + " por $1",
-      "TOTAL EN BOLÍVARES: " + fmtBs(m.totalBs)
-    );
-  else l.push("Pagadero en bolívares a la tasa BCV del día del pago.");
-  l.push("", "Si ya realizó el pago, por favor responda con el comprobante. ¡Gracias!");
-  return l.join("\n");
-}
-// Envío sin pantallas (lo reutiliza el envío en lote): devuelve {ok,to} o {ok:false,error}
-async function enviarCorreoCobranzaCore(r) {
-  const e = r.e,
-    to = String(e.correoAcudiente || "")
-      .trim()
-      .toLowerCase();
-  if (!correoValido(to)) return { ok: false, error: "El estudiante no tiene un correo válido" };
-  if (!correoCfg) return { ok: false, error: "Falta configurar la plantilla de correo" };
-  const m = modeloReciboCobranza(r);
-  try {
-    emailjs.init(EJS_KEY);
-    await emailjs.send(EJS_SERVICE, correoCfg.templateRep, {
-      to_email: to,
-      to_name: e.acudiente || "Representante",
-      from_name: EMPRESA,
-      reply_to: CORREO_COLEGIO,
-      subject: "Recibo de cobranza — " + e.nombre + " — " + EMPRESA,
-      message_html: htmlReciboCobranza(m),
-      message: textoReciboCobranza(m),
-    });
-    return { ok: true, to };
-  } catch (err) {
-    return { ok: false, error: (err && (err.text || err.message)) || String(err) };
-  }
-}
-async function corregirCorreo(estId) {
-  const e = estudiantes.find((x) => x.id === estId);
-  if (!e) return false;
-  const v = prompt("Correo del representante de " + e.nombre + ".\nEjemplo: nombre@gmail.com", e.correoAcudiente || "");
-  if (v === null) return false;
-  const c = v.trim().toLowerCase();
-  if (!correoValido(c)) {
-    alert("Correo inválido. Debe verse así: nombre@gmail.com");
-    return false;
-  }
-  try {
-    await db.collection("estudiantes").doc(estId).update({ correoAcudiente: c });
-  } catch (err) {
-    alert("No se pudo guardar: " + err.message);
-    return false;
-  }
-  const i = estudiantes.findIndex((x) => x.id === estId);
-  estudiantes[i] = { ...estudiantes[i], correoAcudiente: c };
-  renderTabContent();
-  return true;
-}
-async function enviarCorreoCobranza(estId) {
-  let e = estudiantes.find((x) => x.id === estId);
-  if (!e) return;
-  if (!correoValido(e.correoAcudiente)) {
-    if (!(await corregirCorreo(estId))) return;
-    e = estudiantes.find((x) => x.id === estId);
-  }
-  const r = filaCobranza(e),
-    to = e.correoAcudiente.trim().toLowerCase();
-  if (
-    !tasaHoy() &&
-    !confirm(
-      "No has cargado la tasa BCV de hoy: el recibo saldrá solo con el monto en $ (pagadero en Bs. a la tasa del día).\n\n¿Continuar?"
-    )
-  )
-    return;
-  if (!correoCfg) {
-    if (
-      !confirm(
-        "Aún no está configurada la plantilla de correo (el director lo hace en Cobranza → ✉️ Correo).\n\nMientras tanto puedo abrir tu programa de correo con el mensaje listo para " +
-          to +
-          ". ¿Abrirlo?"
-      )
-    )
-      return;
-    window.open(
-      "mailto:" +
-        to +
-        "?subject=" +
-        encodeURIComponent("Recibo de cobranza — " + e.nombre + " — " + EMPRESA) +
-        "&body=" +
-        encodeURIComponent(textoReciboCobranza(modeloReciboCobranza(r))),
-      "_self"
-    );
-    await marcarRecordado(estId);
-    return;
-  }
-  if (!confirm("Se enviará el recibo de cobranza de " + e.nombre + " a:\n" + to + "\n\n¿Continuar?")) return;
-  const res = await enviarCorreoCobranzaCore(r);
-  if (res.ok) {
-    await marcarRecordado(estId);
-    mostrarToast("✅ Recibo enviado a " + res.to);
-  } else alert("No se pudo enviar el correo: " + res.error);
-}
 // Versión solo texto (por si la imagen no se puede usar)
 function cobrarWhatsApp(estId) {
   const e = estudiantes.find((x) => x.id === estId);
@@ -629,7 +454,6 @@ function renderCobranza() {
   const tv = tasaDe(todayStr());
   return `
   ${htmlCfgCuotas()}
-  ${htmlCfgCorreo()}
   <div class="card" style="padding:0.7rem 0.85rem;border-left:4px solid ${hoyT ? "#1a9e5c" : "#e53e3e"};display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
     <div style="flex:1;min-width:160px;font-size:0.8rem">${hoyT ? `✅ Tasa BCV de hoy: <strong>Bs. ${fmtTasa(tv.valor)}</strong>` : `⚠️ Falta la tasa BCV de hoy: los avisos saldrán solo en $`}</div>
     <button class="btn btn-gray btn-sm" onclick="abrirModal({tipo:'tasa'})">💱 ${hoyT ? "Cambiar" : "Cargar"} tasa</button>
@@ -675,7 +499,6 @@ function renderCobranza() {
     </div>
     <div style="display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap">
       <button class="btn btn-print btn-sm" onclick="imprimirCobranza()">🖨️ Imprimir listado</button>
-      <button class="btn btn-danger btn-sm" onclick="enviarRecordatorios()">📧 Enviar resumen por correo</button>
     </div>
   </div>
   ${filas.length ? `<div class="recaudo-box"><div><div style="font-size:0.65rem;color:#adc8ff">${filas.length} estudiante${filas.length !== 1 ? "s" : ""} en esta lista</div><div style="font-size:1.2rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(totalVista)}</div>${hoyT ? `<div style="font-size:0.75rem;color:#adc8ff">${fmtBs(aBs(totalVista))}</div>` : ""}</div><div style="font-size:0.7rem;color:#adc8ff;text-align:right">adeudado en la vista</div></div>` : ""}
@@ -700,7 +523,6 @@ function renderCobranza() {
           <div class="item-name">${escHtml(e.nombre)}</div>
           <div class="item-sub">${escHtml(e.grado) || "Sin grado"}${e.acudiente ? " · 👤 " + escHtml(e.acudiente) : ""}</div>
           <div class="item-sub">📞 ${r.telWa ? fmtTelVE(r.telWa) + (r.telFijo ? ` <span style="color:#b8860b">⚠️ fijo (WhatsApp suele no encontrarlo)</span>` : "") : r.tel ? `<span style="color:#c0392b">⚠️ Número inválido: ${escHtml(r.tel)}</span>` : "Sin teléfono"} <a href="#" onclick="corregirTelefono('${e.id}');return false" style="text-decoration:none" title="Corregir teléfono">✏️</a></div>
-          <div class="item-sub">✉️ ${e.correoAcudiente ? escHtml(e.correoAcudiente) : "Sin correo"} <a href="#" onclick="corregirCorreo('${e.id}');return false" style="text-decoration:none" title="Corregir correo">✏️</a></div>
           ${r.meses.length ? `<div class="item-sub" style="color:#c0392b">📅 Mensualidad: ${r.meses.join(", ")}</div>` : ""}
           ${r.manual > 0 || (e.estado === "mora" && e.moraConcepto) ? `<div class="item-sub" style="color:#c0392b">📋 ${escHtml(e.moraConcepto) || "Deuda anterior"}${r.manual > 0 ? " · " + fmt(r.manual) : ""}</div>` : ""}
           <div class="item-sub">${ult}</div>
@@ -714,7 +536,6 @@ function renderCobranza() {
       <div style="display:flex;gap:0.4rem;margin-top:0.6rem;flex-wrap:wrap">
         <button class="btn btn-whatsapp btn-sm" onclick="enviarReciboCobranza('${e.id}')">📲 Enviar recibo</button>
         <button class="btn btn-gray btn-sm" onclick="cobrarWhatsApp('${e.id}')">💬 Solo texto</button>
-        <button class="btn btn-gray btn-sm" onclick="enviarCorreoCobranza('${e.id}')">📧 Correo</button>
         <button class="btn btn-gray btn-sm" onclick="marcarRecordado('${e.id}')">✅ Ya avisé</button>
         <button class="btn btn-gray btn-sm" onclick="abrirModal({tipo:'ver-estudiante',id:'${e.id}'})">👁 Ficha</button>
       </div>
@@ -774,43 +595,6 @@ function imprimirCobranza() {
   w.document.close();
   setTimeout(() => w.print(), 500);
 }
-// Resumen por correo al buzón de la institución (EmailJS)
-function enviarRecordatorios() {
-  const filas = cobFiltradas(listaCobranza());
-  if (filas.length === 0) {
-    alert("No hay estudiantes en la lista actual");
-    return;
-  }
-  const lista = filas
-    .map(
-      (r, i) =>
-        `${i + 1}. ${r.e.nombre} (${r.e.grado || "N/A"}) - ` +
-        (r.enMora
-          ? "Debe " + dual(r.deuda) + (conceptoDeE(r.e) ? " (" + conceptoDeE(r.e) + ")" : "")
-          : r.ultimo
-            ? "Sin pago hace " + r.diasSin + " días"
-            : baseAnio()
-              ? "Sin pagos este año escolar"
-              : "Nunca ha pagado")
-    )
-    .join("\n");
-  const total = filas.reduce((s, r) => s + r.deuda, 0),
-    tv = tasaDe(todayStr());
-  enviarNotificacion(
-    "⏰ Cobranza: " + filas.length + " estudiantes pendientes",
-    "🏫 " +
-      EMPRESA +
-      "\n⏰ RESUMEN DE COBRANZA\n\n" +
-      lista +
-      "\n\n💰 Total adeudado: " +
-      dual(total) +
-      (tasaHoy() ? "\n💱 Tasa BCV " + fechaCorta(tv.fecha) + ": Bs. " + fmtTasa(tv.valor) : "") +
-      "\n📅 Fecha del reporte: " +
-      new Date().toLocaleDateString("es-CO")
-  );
-  alert("✅ Resumen enviado a notijosefajoaquina@gmail.com");
-}
-
 // ---- Estado de cuenta del representante: cuotas del año (pagadas, vencidas y por vencer), inscripción, recargos,
 // deuda anterior y los recibos del año. Se imprime (o se comparte como imagen desde el teléfono) o va por WhatsApp.
 function estadoCuenta(e, hoy) {

@@ -30,8 +30,7 @@ test("cada rol ve sus pestañas", () => {
       (m) => m[1]
     );
   assert.deepEqual(pestanas("docente"), ["notas"]);
-  assert.ok(!pestanas("administradora").includes("config"));
-  assert.ok(!pestanas("administradora").includes("importar"));
+  assert.deepEqual(pestanas("administradora"), ["dashboard", "caja", "pagos"]);
   assert.ok(pestanas("director").includes("config"));
   assert.ok(pestanas("director").includes("importar"));
 });
@@ -53,10 +52,14 @@ test("un usuario sin rol no entra y ve el aviso", () => {
 test("caja: cobrar guarda el pago, descuenta la deuda anterior y muestra el recibo", () => {
   const f = paso("director › caja cobrado (recibo)");
   // En una sola transacción: número de recibo correlativo, deuda anterior del estudiante y el pago
-  assert.deepEqual(rutas(f), ["set-merge config/contadores", "update estudiantes/est2", "set pagos/id00001"]);
+  assert.deepEqual(rutas(f), ["set-merge config/contadores", "set pagos/id00001", "update estudiantes/est2"]);
   const pago = f.escrituras.find((e) => e.ruta.startsWith("pagos/")).datos;
   assert.equal(pago.factura, "FAC-000001");
   assert.ok(pago.deudaAplicada > 0, "guarda cuánto descontó de la deuda anterior");
+  // el estudiante apunta al recibo con que se cobró, y el recibo dice cuánto bajó la deuda (lo exigen las reglas)
+  const est = f.escrituras.find((e) => e.ruta === "estudiantes/est2").datos;
+  assert.equal(est.ultimoCobro, "id00001");
+  assert.equal(pago.deudaCobro, pago.deudaAplicada);
   assert.equal(pago.origen, "caja");
   assert.equal(pago.tasa, 184.5); // la tasa del día que se cargó antes
   assert.equal(pago.totalBs, Math.round(pago.total * 184.5 * 100) / 100);
@@ -125,8 +128,24 @@ test("impresiones: constancia, flujo de caja, nómina, cobranza y cierre de caja
   }
 });
 
-test("notas: la administradora y los docentes ven las materias configuradas por el director", () => {
-  for (const rol of ["administradora", "docente"]) {
+test("administradora: su Inicio es para cobrar (sin gastos, nómina ni balance) y no abre nada más", () => {
+  const inicio = paso("administradora › después de entrar").app;
+  assert.match(inicio, /Cobrado hoy/);
+  assert.doesNotMatch(inicio, /Nómina Total|Resumen del mes|Balance|Gastos/);
+  for (const intento of [
+    "intento de abrir finanzas",
+    "intento de abrir la ficha de un estudiante",
+    "intento de registrar un gasto",
+  ]) {
+    const f = paso("administradora › " + intento);
+    assert.doesNotMatch(f.app, /modal-bg|Libro de ingresos|Nuevo Gasto|Nuevo Ingreso/, intento);
+    assert.equal(f.escrituras.length, 0, intento);
+  }
+  assert.match(paso("administradora › intento de abrir finanzas").app, /Cierre de caja/); // se queda en Caja
+});
+
+test("notas: los docentes ven las materias configuradas por el director", () => {
+  for (const rol of ["docente"]) {
     const f = paso(`${rol} › notas de est2`); // 1er Año: Matemáticas, Lengua y Literatura, Inglés
     assert.match(f.app, />Inglés</);
     assert.doesNotMatch(f.app, />Ciencias Naturales</, `${rol}: no debe usar la lista por defecto`);

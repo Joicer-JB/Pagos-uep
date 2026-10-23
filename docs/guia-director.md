@@ -4,6 +4,11 @@ El director tiene acceso a todo. Esta guía cubre lo que **solo el director** pu
 inicio y cierre de año. El trabajo diario de cobros y pagos está en la
 [guía de la administradora](guia-administradora.md), que el director también puede usar.
 
+**La administradora solo cobra:** entra a 🏠 Inicio, 💳 Caja y 💰 Pagos. Cobra, imprime y reenvía recibos, y puede
+cargar la tasa BCV de un día que no la tenga. **Todo lo demás lo haces tú:** registrar y editar estudiantes,
+mensualidades y exoneraciones, cobranza, ingresos y gastos, nómina, reportes, notas y configuración. Las reglas de
+Firestore lo exigen también: aunque alguien intentara saltarse la pantalla, la base de datos no lo permite.
+
 ## Al empezar el año escolar
 
 1. **⚙️ Configuración → 📅 Año escolar.** Revisa el nombre del año (ej. 2026-2027) y su fecha de inicio.
@@ -45,13 +50,17 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 - **Privacidad:** los docentes no ven los datos privados de los estudiantes (teléfonos y correo del
   representante, deuda, mensualidad, observaciones médicas). Trabajan con una **ficha** que solo tiene nombre,
   cédula, fecha de nacimiento, grado, sección, año escolar y representante (lo que sale en el boletín). La app
-  prepara y actualiza esas fichas sola cuando entras tú o la administradora.
+  prepara y actualiza esas fichas sola cuando entras tú.
 
 ## Lo que solo puede hacer el director
 
 - **Borrar** recibos, estudiantes, gastos, pagos de nómina y trabajadores (botón 🗑️). Un recibo nunca se
-  puede _editar_: si está mal, se borra y se registra de nuevo.
-- Cambiar la configuración: cuotas, correo, materias, indicadores e institución.
+  puede _editar_, y un ingreso o gasto tampoco: si está mal, se borra (queda en la bitácora) y se registra de nuevo.
+- Registrar y editar estudiantes, sus mensualidades y **exoneraciones** (no paga recargo, no paga inscripción,
+  perdonar el recargo de un mes, deuda anterior).
+- **Corregir una tasa BCV** ya guardada e importar las tasas del Excel del BCV.
+- Ingresos y gastos, cuentas por pagar, conciliación, nómina, asistencia y documentos del personal.
+- Cambiar la configuración: cuotas, materias, indicadores e institución.
 - Importar matrícula, unificar grados escritos de formas distintas y pasar de grado.
 
 ## Estructura de costos del año
@@ -83,6 +92,38 @@ los estudiantes activos:
   📒 Finanzas) contra las mensualidades del mes. Dice cuántos estudiantes deben pagar para cubrirlos y si, con la
   cobranza actual, alcanza.
 
+### 🔮 Flujo de caja proyectado
+
+Debajo del tablero: **mes a mes, hasta que empiece el próximo año escolar**, cuánto entraría y saldría, y con cuánto
+quedaría el colegio. Toca un mes para ver el detalle.
+
+- **Entra:** las mensualidades que faltan por cobrar (por el % de cobranza del escenario), la parte de la deuda
+  atrasada que esperas recuperar (repartida en los próximos 3 meses) y el promedio de otros ingresos del año.
+- **Sale:** la nómina del personal activo, el promedio de los demás gastos del año, las cuentas por pagar de una sola
+  vez (en su mes) y las **utilidades** (diciembre) y el **bono vacacional** (julio), estimados con los días de sueldo
+  que elijas. Puedes cambiar los días y el mes, o poner 0 para no incluirlos.
+- **Escenarios:** «si todos pagan» (100 %), «al ritmo de cobranza actual» y «si la cobranza baja 15 puntos».
+- **Dinero con el que se empieza:** si lo dejas vacío, usa el resultado del año hasta hoy (lo cobrado más otros
+  ingresos, menos los gastos). Mejor escribe lo que realmente hay hoy en el banco y en caja.
+- Si algún mes no alcanza, lo dice arriba en rojo. Ojo con **julio y agosto**: ya no entran mensualidades, pero la
+  nómina se sigue pagando. Para eso sirve la reserva.
+
+Se imprime con **🖨️ Imprimir**. Es una estimación: no incluye uniformes ni otros cobros, ni aumentos de sueldo que
+aún no estén en la nómina.
+
+### 🗓️ Resumen quincenal
+
+El **1 y el 16 de cada mes** aparece en 🏠 Inicio (solo para ti) el resumen de la quincena que terminó:
+
+- cuántos estudiantes **deben o tienen mora** y cuánto deben en total, y cuántos están **al día**;
+- el índice de cobranza del año;
+- lo que **entró** (cobros a representantes y otros ingresos) y lo que **salió** (gastos por categoría, nómina
+  incluida) en esa quincena, y el resultado.
+
+Se queda en Inicio hasta que pulses **✅ Visto**. Puedes imprimirlo o mandártelo por WhatsApp. En 📊 Reportes →
+**🗓️ Resumen quincenal** está el de cualquiera de las últimas quincenas, con la antigüedad de la deuda y las deudas
+más grandes.
+
 ### 🧮 Simulador de mensualidad
 
 Debajo del tablero: escribe el **aumento de la mensualidad**, cuántos pagan (sale con la cobranza actual), cuántos
@@ -112,8 +153,12 @@ Solo el director ve el botón. Para no cobrarle recargos nunca, marca en su fich
 
 ## Respaldos
 
-Si pasan más de 14 días sin descargar un respaldo, en 🏠 Inicio aparece un aviso con el botón **Descargar
-respaldo**. Guarda el archivo fuera de la computadora (Drive, correo o pendrive).
+- **Automático cada viernes a las 5:00 pm:** GitHub hace una copia completa y cifrada de la base de datos y la
+  guarda 90 días. Hay que activarlo una vez: ver [Respaldo automático semanal](respaldo-automatico.md). En
+  ⚙️ Configuración → 📅 Año escolar → **🔐 Respaldo automático** ves la fecha del último y puedes abrir uno con su
+  clave.
+- **A mano:** si pasan más de 14 días sin ningún respaldo, en 🏠 Inicio aparece un aviso con el botón **Descargar
+  respaldo**. Guarda el archivo fuera de la computadora (Drive, correo o pendrive).
 
 ## Borrar un recibo
 
@@ -143,6 +188,11 @@ correcto. (El resumen guardado del año anterior al cerrarlo no se recalcula.)
 
 ## Seguridad
 
+- **La computadora de la administradora** (a veces la usa otra persona): su sesión se cierra al cerrar el
+  navegador o después de 30 minutos sin usarla, y al pulsar «Salir» se borra de esa computadora la copia de los
+  datos. En tu computadora, que es personal, la sesión y la copia se quedan (para trabajar sin internet).
+- **App Check:** para que Firebase solo atienda a la plataforma. Ver [App Check](app-check.md); necesito de ti la
+  clave del sitio de reCAPTCHA.
 - Si cambias el correo del director o de la administradora, cámbialo en `js/config.js` **y** en
   `firestore.rules`, y publica las reglas. Ver el [README](../README.md#reglas-de-firestore-seguridad).
 - No compartas tu contraseña. Cada persona debe tener su propia cuenta.

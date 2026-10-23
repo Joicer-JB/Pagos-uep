@@ -15,7 +15,7 @@ before(async () => {
   s = await nav.nuevaPagina();
   await s.pagina.goto(nav.base);
   await s.pagina.waitForSelector("#l-email");
-  await s.pagina.fill("#l-email", "josefajsanquez@gmail.com");
+  await s.pagina.fill("#l-email", "herrerajoicer@gmail.com");
   await s.pagina.fill("#l-pwd", "prueba123");
   await s.pagina.click("#login-btn");
   await s.pagina.waitForSelector(".tabs .tab");

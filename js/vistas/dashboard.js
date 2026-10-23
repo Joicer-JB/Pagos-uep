@@ -1,6 +1,8 @@
-// Pestaña Inicio: resumen del día, estudiantes en mora, accesos rápidos y nómina.
+// Pestaña Inicio: resumen del mes, estudiantes en mora, accesos rápidos y nómina (director); lo cobrado hoy y
+// por cobrar (administradora).
 
 function renderDashboard() {
+  if (rolUsuario === "administradora") return renderDashboardCaja();
   const mesNom = MESES[mesActual()];
   const anio = anioActual();
   const pagosMes = pagos.filter(
@@ -19,6 +21,7 @@ function renderDashboard() {
   const totalNomina = r2(trabajadoresActivos().reduce((s, t) => s + devengadoMensual(t), 0)); // al mes
 
   return `${htmlAvisoRespaldo()}
+  ${htmlAvisoQuincenal()}
   <div style="background:linear-gradient(135deg,#003366,#00509e);border-radius:14px;padding:1.1rem 1.25rem;color:#fff;margin-bottom:0.85rem">
     <div style="font-size:0.65rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">Resumen del mes</div>
     <div style="font-size:1.5rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${mesNom} ${anio}</div>
@@ -117,4 +120,77 @@ function avisoCuentasPagar() {
   ]
     .filter(Boolean)
     .join(" · ")} →</div></div>`;
+}
+
+// Inicio de la administradora: solo lo que necesita para cobrar (lo cobrado hoy, a quién cobrarle y accesos a Caja y
+// Pagos). No ve gastos, nómina ni el balance del colegio.
+function renderDashboardCaja() {
+  const hoy = todayStr(),
+    deHoy = pagos.filter((p) => p.fecha === hoy),
+    recibos = new Set(deHoy.map((p) => p.factura || p.id)).size,
+    porMetodo = totalesMetodo(deHoy),
+    total = r2(deHoy.reduce((s, p) => s + (p.total || 0), 0)),
+    mora = estudiantes.filter(enMora).sort((a, b) => deudaDe(b) - deudaDe(a));
+  return `
+  <div style="background:linear-gradient(135deg,#003366,#00509e);border-radius:14px;padding:1.1rem 1.25rem;color:#fff;margin-bottom:0.85rem">
+    <div style="font-size:0.65rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">Cobrado hoy · ${escHtml(fechaCorta(hoy))}</div>
+    <div style="font-size:1.5rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(total)}</div>
+    <div style="font-size:0.75rem;color:#adc8ff">${recibos} recibo${recibos !== 1 ? "s" : ""}</div>
+    <div style="display:flex;gap:0.4rem 1.2rem;margin-top:0.55rem;flex-wrap:wrap;font-size:0.75rem">
+      ${METODOS.filter(([m]) => porMetodo[m].usd > 0)
+        .map(
+          ([m, etq]) =>
+            `<div><span style="color:#adc8ff">${etq}:</span> <strong>${txtMetodo(porMetodo[m])}</strong></div>`
+        )
+        .join("")}
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">${estudiantes.filter((e) => !e.graduado).length}</div><div class="stat-label">👨‍🎓 Estudiantes</div></div>
+    <div class="stat-card red"><div class="stat-val">${mora.length}</div><div class="stat-label">⚠️ Con deuda</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><div class="card-bar"></div><h2>📋 Accesos Rápidos</h2></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
+      <button class="btn btn-gray" onclick="caja.vista='cobro';setTab('caja')" style="padding:0.65rem;font-size:0.8rem;border-radius:10px;border:1.5px solid #dde3f0">💳 Cobrar</button>
+      <button class="btn btn-gray" onclick="setTab('pagos');subTab.pagos='nuevo';renderTabContent()" style="padding:0.65rem;font-size:0.8rem;border-radius:10px;border:1.5px solid #dde3f0">💰 Nuevo Pago</button>
+      <button class="btn btn-gray" onclick="setTab('caja');caja.vista='cierre';caja.cierre=todayStr();renderTabContent()" style="padding:0.65rem;font-size:0.8rem;border-radius:10px;border:1.5px solid #dde3f0">🔒 Cierre de caja</button>
+    </div>
+  </div>
+
+  ${
+    mora.length
+      ? `<div class="card">
+    <div class="card-title"><div class="card-bar"></div><h2>⚠️ Con deuda (${mora.length})</h2></div>
+    ${mora
+      .slice(0, 6)
+      .map(
+        (
+          e
+        ) => `<div class="alert-item alert-mora" onclick="caja.vista='cobro';setTab('caja');cajaElegir('${e.id}')" style="cursor:pointer;justify-content:space-between">
+      <div><strong>${escHtml(e.nombre)}</strong> — ${escHtml(e.grado) || "Sin grado"}</div>
+      <span style="font-weight:800">${fmt(deudaDe(e))}</span></div>`
+      )
+      .join("")}
+    ${mora.length > 6 ? `<div style="font-size:0.75rem;color:#888;text-align:center;margin-top:0.3rem">+${mora.length - 6} más · búscalos en Caja</div>` : ""}
+  </div>`
+      : ""
+  }
+
+  <div class="card">
+    <div class="card-title"><div class="card-bar"></div><h2>💰 Últimos Pagos</h2></div>
+    ${pagos
+      .slice(0, 5)
+      .map(
+        (p) => `
+    <div class="info-row">
+      <span style="color:#333">${escHtml(p.nombre)}</span>
+      <div style="text-align:right"><div style="font-weight:700;color:#003366;font-size:0.85rem">${fmt(p.total)}</div><div style="font-size:0.68rem;color:#888">${escHtml(p.fecha)} · ${escHtml(p.factura || "")}</div></div>
+    </div>`
+      )
+      .join("")}
+    ${pagos.length === 0 ? '<p style="color:#aaa;font-size:0.82rem">Sin pagos registrados</p>' : ""}
+  </div>`;
 }

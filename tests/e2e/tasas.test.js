@@ -42,7 +42,7 @@ before(async () => {
   sesion = await nav.nuevaPagina();
   await pagina().goto(nav.base);
   await pagina().waitForSelector("#l-email");
-  await pagina().fill("#l-email", "josefajsanquez@gmail.com"); // la administradora: también puede corregir tasas
+  await pagina().fill("#l-email", "herrerajoicer@gmail.com"); // el director: el único que corrige tasas guardadas
   await pagina().fill("#l-pwd", "prueba123");
   await pagina().click("#login-btn");
   await pagina().waitForSelector(".tabs .tab");
@@ -203,4 +203,40 @@ test("un archivo sin tasas avisa y no guarda nada", async () => {
   await pagina().waitForSelector("#tz-import :text('No se encontraron tasas')");
   assert.equal(await llamar(`window.__ESCRITURAS__.length`), antes);
   assert.deepEqual(sesion.errores, []);
+});
+
+test("la administradora carga la tasa de un día que no la tiene, pero no corrige las ya guardadas", async () => {
+  const otra = await nav.nuevaPagina();
+  const p = otra.pagina,
+    ev = (c) => p.evaluate(c);
+  await p.goto(nav.base);
+  await p.waitForSelector("#l-email");
+  await p.fill("#l-email", "josefajsanquez@gmail.com");
+  await p.fill("#l-pwd", "prueba123");
+  await p.click("#login-btn");
+  await p.waitForSelector(".tabs .tab");
+  await ev(`setTab("pagos"); subTab.pagos = "nuevo"; renderTabContent(); seleccionarEstudiantePago("est4")`);
+  await p.fill("#p-fecha", "2026-10-05");
+  await p.dispatchEvent("#p-fecha", "change");
+  assert.equal(await p.inputValue("#p-tasa"), "182,1");
+  assert.equal(await p.locator("#p-tasa").getAttribute("readonly"), ""); // la guardada no se cambia
+  await p.fill("#p-fecha", "2026-07-15");
+  await p.dispatchEvent("#p-fecha", "change");
+  assert.equal(await p.locator("#p-tasa").getAttribute("readonly"), null); // sin tasa: la escribe ella
+  // en la ventana de la tasa: sin importar el Excel del BCV ni editar las de días anteriores
+  await ev(`abrirModal({ tipo: "tasa" })`);
+  assert.equal(await p.locator("#tz-archivo").count(), 0);
+  await p.fill("#tz-valor", "185,5");
+  await ev(`guardarTasaModal()`);
+  await p.waitForTimeout(100);
+  assert.equal(await ev(`(__DATOS_FALSOS__.config.get("tasasBCV").tasas || {})["2026-10-07"]`), 185.5);
+  // ya cargada la de hoy: solo la ve
+  await ev(`abrirModal({ tipo: "tasa" })`);
+  assert.match(await p.textContent(".modal"), /solo él puede corregirla/);
+  assert.equal(await p.locator("#tz-valor").count(), 0);
+  // y aunque lo intente, no cambia una guardada
+  assert.equal(await ev(`guardarTasaDia("2026-10-05", 150)`), false);
+  assert.match(otra.dialogos.at(-1), /Solo el director puede corregirla/);
+  assert.equal(await ev(`tasas["2026-10-05"]`), 182.1);
+  assert.deepEqual(otra.errores, []);
 });

@@ -22,7 +22,7 @@ before(async () => {
   sesion = await nav.nuevaPagina();
   await sesion.pagina.goto(nav.base);
   await sesion.pagina.waitForSelector("#l-email");
-  await sesion.pagina.fill("#l-email", "josefajsanquez@gmail.com");
+  await sesion.pagina.fill("#l-email", "herrerajoicer@gmail.com");
   await sesion.pagina.fill("#l-pwd", "prueba123");
   await sesion.pagina.click("#login-btn");
   await sesion.pagina.waitForSelector(".tabs .tab");
@@ -87,4 +87,17 @@ test("en un año anterior (solo consulta) no se escucha nada, y al salir se deja
   await llamar(`logout()`);
   assert.equal(await llamar("__OTRO_EQUIPO__.oyentes()"), 0);
   assert.deepEqual(sesion.errores, []);
+});
+
+test("la administradora solo escucha pagos y estudiantes (no lee finanzas)", async () => {
+  const otra = await nav.nuevaPagina();
+  await otra.pagina.goto(nav.base);
+  await otra.pagina.waitForSelector("#l-email");
+  await otra.pagina.fill("#l-email", "josefajsanquez@gmail.com");
+  await otra.pagina.fill("#l-pwd", "prueba123");
+  await otra.pagina.click("#login-btn");
+  await otra.pagina.waitForSelector(".tabs .tab");
+  await otra.pagina.waitForTimeout(200);
+  assert.equal(await otra.pagina.evaluate("__OTRO_EQUIPO__.oyentes()"), 2);
+  assert.deepEqual(await otra.pagina.evaluate("[finanzas.length, trabajadores.length]"), [0, 0]);
 });

@@ -8,7 +8,7 @@ pruebas automáticas avisan si algo se rompió.
 
 | Quiero cambiar…                                                | Archivo                                                                      |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Correos de director/administradora, nombre, EmailJS            | `js/config.js` (y los correos en `firestore.rules`)                          |
+| Correos de director/administradora, nombre, App Check          | `js/config.js` (y los correos en `firestore.rules`)                          |
 | Colores, tamaños, estilos                                      | `css/estilos.css`                                                            |
 | Una pestaña (Caja, Pagos, Cobranza, Notas…)                    | `js/vistas/<pestaña>.js`                                                     |
 | El recibo de pago                                              | `js/vistas/pagos.js`                                                         |
@@ -72,6 +72,11 @@ commit):
 - **Para imprimir un documento usa `abrirVentanaImpresion()`**, no `window.open("", "_blank")`: en el teléfono una
   ventana nueva no tiene cómo volver a la app.
 - **Ingresos y gastos nuevos llevan `registradoPor: correoUsuario()`**: las reglas rechazan los que no lo tienen.
+  Un ingreso o gasto ya guardado no se modifica (las reglas lo rechazan): se borra y se registra de nuevo.
+- **La administradora solo cobra**: sus pestañas y ventanas están en `PESTANAS_ROL` y `MODALES_ADMINISTRADORA`
+  (`js/interfaz.js`), y no carga finanzas, nómina ni notas (`js/servicios/datos.js`). Si algo nuevo es para ella,
+  agrégalo ahí **y** permítelo en `firestore.rules` (hoy solo lee estudiantes y pagos, crea pagos y, al cobrar, baja
+  la deuda anterior con `ultimoCobro`/`deudaCobro`).
 - **Para borrar un pago, un ingreso/gasto o un estudiante usa `borrarConBitacora(col, id, datos)`** (o
   `anotarBorrado(lote, …)` dentro de un lote o transacción). Un `delete()` suelto lo rechazan las reglas.
 - **No esperes la respuesta del servidor para seguir**: sin internet las escrituras se guardan en el equipo y se

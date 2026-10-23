@@ -477,12 +477,10 @@ async function guardarEstudiante(editId) {
       await db.collection("estudiantes").doc(editId).update(datos);
       const i = estudiantes.findIndex((e) => e.id === editId);
       if (i >= 0) estudiantes[i] = { ...estudiantes[i], ...datos };
-      alertaEstudiante(datos, "✏️ Actualizado");
     } else {
       const ref = await db.collection("estudiantes").add(datos);
       datos.id = ref.id;
       ponerEnLista(estudiantes, datos);
-      alertaEstudiante(datos, "➕ Registrado");
     }
     cerrarModal();
   } catch (e) {

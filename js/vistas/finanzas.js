@@ -480,7 +480,6 @@ async function guardarFinanza(tipo) {
     datos.id = ref.id;
     ponerEnLista(finanzas, datos);
     aplicarTasaEditada("fin", fecha, c.tasa);
-    alertaFinanza(datos);
     if (modalActual && modalActual.cuentaId) await marcarCuentaPagada(modalActual.cuentaId, datos);
     cerrarModal();
   } catch (e) {
