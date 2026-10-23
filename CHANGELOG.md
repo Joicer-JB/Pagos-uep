@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — App Check y avisos listos
+
+- **App Check encendido:** la plataforma se identifica ante Firebase con reCAPTCHA v3 (invisible). Falta que el
+  director pulse **Aplicar** en Firebase → App Check → Cloud Firestore después de 1 o 2 días de uso
+  (`docs/app-check.md`, paso 4).
+- **Avisos al teléfono:** ya tiene la clave «Web Push»; se activan en ⚙️ Configuración → 📲 Avisos.
+
 ## Octubre 2026 — Entrar con Google y avisos al teléfono
 
 - **Entrar con Google** en la pantalla de entrada, con las mismas cuentas (se reconocen por el correo). Con la

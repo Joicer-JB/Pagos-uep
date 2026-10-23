@@ -46,7 +46,7 @@ firebase.initializeApp({
 // App Check: Firebase solo atiende a esta página (no a programas que copien la configuración de arriba). Usa
 // reCAPTCHA v3, invisible para quien usa la app. Va antes de cualquier uso de Firestore. Mientras APP_CHECK_CLAVE
 // esté vacía no se activa (ver docs/app-check.md). En el equipo de desarrollo (localhost) tampoco.
-const APP_CHECK_CLAVE = "";
+const APP_CHECK_CLAVE = "6LfDtf0tAAAAANNugjmgfhP1pt-TDdVqe-LK4m_J";
 const APP_CHECK_ENTERPRISE = false; // true si la clave se creó como reCAPTCHA Enterprise (en Google Cloud)
 if (APP_CHECK_CLAVE && firebase.appCheck && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
   const Proveedor = APP_CHECK_ENTERPRISE
