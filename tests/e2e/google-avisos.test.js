@@ -51,6 +51,9 @@ test("avisos al teléfono: se activan en el equipo, se elige qué avisos y se qu
   const p = s.pagina;
   await p.evaluate(`setTab("config"); subTab.config = "avisos"; renderTabContent()`);
   await p.waitForSelector("text=Activar los avisos en este equipo");
+  assert.doesNotMatch(await p.textContent("#tab-content"), /falta un paso en Firebase/); // la clave ya está puesta
+  // sin la clave, lo explica
+  await p.evaluate(`window.__CLAVE__ = VAPID_CLAVE; VAPID_CLAVE = ""; renderTabContent()`);
   assert.match(await p.textContent("#tab-content"), /falta un paso en Firebase/);
   // con la clave puesta y el permiso del navegador
   await p.evaluate(`VAPID_CLAVE = "clave-publica-de-prueba";

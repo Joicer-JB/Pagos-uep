@@ -20,7 +20,7 @@ manda unos minutos tarde. Los avisos son **solo para el director**.
 2. Si dice que la **API de Firebase Cloud Messaging (V1)** está inhabilitada, actívala con el enlace que aparece.
 3. Abajo, en **Configuración web → Certificados push web**, pulsa **Generar par de claves**.
 4. Copia la clave que aparece (es larga y empieza con «B…») y **mándamela**. Es pública: se puede compartir. La pongo en
-   la plataforma (`VAPID_CLAVE` en `js/config.js`).
+   la plataforma (`VAPID_CLAVE` en `js/config.js`). ✅ Ya está puesta (octubre 2026).
 
 Los avisos usan el mismo secreto de GitHub que el respaldo (`FIREBASE_SERVICE_ACCOUNT`, ver
 [respaldo-automatico.md](respaldo-automatico.md)). Si ya lo creaste, no hace falta nada más.
