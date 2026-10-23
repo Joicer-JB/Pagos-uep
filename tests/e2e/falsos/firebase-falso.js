@@ -393,6 +393,16 @@
       async setPersistence(tipo) {
         window.__PERSISTENCIA__ = tipo;
       },
+      // «Entrar con Google»: entra con la cuenta que diga window.__CUENTA_GOOGLE__ (o falla con su código)
+      async signInWithPopup() {
+        const g = window.__CUENTA_GOOGLE__;
+        if (!g) throw error("auth/popup-closed-by-user", "Se cerró la ventana");
+        if (g.error) throw error(g.error, g.error);
+        actual = { uid: "uid-google-" + g.email, email: g.email };
+        avisar();
+        return { user: actual };
+      },
+      async signInWithRedirect() {},
     };
   }
 
@@ -422,8 +432,17 @@
     apps,
     initializeApp,
     app: (nombre = "[DEFAULT]") => apps.find((a) => a.name === nombre),
-    auth: Object.assign(() => apps[0].auth(), { Auth: { Persistence: { LOCAL: "local", SESSION: "session" } } }),
+    auth: Object.assign(() => apps[0].auth(), {
+      Auth: { Persistence: { LOCAL: "local", SESSION: "session" } },
+      GoogleAuthProvider: function () {
+        this.setCustomParameters = () => {};
+      },
+    }),
     firestore,
+    // Avisos al teléfono: el navegador «da» un token fijo
+    messaging: Object.assign(() => ({ getToken: async () => "token-de-prueba-123" }), {
+      isSupported: async () => true,
+    }),
     // App Check: en las pruebas no hay reCAPTCHA; se anota con qué clave se activó
     appCheck: Object.assign(
       () => ({

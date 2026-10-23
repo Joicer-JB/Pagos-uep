@@ -4,7 +4,9 @@
 function renderLogin() {
   return `<div class="login-wrap"><div class="login-card">
   <div class="login-logo"><img src="data:image/png;base64,${LOGO}" alt="Logo"/><div><h1>${EMPRESA}</h1><p style="font-size:0.7rem;color:#888">${EMPRESA_SUB}</p></div></div>
-  <div class="login-bienvenida">Sistema de Gestión · entra con tu correo y tu contraseña</div>
+  <div class="login-bienvenida">Sistema de Gestión · entra con tu cuenta de Google o con tu correo y contraseña</div>
+  <button class="btn btn-full btn-google" id="login-google" onclick="doLoginGoogle()">${LOGO_GOOGLE} Entrar con Google</button>
+  <div class="login-o"><span>o con tu contraseña</span></div>
   <div style="display:flex;flex-direction:column;gap:0.75rem">
     <div><label class="field-label">Correo electrónico</label><input class="inp" type="email" id="l-email" placeholder="tucorreo@gmail.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
     <div><label class="field-label">Contraseña</label><input class="inp" type="password" id="l-pwd" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/></div>
@@ -23,12 +25,14 @@ function avisoSalidaInactividad() {
   }
   return `<div class="alert-item alert-info" style="margin-top:0.6rem;font-size:0.78rem">🔒 La sesión se cerró sola después de ${MINUTOS_INACTIVIDAD} minutos sin usarla.</div>`;
 }
+// La «G» de Google para el botón de entrada
+const LOGO_GOOGLE = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>`;
 let entrando = false; // true mientras doLogin() está iniciando sesión (el aviso de Firebase en app.js espera)
 
 // Rol de un usuario de Firebase: director y administradora por su correo (ROLES), docentes por su perfil
 // activo en la colección "usuarios". Devuelve null si no tiene acceso.
 async function rolDe(user) {
-  const rolFijo = ROLES[user.email];
+  const rolFijo = ROLES[String(user.email || "").toLowerCase()];
   if (rolFijo) return { rol: rolFijo, perfil: null };
   const userDoc = await db.collection("usuarios").doc(user.uid).get();
   if (userDoc.exists && userDoc.data().rol === "docente" && userDoc.data().activo !== false)
@@ -82,6 +86,49 @@ async function doLogin() {
     btn.textContent = "🔐 Entrar al Sistema";
   } finally {
     entrando = false;
+  }
+}
+// Botón «Entrar con Google»: elige la cuenta de Google; entra si ese correo tiene un rol (los mismos de siempre).
+// La sesión empieza solo para esta ventana; si no es la administradora (PC compartida), se recuerda en el equipo.
+const ERRORES_GOOGLE = {
+  "auth/operation-not-allowed": "Falta activar Google en Firebase (Authentication → Método de acceso → Google).",
+  "auth/unauthorized-domain":
+    "Falta autorizar esta página en Firebase (Authentication → Configuración → Dominios autorizados).",
+  "auth/account-exists-with-different-credential": "Esa cuenta entra con contraseña: usa tu correo y tu contraseña.",
+  "auth/network-request-failed": "Sin internet: no se pudo abrir Google.",
+};
+async function doLoginGoogle() {
+  const btn = document.getElementById("login-google");
+  if (btn) btn.disabled = true;
+  entrando = true;
+  const P = firebase.auth.Auth.Persistence;
+  try {
+    const proveedor = new firebase.auth.GoogleAuthProvider();
+    proveedor.setCustomParameters({ prompt: "select_account" }); // que siempre pregunte qué cuenta usar
+    await fbAuth.setPersistence(P.SESSION).catch(() => {});
+    let cred;
+    try {
+      cred = await fbAuth.signInWithPopup(proveedor);
+    } catch (e) {
+      // Si el navegador no deja abrir la ventana de Google, se va a Google y vuelve
+      if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")
+        return fbAuth.signInWithRedirect(proveedor);
+      throw e;
+    }
+    const r = await rolDe(cred.user);
+    if (!r) {
+      await fbAuth.signOut();
+      mostrarError("login-err", "La cuenta " + (cred.user.email || "") + " no tiene acceso a la plataforma.");
+      return;
+    }
+    if (!equipoCompartido(r.rol)) await fbAuth.setPersistence(P.LOCAL).catch(() => {});
+    iniciarSesion(r);
+  } catch (e) {
+    if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request")
+      mostrarError("login-err", ERRORES_GOOGLE[e.code] || "No se pudo entrar con Google: " + (e.message || e.code));
+  } finally {
+    entrando = false;
+    if (btn) btn.disabled = false;
   }
 }
 // ---- Equipo compartido: la PC de la administradora a veces la usa otra persona. Su sesión se cierra al cerrar el

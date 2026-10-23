@@ -9,6 +9,39 @@ cargar la tasa BCV de un día que no la tenga. **Todo lo demás lo haces tú:** 
 mensualidades y exoneraciones, cobranza, ingresos y gastos, nómina, reportes, notas y configuración. Las reglas de
 Firestore lo exigen también: aunque alguien intentara saltarse la pantalla, la base de datos no lo permite.
 
+## 🔍 Buscador inteligente
+
+Botón **🔍 Buscar** de la cabecera, la barra de Inicio, **Ctrl+K** o la tecla **/**. Se escribe como se habla, y
+responde con los datos de la plataforma (sin internet de por medio):
+
+- **Encontrar:**
+  - un estudiante (nombre, cédula, teléfono o representante): cobrarle, su estado de cuenta, su ficha;
+  - un recibo (número o referencia de la transferencia);
+  - un trabajador: su ficha o pagarle.
+- **Ir a cualquier parte:** «cierre de caja», «nuevo gasto», «cuentas por pagar», «conciliación», «flujo proyectado»,
+  «respaldo», «bitácora», «pasar de grado»…
+- **Preguntar:**
+  - «cobrado hoy», «cobrado el 15/10», «cobrado en septiembre»;
+  - «gastos de este mes», «cómo vamos este mes», «balance del año»;
+  - «quién debe en 1er año», «cuántos están al día», «inscripciones pendientes»;
+  - «nómina», «cuentas por pagar», «tasa del 02/10»;
+  - **«qué hizo la secretaria hoy»** o «actividad de esta semana»: cada cobro, ingreso o gasto registrado, y lo
+    borrado, con la hora y quién lo hizo.
+
+Las fechas se entienden así: hoy, ayer, esta semana, la semana pasada, esta quincena, la quincena pasada, este mes, el
+mes pasado, el nombre de un mes, una fecha (15/10) o este año escolar.
+
+La secretaria también tiene el buscador, pero solo ve lo suyo: estudiantes, recibos, lo cobrado de un día, quién
+debe y las acciones de la Caja y Pagos.
+
+## Entrar con Google y avisos al teléfono
+
+- **Entrar con Google:** botón en la pantalla de entrada. Hay que activarlo una vez en Firebase; ver
+  [Entrar con Google](entrar-con-google.md). Con la verificación en 2 pasos de tu Gmail, nadie entra sin tu teléfono.
+- **📲 Avisos al teléfono:** ⚙️ Configuración → 📲 Avisos. Te llegan el cierre del día (lunes a viernes, 6:00 pm), el
+  resumen de cada quincena (el 1 y el 16) y si el respaldo del viernes salió bien o falló, aunque la plataforma esté
+  cerrada. Ver [Avisos al teléfono](avisos-telefono.md).
+
 ## Al empezar el año escolar
 
 1. **⚙️ Configuración → 📅 Año escolar.** Revisa el nombre del año (ej. 2026-2027) y su fecha de inicio.

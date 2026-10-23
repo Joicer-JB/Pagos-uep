@@ -100,6 +100,7 @@ js/
     proyeccion.js          Flujo de caja proyectado mes a mes hasta el próximo año escolar
     resumen-quincenal.js   Resumen de cada quincena para el director (deudores, al día, entradas y salidas)
     respaldo.js            Abrir (descifrar) los respaldos automáticos semanales
+    avisos-telefono.js     Activar los avisos al teléfono en cada equipo (solo el director)
     cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día;
                            sin internet, recibo provisional que luego recibe su número
     bitacora.js            Quién registró cada pago y bitácora de lo que se borra (la ve el director)
@@ -110,12 +111,13 @@ js/
     nomina.js (pantalla) + nomina-recibos.js, nomina-trabajador.js, nomina-constancia.js,
       nomina-pagos.js y nomina-asistencia.js
     reportes.js  graficas.js  notas.js  boletin.js  configuracion.js  anio-escolar.js
-    promocion.js  importar.js  duplicados.js
+    promocion.js  importar.js  duplicados.js  buscador.js (🔍 buscador inteligente)
   app.js                   Arranque: si ya hay una sesión abierta, entra directo
 sw.js                      Service worker: guarda la app para abrirla sin internet (app instalable)
 manifest.webmanifest       Nombre, colores e íconos de la app instalada (íconos en assets/iconos/)
 firestore.rules            Reglas de seguridad de la base de datos (ver abajo)
-herramientas/respaldo/     Respaldo automático semanal (lo corre GitHub Actions; ver docs/respaldo-automatico.md)
+herramientas/nube/         Lo que corre GitHub Actions con la cuenta de servicio: respaldo semanal (respaldo.js) y
+                           avisos al teléfono (avisos.js), con el mismo código de js/ (app-en-node.js)
 tests/                     Pruebas automáticas (no se publican ni afectan a la app)
 ```
 

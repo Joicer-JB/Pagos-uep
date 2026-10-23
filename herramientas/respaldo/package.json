@@ -1,8 +1,0 @@
-{
-  "name": "pagos-uep-respaldo",
-  "private": true,
-  "description": "Respaldo automático semanal de la base de datos (lo corre GitHub Actions)",
-  "dependencies": {
-    "firebase-admin": "14.5.0"
-  }
-}

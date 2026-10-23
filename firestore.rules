@@ -28,6 +28,7 @@ rules_version = '2';
 //      pagar, asistencia, notas, configuración) solo lo ve y lo modifica el director. Un ingreso o gasto ya
 //      registrado no se modifica (como los recibos). Al cobrar, la deuda anterior del estudiante solo puede bajar, y
 //      el estudiante queda apuntando al recibo con que se cobró (ultimoCobro).
+//  11. (Octubre 2026) Avisos al teléfono: "avisos_dispositivos" (solo el director).
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -157,6 +158,12 @@ service cloud.firestore {
     // Cuentas por pagar (servicios, alquiler, proveedores…): el director las anota, marca como pagadas y borra. El
     // dinero que sale se registra aparte, como gasto en "finanzas".
     match /cuentas_pagar/{id} {
+      allow read, write: if isDirector();
+    }
+
+    // Avisos al teléfono: los equipos donde el director activó los avisos (la dirección de cada uno para Firebase
+    // Cloud Messaging). Los lee el envío de avisos con la cuenta de servicio, que no pasa por estas reglas.
+    match /avisos_dispositivos/{id} {
       allow read, write: if isDirector();
     }
 

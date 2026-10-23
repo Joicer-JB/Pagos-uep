@@ -1,5 +1,29 @@
 # Historial de cambios
 
+## Octubre 2026 — Entrar con Google y avisos al teléfono
+
+- **Entrar con Google** en la pantalla de entrada, con las mismas cuentas (se reconocen por el correo). Con la
+  verificación en 2 pasos de Gmail, nadie entra sin el teléfono. La sesión de la administradora con Google tampoco se
+  recuerda en la PC compartida. Hay que activarlo en Firebase: `docs/entrar-con-google.md`.
+- **📲 Avisos al teléfono** (solo el director, ⚙️ Configuración → 📲 Avisos): cierre del día (lunes a viernes, 6 pm),
+  resumen de la quincena (el 1 y el 16, 7 am) y si el respaldo del viernes salió bien o falló, aunque la plataforma
+  esté cerrada. Los manda GitHub Actions (`.github/workflows/avisos.yml`) con Firebase Cloud Messaging, calculados con
+  el mismo código de la plataforma. Nueva colección `avisos_dispositivos`: **hay que publicar las reglas de Firestore**.
+  Falta la clave «Web Push» de Firebase: `docs/avisos-telefono.md`.
+- **Arreglo del respaldo automático:** firebase-admin 14 ya no trae `admin.firestore()`; el respaldo se habría caído en
+  su primer viernes. Ahora usa las funciones nuevas (`firebase-admin/app`, `/firestore`, `/messaging`), y el respaldo y
+  los avisos se prueban de verdad contra el emulador de Firestore (`tests/reglas/nube.test.js`).
+- `herramientas/respaldo/` pasó a llamarse `herramientas/nube/` (respaldo y avisos).
+
+## Octubre 2026 — 🔍 Buscador inteligente
+
+- Botón **🔍 Buscar** en la cabecera, barra en Inicio, **Ctrl+K** o **/**. Encuentra estudiantes (nombre, cédula,
+  teléfono o representante, con su deuda y botones para cobrar, ver su estado de cuenta o su ficha), recibos (número o
+  referencia) y trabajadores. Lleva a cualquier acción («cierre de caja», «nuevo gasto», «pagos viejos»…), y
+  responde preguntas: lo cobrado y gastado en un período, cómo vamos, quién debe (por grado), cuántos están al día,
+  inscripciones pendientes, nómina, cuentas por pagar, tasa de un día y **qué hizo cada quien** (cobros, ingresos,
+  gastos y borrados, con la hora). Cada rol ve solo lo suyo: la secretaria, lo de un día y sus pestañas.
+
 ## Octubre 2026 — Pagos viejos en lote, recaudo del día y diseño
 
 - **⚡ Pagos viejos** (💰 Pagos): para ponerse al día con lo cobrado y no registrado (como las inscripciones de

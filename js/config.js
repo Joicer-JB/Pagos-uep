@@ -54,6 +54,10 @@ if (APP_CHECK_CLAVE && firebase.appCheck && !/^(localhost|127\.0\.0\.1)$/.test(l
     : firebase.appCheck.ReCaptchaV3Provider;
   firebase.appCheck().activate(new Proveedor(APP_CHECK_CLAVE), true);
 }
+// Avisos al teléfono: clave pública «Web Push» de Firebase (Configuración del proyecto → Cloud Messaging →
+// Certificados push web). Mientras esté vacía, los avisos no se pueden activar (ver docs/avisos-telefono.md).
+// (let y no const: las pruebas ponen una de mentira)
+let VAPID_CLAVE = "";
 const db = firebase.firestore();
 // Copia de los datos en el equipo: la app sigue funcionando sin internet (ver servicios/conexion.js).
 // Tiene que activarse antes de cualquier lectura o escritura.

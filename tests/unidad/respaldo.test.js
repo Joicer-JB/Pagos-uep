@@ -1,9 +1,9 @@
-// Respaldo automático: lo que cifra el flujo de GitHub (herramientas/respaldo/cifrado.js) se abre en la plataforma
+// Respaldo automático: lo que cifra el flujo de GitHub (herramientas/nube/cifrado.js) se abre en la plataforma
 // con la misma clave (js/servicios/respaldo.js), y con otra clave no.
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { cargar } = require("./cargar");
-const { cifrar } = require("../../herramientas/respaldo/cifrado");
+const { cifrar } = require("../../herramientas/nube/cifrado");
 
 const app = cargar("js/servicios/respaldo.js");
 // lo que el navegador trae de fábrica

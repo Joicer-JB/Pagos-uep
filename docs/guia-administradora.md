@@ -8,6 +8,19 @@ exoneraciones, recargos, gastos, nómina y configuración los maneja el director
 [Lo que hace el director](#lo-que-hace-el-director)). En **Inicio** ves lo cobrado hoy por método, los estudiantes
 con deuda (tócalos para cobrarles en la Caja) y los últimos pagos.
 
+## 🔍 Buscar cualquier cosa
+
+Arriba está el botón **🔍 Buscar** (y en Inicio, la barra «¿Qué necesitas?»). En la computadora también se abre con
+**Ctrl+K** o la tecla **/**. Escribe como hablas:
+
+- El **nombre, la cédula o el teléfono** de un estudiante, o el nombre de su representante → sale con lo que debe, y
+  con un toque lo cobras o imprimes su estado de cuenta.
+- El **número de un recibo** (por ejemplo `154`) o la **referencia** de una transferencia → abre el recibo.
+- Lo que quieres hacer: «cierre de caja», «nuevo pago», «pagos viejos», «tasa».
+- Una pregunta: «cobrado hoy», «cobrado ayer», «quién debe», «quién debe en 3er grado».
+
+Con las flechas ↑ ↓ te mueves, **Enter** abre y **Esc** cierra.
+
 ## Cada día: la tasa BCV
 
 Antes del primer cobro, carga la tasa del día con el botón **💱** de la cabecera. Si falta, aparece un

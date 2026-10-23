@@ -6,7 +6,7 @@
 // · Lo demás (Firestore, inicio de sesión, tasa del día) no pasa por aquí: Firestore guarda su propia copia.
 // Si cambias este archivo, cambia también VERSION: así el navegador instala el nuevo y borra la copia vieja.
 
-const VERSION = "v2"; // v2: archivos nuevos (nómina dividida, respaldo, proyección, App Check)
+const VERSION = "v3"; // v3: avisos al teléfono (push) y buscador
 const CACHE = "jjs-app-" + VERSION;
 const BIBLIOTECAS_FIJAS = [
   /^https:\/\/www\.gstatic\.com\/firebasejs\/\d+\.\d+\.\d+\//,
@@ -81,4 +81,38 @@ self.addEventListener("fetch", (evento) => {
   if (pedido.method !== "GET") return;
   if (BIBLIOTECAS_FIJAS.some((re) => re.test(pedido.url))) return evento.respondWith(primeroLaCopia(pedido));
   if (esLocal(pedido.url)) return evento.respondWith(primeroLaRed(pedido));
+});
+
+// ---- 📲 Avisos al teléfono (los manda herramientas/nube/avisos.js con Firebase Cloud Messaging).
+// Llegan como datos: { titulo, cuerpo, url }. Se muestran aunque la plataforma esté cerrada; al tocarlos, se abre.
+self.addEventListener("push", (evento) => {
+  let d = {};
+  try {
+    d = evento.data ? evento.data.json() : {};
+  } catch (e) {
+    d = { data: { cuerpo: evento.data ? evento.data.text() : "" } };
+  }
+  const datos = d.data || {},
+    n = d.notification || {};
+  evento.waitUntil(
+    self.registration.showNotification(datos.titulo || n.title || "JJS Gestión", {
+      body: datos.cuerpo || n.body || "",
+      icon: "assets/iconos/icono-192.png",
+      badge: "assets/iconos/icono-192.png",
+      tag: datos.tipo || undefined, // uno nuevo del mismo tipo reemplaza al anterior
+      data: { url: datos.url || "./" },
+    })
+  );
+});
+self.addEventListener("notificationclick", (evento) => {
+  evento.notification.close();
+  const url = new URL((evento.notification.data && evento.notification.data.url) || "./", self.location.href).href;
+  evento.waitUntil(
+    (async () => {
+      const abiertas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const app = abiertas.find((c) => c.url.startsWith(new URL("./", self.location.href).href));
+      if (app) return app.focus();
+      return self.clients.openWindow(url);
+    })()
+  );
 });
