@@ -46,7 +46,7 @@ firebase.initializeApp({
 // App Check: Firebase solo atiende a esta página (no a programas que copien la configuración de arriba). Usa
 // reCAPTCHA v3, invisible para quien usa la app. Va antes de cualquier uso de Firestore. Mientras APP_CHECK_CLAVE
 // esté vacía no se activa (ver docs/app-check.md). En el equipo de desarrollo (localhost) tampoco.
-const APP_CHECK_CLAVE = "";
+const APP_CHECK_CLAVE = "6LfDtf0tAAAAANNugjmgfhP1pt-TDdVqe-LK4m_J";
 const APP_CHECK_ENTERPRISE = false; // true si la clave se creó como reCAPTCHA Enterprise (en Google Cloud)
 if (APP_CHECK_CLAVE && firebase.appCheck && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
   const Proveedor = APP_CHECK_ENTERPRISE
@@ -57,7 +57,7 @@ if (APP_CHECK_CLAVE && firebase.appCheck && !/^(localhost|127\.0\.0\.1)$/.test(l
 // Avisos al teléfono: clave pública «Web Push» de Firebase (Configuración del proyecto → Cloud Messaging →
 // Certificados push web). Mientras esté vacía, los avisos no se pueden activar (ver docs/avisos-telefono.md).
 // (let y no const: las pruebas ponen una de mentira)
-let VAPID_CLAVE = "";
+let VAPID_CLAVE = "BMEbJRVU6fqW55_Y8NnvOQmHIi4_cq-nM5I68h3Dk6rRumQJn1u8jWs1utUHlyFU9kN8NxVzpe5-x3xk6E8aaJc";
 const db = firebase.firestore();
 // Copia de los datos en el equipo: la app sigue funcionando sin internet (ver servicios/conexion.js).
 // Tiene que activarse antes de cualquier lectura o escritura.

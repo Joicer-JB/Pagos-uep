@@ -34,7 +34,7 @@ Usa reCAPTCHA v3 de Google. Es invisible: ni la secretaria ni tú tienen que mar
 ### 3. Poner la clave del sitio en la plataforma
 
 Me pasas la clave del sitio y la pongo en `APP_CHECK_CLAVE` (en `js/config.js`). Desde ese momento la plataforma se
-identifica ante Firebase en cada operación.
+identifica ante Firebase en cada operación. ✅ Ya está puesta (octubre 2026, reCAPTCHA v3).
 
 ### 4. Revisar y aplicar (después de 1 o 2 días)
 
