@@ -16,7 +16,7 @@ function render() {
         <div class="header-label">Sistema de Gestión · <span style="color:#ffd700" id="rol-lbl"></span></div>
         <div class="header-name">${EMPRESA}</div>
       </div>
-      ${rolUsuario !== "docente" ? `<button class="logout-btn" style="margin-left:auto;${tasaHoy() ? "" : "background:#c0392b;color:#fff"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día">${chipTasaTxt()}</button>` : ""}
+      ${rolUsuario !== "docente" ? `<button class="logout-btn busq-btn" style="margin-left:auto" onclick="abrirBuscador()" title="Buscar o preguntar (Ctrl+K)">🔍 <span class="busq-btn-txt">Buscar</span></button><button class="logout-btn" style="margin-left:0.4rem;${tasaHoy() ? "" : "background:#c0392b;color:#fff"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día">${chipTasaTxt()}</button>` : ""}
       ${escCfg && rolUsuario !== "docente" ? `<select onchange="cambiarAnioVista(this.value)" style="margin-left:0.4rem;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:0.28rem 0.4rem;font-size:0.7rem;max-width:130px">${[escCfg.actual, ...escCfg.anteriores.slice().reverse()].map((a) => `<option value="${a.id}" style="color:#000" ${a.id === anioVista ? "selected" : ""}>${escHtml(a.nombre)}${a.id === escCfg.actual.id ? " (actual)" : ""}</option>`).join("")}</select>` : ""}
 ${eventoInstalar ? `<button class="logout-btn" style="margin-left:0.4rem" onclick="instalarApp()" title="Instalar la plataforma en este equipo">📲 Instalar</button>` : ""}<button class="logout-btn" style="${rolUsuario !== "docente" ? "margin-left:0.4rem" : ""}" onclick="logout()">Salir</button>
     </div>
@@ -68,7 +68,7 @@ ${bannerTasa()}
 // Pestañas y ventanas de cada rol que no es el director: los docentes solo Notas; la administradora cobra (Inicio,
 // Caja y Pagos) y no modifica nada más. Las reglas de Firestore lo exigen también (firestore.rules).
 const PESTANAS_ROL = { docente: ["notas"], administradora: ["dashboard", "caja", "pagos"] };
-const MODALES_ADMINISTRADORA = ["tasa", "recibo", "nuevo-pago"];
+const MODALES_ADMINISTRADORA = ["tasa", "recibo", "nuevo-pago", "buscar"];
 const pestanaPermitida = (t) => !PESTANAS_ROL[rolUsuario] || PESTANAS_ROL[rolUsuario].includes(t);
 // Cambia de pestaña (cada rol solo entra a las suyas) y limpia los filtros
 function setTab(t) {
@@ -130,6 +130,7 @@ function renderModal() {
   const m = modalActual;
   if (!m) return "";
   if (m.tipo === "tasa") return renderModalTasa();
+  if (m.tipo === "buscar") return renderModalBuscar();
   if (m.tipo === "recibo") return renderModalRecibo(m);
   if (m.tipo === "nuevo-pago") return renderModalNuevoPago();
   if (m.tipo === "nuevo-estudiante") return renderModalEstudiante({});

@@ -110,7 +110,7 @@ js/
     nomina.js (pantalla) + nomina-recibos.js, nomina-trabajador.js, nomina-constancia.js,
       nomina-pagos.js y nomina-asistencia.js
     reportes.js  graficas.js  notas.js  boletin.js  configuracion.js  anio-escolar.js
-    promocion.js  importar.js  duplicados.js
+    promocion.js  importar.js  duplicados.js  buscador.js (🔍 buscador inteligente)
   app.js                   Arranque: si ya hay una sesión abierta, entra directo
 sw.js                      Service worker: guarda la app para abrirla sin internet (app instalable)
 manifest.webmanifest       Nombre, colores e íconos de la app instalada (íconos en assets/iconos/)

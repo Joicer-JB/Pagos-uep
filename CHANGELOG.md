@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## Octubre 2026 — 🔍 Buscador inteligente
+
+- Botón **🔍 Buscar** en la cabecera, barra en Inicio, **Ctrl+K** o **/**. Encuentra estudiantes (nombre, cédula,
+  teléfono o representante, con su deuda y botones para cobrar, ver su estado de cuenta o su ficha), recibos (número o
+  referencia) y trabajadores. Lleva a cualquier acción («cierre de caja», «nuevo gasto», «pagos viejos»…), y
+  responde preguntas: lo cobrado y gastado en un período, cómo vamos, quién debe (por grado), cuántos están al día,
+  inscripciones pendientes, nómina, cuentas por pagar, tasa de un día y **qué hizo cada quien** (cobros, ingresos,
+  gastos y borrados, con la hora). Cada rol ve solo lo suyo: la secretaria, lo de un día y sus pestañas.
+
 ## Octubre 2026 — Pagos viejos en lote, recaudo del día y diseño
 
 - **⚡ Pagos viejos** (💰 Pagos): para ponerse al día con lo cobrado y no registrado (como las inscripciones de
