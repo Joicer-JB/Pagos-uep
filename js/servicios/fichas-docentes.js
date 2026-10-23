@@ -44,10 +44,10 @@ let _sincronizando = null;
 let _repetirSincronizacion = false;
 let _esperaFichas = null;
 
-// Pone al día las fichas de los docentes con la lista de estudiantes en memoria. Solo director y administradora,
-// y solo en el año actual. Si falla (sin internet, reglas viejas), lo intentará en el próximo cambio.
+// Pone al día las fichas de los docentes con la lista de estudiantes en memoria. Solo el director (es quien
+// edita estudiantes), y solo en el año actual. Si falla (sin internet, reglas viejas), lo intentará en el próximo cambio.
 async function sincronizarFichasDocentes() {
-  if (!rolUsuario || rolUsuario === "docente" || soloLectura()) return;
+  if (rolUsuario !== "director" || soloLectura()) return;
   if (_sincronizando) {
     _repetirSincronizacion = true; // llegó otro cambio mientras escribía: se repite al terminar
     return _sincronizando;

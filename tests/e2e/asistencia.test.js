@@ -17,7 +17,7 @@ before(async () => {
   s = await nav.nuevaPagina();
   await s.pagina.goto(nav.base);
   await s.pagina.waitForSelector("#l-email");
-  await s.pagina.fill("#l-email", "josefajsanquez@gmail.com");
+  await s.pagina.fill("#l-email", "herrerajoicer@gmail.com");
   await s.pagina.fill("#l-pwd", "prueba123");
   await s.pagina.click("#login-btn");
   await s.pagina.waitForSelector(".tabs .tab");
@@ -45,7 +45,7 @@ test("se marca el día y se guarda: estado de cada uno, horas y motivo", async (
     trab2: { estado: "falta", nota: "No avisó" },
     trabH: { estado: "presente", horas: 4 },
   });
-  assert.equal(d.actualizadoPor, "josefajsanquez@gmail.com");
+  assert.equal(d.actualizadoPor, "herrerajoicer@gmail.com");
 });
 
 test("otro día: «los demás, presentes», las horas y el resumen del mes", async () => {

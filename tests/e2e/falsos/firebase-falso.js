@@ -345,6 +345,12 @@
     runTransaction,
     enablePersistence: async () => {},
     waitForPendingWrites: () => confirmacion(),
+    // Al salir en un equipo compartido la app borra la copia local: aquí solo se anota
+    // (en sessionStorage, porque después la app vuelve a abrir la página)
+    terminate: async () =>
+      sessionStorage.setItem("__LIMPIEZA__", (sessionStorage.getItem("__LIMPIEZA__") || "") + "terminate,"),
+    clearPersistence: async () =>
+      sessionStorage.setItem("__LIMPIEZA__", (sessionStorage.getItem("__LIMPIEZA__") || "") + "clearPersistence,"),
   };
 
   // ---------- Autenticación ----------
@@ -384,6 +390,9 @@
         actual = null;
         avisar();
       },
+      async setPersistence(tipo) {
+        window.__PERSISTENCIA__ = tipo;
+      },
     };
   }
 
@@ -413,7 +422,18 @@
     apps,
     initializeApp,
     app: (nombre = "[DEFAULT]") => apps.find((a) => a.name === nombre),
-    auth: () => apps[0].auth(),
+    auth: Object.assign(() => apps[0].auth(), { Auth: { Persistence: { LOCAL: "local", SESSION: "session" } } }),
     firestore,
+    // App Check: en las pruebas no hay reCAPTCHA; se anota con qué clave se activó
+    appCheck: Object.assign(
+      () => ({
+        activate: (proveedor, auto) => (window.__APP_CHECK__ = { clave: proveedor.clave, auto }),
+      }),
+      {
+        ReCaptchaV3Provider: function (clave) {
+          this.clave = clave;
+        },
+      }
+    ),
   };
 })();

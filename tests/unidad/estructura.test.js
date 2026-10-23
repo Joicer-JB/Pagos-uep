@@ -53,6 +53,8 @@ test("todos los archivos se cargan sin errores en el orden de index.html", () =>
     document: { addEventListener: nada, getElementById: () => null, createElement: () => elemento, body: elemento },
     window: { addEventListener: nada },
     navigator: { onLine: true },
+    location: { hostname: "localhost" },
+    setInterval: nada,
     localStorage: { getItem: () => null, setItem: nada },
     firebase: {
       initializeApp: nada,
@@ -85,7 +87,6 @@ test("las bibliotecas de jsDelivr tienen versión exacta y su huella coincide co
     ...html.matchAll(/<script\s+src="(https:\/\/cdn\.jsdelivr\.net\/npm\/[^"]+)"\s+integrity="([^"]+)"/g),
   ];
   const esperado = {
-    "@emailjs/browser@4.4.1/dist/email.min.js": "@emailjs/browser/dist/email.min.js",
     "@e965/xlsx@0.20.3/dist/xlsx.full.min.js": "xlsx/dist/xlsx.full.min.js", // SheetJS 0.20.3 publicado en npm por e965
     "chart.js@4.4.1/dist/chart.umd.js": "chart.js/dist/chart.umd.js",
   };

@@ -6,13 +6,13 @@ const js = require("@eslint/js");
 const globals = require("globals");
 
 module.exports = [
-  { ignores: ["node_modules/**", "js/logo.js"] },
+  { ignores: ["**/node_modules/**", "js/logo.js"] },
   {
     files: ["js/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
-      globals: { ...globals.browser, firebase: "readonly", emailjs: "readonly", XLSX: "readonly", Chart: "readonly" },
+      globals: { ...globals.browser, firebase: "readonly", XLSX: "readonly", Chart: "readonly" },
     },
     rules: {
       ...js.configs.recommended.rules,
@@ -24,7 +24,7 @@ module.exports = [
     },
   },
   {
-    files: ["tests/**/*.js", "eslint.config.js"],
+    files: ["tests/**/*.js", "herramientas/**/*.js", "eslint.config.js"],
     languageOptions: { ecmaVersion: 2022, sourceType: "commonjs", globals: { ...globals.node, ...globals.browser } },
     rules: {
       ...js.configs.recommended.rules,

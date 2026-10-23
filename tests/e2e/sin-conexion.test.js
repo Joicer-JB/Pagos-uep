@@ -105,7 +105,7 @@ test("al registrar un pago sin internet, la animación avisa que el recibo es pr
 });
 
 test("sin internet, guardar un gasto no se queda «guardando»", async () => {
-  const s = await entrar();
+  const s = await entrar("herrerajoicer@gmail.com");
   await s.contexto.setOffline(true);
   await s.llamar(`setTab("finanzas"); abrirModal({ tipo: "nuevo-finanza", subtipo: "gasto" })`);
   await s.pagina.fill("#fin-desc", "Agua potable");

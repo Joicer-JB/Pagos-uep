@@ -421,6 +421,7 @@ function renderConfigAnio() {
     <button class="btn btn-primary" onclick="iniciarNuevoAnio()">📅 Cerrar año e iniciar el nuevo</button>
     <button class="btn btn-gray btn-sm" onclick="descargarRespaldo()">💾 Descargar respaldo ahora</button>
   </div>
+  ${htmlRespaldoAutomatico()}
   ${renderPromocion()}
   ${
     hist.length

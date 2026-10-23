@@ -1,6 +1,12 @@
 # Guía de la administradora
 
-Tareas del día a día: tasa BCV, cobros, pagos, cobranza, estudiantes, gastos y nómina.
+Tareas del día a día: tasa BCV, cobros y pagos.
+
+Tu usuario entra a **🏠 Inicio**, **💳 Caja** y **💰 Pagos**: todo lo necesario para cobrar y atender a los
+representantes. Puedes cobrar e imprimir o reenviar recibos, pero **no modificar nada**: estudiantes, mensualidades,
+exoneraciones, recargos, gastos, nómina y configuración los maneja el director (ver
+[Lo que hace el director](#lo-que-hace-el-director)). En **Inicio** ves lo cobrado hoy por método, los estudiantes
+con deuda (tócalos para cobrarles en la Caja) y los últimos pagos.
 
 ## Cada día: la tasa BCV
 
@@ -9,6 +15,9 @@ aviso amarillo.
 
 1. **🔄 Traer del BCV** la busca en internet. **Verifícala en bcv.org.ve** antes de guardar.
 2. **💾 Guardar tasa.** Queda guardada para todos los usuarios.
+
+Si la tasa de hoy **ya está cargada** (la cargó el director, o tú más temprano), el botón 💱 solo la muestra. Si no
+es la correcta, avísale al director: **solo él puede corregir una tasa ya guardada**.
 
 Todos los montos están en **$ de referencia**. Cada pago guarda la tasa de su día y su valor en Bs.
 
@@ -90,8 +99,8 @@ Si se va el internet puedes **seguir cobrando**. Abajo aparece el aviso **«📴
 - Al volver la conexión aparece **«🔄 Subiendo los cambios…»** y luego **«✅ Todo está al día»**. Cada recibo
   provisional recibe solo su número correlativo (`FAC-…`). Si imprimes o reenvías el recibo después, ya sale con
   el número definitivo.
-- Ingresos, gastos y cambios de estudiantes también se guardan y se suben solos.
-- Lo único que necesita internet es borrar un recibo que descontó deuda anterior (eso lo hace el director).
+- **No cierres la sesión sin internet** si cobraste sin conexión: la app no te deja salir hasta que esos cobros se
+  suban (si no, se perderían al borrar la copia del equipo). Espera el aviso «✅ Todo está al día».
 - La **primera vez** que entras en un equipo sí necesitas internet. Después, la app abre aunque no haya conexión.
 
 ## Recibo «2 por hoja» (original y copia)
@@ -126,11 +135,34 @@ referencia ya está en otro recibo del año la app lo avisa antes de cobrar («y
 fecha»). Basta con que coincidan las últimas 6 cifras. En «Nuevo pago», con transferencia o punto, se escribe la
 referencia.
 
+- Arriba ves el **recaudo total de hoy**: cuánto se cobró hoy, cuántos recibos y cuánto por cada forma de pago
+  (el recaudo acumulado lo ve el director).
 - **➕ Nuevo Pago:** busca al estudiante por cédula, elige el concepto, el mes y el método, y escribe el
   total.
 - En la lista, toca un pago para ver el recibo, imprimirlo o enviarlo por WhatsApp.
 - Un pago registrado **no se puede modificar**. Si hay un error, pídele al director que lo borre y
   regístralo de nuevo.
+
+## ⚡ Pagos viejos: registrar muchos de una vez
+
+Si hay pagos que ya se cobraron y no se registraron (por ejemplo, las **inscripciones de septiembre**), usa
+**💰 Pagos → ⚡ Pagos viejos** en vez de hacerlos uno por uno:
+
+1. Elige qué vas a registrar: **🎓 Inscripciones** (con el primer mes, como en la Caja) o **📅 Mensualidad** de un mes.
+2. Pon la **fecha del pago** y la **forma de pago**. Debajo de la fecha ves la tasa BCV de ese día; si falta,
+   cárgala con 💱.
+3. Sale la lista de **quienes deben eso**, por grado. Busca por nombre, cédula o representante, o filtra por grado.
+4. **Marca a cada uno que pagó.** Si pagó otro día, con otra forma de pago o menos de lo que debía, cámbialo en su
+   renglón (si pagó menos, queda como abono). La fecha y la forma de pago que pongas se usan en el siguiente que
+   marques.
+5. Abajo ves cuántos marcaste y el total. Pulsa **💾 Registrar**: cada uno queda con **su recibo**, su fecha y la tasa
+   de ese día. Al final sale la lista de recibos, que puedes imprimir.
+
+Lo que marcas se queda guardado en la computadora hasta que lo registres, por si se cierra la página. Antes de
+registrar, la app revisa que no falten tasas, que nadie pague más de lo que debe y que no se repitan referencias.
+
+Para las **transferencias**, también puedes hacerlo desde el estado de cuenta del banco: el director lo sube en
+📒 Finanzas → 🏦 Conciliación, y lo que entró y nadie registró se registra desde ahí.
 
 ## Registrar un pago viejo (con otra fecha)
 
@@ -142,9 +174,7 @@ Pago**:
    - ⚠️ si ese día no tiene tasa (fin de semana o feriado), con la del último día que sí tenía, y te avisa;
    - si no hay ninguna tasa cercana, queda vacío: búscala en bcv.org.ve y escríbela. Quedará guardada para
      ese día.
-2. **Si la tasa no es la correcta, escribe la correcta.** Ese pago usará la que escribiste. Debajo aparece la
-   casilla **«Corregir también la tasa guardada de ese día (para todos)»**: márcala solo si la tasa guardada
-   estaba mal, así los demás pagos y reportes de ese día la usarán también.
+2. Si ese día **ya tiene tasa guardada**, el campo no se puede cambiar. Si crees que está mal, avísale al director.
 3. Si la fecha es de un **año escolar anterior**, la app te pide confirmar: el pago quedará en el historial de
    ese año y no aparecerá en las listas del año actual. No se aceptan fechas futuras.
 
@@ -171,162 +201,30 @@ Si sale el aviso **«La estructura de costos del año no está guardada»**, el 
 que pagó. Los meses marcados (septiembre, por ejemplo) se descuentan primero y lo demás queda como inscripción. Para
 que el monto se llene solo, el director debe guardar la estructura en 🔔 Cobranza → ⚙️ Cuotas del año.
 
-Lo mismo funciona en 📒 Finanzas (ingresos y gastos) y en 👷 Nómina. Para revisar o corregir las tasas de varios
-días también puedes usar el botón 💱 de la cabecera.
+## Lo que hace el director
 
-### Cargar de una vez las tasas de muchos días (Excel del BCV)
+Pídeselo al director cuando haga falta:
 
-Si vas a registrar pagos de días en que nadie cargó la tasa, cárgalas todas de una vez:
+- **Registrar o corregir un estudiante** (datos, teléfono, mensualidad, grado, retiro).
+- **Exoneraciones**: «no paga recargo», «no paga inscripción», perdonar el recargo de un mes, deuda anterior.
+- **Borrar un recibo** que salió mal (luego lo cobras de nuevo).
+- **Corregir una tasa BCV** ya guardada.
+- **Cobranza por WhatsApp**, ingresos y gastos, nómina, reportes y configuración.
 
-1. En [bcv.org.ve](https://www.bcv.org.ve) → **Estadísticas → Tipo de cambio de referencia**, descarga el
-   Excel del trimestre que necesitas (tiene una hoja por día).
-2. En la plataforma, botón 💱 de la cabecera → **📥 Tasas de días anteriores** → elige ese archivo.
-3. La app muestra cuántas tasas encontró: **nuevas** (días sin tasa), **iguales** a las guardadas y
-   **distintas**. Compara uno o dos días con la página del BCV.
-4. Pulsa **💾 Guardar tasas del archivo**. Se guardan las nuevas; las distintas solo si marcas
-   «Reemplazar también…».
+## Tu computadora (puede usarla otra persona)
 
-También sirve un Excel o CSV sencillo con dos columnas: **fecha** y **tasa**.
+Para que nadie vea los datos del colegio en tu computadora:
 
-## 🔔 Cobranza
-
-- **Con deuda / Sin pago reciente / Todos:** quién debe, cuánto y desde cuándo.
-- **WhatsApp:** envía el recordatorio con el monto en $ y en Bs.
-- **Correo:** envía el comprobante de cobranza al representante, si tiene correo cargado.
-- ✏️ junto al teléfono o al correo los corrige en el momento.
-- **🖨️ Imprimir** genera el listado de cobranza.
-
-## 👨‍🎓 Estudiantes
-
-- Toca un estudiante para ver su ficha y su **estado de cuenta** cuota por cuota. Si un mes tiene recargo, dice
-  cuándo se pagó («+ recargo $ 5,00 (pagada el 20/09/2026)»).
-- **Recargo por mora:** se cobra una vez por cada mes pagado después de su vencimiento. El primer mes pagado
-  **junto con la inscripción** (el mismo día) no tiene recargo, aunque se inscriba después del día de vencimiento.
-- **Editar:** datos personales, representante, mensualidad, deuda anterior manual o exoneración del
-  recargo.
-- Desde la ficha: **Registrar pago**, **🖨️ Constancia de estudio** y **🧾 Estado de cuenta**: una hoja con las cuotas
-  del año (pagadas, vencidas y por vencer), la inscripción, los recargos, la deuda anterior, los recibos del año y el
-  **total a pagar hoy** en $ y Bs. Desde el teléfono, **📤 Compartir** la manda como imagen. El botón **💬** envía el
-  mismo resumen por WhatsApp al representante.
-
-## 📒 Finanzas y 👷 Nómina
-
-- **Finanzas:** registra ingresos y gastos en $ o en Bs., con la tasa del día. **Flujo de caja**
-  muestra el año mes a mes y se puede imprimir.
-- **📒 Libro:** el libro de ingresos y egresos del mes (o, marcando la casilla, del año) para el contador: cada cobro
-  (un renglón por recibo), ingreso y gasto en orden de fecha, con su documento (FAC-…, NOM-…), en $ y en Bs. a la
-  tasa de cada operación y con el saldo. Abajo, el total por categoría. **📥 Excel** lo descarga (hojas «Libro» y
-  «Resumen»); **🖨️ Imprimir**, en hoja horizontal.
-- **🧾 Por pagar:** anota lo que el colegio tiene que pagar (luz, agua, alquiler, proveedores, impuestos) con su
-  monto en $ o Bs. y la fecha en que vence; si se repite cada mes, márcalo. Arriba ves lo vencido, lo que vence en 7
-  días y el total. **✓ Pagar** abre el gasto ya lleno: al guardarlo, la cuenta queda pagada y, si es de cada mes,
-  se anota sola la del mes siguiente. En **Inicio** sale el aviso de lo vencido y de lo que vence esta semana.
-- **🏦 Conciliación:** descarga del banco el estado de cuenta y súbelo. Sirve **Excel** (.xlsx o .xls, también los
-  .xls que en realidad son una página), **CSV** (con coma, punto y coma o tabulador) y **TXT** en columnas. La app
-  busca sola la fila de títulos y las columnas, aunque cada banco las llame distinto: fecha (o fecha valor u
-  operación), referencia (o número de documento o comprobante), descripción o concepto, y el dinero en columnas de
-  **débito y crédito**, en **una columna con signo** (los cargos en negativo, entre paréntesis o con «D» al final) o
-  con una columna de **tipo** (C/D, NC/ND, crédito/débito). Si la referencia viene dentro de la descripción
-  («PAGO MOVIL … REF 445566»), también la toma, sin confundirla con un teléfono. Las fechas pueden venir como
-  07/10/2026, 07-OCT-2026 o 7 de octubre de 2026. Las filas de saldo inicial o de totales no se cuentan. Si alguna
-  columna no la reconoce, elígela en **⚙️ Columnas**: la app **recuerda el formato de ese banco** en este equipo para
-  la próxima vez. Si el Excel trae varias hojas, eliges la hoja. Compara cada abono con los cobros por
-  **transferencia o pago móvil** y te dice:
-  - **❓ Entró al banco y no está registrado:** dinero que llegó y no aparece en ningún recibo. **➕ Registrar** abre
-    «Nuevo pago» con la fecha, la referencia y el monto (pasado a $ con la tasa de ese día); solo falta el
-    estudiante y el concepto.
-  - **⚠️ La referencia coincide pero el monto no**, y **⚠️ Registrado y no aparece en el banco** (referencia mal
-    escrita o pago que no llegó).
-  - **🟡 Coinciden por monto y fecha** (sin la misma referencia: confírmalos) y **✅ Conciliados**.
-  - **Referencias repetidas** en los recibos (la misma transferencia en dos recibos).
-
-  Los cobros por **punto de venta** no se comparan uno por uno: el banco los abona juntos al cerrar el lote.
-
-- **Nómina:** ver abajo.
-
-## 👷 Nómina
-
-**Ficha del trabajador** (➕ Nuevo o ✏️):
-
-- **Datos personales:** cédula, RIF (se escribe como V-12345678-9), teléfono, fecha de ingreso a la escuela (la ficha
-  dice cuántos años lleva), cargo o funciones y **títulos obtenidos** (uno por línea).
-- **💼 Sueldo fijo:** salario base **mensual**, bonos mensuales, una **deducción fija mensual** (por ejemplo caja de
-  ahorro o IVSS, con su nombre) y **cómo se le paga**: por quincenas (la mitad en cada una) o una vez al mes. Si solo
-  trabaja por horas, deja el salario vacío.
-- **⏱️ Horas de clase:** para los profesores que cobran por hora (todos los de Media general) y para quien tiene un
-  cargo fijo y además da horas (por ejemplo, la coordinadora de Primaria que en la tarde da clases en Media general:
-  sueldo fijo **y** horas, en la misma ficha). Toca **+ Agregar horas de clase**, elige el nivel, las **horas que da al
-  mes** y **lo que vale la hora**: Media general sale en $ 2,50 y Primaria en $ 2,00, y se puede cambiar. Cada nivel
-  va con su tarifa: el profesor de deporte lleva una fila de Primaria a $ 2,00 y otra de Media general a $ 2,50.
-- **📚 Clases que da:** toca **+ Agregar clase**. En Inicial y Primaria basta marcar el grado (sin materia: es el
-  docente de aula). En Media general, una fila por materia: escribe la materia, marca los años, los días y la hora de
-  inicio y de salida; si el horario cambia de un año a otro, agrega otra fila. Para Deporte o Inglés usa **🏫 Todo el
-  colegio** (o los botones Inicial, Primaria y Media general, que marcan o desmarcan el nivel completo).
-- **🏦 Cuentas para pagarle:** hasta dos (la primera es la principal): número de cuenta de 20 dígitos (el banco se
-  llena solo con los 4 primeros) o el teléfono del **pago móvil**, tipo y, si la cuenta es de otra persona, su
-  titular y cédula. La app avisa si a la cuenta le faltan dígitos o si no es del banco escrito.
-
-Si alguien deja de trabajar, edítalo y marca «Ya no trabaja aquí»: se conserva su historial. En la lista, cada uno
-dice si es de **sueldo fijo**, **por horas** o **fijo + horas**.
-
-**📜 Constancia de trabajo:** en la ficha del trabajador toca **📜 Constancia**. Eliges a quién va dirigida («A quien
-pueda interesar»), el tratamiento (la ciudadana, el ciudadano o el(la) ciudadano(a)), el cargo que dirá, el salario
-(completo con bonos y horas, sin bonos, o sin salario) y la moneda (bolívares a la tasa BCV del día, con su
-equivalente en $, o solo una de las dos). El monto sale también en letras. La firma la directora: su nombre, su
-cédula y el RIF del plantel se ponen una sola vez en ⚙️ Configuración → 🏫 Institución (si faltan, sale una línea
-para escribirlos a mano). Para alguien que ya no trabaja aquí, dice «prestó sus servicios desde… hasta…».
-
-**🗓️ Asistencia** (pestaña de Nómina): elige el día y marca a cada uno: **P** presente, **R** retardo, **F** falta,
-**J** falta justificada o **Pm** permiso o reposo (tocar otra vez lo quita). A quien trabaja por horas, escribe las
-horas que dio ese día; a quien faltó, el motivo si quieres. **✓ Los demás, presentes** marca a todos los que faltan
-por marcar. Toca **💾 Guardar el día**. Abajo está el resumen del mes por trabajador, y **🖨️ Imprimir el mes** saca la
-planilla con cada día. Al **pagar la quincena** aparece su asistencia en ese período (faltas con el día y horas
-registradas). Si da horas de un solo nivel, **Usar … h** pone esas horas en el pago (lo decides tú). Las faltas no
-se descuentan solas: si corresponde, ponlo en «Otro descuento».
-
-**📚 Clases** (pestaña de Nómina): cada grado y año con su docente de aula, las materias, quién las da y a qué hora.
-Avisa los **choques de horario** (un profesor en dos clases a la vez, o un año con dos materias a la misma hora), los
-grados **sin docente** y, en Media general, las materias del año (Configuración → Materias) que nadie da. Con
-**🖨️ Imprimir** sale la lista completa.
-
-**📎 Documentos (certificado de salud, título, cédula, RIF):** en la ficha del trabajador (toca su nombre), en
-**Documentos**, elige cuál es, la **fecha en que vence** (el certificado de salud), toma la foto o elige el PDF y toca
-**📎 Adjuntar**. Con **🖨️ Ver** lo abres para imprimirlo cuando lo necesites. Las fotos se achican solas; un PDF
-puede pesar hasta 4 MB. Si el certificado de salud está **vencido** o vence en menos de 30 días, sale un aviso arriba
-de la lista del personal y en la ficha. **📄 Ficha** imprime todos sus datos, sueldo, cuentas y documentos.
-
-**💳 Pagar nómina:**
-
-1. Elige el trabajador y el período: **1ra quincena**, **2da quincena** o **mes completo**, y el mes. Se llenan solos
-   el salario y los bonos de ese período (la mitad si es una quincena). Si da **horas de clase**, aparecen sus horas
-   de la quincena (la mitad de las del mes): **cámbialas por las que trabajó** (si faltó o dio horas de más) y el
-   monto se calcula solo. Elige también **a qué cuenta** se le paga: sale en el recibo.
-2. En **Deducciones** aparecen solas la deducción fija, los **adelantos** que tiene por descontar y la **cuota de cada
-   préstamo**. Puedes cambiar un monto o desmarcar una deducción (por ejemplo, no cobrar la cuota esta quincena), y
-   agregar otro descuento con su motivo (por ejemplo, una inasistencia).
-3. Revisa el **neto a entregar** (en $ y en Bs.), elige si se paga en Bs. o en $ efectivo y registra. Sale el recibo
-   con asignaciones, deducciones y neto, para firmar.
-4. Si ese período ya se le pagó, la app te avisa antes de registrarlo otra vez.
-
-**💸 Adelanto:** cuando le das dinero antes de su quincena. Elige a cuenta de qué período es: la app te dice cuánto le
-corresponde y cuánto ya se le adelantó. Al pagarle ese período, el adelanto se descuenta solo.
-
-**🤝 Préstamo:** cuando le prestas dinero. Escribe el monto y la **cuota por pago**: la app dice en cuántos pagos se
-salda, y la cuota se descuenta sola en cada pago de nómina hasta pagarlo. En su ficha ves cuánto debe.
-
-**📅 Nómina del mes:** elige el mes y ves, por trabajador, cuánto gana, cuánto se le pagó, qué quincena falta, lo
-que debe y un botón para pagar lo que sigue. Arriba: la nómina del mes, lo ya pagado, lo que falta y el dinero
-entregado en el mes (adelantos, pagos y préstamos).
-
-Si se borra un pago (director), los adelantos y cuotas que descontaba vuelven a quedar pendientes. Cada recibo
-tiene un número fijo (NOM-…), así sale igual al reimprimirlo.
-
-**Recibos «2 por hoja»:** marca **🖨️ Imprimir 2 por hoja (original y copia)** (debajo de los botones de Nómina, o
-en el formulario de pago) y los recibos de nómina salen con el original y la copia en una hoja carta, para que el
-trabajador se lleve uno y el otro, firmado, quede en el archivo. Sin marcar, salen como siempre.
+- **Pulsa «Salir» al terminar.** Al salir, la app borra de la computadora la copia de los datos que guarda para
+  trabajar sin internet.
+- Si **cierras el navegador**, la sesión también se cierra: la próxima vez hay que entrar con la contraseña.
+- Si pasan **30 minutos sin usarla**, la sesión se cierra sola (nunca a mitad de un cobro). Al volver, la pantalla
+  de entrada lo explica.
+- No guardes tu contraseña en el navegador si otra persona usa esa computadora.
 
 ## Si algo no funciona
 
 - **«Falta la tasa BCV»:** cárgala con 💱.
 - **«Sin permiso» o «Missing or insufficient permissions»:** esa acción es solo del director.
+- **No te deja salir («hay cobros hechos sin conexión»):** espera a que vuelva el internet y se suban.
 - **No ves los cambios:** recarga la página con Ctrl+Shift+R.

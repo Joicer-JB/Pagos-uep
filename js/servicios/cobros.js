@@ -23,24 +23,30 @@ const facturaProvisional = () =>
 const esSinConexion = (err) =>
   !navigator.onLine || (err && (err.code === "unavailable" || err.code === "deadline-exceeded"));
 
-// Descuenta la deuda anterior del estudiante `e` (sus datos) de los pagos `listos` que la aplican.
-// Anota en cada pago cuánto descontó y devuelve los cambios para el estudiante (o null).
-function descontarDeudaAnterior(e, listos, aplicaDeuda) {
+// Descuenta la deuda anterior del estudiante `e` (sus datos) de los pagos `listos` que la aplican (ids: los id que
+// tendrán esos pagos). Anota en cada pago cuánto descontó y devuelve los cambios para el estudiante (o null).
+// El estudiante queda apuntando al primer pago que descontó (ultimoCobro), y ese pago dice cuánto bajó la deuda en
+// total (deudaCobro): así las reglas de Firestore comprueban que la administradora solo baja una deuda cobrándola.
+function descontarDeudaAnterior(e, listos, aplicaDeuda, ids) {
   if (!(e && e.estado === "mora" && e.moraMonto > 0)) return null;
-  let resto = r2(e.moraMonto);
-  listos.forEach((d) => {
+  let resto = r2(e.moraMonto),
+    primero = -1;
+  listos.forEach((d, i) => {
     if (resto <= 0 || !aplicaDeuda(d)) return;
     const aplicada = r2(Math.min(resto, d.total));
     if (aplicada <= 0) return;
     d.deudaAplicada = aplicada;
     d.deudaConcepto = e.moraConcepto || "";
     resto = r2(resto - aplicada);
+    if (primero < 0) primero = i;
   });
-  if (resto === r2(e.moraMonto)) return null;
+  if (primero < 0) return null;
+  listos[primero].deudaCobro = r2(e.moraMonto - resto);
   return {
     moraMonto: resto,
     estado: resto <= 0 ? "alsaldo" : "mora",
     moraConcepto: resto <= 0 ? "" : e.moraConcepto || "",
+    ultimoCobro: ids[primero],
   };
 }
 
@@ -73,13 +79,18 @@ async function registrarCobroEnLinea(docs, { estId, aplicaDeuda }) {
       }
 
       const listos = docs.map((d) => ({ ...d, factura, registradoPor: correoUsuario() }));
-      const cambiosEst = descontarDeudaAnterior(est && est.exists ? est.data() : null, listos, aplicaDeuda);
-      if (cambiosEst) tx.update(estRef, cambiosEst);
-      const guardados = listos.map((d) => {
-        const ref = db.collection("pagos").doc();
-        tx.set(ref, { ...d, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-        return { ...d, id: ref.id };
+      const refs = listos.map(() => db.collection("pagos").doc());
+      const cambiosEst = descontarDeudaAnterior(
+        est && est.exists ? est.data() : null,
+        listos,
+        aplicaDeuda,
+        refs.map((r) => r.id)
+      );
+      const guardados = listos.map((d, i) => {
+        tx.set(refs[i], { ...d, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+        return { ...d, id: refs[i].id };
       });
+      if (cambiosEst) tx.update(estRef, cambiosEst);
       return { factura, guardados, estudiante: cambiosEst, provisional: false };
     });
 
@@ -101,18 +112,19 @@ async function registrarCobroEnLinea(docs, { estId, aplicaDeuda }) {
 async function registrarCobroSinConexion(docs, { estId, aplicaDeuda }) {
   const factura = facturaProvisional();
   const listos = docs.map((d) => ({ ...d, factura, pendiente: true, registradoPor: correoUsuario() }));
+  const refs = listos.map(() => db.collection("pagos").doc());
   const cambiosEst = descontarDeudaAnterior(
     estudiantes.find((x) => x.id === estId),
     listos,
-    aplicaDeuda
+    aplicaDeuda,
+    refs.map((r) => r.id)
   );
   const lote = db.batch();
-  if (cambiosEst) lote.update(db.collection("estudiantes").doc(estId), cambiosEst);
-  const guardados = listos.map((d) => {
-    const ref = db.collection("pagos").doc();
-    lote.set(ref, { ...d, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-    return { ...d, id: ref.id };
+  const guardados = listos.map((d, i) => {
+    lote.set(refs[i], { ...d, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    return { ...d, id: refs[i].id };
   });
+  if (cambiosEst) lote.update(db.collection("estudiantes").doc(estId), cambiosEst);
   await lote.commit(); // sin conexión no espera al servidor (ver conexion.js)
   return { factura, guardados, estudiante: cambiosEst, provisional: true };
 }

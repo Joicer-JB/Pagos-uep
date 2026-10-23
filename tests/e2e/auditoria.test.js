@@ -49,7 +49,7 @@ test("cada cobro guarda quién lo registró, y se ve en la lista de pagos y en e
 });
 
 test("los ingresos y gastos también guardan quién los registró", async () => {
-  const s = await entrar(ADMIN);
+  const s = await entrar(DIRECTOR);
   await s.llamar(`setTab("finanzas"); abrirModal({ tipo: "nuevo-finanza", subtipo: "gasto" })`);
   await s.pagina.fill("#fin-desc", "Papel para la impresora");
   await s.pagina.fill("#fin-monto", "12");
@@ -57,10 +57,10 @@ test("los ingresos y gastos también guardan quién los registró", async () => 
   await s.pagina.waitForTimeout(150);
   const w = await s.escrituras("finanzas/");
   assert.equal(w.length, 1, JSON.stringify(s.dialogos));
-  assert.equal(w[0].datos.registradoPor, ADMIN);
+  assert.equal(w[0].datos.registradoPor, DIRECTOR);
   const id = w[0].ruta.split("/")[1];
   await s.llamar(`abrirModal({ tipo: "ver-finanza", id: ${JSON.stringify(id)} })`);
-  assert.match(await s.pagina.textContent(".modal"), /Registrado por\s*Administradora/);
+  assert.match(await s.pagina.textContent(".modal"), /Registrado por\s*Director/);
 });
 
 test("borrar un recibo deja una copia en la bitácora, en el mismo lote que el borrado", async () => {

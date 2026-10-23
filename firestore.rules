@@ -23,6 +23,11 @@ rules_version = '2';
 //   7. (Octubre 2026) Documentos del personal: "documentos_trabajadores" (solo director y administradora).
 //   8. (Octubre 2026) Cuentas por pagar: "cuentas_pagar" (solo director y administradora).
 //   9. (Octubre 2026) Asistencia del personal: "asistencia_personal" (solo director y administradora).
+//  10. (Octubre 2026) La administradora solo cobra: lee estudiantes y pagos, registra cobros y carga la tasa BCV de
+//      un día que no la tenga. Todo lo demás (editar estudiantes y exoneraciones, finanzas, nómina, cuentas por
+//      pagar, asistencia, notas, configuración) solo lo ve y lo modifica el director. Un ingreso o gasto ya
+//      registrado no se modifica (como los recibos). Al cobrar, la deuda anterior del estudiante solo puede bajar, y
+//      el estudiante queda apuntando al recibo con que se cobró (ultimoCobro).
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -62,32 +67,53 @@ service cloud.firestore {
     }
     match /bitacora/{id} {
       allow read:   if isDirector();
-      allow create: if isStaff()
+      allow create: if isDirector()
         && request.resource.data.por == mail()
         && id == request.resource.data.coleccion + '_' + request.resource.data.docId;
       allow update, delete: if false;
     }
 
     // ───────────── Estudiantes ─────────────
-    // Director y administradora registran y editan (al cobrar se actualiza la deuda del estudiante).
+    // Solo el director registra y edita (mensualidad, exoneraciones, recargos perdonados, deuda...). La
+    // administradora los lee para cobrar, y al cobrar baja la deuda anterior: solo esos campos, solo para bajarla, y
+    // con el recibo de ese cobro (nuevo, guardado en la misma operación, registrado por ella, de ese estudiante y
+    // dice cuánto bajó: deudaCobro).
     // Borrar: solo el director. Los docentes NO leen esta colección (tiene teléfonos, correo, deuda, mensualidad,
     // observaciones médicas...): leen sus fichas en "estudiantes_docentes".
+    function cobroBajaDeuda(id) {
+      let antes = resource.data;
+      let despues = request.resource.data;
+      let ruta = /databases/$(database)/documents/pagos/$(despues.get('ultimoCobro', '-'));
+      let recibo = getAfter(ruta);
+      return despues.diff(antes).affectedKeys().hasOnly(['moraMonto', 'estado', 'moraConcepto', 'ultimoCobro'])
+        && despues.moraMonto is number
+        && despues.moraMonto >= 0
+        && despues.moraMonto < antes.get('moraMonto', 0)
+        && despues.estado in ['mora', 'alsaldo']
+        && !exists(ruta)
+        && recibo != null
+        && recibo.data.get('estId', '') == id
+        && recibo.data.get('registradoPor', '') == mail()
+        && math.abs(recibo.data.get('deudaCobro', 0) - (antes.get('moraMonto', 0) - despues.moraMonto)) < 0.01;
+    }
     match /estudiantes/{id} {
-      allow read:           if isStaff();
-      allow create, update: if isStaff();
-      allow delete:         if isDirector() && conBitacora('estudiantes', id);
+      allow read:   if isStaff();
+      allow create: if isDirector();
+      allow update: if isDirector() || (isAdmin() && cobroBajaDeuda(id));
+      allow delete: if isDirector() && conBitacora('estudiantes', id);
     }
     // Fichas para docentes: copia de cada estudiante con solo lo necesario para notas y boletín.
-    // La mantiene la app de director y administradora; no acepta ningún otro campo.
+    // La mantiene la app del director; no acepta ningún otro campo.
     match /estudiantes_docentes/{id} {
       allow read:           if isStaff() || isDocente();
-      allow create, update: if isStaff() && request.resource.data.keys().hasOnly(
+      allow create, update: if isDirector() && request.resource.data.keys().hasOnly(
         ['nombre', 'cedula', 'fechaNac', 'grado', 'seccion', 'anioEscolar', 'acudiente', 'estado', 'graduado']);
-      allow delete:         if isStaff();
+      allow delete:         if isDirector();
     }
 
-    // ───────────── Dinero y personal: solo director y administradora ─────────────
-    // Pagos: se registran y se consultan, pero no se modifican. Borrar un recibo: solo el director.
+    // ───────────── Dinero y personal ─────────────
+    // Pagos: director y administradora los registran y consultan, pero no se modifican. Borrar un recibo: solo el
+    // director.
     // Única excepción: a un recibo cobrado sin conexión (pendiente) se le pone su número correlativo, en la misma
     // transacción que avanza el contador de recibos.
     function numeraPendiente() {
@@ -105,54 +131,54 @@ service cloud.firestore {
       allow update: if isStaff() && numeraPendiente();
       allow delete: if isDirector() && conBitacora('pagos', id);
     }
+    // Ingresos y gastos, nómina y personal: solo el director. Un ingreso o gasto registrado no se modifica: si está
+    // mal, se borra (queda en la bitácora) y se registra de nuevo.
     match /finanzas/{id} {
-      allow read:   if isStaff();
-      allow create: if isStaff() && firmado();
-      allow update: if isStaff()
-        && request.resource.data.get('registradoPor', '') == resource.data.get('registradoPor', '');
+      allow read:   if isDirector();
+      allow create: if isDirector() && firmado();
+      allow update: if false;
       allow delete: if isDirector() && conBitacora('finanzas', id);
     }
     match /trabajadores/{id} {
-      allow read, create, update: if isStaff();
-      allow delete:               if isDirector();
+      allow read, write: if isDirector();
     }
     // Documentos del personal (certificado de salud, título, cédula…), en trozos <adjunto>_<n>. No se modifican: se
     // adjunta otro y se quita el viejo.
     match /documentos_trabajadores/{id} {
-      allow read:   if isStaff();
-      allow create: if isStaff()
+      allow read:   if isDirector();
+      allow create: if isDirector()
         && request.resource.data.keys().hasOnly(['trabajadorId', 'adjuntoId', 'parte', 'partes', 'tipo', 'datos'])
         && request.resource.data.datos is string
         && id == request.resource.data.adjuntoId + '_' + string(request.resource.data.parte);
       allow update: if false;
-      allow delete: if isStaff();
+      allow delete: if isDirector();
     }
 
-    // Cuentas por pagar (servicios, alquiler, proveedores…): director y administradora las anotan, marcan como pagadas
-    // y borran. El dinero que sale se registra aparte, como gasto en "finanzas".
+    // Cuentas por pagar (servicios, alquiler, proveedores…): el director las anota, marca como pagadas y borra. El
+    // dinero que sale se registra aparte, como gasto en "finanzas".
     match /cuentas_pagar/{id} {
-      allow read, create, update, delete: if isStaff();
+      allow read, write: if isDirector();
     }
 
-    // Asistencia del personal: un documento por día (id = fecha). Solo director y administradora.
+    // Asistencia del personal: un documento por día (id = fecha). Solo el director.
     match /asistencia_personal/{fecha} {
-      allow read, write: if isStaff();
+      allow read, write: if isDirector();
     }
 
     // ───────────── Notas ─────────────
     // Los docentes cargan notas. Solo el director puede borrar (lo usa el cierre de año).
     match /notas/{id} {
-      allow read, create, update: if isStaff() || isDocente();
+      allow read, create, update: if isDirector() || isDocente();
       allow delete:               if isDirector();
     }
     match /notas_historial/{id} {
-      allow read:  if isStaff();
-      allow write: if isDirector();
+      allow read, write: if isDirector();
     }
 
     // ───────────── Configuración ─────────────
     // Todos los roles la leen (materias, indicadores, datos de la institución, tasa BCV...).
-    // La tasa BCV la puede cargar también la administradora; el resto de la configuración, solo el director.
+    // La administradora puede cargar la tasa BCV de un día que aún no la tenga (no cambiar ni borrar las guardadas);
+    // el resto de la configuración, solo el director.
     // El contador de recibos (config/contadores) lo usan director y administradora al cobrar: solo puede
     // avanzar de 1 en 1, así nadie puede retroceder o repetir números de recibo.
     function siguienteRecibo() {
@@ -160,10 +186,16 @@ service cloud.firestore {
         && request.resource.data.recibo is int
         && request.resource.data.recibo == (resource == null ? 0 : resource.data.get('recibo', 0)) + 1;
     }
+    function soloTasasNuevas() {
+      return resource == null
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tasas', 'actualizado'])
+          && request.resource.data.tasas.diff(resource.data.get('tasas', {})).changedKeys().size() == 0
+          && request.resource.data.tasas.diff(resource.data.get('tasas', {})).removedKeys().size() == 0);
+    }
     match /config/{docId} {
       allow read:  if isStaff() || isDocente();
       allow write: if isDirector()
-        || (docId == 'tasasBCV' && isStaff())
+        || (docId == 'tasasBCV' && isAdmin() && soloTasasNuevas())
         || (docId == 'contadores' && isStaff() && siguienteRecibo());
     }
 

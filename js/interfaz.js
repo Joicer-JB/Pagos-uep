@@ -28,13 +28,6 @@ ${eventoInstalar ? `<button class="logout-btn" style="margin-left:0.4rem" onclic
               ["dashboard", "🏠 Inicio"],
               ["caja", "💳 Caja"],
               ["pagos", "💰 Pagos"],
-              ["cobranza", "🔔 Cobranza"],
-              ["estudiantes", "👨‍🎓 Estudiantes"],
-              ["finanzas", "📒 Finanzas"],
-              ["nomina", "👷 Nómina"],
-              ["reportes", "📊 Reportes"],
-              ["graficas", "📈 Gráficas"],
-              ["notas", "📝 Notas"],
             ]
           : [
               ["dashboard", "🏠 Inicio"],
@@ -62,15 +55,24 @@ ${eventoInstalar ? `<button class="logout-btn" style="margin-left:0.4rem" onclic
 ${bannerTasa()}
 <div class="content" id="tab-content">${renderTab()}</div>
   ${modalActual ? renderModal() : ""}`;
+  // En el teléfono las pestañas no caben: la elegida queda a la vista
+  const pestanas = app.querySelector(".tabs"),
+    elegida = pestanas && pestanas.querySelector(".tab.active");
+  if (elegida) pestanas.scrollLeft = elegida.offsetLeft - (pestanas.clientWidth - elegida.offsetWidth) / 2;
   const rl = document.getElementById("rol-lbl");
   if (rl)
     rl.textContent =
       rolUsuario === "director" ? "👑 Director" : rolUsuario === "docente" ? "📝 Docente" : "✏️ Administradora";
   animarModalSiEsNuevo();
 }
-// Cambia de pestaña (los docentes solo pueden estar en Notas) y limpia los filtros
+// Pestañas y ventanas de cada rol que no es el director: los docentes solo Notas; la administradora cobra (Inicio,
+// Caja y Pagos) y no modifica nada más. Las reglas de Firestore lo exigen también (firestore.rules).
+const PESTANAS_ROL = { docente: ["notas"], administradora: ["dashboard", "caja", "pagos"] };
+const MODALES_ADMINISTRADORA = ["tasa", "recibo", "nuevo-pago"];
+const pestanaPermitida = (t) => !PESTANAS_ROL[rolUsuario] || PESTANAS_ROL[rolUsuario].includes(t);
+// Cambia de pestaña (cada rol solo entra a las suyas) y limpia los filtros
 function setTab(t) {
-  if (rolUsuario === "docente" && t !== "notas") return;
+  if (!pestanaPermitida(t)) return;
   tabActual = t;
   pagoPrefill = null;
   filtros = { busq: "", fecha: "", metodo: "", estado: "", lapso: LAPSOS[0], anio: String(anioActual()) };
@@ -80,7 +82,7 @@ function setTab(t) {
 }
 // HTML de la pestaña actual
 function renderTab() {
-  if (rolUsuario === "docente" && tabActual !== "notas") tabActual = "notas"; // los docentes solo ven Notas
+  if (!pestanaPermitida(tabActual)) tabActual = PESTANAS_ROL[rolUsuario][0];
   if (tabActual === "dashboard") return renderDashboard();
   if (tabActual === "caja") return renderCaja();
   if (tabActual === "pagos") return renderPagos();
@@ -152,6 +154,7 @@ function abrirModal(m) {
     alert("Estás viendo un año escolar anterior (solo consulta). Vuelve al año actual para registrar o editar.");
     return;
   }
+  if (m && rolUsuario === "administradora" && !MODALES_ADMINISTRADORA.includes(m.tipo)) return;
   modalActual = m;
   render();
   if (m && /-nomina$/.test(m.tipo || "")) prepararModalNomina(m); // llena lo que corresponde al trabajador elegido

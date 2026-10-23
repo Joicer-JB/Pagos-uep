@@ -48,10 +48,9 @@ test("el director perdona el recargo de un mes con su motivo, y queda anotado", 
   assert.deepEqual(s.errores, []);
 });
 
-test("la administradora ve el recargo pero no puede perdonarlo", async () => {
+test("la administradora no abre la ficha del estudiante ni puede perdonar el recargo", async () => {
   const s = await entrar("josefajsanquez@gmail.com");
-  assert.match(await s.pagina.textContent(".modal"), /\+ recargo \$ 5,00/);
-  assert.equal(await s.pagina.locator(".modal .recargo-accion").count(), 0);
+  assert.equal(await s.pagina.locator(".modal").count(), 0); // la ficha no se abre
   await s.pagina.evaluate(`perdonarRecargo("est6", "2026-09", "x")`);
   assert.equal(await recargo(s), 10);
   assert.match(s.dialogos.join("\n"), /Solo el director puede perdonar recargos/);

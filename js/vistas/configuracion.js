@@ -18,12 +18,14 @@ async function cargarConfig() {
     if (matSnap.exists) configMaterias = matSnap.data();
     if (indSnap.exists) configIndicadores = indSnap.data();
     if (rolUsuario === "director") {
-      const [docsSnap, respSnap] = await Promise.all([
+      const [docsSnap, respSnap, rqSnap] = await Promise.all([
         db.collection("usuarios").where("rol", "==", "docente").get(),
         db.collection("config").doc("respaldo").get(),
+        db.collection("config").doc("resumenQuincenal").get(),
       ]);
       configDocentes = docsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
       configRespaldo = respSnap.exists ? respSnap.data() : { ultimo: "" };
+      configResumenQ = rqSnap.exists ? rqSnap.data() : { visto: "" };
     }
   } catch (e) {
     console.error(e);

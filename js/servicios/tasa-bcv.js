@@ -48,8 +48,15 @@ const tasaHoy = () => tasaHoyValor() > 0;
 const aBs = (usd) => r2((usd || 0) * tasaHoyValor());
 // Monto en $ y, si hay tasa de hoy, también en Bs.: "$ 45,00 (Bs. 8.253,00)"
 const dual = (usd) => (tasaHoy() ? `${fmt(usd)} (${fmtBs(aBs(usd))})` : fmt(usd));
+// Una tasa ya guardada solo la corrige el director; la administradora puede cargar la de un día que no la tenga
+const puedeCorregirTasa = () => rolUsuario === "director";
+const tasaFija = (fecha) => !puedeCorregirTasa() && tasas[fecha] > 0;
 // Guarda la tasa de una fecha en Firestore (compartida); si falla, la guarda solo en este equipo
 async function guardarTasaDia(fecha, valor) {
+  if (tasaFija(fecha) && Math.abs(tasas[fecha] - valor) > 0.00005) {
+    alert("La tasa del " + fechaCorta(fecha) + " ya está guardada. Solo el director puede corregirla.");
+    return false;
+  }
   tasas[fecha] = valor;
   try {
     await db
@@ -125,7 +132,7 @@ const notaTasa = (t) =>
 function campoTasaHTML(pref, fecha, onInput) {
   const t = tasaDe(fecha || todayStr());
   return `<div class="field"><label class="field-label">💱 Tasa BCV (Bs. por $1) *</label>
-    <input class="inp" id="${pref}-tasa" inputmode="decimal" autocomplete="off" placeholder="Ej: 396,3674" value="${t ? String(t.valor).replace(".", ",") : ""}" oninput="${onInput};revisarTasaCampo('${pref}')"/>
+    <input class="inp" id="${pref}-tasa" inputmode="decimal" autocomplete="off" placeholder="Ej: 396,3674" value="${t ? String(t.valor).replace(".", ",") : ""}" ${t && t.exacta && tasaFija(t.fecha) ? "readonly" : ""} oninput="${onInput};revisarTasaCampo('${pref}')"/>
     <div id="${pref}-tasa-nota" style="font-size:0.7rem;color:${t && t.exacta ? "#1a9e5c" : "#b8860b"};margin-top:2px">${notaTasa(t)}</div>
     <label id="${pref}-tasa-corr" style="display:none;gap:0.4rem;align-items:center;font-size:0.72rem;color:#7a5c00;margin-top:4px"><input type="checkbox" id="${pref}-tasa-corregir"/> <span></span></label></div>`;
 }
@@ -183,7 +190,10 @@ function actualizarTasaCampo(pref, fn) {
   const f = document.getElementById(pref + "-fecha"),
     t = tasaDe(f && f.value);
   const el = document.getElementById(pref + "-tasa");
-  if (el) el.value = t ? String(t.valor).replace(".", ",") : "";
+  if (el) {
+    el.value = t ? String(t.valor).replace(".", ",") : "";
+    el.readOnly = !!(t && t.exacta && tasaFija(t.fecha));
+  }
   const n = document.getElementById(pref + "-tasa-nota");
   if (n) {
     n.textContent = notaTasa(t);
@@ -216,6 +226,20 @@ function bannerTasa() {
 function renderModalTasa() {
   const hoy = todayStr();
   const lista = Object.keys(tasas).sort().reverse().slice(0, 15);
+  if (!puedeCorregirTasa() && tasas[hoy] > 0)
+    return `<div class="modal-bg" onclick="if(event.target.classList.contains('modal-bg'))cerrarModal()"><div class="modal">
+    <div class="modal-header"><div><h3>💱 Tasa BCV</h3><p>Bolívares por $1 de referencia</p></div><button class="modal-close-x" onclick="cerrarModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="info-row"><span>Hoy, ${fechaCorta(hoy)}</span><strong>Bs. ${fmtTasa(tasas[hoy])}</strong></div>
+      <div style="font-size:0.74rem;color:#555;margin:0.5rem 0">La tasa de hoy ya está cargada. Si no es la correcta, avísale al director: solo él puede corregirla.</div>
+      ${lista
+        .filter((f) => f !== hoy)
+        .slice(0, 6)
+        .map(
+          (f) => `<div class="info-row"><span>${fechaCorta(f)}</span><strong>Bs. ${fmtTasa(tasas[f])}</strong></div>`
+        )
+        .join("")}
+    </div></div></div>`;
   return `<div class="modal-bg" onclick="if(event.target.classList.contains('modal-bg'))cerrarModal()"><div class="modal">
     <div class="modal-header"><div><h3>💱 Tasa BCV</h3><p>Bolívares por $1 de referencia</p></div><button class="modal-close-x" onclick="cerrarModal()">✕</button></div>
     <div class="modal-body"><div class="form-grid">
@@ -225,14 +249,18 @@ function renderModalTasa() {
       </div>
       <div id="tz-msg" style="font-size:0.74rem;color:#555">La tasa se comparte con todos los usuarios y queda guardada por fecha.</div>
       <div style="display:flex;gap:0.5rem"><button class="btn btn-gray btn-sm" onclick="traerTasaAPI()">🔄 Traer del BCV</button><button class="btn btn-primary" style="flex:1" onclick="guardarTasaModal()">💾 Guardar tasa</button></div>
-      <div style="border-top:1px dashed #ccd5e3;padding-top:0.6rem">
+      ${
+        puedeCorregirTasa()
+          ? `<div style="border-top:1px dashed #ccd5e3;padding-top:0.6rem">
         <div class="field-label">📥 Tasas de días anteriores</div>
         <div style="font-size:0.72rem;color:#555;margin-bottom:0.35rem">Descarga el Excel del BCV (bcv.org.ve → Estadísticas → Tipo de cambio de referencia) y súbelo aquí: se cargan todas las tasas de ese periodo.</div>
         <input class="inp" type="file" id="tz-archivo" accept=".xls,.xlsx,.csv" onchange="leerArchivoTasas(this)"/>
         <div id="tz-import" style="font-size:0.78rem"></div>
-      </div>
+      </div>`
+          : ""
+      }
       ${
-        lista.length
+        lista.length && puedeCorregirTasa()
           ? `<div class="section-title" style="margin-top:0.5rem">Últimas tasas (toca una para editarla)</div>
       ${lista.map((f) => `<div class="info-row" style="cursor:pointer" onclick="document.getElementById('tz-fecha').value='${f}';document.getElementById('tz-valor').value='${String(tasas[f]).replace(".", ",")}'"><span>${fechaCorta(f)}</span><strong>Bs. ${fmtTasa(tasas[f])}</strong></div>`).join("")}`
           : ""

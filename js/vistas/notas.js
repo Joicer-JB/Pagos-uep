@@ -297,8 +297,6 @@ async function guardarNotas(estId, lapso) {
       .collection("notas")
       .doc(key)
       .set({ estId, lapso, ...datos, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    const estObj = estudiantes.find((e) => e.id === estId);
-    if (estObj) alertaNotas(estObj, lapso);
     alert("✅ Notas guardadas correctamente");
   } catch (e) {
     alert("Error: " + e.message);

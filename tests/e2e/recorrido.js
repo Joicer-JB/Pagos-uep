@@ -44,7 +44,6 @@ function crearRecorrido(rol, { pagina, dialogos }, fotos) {
   let nImpresiones = 0,
     nAperturas = 0,
     nEscrituras = 0,
-    nCorreos = 0,
     nDialogos = 0;
   const r = {
     rol,
@@ -60,7 +59,6 @@ function crearRecorrido(rol, { pagina, dialogos }, fotos) {
         impresiones: window.__IMPRESIONES__.map((d) => d.html),
         aperturas: window.__APERTURAS__.slice(),
         escrituras: (window.__ESCRITURAS__ || []).slice(),
-        correos: (window.__CORREOS__ || []).slice(),
         foco: document.activeElement ? document.activeElement.id || document.activeElement.tagName : "",
       }));
       fotos.push({
@@ -71,13 +69,11 @@ function crearRecorrido(rol, { pagina, dialogos }, fotos) {
         impresiones: estado.impresiones.slice(nImpresiones),
         aperturas: estado.aperturas.slice(nAperturas),
         escrituras: estado.escrituras.slice(nEscrituras),
-        correos: estado.correos.slice(nCorreos),
       });
       nDialogos = dialogos.length;
       nImpresiones = estado.impresiones.length;
       nAperturas = estado.aperturas.length;
       nEscrituras = estado.escrituras.length;
-      nCorreos = estado.correos.length;
     },
     // Hace clic en el elemento cuyo onclick empieza con `prefijo` (el n-ésimo si hay varios)
     async clic(prefijo, n = 0) {
@@ -399,18 +395,18 @@ const PASOS = {
     await r.foto("docente entra en el mismo equipo");
   },
 
+  // Solo cobra: Inicio, Caja y Pagos. Lo demás no se abre aunque se intente.
   async administradora(r) {
-    await r.verNotasDe(["est2", "est6"]);
-    await r.pestana("estudiantes");
-    await r.abrirCada("abrirModal({tipo:'ver-estudiante'", 1);
     await r.pestana("pagos");
     await r.abrirCada("abrirModal({tipo:'recibo'", 1);
-    await r.pestana("notas");
-    const sel = await r.pagina.$("#tab-content select");
-    if (sel) {
-      await sel.selectOption({ index: 1 }).catch(() => {});
-      await r.foto("notas con estudiante");
-    }
+    await r.pestana("caja");
+    await r.foto("caja");
+    await r.pestana("finanzas");
+    await r.foto("intento de abrir finanzas");
+    await r.llamar(`abrirModal({ tipo: "ver-estudiante", id: "est2" })`);
+    await r.foto("intento de abrir la ficha de un estudiante");
+    await r.llamar(`abrirModal({ tipo: "nuevo-finanza", subtipo: "gasto" })`);
+    await r.foto("intento de registrar un gasto");
   },
 
   async docente(r) {

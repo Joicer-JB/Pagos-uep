@@ -940,3 +940,79 @@ textarea.inp {
   color: #003366;
   font-weight: 700;
 }
+
+/* ---- 💰 Pagos → ⚡ Pagos viejos (registro en lote) ---- */
+.ayuda {
+  font-size: 0.76rem;
+  color: #555;
+  line-height: 1.5;
+}
+.nota-campo {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 3px;
+}
+.lote-opcion {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #333;
+  min-height: 2.6rem;
+  cursor: pointer;
+}
+.lote-fila {
+  cursor: default;
+  padding: 0;
+}
+.lote-fila:hover {
+  transform: none;
+}
+.lote-marca {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+}
+.lote-marca input[type="checkbox"] {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  accent-color: #1a9e5c;
+  cursor: pointer;
+}
+.lote-fila.marcada {
+  border-left-color: #1a9e5c;
+  background: #f3fbf6;
+}
+.lote-detalle {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  padding: 0 0.85rem 0.8rem 2.9rem;
+}
+.lote-barra {
+  position: sticky;
+  bottom: 0.6rem;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #003366, #00509e);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 30, 70, 0.35);
+}
+@media (max-width: 520px) {
+  .lote-detalle {
+    padding-left: 0.85rem;
+  }
+  .lote-barra .btn {
+    flex: 1;
+  }
+}

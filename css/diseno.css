@@ -1,0 +1,366 @@
+/* Capa de diseño (octubre 2026): mismos colores del colegio (azul #003366 / #00509e y dorado #ffd700), con más
+   aire, sombras más suaves, botones y campos más cómodos de tocar, y detalles de accesibilidad. Va después de
+   estilos.css y animaciones.css y solo ajusta lo que ya existe: si se quita este archivo, todo vuelve a como era. */
+
+:root {
+  --azul: #003366;
+  --azul-2: #00509e;
+  --dorado: #ffd700;
+  --dorado-osc: #b8860b;
+  --verde: #1a9e5c;
+  --rojo: #e53e3e;
+  --fondo: #eef2f9;
+  --borde: #dde3f0;
+  --texto: #1f2a3d;
+  --suave: #6b7689;
+  --sombra: 0 1px 2px rgba(0, 30, 70, 0.06), 0 6px 18px rgba(0, 30, 70, 0.06);
+  --sombra-alta: 0 2px 4px rgba(0, 30, 70, 0.08), 0 12px 28px rgba(0, 30, 70, 0.12);
+  --degradado: linear-gradient(135deg, var(--azul), var(--azul-2));
+  --brillo: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 45%);
+}
+
+body {
+  color: var(--texto);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+::selection {
+  background: rgba(255, 215, 0, 0.45);
+  color: var(--azul);
+}
+/* Los montos alinean sus cifras (todas del mismo ancho) */
+.stat-val,
+.item-amount,
+.info-row strong,
+.recaudo-box,
+.total-box {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Entrada ---- */
+.login-wrap {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.1), transparent 35%),
+    radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.08), transparent 40%), var(--degradado);
+}
+.login-card {
+  max-width: 380px;
+  padding: 2rem 1.75rem 1.6rem;
+}
+.login-logo {
+  border-bottom: 2px solid rgba(255, 215, 0, 0.7);
+}
+.login-logo {
+  flex-direction: column;
+  text-align: center;
+  gap: 0.6rem;
+}
+.login-logo img {
+  width: 84px;
+  height: 84px;
+}
+.login-logo h1 {
+  font-size: 1.05rem;
+}
+.login-bienvenida {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--suave);
+  margin: -0.6rem 0 1.1rem;
+}
+
+/* ---- Cabecera y pestañas ---- */
+.header {
+  background: var(--brillo), var(--degradado);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.55);
+}
+.logout-btn {
+  min-height: 30px;
+  border-radius: 9px;
+  transition: background 0.2s ease;
+}
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.tabs {
+  gap: 0.15rem;
+  /* en el teléfono, un desvanecido a la derecha indica que hay más pestañas */
+  -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, #000 92%, transparent);
+  padding-right: 1.5rem;
+}
+.tab {
+  border-radius: 10px 10px 0 0;
+  min-height: 40px;
+}
+.tab.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+@media (min-width: 900px) {
+  .tabs {
+    -webkit-mask-image: none;
+    mask-image: none;
+    padding-right: 0;
+  }
+}
+
+/* ---- Contenido y tarjetas ---- */
+.content {
+  max-width: 1120px;
+}
+.card {
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0, 51, 102, 0.06);
+}
+.card-title {
+  border-bottom-color: #eef1f7;
+}
+.card-title h2 {
+  font-size: 0.95rem;
+  letter-spacing: 0.1px;
+}
+.card-bar {
+  background: linear-gradient(180deg, var(--azul), var(--azul-2));
+  box-shadow: 2px 0 0 var(--dorado);
+}
+.section-title {
+  color: var(--azul);
+  opacity: 0.75;
+  margin-top: 0.4rem;
+}
+
+/* ---- Cifras de resumen ---- */
+.stat-card {
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0, 51, 102, 0.06);
+  border-top: 3px solid var(--azul);
+  padding: 0.85rem 0.7rem;
+}
+.stat-card.green {
+  border-top-color: var(--verde);
+}
+.stat-card.red {
+  border-top-color: var(--rojo);
+}
+.stat-card.gold {
+  border-top-color: var(--dorado-osc);
+}
+.stat-card.blue {
+  border-top-color: var(--azul-2);
+}
+.stat-label {
+  color: var(--suave);
+  font-weight: 600;
+}
+
+/* ---- Recuadros azules (recaudo, totales, ventanas) ---- */
+.recaudo-box,
+.total-box,
+.modal-header,
+.recibo-header {
+  background: var(--brillo), var(--degradado);
+}
+.recaudo-box {
+  box-shadow: 0 8px 22px rgba(0, 51, 102, 0.22);
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+/* ---- Botones ---- */
+.btn {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1.2;
+}
+.btn-sm {
+  min-height: 34px;
+}
+.btn-full {
+  display: flex;
+}
+.btn-success {
+  background: linear-gradient(135deg, #1a9e5c, #17b26a);
+  box-shadow: 0 4px 14px rgba(26, 158, 92, 0.28);
+}
+.btn-danger {
+  box-shadow: 0 4px 14px rgba(229, 62, 62, 0.22);
+}
+.btn-gray {
+  background: #f3f5f9;
+  border: 1px solid var(--borde);
+  color: #2c3a52;
+}
+.btn-print {
+  background: var(--degradado);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+/* Teclado: un anillo dorado muestra dónde está el foco */
+.btn:focus-visible,
+.tab:focus-visible,
+.stab:focus-visible,
+.metodo-btn:focus-visible,
+.logout-btn:focus-visible,
+a:focus-visible,
+input[type="checkbox"]:focus-visible {
+  outline: 3px solid rgba(255, 215, 0, 0.9);
+  outline-offset: 2px;
+}
+
+/* ---- Campos ---- */
+.inp {
+  min-height: 44px;
+  color: var(--texto);
+}
+.inp::placeholder {
+  color: #9aa5b8;
+}
+.inp:focus {
+  background: #fff;
+}
+.inp[readonly]:not([data-pad]) {
+  background: #eef1f6;
+  color: #4a5568;
+  cursor: default;
+}
+.field-label {
+  color: #44516a;
+}
+textarea.inp {
+  min-height: 70px;
+}
+
+/* ---- Subpestañas ---- */
+.stab {
+  min-height: 34px;
+  color: #5c6b82;
+  background: #fff;
+}
+.stab.active {
+  background: var(--degradado);
+  border-color: var(--azul);
+  color: var(--dorado);
+  box-shadow: 0 3px 10px rgba(0, 51, 102, 0.22);
+}
+
+/* ---- Listas ---- */
+.list-item {
+  box-shadow: var(--sombra);
+  border-top: 1px solid rgba(0, 51, 102, 0.05);
+  border-right: 1px solid rgba(0, 51, 102, 0.05);
+  border-bottom: 1px solid rgba(0, 51, 102, 0.05);
+}
+.list-item:hover {
+  transform: none;
+  box-shadow: var(--sombra);
+}
+@media (hover: hover) {
+  .list-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--sombra-alta);
+  }
+}
+.list-item:active {
+  transform: scale(0.995);
+}
+.item-sub {
+  color: var(--suave);
+}
+.badge {
+  letter-spacing: 0.2px;
+}
+
+/* ---- Avisos ---- */
+.alert-item {
+  border-radius: 12px;
+  line-height: 1.45;
+}
+
+/* ---- Sin datos ---- */
+.empty {
+  color: #8a96aa;
+}
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 0.7rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--sombra);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+/* ---- Ventanas: en el teléfono suben desde abajo, como en las apps ---- */
+.modal-bg {
+  background: rgba(8, 20, 40, 0.62);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.modal {
+  border-radius: 18px;
+}
+@media (max-width: 520px) {
+  .modal-bg {
+    align-items: flex-end;
+    padding: 0.6rem 0 0;
+  }
+  .modal {
+    margin: auto 0 0;
+    border-radius: 20px 20px 0 0;
+    max-height: 94vh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .modal-header {
+    position: relative;
+    padding-top: 1.35rem;
+  }
+  /* agarradera */
+  .modal-header::before {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    width: 38px;
+    height: 4px;
+    margin-left: -19px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.45);
+  }
+}
+.modal-close-x {
+  width: 30px;
+  height: 30px;
+  transition: background 0.2s ease;
+}
+.modal-close-x:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* ---- Barras de desplazamiento finas en la computadora ---- */
+@media (hover: hover) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #b9c4d8 transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #b9c4d8;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+}
