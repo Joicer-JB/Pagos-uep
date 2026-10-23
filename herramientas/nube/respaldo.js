@@ -7,8 +7,9 @@
 // El archivo solo se abre en la plataforma: Configuración → Año escolar → «Abrir un respaldo», con la misma clave.
 const fs = require("fs");
 const path = require("path");
-const admin = require("firebase-admin");
+const { conectar, Timestamp, DocumentReference, GeoPoint } = require("./firebase");
 const { cifrar } = require("./cifrado");
+const { enviarAvisos } = require("./avisos");
 
 // Fecha y hora de Venezuela (el servidor de GitHub está en UTC)
 function ahoraCaracas() {
@@ -31,9 +32,9 @@ function ahoraCaracas() {
 // Los valores propios de Firestore (fechas, referencias, bytes) pasan a JSON sin perder qué eran
 function aJSON(v) {
   if (v === null || typeof v !== "object") return v;
-  if (v instanceof admin.firestore.Timestamp) return { __tipo: "fecha", valor: v.toDate().toISOString() };
-  if (v instanceof admin.firestore.DocumentReference) return { __tipo: "referencia", ruta: v.path };
-  if (v instanceof admin.firestore.GeoPoint) return { __tipo: "punto", lat: v.latitude, lng: v.longitude };
+  if (v instanceof Timestamp) return { __tipo: "fecha", valor: v.toDate().toISOString() };
+  if (v instanceof DocumentReference) return { __tipo: "referencia", ruta: v.path };
+  if (v instanceof GeoPoint) return { __tipo: "punto", lat: v.latitude, lng: v.longitude };
   if (Buffer.isBuffer(v) || v instanceof Uint8Array)
     return { __tipo: "bytes", base64: Buffer.from(v).toString("base64") };
   if (Array.isArray(v)) return v.map(aJSON);
@@ -41,13 +42,9 @@ function aJSON(v) {
 }
 
 async function main() {
-  const cuenta = process.env.FIREBASE_SERVICE_ACCOUNT,
-    clave = process.env.RESPALDO_CLAVE;
-  if (!cuenta) throw new Error("Falta el secreto FIREBASE_SERVICE_ACCOUNT (ver docs/respaldo-automatico.md)");
+  const clave = process.env.RESPALDO_CLAVE;
   if (!clave) throw new Error("Falta el secreto RESPALDO_CLAVE (ver docs/respaldo-automatico.md)");
-  const credencial = JSON.parse(cuenta);
-  admin.initializeApp({ credential: admin.credential.cert(credencial) });
-  const db = admin.firestore();
+  const { db, messaging, proyecto } = conectar();
 
   const { fecha, hora } = ahoraCaracas();
   const colecciones = {},
@@ -60,7 +57,7 @@ async function main() {
   const documentos = Object.values(totales).reduce((a, b) => a + b, 0);
   const contenido = JSON.stringify({
     generado: new Date().toISOString(),
-    proyecto: credencial.project_id,
+    proyecto,
     totales,
     colecciones,
   });
@@ -86,9 +83,25 @@ async function main() {
 
   console.log(`Respaldo ${nombre}: ${documentos} documentos en ${Object.keys(totales).length} colecciones`);
   for (const [c, n] of Object.entries(totales)) console.log(`  ${c}: ${n}`);
+  // Aviso al teléfono del director (si lo activó). Si falla el aviso, el respaldo igual quedó hecho.
+  try {
+    const r = await enviarAvisos(
+      db,
+      messaging,
+      "respaldo-ok",
+      "💾 Respaldo semanal hecho",
+      documentos + " registros guardados (" + fecha + ")"
+    );
+    console.log("Avisos enviados:", r.enviados);
+  } catch (e) {
+    console.warn("No se pudo mandar el aviso del respaldo:", e.message);
+  }
 }
 
-main().catch((e) => {
-  console.error("❌ No se pudo hacer el respaldo:", e.message);
-  process.exit(1);
-});
+if (require.main === module)
+  main().catch((e) => {
+    console.error("❌ No se pudo hacer el respaldo:", e.message);
+    process.exit(1);
+  });
+
+module.exports = { main };

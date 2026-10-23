@@ -5,7 +5,7 @@
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const { abrirNavegador } = require("./entorno");
-const { cifrar } = require("../../herramientas/respaldo/cifrado");
+const { cifrar } = require("../../herramientas/nube/cifrado");
 
 let nav, s;
 const llamar = (c) => s.pagina.evaluate(c);

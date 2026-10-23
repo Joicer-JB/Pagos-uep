@@ -40,6 +40,7 @@ function renderConfig() {
     ["institucion", "🏫 Institución"],
     ["anio", "📅 Año escolar"],
     ["bitacora", "🕵️ Bitácora"],
+    ["avisos", "📲 Avisos"],
   ];
   return `<div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>⚙️ Configuración</h2></div>
@@ -57,7 +58,9 @@ function renderConfig() {
               ? renderConfigAnio()
               : st === "bitacora"
                 ? renderConfigBitacora()
-                : renderConfigInstitucion()
+                : st === "avisos"
+                  ? renderConfigAvisos()
+                  : renderConfigInstitucion()
     }
   </div>`;
 }

@@ -1,4 +1,4 @@
-// Abrir un respaldo automático (lo hace GitHub Actions cada viernes, ver herramientas/respaldo/respaldo.js).
+// Abrir un respaldo automático (lo hace GitHub Actions cada viernes, ver herramientas/nube/respaldo.js).
 // El archivo viene cifrado: JSON comprimido (gzip) y cifrado con AES-256-GCM, con la llave sacada de la clave del
 // respaldo con PBKDF2-SHA256. Aquí se descifra en el propio navegador: la clave no sale del equipo.
 

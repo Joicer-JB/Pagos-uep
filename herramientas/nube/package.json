@@ -1,0 +1,8 @@
+{
+  "name": "pagos-uep-nube",
+  "private": true,
+  "description": "Respaldo automático y avisos al teléfono (los corre GitHub Actions)",
+  "dependencies": {
+    "firebase-admin": "14.5.0"
+  }
+}

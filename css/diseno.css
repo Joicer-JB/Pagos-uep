@@ -571,3 +571,37 @@ textarea.inp {
     display: none;
   }
 }
+
+/* ---- Entrar con Google ---- */
+.btn-google {
+  background: #fff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
+  gap: 0.6rem;
+}
+.btn-google:hover:not(:disabled) {
+  background: #f8faff;
+  border-color: #c6cbd3;
+}
+.login-o {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.9rem 0 0.7rem;
+  font-size: 0.7rem;
+  color: #9aa5b8;
+}
+.login-o::before,
+.login-o::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e6e9f0;
+}
+/* En el teléfono, el selector del año más angosto para que los botones de la cabecera quepan en una fila */
+@media (max-width: 520px) {
+  .header-top select {
+    max-width: 96px !important; /* su estilo en línea dice 130px */
+  }
+}

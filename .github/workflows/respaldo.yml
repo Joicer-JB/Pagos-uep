@@ -1,6 +1,8 @@
 # Respaldo automático de toda la base de datos: cada viernes a las 5:00 pm, hora de Venezuela (21:00 UTC).
 # GitHub a veces lo arranca unos minutos tarde. También se puede correr a mano: Actions → Respaldo semanal → Run workflow.
 #
+# Al terminar, si el director activó los avisos al teléfono, le llega «💾 Respaldo semanal hecho» (o que falló).
+#
 # El archivo queda cifrado (sin la clave no se puede leer) en la corrida del flujo, sección «Artifacts», durante 90 días.
 # Se abre en la plataforma: Configuración → Año escolar → «Abrir un respaldo». Ver docs/respaldo-automatico.md.
 #
@@ -26,23 +28,31 @@ jobs:
     name: Respaldo de la base de datos
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      TZ: America/Caracas
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: herramientas/respaldo/package-lock.json
-      - run: npm ci --prefix herramientas/respaldo
+          cache-dependency-path: herramientas/nube/package-lock.json
+      - run: npm ci --prefix herramientas/nube
       - name: Respaldar
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           RESPALDO_CLAVE: ${{ secrets.RESPALDO_CLAVE }}
           SALIDA: respaldos
-        run: node herramientas/respaldo/respaldo.js
+        run: node herramientas/nube/respaldo.js
       - uses: actions/upload-artifact@v4
         with:
           name: respaldo-${{ github.run_number }}
           path: respaldos/
           retention-days: 90
           if-no-files-found: error
+      # Si algo falló, aviso al teléfono del director (si activó los avisos)
+      - name: Avisar que falló
+        if: failure()
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node herramientas/nube/avisos.js respaldo-fallo || true

@@ -222,6 +222,7 @@ const ACCIONES_BUSQ = [
   ["📝", "Notas y boletines", "notas", "notas boletines calificaciones"],
   ["📥", "Importar matrícula desde Excel", "importar", "importar excel matricula"],
   ["💾", "Respaldo", "config", "respaldo copia seguridad backup", ir("config", "anio")],
+  ["📲", "Avisos al teléfono", "config", "avisos notificaciones telefono celular alertas", ir("config", "avisos")],
   ["🕵️", "Bitácora (quién borró qué)", "config", "bitacora borrados quien borro auditoria", ir("config", "bitacora")],
   ["👨‍🏫", "Cuentas de los docentes", "config", "docentes cuentas usuarios contrasena", ir("config", "docentes")],
   ["🏫", "Datos de la institución", "config", "institucion rif director datos colegio", ir("config", "institucion")],

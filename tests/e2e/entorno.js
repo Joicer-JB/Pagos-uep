@@ -21,7 +21,7 @@ const TIPOS = {
 const leer = (rel) => fs.readFileSync(path.join(RAIZ, rel), "utf8");
 const BIBLIOTECAS = [
   [/firebase-app-compat\.js$/, () => leer("tests/e2e/falsos/firebase-falso.js")],
-  [/firebase-(firestore|auth|app-check)-compat\.js$/, () => "/* incluido en firebase-falso.js */"],
+  [/firebase-(firestore|auth|app-check|messaging)-compat\.js$/, () => "/* incluido en firebase-falso.js */"],
   [/xlsx\.full\.min\.js$/, () => leer("node_modules/xlsx/dist/xlsx.full.min.js")],
   [/chart\.umd(\.min)?\.js$/, () => leer("node_modules/chart.js/dist/chart.umd.js")],
 ];

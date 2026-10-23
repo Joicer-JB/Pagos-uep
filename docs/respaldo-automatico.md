@@ -8,6 +8,8 @@ estudiantes, pagos, finanzas, nómina, documentos del personal, notas, configura
 - La plataforma anota la fecha del último respaldo. El director la ve en ⚙️ Config → 📅 Año escolar, y en
   Inicio aparece un aviso si pasan más de 14 días sin respaldo.
 - GitHub a veces lo arranca unos minutos tarde (es normal).
+- Si activaste los [avisos al teléfono](avisos-telefono.md), te llega «💾 Respaldo semanal hecho» o, si falló, «⚠️ No
+  se pudo hacer el respaldo».
 
 ## Activarlo (una sola vez, unos 10 minutos)
 

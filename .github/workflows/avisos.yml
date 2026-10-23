@@ -1,0 +1,46 @@
+# 📲 Avisos al teléfono del director (Firebase Cloud Messaging), hora de Venezuela:
+#   · cierre del día: de lunes a viernes, alrededor de las 6:00 pm (lo cobrado hoy y las cuentas por pagar);
+#   · resumen de la quincena: el 1 y el 16 de cada mes, alrededor de las 7:00 am.
+# GitHub a veces los manda unos minutos tarde. Para probar: Actions → Avisos al teléfono → Run workflow → «prueba».
+# Usa el mismo secreto que el respaldo (FIREBASE_SERVICE_ACCOUNT). Ver docs/avisos-telefono.md.
+name: Avisos al teléfono
+
+on:
+  schedule:
+    - cron: "5 22 * * 1-5"
+    - cron: "5 11 1,16 * *"
+  workflow_dispatch:
+    inputs:
+      tipo:
+        description: "Qué aviso mandar"
+        type: choice
+        options: [prueba, dia, quincena]
+        default: prueba
+
+concurrency:
+  group: avisos
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  avisos:
+    name: Mandar avisos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: America/Caracas
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: herramientas/nube/package-lock.json
+      - run: npm ci --prefix herramientas/nube
+      - name: Mandar
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          TIPO: ${{ github.event_name == 'workflow_dispatch' && inputs.tipo || (github.event.schedule == '5 11 1,16 * *' && 'quincena' || 'dia') }}
+        run: node herramientas/nube/avisos.js
