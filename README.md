@@ -112,7 +112,7 @@ js/
     dashboard.js  caja.js  pagos.js (+ pagos-lote.js: ⚡ pagos viejos)  cobranza.js  estudiantes.js  finanzas.js
     nomina.js (pantalla) + nomina-recibos.js, nomina-trabajador.js, nomina-constancia.js,
       nomina-pagos.js y nomina-asistencia.js
-    reportes.js  graficas.js  notas.js  sabana.js (📋 sábana de notas)  boletin.js  configuracion.js  anio-escolar.js
+    reportes.js  graficas.js  notas.js  sabana.js (📋 sábana de notas)  cuadro-honor.js  boletin.js  configuracion.js  anio-escolar.js
     promocion.js  importar.js  duplicados.js  buscador.js (🔍 buscador inteligente)
   app.js                   Arranque: si ya hay una sesión abierta, entra directo
 sw.js                      Service worker: guarda la app para abrirla sin internet (app instalable)

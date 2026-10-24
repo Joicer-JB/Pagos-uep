@@ -77,6 +77,24 @@ con los docentes. El boletín sigue siendo para los representantes.
 - Los docentes arman el **plan de evaluación** de cada materia (nombre y porcentaje de cada evaluación) en la
   pestaña Notas, con **⚙️ Plan de evaluación**. Tú también puedes.
 
+## Boletines
+
+En **📝 Notas**, elige un estudiante y pulsa **🖨️ Boletín**. Para entregar los de todo un grado, filtra por ese
+grado y pulsa **🖨️ Boletines de todo …**: sale uno por hoja, en orden alfabético. El boletín lleva el escudo, los
+datos de ⚙️ Configuración → 🏫 Institución (nombre, dirección, código del plantel, directora y coordinadores) y las notas ya
+con los cambios del consejo.
+
+## Cuadro de honor (media general)
+
+En **📝 Notas → 🏆 Cuadro de honor**, por lapso o del año completo:
+
+- **Años con mejor promedio:** el promedio de cada año (1er a 5to), del mejor al más bajo, con cuántos estudiantes
+  ya tienen notas y cuántos tienen alguna materia reprobada.
+- **Mejores promedios:** los 10 mejores de toda media general y los 3 mejores de cada año. Solo entra quien ya tiene
+  nota en todas sus materias; por defecto, tampoco quien tiene una materia reprobada (se puede incluir). Los
+  empatados comparten el puesto.
+- **🖨️ Imprimir** para la cartelera o el acto. En el buscador 🔍 también sale con «mejores promedios».
+
 ## Estudiantes repetidos
 
 Si un estudiante quedó dos o más veces (por ejemplo «Pérez, Ana» y «Ana Pérez», con o sin tilde), en la

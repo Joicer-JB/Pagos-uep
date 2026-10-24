@@ -778,3 +778,23 @@ textarea.inp {
   color: #003366;
   margin-top: 0.4rem;
 }
+
+/* ---- Cuadro de honor ---- */
+.honor-tabla {
+  width: 100%;
+  margin-bottom: 0.7rem;
+}
+.honor-puesto {
+  font-size: 1.05rem;
+  width: 56px;
+}
+.honor-prom {
+  font-weight: 800;
+  color: #003366;
+  width: 80px;
+}
+.honor-anios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.6rem;
+}

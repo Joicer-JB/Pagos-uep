@@ -1,5 +1,19 @@
 # Historial de cambios
 
+## Octubre 2026 — 🏆 Cuadro de honor y matrícula por grado
+
+- **Boletín nuevo para los representantes:** con el escudo del colegio (arriba y de marca de agua), la ficha del
+  estudiante, un resumen (promedio general, materias aprobadas y promedio de cada lapso) y las notas con una barra en
+  la definitiva. En una sola hoja carta. En primaria, una sola tabla con el literal de cada indicador en los 3 lapsos
+  (antes los literales no salían en el boletín). **🖨️ Boletines de todo un grado** de una vez (📝 Notas → filtrar por
+  grado).
+- **📝 Notas → 🏆 Cuadro de honor** (media general), por lapso o del año: el **año con mejor promedio**, los 10 mejores
+  promedios de toda media general y los 3 mejores de cada año. Solo entra quien tiene nota en todas sus materias y,
+  por defecto, sin materias reprobadas. Los empatados comparten el puesto. Se imprime.
+- **👨‍🎓 Estudiantes:** el recuadro «Total» (que contaba a los retirados) ahora es **🎒 Inscritos**, y la tabla
+  **📊 Matrícula por grado** muestra inscritos (niñas y niños), retirados y graduados de cada grado.
+- **Orden alfabético** en Estudiantes, Notas, la sábana y la Caja (sin importar tildes ni mayúsculas).
+
 ## Octubre 2026 — 📋 Sábana de notas (media general)
 
 - **📝 Notas → 📋 Sábana de notas:** todas las notas de un año (o sección) en una tabla, para el consejo de sección
