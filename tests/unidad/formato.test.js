@@ -17,7 +17,8 @@ test("fmt: $ con separador de miles y 2 decimales", () => {
 test("fmtBs y fmtTasa", () => {
   assert.equal(f("fmtBs(8156.25)"), "Bs. 8.156,25");
   assert.equal(f("fmtBs(null)"), "Bs. 0,00");
-  assert.equal(f("fmtTasa(396.3674)"), "396,3674");
+  assert.equal(f("fmtTasa(396.3674)"), "396,36"); // 2 decimales, sin redondear
+  assert.equal(f("fmtTasa(883.69)"), "883,69");
   assert.equal(f("fmtTasa(184.5)"), "184,50");
 });
 

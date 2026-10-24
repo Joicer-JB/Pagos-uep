@@ -6,7 +6,7 @@
 // · Lo demás (Firestore, inicio de sesión, tasa del día) no pasa por aquí: Firestore guarda su propia copia.
 // Si cambias este archivo, cambia también VERSION: así el navegador instala el nuevo y borra la copia vieja.
 
-const VERSION = "v3"; // v3: avisos al teléfono (push) y buscador
+const VERSION = "v4"; // v4: los archivos de la app se revisan siempre con el servidor (sin la copia del navegador)
 const CACHE = "jjs-app-" + VERSION;
 const BIBLIOTECAS_FIJAS = [
   /^https:\/\/www\.gstatic\.com\/firebasejs\/\d+\.\d+\.\d+\//,
@@ -56,7 +56,11 @@ const conLimite = (promesa, ms) =>
 async function primeroLaRed(pedido) {
   const cache = await caches.open(CACHE);
   try {
-    const r = await conLimite(fetch(pedido), ESPERA_RED_MS);
+    // «no-cache»: pregunta siempre al servidor, así una versión publicada llega al momento y no 10 minutos después
+    const r = await conLimite(
+      pedido.mode === "navigate" ? fetch(pedido) : fetch(pedido, { cache: "no-cache" }),
+      ESPERA_RED_MS
+    );
     if (r.ok) cache.put(pedido, r.clone());
     return r;
   } catch (err) {

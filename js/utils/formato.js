@@ -70,8 +70,12 @@ const r2 = (n) => Math.round((Number(n) || 0) * 100 + (Number(n) >= 0 ? 1e-9 : -
 // Formato en bolívares: "Bs. 1.234,56"
 const fmtBs = (v) =>
   "Bs. " + Number(v || 0).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-// Formato de la tasa BCV: "396,36" (los pagos viejos pueden traer hasta 4 decimales: "396,3674")
-const fmtTasa = (v) => Number(v).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+// Formato de la tasa BCV con 2 decimales, sin redondear (como cuenta la tasa): 396,3674 → "396,36"
+const fmtTasa = (v) =>
+  (Math.floor(Math.round((Number(v) || 0) * 1e6) / 1e4) / 100).toLocaleString("es-VE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 const fmtUSD = fmt;
 // "2026-10-07" → "07/10/2026"
 const fechaCorta = (s) => {
