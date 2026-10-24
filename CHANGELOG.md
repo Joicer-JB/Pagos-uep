@@ -1,5 +1,10 @@
 # Historial de cambios
 
+## Octubre 2026 — Coordinadora de Educación Inicial
+
+- ⚙️ Configuración → 🏫 Institución: campo para la **coordinadora de Educación Inicial**. Cada boletín firma la
+  coordinadora de su nivel (Media General, Primaria o Inicial).
+
 ## Octubre 2026 — 🏆 Cuadro de honor y matrícula por grado
 
 - **Boletín nuevo para los representantes:** con el escudo del colegio (arriba y de marca de agua), la ficha del

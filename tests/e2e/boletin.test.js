@@ -103,7 +103,14 @@ test("primaria: el literal de cada indicador en los 3 lapsos, con la leyenda", a
   ]);
   assert.match(await p.textContent(".b-sello"), /Educación Primaria/);
   assert.equal(await p.locator(".b-leyenda > div").count(), 5);
+  assert.match(await p.textContent(".b-firmas"), /Coordinación de Primaria/);
   await p.close();
+  // Inicial (Valentina, Nivel II) firma la coordinadora de Educación Inicial
+  await llamar(`configInst = { ...configInst, coordinadorInicial: "Lic. María Pérez" }; imprimirBoletin("est3")`);
+  const ini = await enPagina(await ultima());
+  assert.match(await ini.textContent(".b-sello"), /Educación Inicial/);
+  assert.match(await ini.textContent(".b-firmas"), /Lic. María Pérez\s*Coordinación de Educación Inicial/);
+  await ini.close();
 });
 
 test("los boletines de todo un grado, uno por hoja y en orden alfabético", async () => {

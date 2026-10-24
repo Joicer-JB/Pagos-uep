@@ -245,10 +245,12 @@ function renderConfigInstitucion() {
       <input class="inp" id="inst-directora" value="${escHtml(inst.directora) || "Lic. Ligia Herrera"}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Cédula de la directora <span style="font-weight:400;color:#888">(para las constancias)</span></label>
       <input class="inp" id="inst-cedula-directora" value="${escHtml(inst.cedulaDirectora) || ""}" placeholder="V-12345678"/></div>
-    <div class="field"><label class="field-label">Coordinador/a de Media General</label>
+    <div class="field"><label class="field-label">Coordinadora de Media General</label>
       <input class="inp" id="inst-coordinador" value="${escHtml(inst.coordinador) || "Lic. Carlos Carrascal"}" placeholder="Nombre y título"/></div>
-    <div class="field"><label class="field-label">Coordinador/a de Primaria</label>
+    <div class="field"><label class="field-label">Coordinadora de Primaria</label>
       <input class="inp" id="inst-coordinador-prim" value="${escHtml(inst.coordinadorPrimaria) || ""}" placeholder="Nombre y título"/></div>
+    <div class="field"><label class="field-label">Coordinadora de Educación Inicial</label>
+      <input class="inp" id="inst-coordinador-ini" value="${escHtml(inst.coordinadorInicial) || ""}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Año escolar actual</label>
       <input class="inp" id="inst-anio" value="${escHtml(inst.anioEscolar) || "2025-2026"}" placeholder="2025-2026"/></div>
   </div>
@@ -319,6 +321,7 @@ async function guardarInstitucion() {
     cedulaDirectora: document.getElementById("inst-cedula-directora").value.trim(),
     coordinador: document.getElementById("inst-coordinador").value.trim(),
     coordinadorPrimaria: document.getElementById("inst-coordinador-prim").value.trim(),
+    coordinadorInicial: document.getElementById("inst-coordinador-ini").value.trim(),
     anioEscolar: document.getElementById("inst-anio").value.trim(),
   };
   try {

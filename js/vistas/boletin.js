@@ -249,7 +249,9 @@ function cuerpoBoletinPrimaria(est) {
   </div>
   ${pieBoletin([
     [inst.directora || "Lic. Ligia Herrera", "Directora"],
-    [inst.coordinadorPrimaria || "", "Coordinación"],
+    esPreescolar
+      ? [inst.coordinadorInicial || "", "Coordinación de Educación Inicial"]
+      : [inst.coordinadorPrimaria || "", "Coordinación de Primaria"],
     ["", "Docente"],
     ["", "Representante (recibido)"],
   ])}
