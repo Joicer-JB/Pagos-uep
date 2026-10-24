@@ -36,12 +36,12 @@ function posEscalera(g) {
   if (!n) return -1;
   const ex = ESC_NORM.indexOf(n);
   if (ex >= 0) return ex;
-  // Preescolar I/II/III = Nivel I/II/III = Inicial I/II/III (es lo mismo). También «I nivel», «1er nivel», «primer nivel»
+  // Preescolar I/II/III = Nivel I/II/III = Inicial I/II/III = I/II/III Grupo (es lo mismo). También «I nivel», «1er nivel», «primer nivel»
   const NIV = { i: 1, ii: 2, iii: 3, 1: 1, 2: 2, 3: 3, primer: 1, primero: 1, segundo: 2, tercer: 3, tercero: 3 };
   let m =
-    n.match(/^(?:nivel|preescolar|inicial|educacion inicial)\s*(iii|ii|i|1|2|3)$/) ||
+    n.match(/^(?:nivel|grupo|preescolar|inicial|educacion inicial)\s*(iii|ii|i|1|2|3)$/) ||
     n.match(
-      /^(iii|ii|i|1|2|3|primer|primero|segundo|tercer|tercero)\s*(?:er|ro|do|to|ero)?\s*nivel(?:\s+(?:de\s+)?(?:preescolar|inicial))?$/
+      /^(iii|ii|i|1|2|3|primer|primero|segundo|tercer|tercero)\s*(?:er|ro|do|to|ero)?\s*(?:nivel|grupo)(?:\s+(?:de\s+)?(?:preescolar|inicial))?$/
     );
   if (m) return NIV[m[1]];
   let num = null,

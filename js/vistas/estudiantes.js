@@ -381,6 +381,7 @@ function imprimirConstancia(estId) {
     body{font-family:'Times New Roman',serif;background:#fff;color:#222;padding:2.5rem;max-width:720px;margin:0 auto;font-size:12pt;line-height:1.6}
     .membrete{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:3px double #003366}
     .logo{width:75px;height:75px;object-fit:contain;flex-shrink:0}
+    .logo-ministerio{width:auto;max-width:160px}
     .org-info{text-align:center;flex:1}
     .org-name{font-size:11pt;font-weight:bold;color:#003366;text-transform:uppercase;line-height:1.3}
     .org-sub{font-size:9pt;color:#555;margin-top:3px}
@@ -409,7 +410,11 @@ function imprimirConstancia(estId) {
       <div class="org-name">${EMPRESA}</div>
       <div class="org-sub">${EMPRESA_SUB}${configInst.rif ? " · R.I.F.: " + escHtml(configInst.rif) : ""}</div>
     </div>
-    <img src="data:image/png;base64,${LOGO}" class="logo" alt="Logo"/>
+    ${
+      logoSeguro(configLogos.ministerio)
+        ? `<img src="${logoSeguro(configLogos.ministerio)}" class="logo logo-ministerio" alt="Ministerio del Poder Popular para la Educación"/>`
+        : `<img src="data:image/png;base64,${LOGO}" class="logo" alt="Logo"/>`
+    }
   </div>
 
   <div class="num-const">N° ${numConst} &nbsp;·&nbsp; Turumo, ${fechaLarga}</div>

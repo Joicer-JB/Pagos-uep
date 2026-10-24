@@ -186,7 +186,7 @@ function excelDePrueba() {
       "ana.ruiz@example.com",
     ],
     ["2do Grado", "V-31000222", "Lucía Fernanda Mora", "F", "2018-08-20", "Luis Mora", "V-14000222", "04245550002", ""],
-    ["2do Grado", "V-30111222", "Ana María Pérez", "F", "10/03/2019", "Carmen Pérez", "V-12345678", "04141234567", ""],
+    ["1er Grado", "V-30111222", "Ana María Pérez", "F", "10/03/2019", "Carmen Pérez", "V-12345678", "04141234567", ""],
   ];
   const libro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), "Matrícula");
@@ -356,11 +356,8 @@ const PASOS = {
     await r.pestana("importar");
     const archivo = await pagina.$("#tab-content input[type=file]");
     if (archivo) {
-      const gradoSel = await pagina.$("#tab-content select");
-      if (gradoSel) {
-        const ops = await gradoSel.$$eval("option", (os) => os.map((o) => o.value).filter(Boolean));
-        if (ops.length) await gradoSel.selectOption(ops[0]);
-      }
+      // Se monta 2do Grado: la fila de 1er Grado del Excel se ignora
+      if (await pagina.$("#imp-grado")) await pagina.selectOption("#imp-grado", "2do Grado");
       await archivo.setInputFiles(excelDePrueba());
       await pagina.waitForTimeout(300);
       await r.foto("importar vista previa");

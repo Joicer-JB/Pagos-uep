@@ -4,6 +4,7 @@ let configDocentes = [];
 let configMaterias = {}; // {grado: [materias]}
 let configIndicadores = {}; // {grado_materia: [indicadores]}
 let configInst = {};
+let configLogos = {}; // {ministerio: "data:image/png;base64,…"} — logos que sube el director (config/logos)
 let configRespaldo = null; // { ultimo: "YYYY-MM-DD" } — fecha del último respaldo descargado (solo la ve el director)
 // Materias, indicadores y datos de la institución los usan todos los roles (notas, boletines, recibos).
 // La lista de docentes solo la carga el director: las reglas de Firestore no dejan leer "usuarios" a los demás.
@@ -18,11 +19,13 @@ async function cargarConfig() {
     if (matSnap.exists) configMaterias = matSnap.data();
     if (indSnap.exists) configIndicadores = indSnap.data();
     if (rolUsuario === "director") {
-      const [docsSnap, respSnap, rqSnap] = await Promise.all([
+      const [docsSnap, respSnap, rqSnap, logosSnap] = await Promise.all([
         db.collection("usuarios").where("rol", "==", "docente").get(),
         db.collection("config").doc("respaldo").get(),
         db.collection("config").doc("resumenQuincenal").get(),
+        db.collection("config").doc("logos").get(),
       ]);
+      configLogos = logosSnap.exists ? logosSnap.data() : {};
       configDocentes = docsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
       configRespaldo = respSnap.exists ? respSnap.data() : { ultimo: "" };
       configResumenQ = rqSnap.exists ? rqSnap.data() : { visto: "" };
@@ -262,6 +265,17 @@ function renderConfigInstitucion() {
             `<div class="field" style="margin:0"><label class="field-label" style="font-weight:400">${escHtml(g)}</label><input class="inp inst-guia" data-grado="${escHtml(g)}" value="${escHtml((inst.guias || {})[g] || "")}" placeholder="Nombre del profesor guía"/></div>`
         )
         .join("")}</div></div>
+    <div class="field" style="grid-column:1/-1"><label class="field-label">🏛️ Logo del Ministerio del Poder Popular para la Educación <span style="font-weight:400;color:#888">(sale en las constancias de estudio, arriba a la derecha)</span></label>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+        ${
+          logoSeguro(configLogos.ministerio)
+            ? `<img src="${logoSeguro(configLogos.ministerio)}" alt="Logo del Ministerio" class="logo-ministerio-vista" style="height:56px;max-width:200px;object-fit:contain;border:1px solid #e3e7ef;border-radius:6px;padding:4px;background:#fff"/>`
+            : `<span style="font-size:0.75rem;color:#888">Todavía no hay logo</span>`
+        }
+        <input type="file" accept="image/png,image/jpeg,image/webp" id="inst-logo-min" class="inp" style="max-width:280px" onchange="subirLogoMinisterio(this)"/>
+        ${logoSeguro(configLogos.ministerio) ? `<button class="btn btn-gray btn-sm" onclick="quitarLogoMinisterio()">Quitar</button>` : ""}
+      </div>
+      <div class="ayuda" style="margin-top:0.3rem">Puedes sacarlo del Word de la matrícula: clic derecho sobre el logo → «Guardar como imagen». Se guarda apenas lo eliges.</div></div>
     <div class="field"><label class="field-label">Año escolar actual</label>
       <input class="inp" id="inst-anio" value="${escHtml(inst.anioEscolar) || "2025-2026"}" placeholder="2025-2026"/></div>
   </div>
@@ -342,6 +356,47 @@ async function guardarInstitucion() {
     await db.collection("config").doc("institucion").set(datos);
     configInst = datos;
     mostrarToast("✅ Datos institucionales guardados");
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+// Solo se muestra una imagen guardada por la propia plataforma (PNG o JPEG en base64)
+const logoSeguro = (u) => (/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(u || "") ? u : "");
+// Achica la imagen (máximo 480 px de lado) y la guarda en config/logos
+function subirLogoMinisterio(input) {
+  const archivo = input.files && input.files[0];
+  if (!archivo) return;
+  const lector = new FileReader();
+  lector.onload = () => {
+    const img = new Image();
+    img.onload = async () => {
+      const k = Math.min(1, 480 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(img.width * k));
+      c.height = Math.max(1, Math.round(img.height * k));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      let url = c.toDataURL("image/png");
+      if (url.length > 600000) url = c.toDataURL("image/jpeg", 0.9);
+      try {
+        await db.collection("config").doc("logos").set({ ministerio: url }, { merge: true });
+        configLogos.ministerio = url;
+        renderTabContent();
+        mostrarToast("✅ Logo del Ministerio guardado: ya sale en las constancias");
+      } catch (e) {
+        alert("No se pudo guardar el logo: " + e.message);
+      }
+    };
+    img.onerror = () => alert("Ese archivo no es una imagen que se pueda leer. Usa PNG o JPG.");
+    img.src = lector.result;
+  };
+  lector.readAsDataURL(archivo);
+}
+async function quitarLogoMinisterio() {
+  if (!confirm("¿Quitar el logo del Ministerio de las constancias?")) return;
+  try {
+    await db.collection("config").doc("logos").set({ ministerio: "" }, { merge: true });
+    configLogos.ministerio = "";
+    renderTabContent();
   } catch (e) {
     alert("Error: " + e.message);
   }
