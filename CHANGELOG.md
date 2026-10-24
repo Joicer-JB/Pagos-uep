@@ -6,6 +6,10 @@
   «🔄 Traer del BCV», la del Excel del BCV y las que ya estaban guardadas con 4 decimales. Los pagos ya registrados
   conservan la tasa y los bolívares con que se cobraron.
 - Guía del director: cómo bajar el Excel de tasas del BCV e importarlo.
+- La tasa se **muestra** también con 2 decimales en todas partes (cabecera, recibos, reportes), incluso la de los pagos
+  viejos que se cobraron con 4.
+- La app instalada y el navegador ya no se quedan con la copia vieja de la plataforma después de publicar un cambio:
+  los archivos se revisan siempre con el servidor (`sw.js` v4).
 
 ## Octubre 2026 — Boletín sin la dirección de la página
 
