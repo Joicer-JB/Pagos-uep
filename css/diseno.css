@@ -705,6 +705,13 @@ textarea.inp {
 .sab-aj {
   background: #fff8e1 !important;
 }
+/* M: la nota final que fija el consejo (vacía si no la cambió) */
+.sab-mod {
+  font-weight: 800;
+  color: #7a5c00;
+  background: #fffdf5;
+  border-left: 2px solid #f0d77a;
+}
 .sab-tabla sup,
 .sab-detalle sup {
   font-size: 0.55rem;

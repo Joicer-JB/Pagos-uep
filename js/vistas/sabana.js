@@ -94,30 +94,46 @@ function datosSabana(grado, seccion, ver, materia) {
     cabecera = [
       [
         ...fijas,
-        ...areas.map((m) => ({ t: m, sub: profesorDe(grado, m), cs: LAPSOS.length + 1 })),
+        ...areas.map((m) => ({ t: m, sub: profesorDe(grado, m), cs: LAPSOS.length + 2 })),
         { t: "Promedio", rs: 2 },
       ],
-      areas.flatMap(() => [...LAPSOS.map((l, i) => ({ t: i + 1 + "° L" })), { t: "Def." }]),
+      areas.flatMap(() => [...LAPSOS.map((l, i) => ({ t: i + 1 + "° L" })), { t: "Def." }, { t: "M" }]),
     ];
+    // Def.: la que dan los 3 lapsos. M: la que fija el consejo al terminar el año (vacía si no la cambió). El
+    // promedio cuenta la final (M si la hay).
     filas = lista.map((est) => ({
       est,
       celdas: [
         ...areas.flatMap((m) => {
           const d = definitivaDe(est, m);
-          return [...d.lapsos.map((x, i) => nota(x, m, LAPSOS[i])), nota(d, m, LAPSO_DEF, "def")];
+          return [
+            ...d.lapsos.map((x, i) => nota(x, m, LAPSOS[i])),
+            { v: d.calculada, materia: m, lapso: LAPSO_DEF, tipo: "def" },
+            {
+              v: d.ajuste ? d.nota : null,
+              ajuste: d.ajuste,
+              calculada: d.calculada,
+              materia: m,
+              lapso: LAPSO_DEF,
+              tipo: "mod",
+            },
+          ];
         }),
         { v: promedioEstudiante(est, areas), tipo: "prom" },
       ],
     }));
   }
-  // Pie: promedio de cada columna y cuántos quedaron por debajo de 10
-  const columnas = filas.length ? filas[0].celdas.length : 0;
+  // Pie: promedio de cada columna y cuántos quedaron por debajo de 10 (en la columna M, solo las cambiadas: no cuenta)
+  const tipos = filas.length ? filas[0].celdas.map((c) => c.tipo) : [];
   const col = (i) => filas.map((f) => f.celdas[i].v).filter((v) => v !== null);
   const pie = [
-    { t: "Promedio de la sección", celdas: [...Array(columnas).keys()].map((i) => promedioDeNotas(col(i))) },
+    {
+      t: "Promedio de la sección",
+      celdas: tipos.map((t, i) => (t === "mod" ? null : promedioDeNotas(col(i)))),
+    },
     {
       t: "Reprobados (menos de 10)",
-      celdas: [...Array(columnas).keys()].map((i) => col(i).filter((v) => v < 10).length),
+      celdas: tipos.map((t, i) => (t === "mod" ? null : col(i).filter((v) => v < 10).length)),
     },
   ];
   const mat = ver === "materia" ? (areas.includes(materia) ? materia : areas[0]) : "";
@@ -138,7 +154,7 @@ function ajustesSabana(grado, seccion) {
 
 const tituloCelda = (c) =>
   c.ajuste
-    ? `Cambiada por el consejo (antes ${c.ajuste.original ?? "-"}): ${c.ajuste.motivo || ""}`
+    ? `${c.tipo === "mod" ? "Modificada" : "Cambiada"} por el consejo (antes ${c.ajuste.original ?? "-"}): ${c.ajuste.motivo || ""}`
     : c.faltan
       ? `Faltan ${c.faltan} evaluación(es) por nota`
       : "";
@@ -155,19 +171,24 @@ function htmlTablaSabana(d, enPantalla) {
     const clases = [
       "sab-n",
       c.tipo === "def" ? "sab-def" : "",
+      c.tipo === "mod" ? "sab-mod" : "",
       c.tipo === "lapso" ? "sab-lapso" : "",
       c.tipo === "prom" ? "sab-prom" : "",
       c.v !== null && c.v < 10 ? "sab-rep" : "",
       c.ajuste ? "sab-aj" : "",
       c.faltan ? "sab-parcial" : "",
-      ajustar && c.materia ? "sab-toca" : "",
+      ajustar && c.materia && c.lapso === LAPSO_DEF ? "sab-toca" : "",
     ]
       .filter(Boolean)
       .join(" ");
     const t = tituloCelda(c);
+    // El consejo cambia la nota final, al terminar los 3 lapsos: se toca la Def. o la M
     const clic =
-      ajustar && c.materia ? ` onclick="abrirAjusteConsejo('${c.estId}','${escJs(c.materia)}','${c.lapso}')"` : "";
-    return `<td class="${clases}"${t ? ` title="${escHtml(t)}"` : ""}${clic}>${textoNota(c.v)}${c.ajuste ? "<sup>C</sup>" : ""}</td>`;
+      ajustar && c.materia && c.lapso === LAPSO_DEF
+        ? ` onclick="abrirAjusteConsejo('${c.estId}','${escJs(c.materia)}','${c.lapso}')"`
+        : "";
+    const texto = c.tipo === "mod" && c.v === null ? "" : textoNota(c.v);
+    return `<td class="${clases}"${t ? ` title="${escHtml(t)}"` : ""}${clic}>${texto}${c.ajuste && c.tipo !== "mod" ? "<sup>C</sup>" : ""}</td>`;
   };
   return `<table class="sab-tabla">
     <thead>${d.cabecera.map((fila) => `<tr>${fila.map(th).join("")}</tr>`).join("")}</thead>
@@ -244,7 +265,7 @@ function renderSabana() {
           : ""
       }
     </div>
-    <div class="ayuda" style="margin-top:0.5rem">Toca el nombre de un estudiante para ver todas sus evaluaciones.${puedeAjustarConsejo() ? " Para cambiar una nota por decisión del consejo, tócala." : ""} <span class="sab-rep">Rojo</span>: menos de 10 · <strong>C</strong>: cambiada por el consejo · <em>cursiva</em>: faltan evaluaciones.</div>
+    <div class="ayuda" style="margin-top:0.5rem">Toca el nombre de un estudiante para ver todas sus evaluaciones.${puedeAjustarConsejo() ? " Al terminar los 3 lapsos, para cambiar la nota final por decisión del consejo, toca su <strong>Def.</strong> o su <strong>M</strong> (en «Todo el año»)." : ""} <span class="sab-rep">Rojo</span>: menos de 10 · <strong>M</strong>: nota modificada por el consejo · <em>cursiva</em>: faltan evaluaciones.</div>
   </div>
   <div class="card" style="padding:0.6rem">
     ${d.filas.length ? `<div class="sabana-wrap">${htmlTablaSabana(d, true)}</div>` : `<div class="empty-state">No hay estudiantes activos en ${escHtml(grado)}.</div>`}
@@ -260,14 +281,14 @@ function htmlDetalleEstudiante(est, enPantalla) {
     ajustar ? ` class="sab-toca" onclick="abrirAjusteConsejo('${est.id}','${escJs(m)}','${l}',true)"` : "";
   const marca = (x) =>
     x.ajuste
-      ? ` <span class="sab-aj-nota">C · antes ${textoNota(x.ajuste.original)}${x.ajuste.motivo ? ": " + escHtml(x.ajuste.motivo) : ""}</span>`
+      ? ` <span class="sab-aj-nota">Consejo · antes ${textoNota(x.ajuste.original)}${x.ajuste.motivo ? ": " + escHtml(x.ajuste.motivo) : ""}</span>`
       : "";
   return (
     areas
       .map((m) => {
         const d = definitivaDe(est, m);
         return `<div class="sab-detalle">
-        <div class="sab-detalle-t"><strong>${escHtml(m)}</strong><span${toque(m, LAPSO_DEF)}>Definitiva: <strong class="${d.nota !== null && d.nota < 10 ? "sab-rep" : ""}">${textoNota(d.nota)}</strong>${d.ajuste ? "<sup>C</sup>" : ""}</span></div>
+        <div class="sab-detalle-t"><strong>${escHtml(m)}</strong><span${toque(m, LAPSO_DEF)}>Definitiva: <strong class="${d.calculada !== null && d.calculada < 10 ? "sab-rep" : ""}">${textoNota(d.calculada)}</strong>${d.ajuste ? ` · M: <strong class="${d.nota !== null && d.nota < 10 ? "sab-rep" : ""}">${textoNota(d.nota)}</strong>` : ""}</span></div>
         ${d.ajuste ? `<div class="item-sub">${marca(d)}</div>` : ""}
         ${d.lapsos
           .map(
@@ -278,7 +299,7 @@ function htmlDetalleEstudiante(est, enPantalla) {
                   `<span class="sab-chip${ev.nota !== null && ev.nota < 10 ? " sab-rep" : ""}">${escHtml(ev.nombre)}${Number(ev.peso) > 0 ? " " + ev.peso + "%" : ""}: <strong>${textoNota(ev.nota)}</strong></span>`
               )
               .join("")}</span>
-            <span${toque(m, LAPSOS[i])}>Nota: <strong class="${x.nota !== null && x.nota < 10 ? "sab-rep" : ""}">${textoNota(x.nota)}</strong>${x.ajuste ? "<sup>C</sup>" : ""}${marca(x)}</span></div>`
+            <span>Nota: <strong class="${x.nota !== null && x.nota < 10 ? "sab-rep" : ""}">${textoNota(x.nota)}</strong>${x.ajuste ? "<sup>C</sup>" : ""}${marca(x)}</span></div>`
           )
           .join("")}
       </div>`;
@@ -397,7 +418,7 @@ const ESTILOS_SABANA = `*{box-sizing:border-box}body{font-family:Arial,sans-seri
   table{border-collapse:collapse;width:100%;margin-bottom:8px}th,td{border:1px solid #999;padding:2px 3px;text-align:center}
   th{background:#003366;color:#fff;font-size:9px}td.sab-nombre,td.sab-pie-t{text-align:left;white-space:nowrap}
   .sab-def,.sab-prom{font-weight:700;background:#f0f4ff}.sab-rep{color:#b91c1c;font-weight:700}.sab-parcial{font-style:italic}
-  .sab-aj{background:#fff8e1}sup{font-size:7px;color:#7a5c00}tfoot td{font-weight:700;background:#f7f7f7}
+  .sab-aj{background:#fff8e1}.sab-mod{font-weight:700;background:#fff8e1;min-width:22px}sup{font-size:7px;color:#7a5c00}tfoot td{font-weight:700;background:#f7f7f7}
   .section-title{font-weight:700;color:#003366;margin:8px 0 4px}
   .sab-detalle{border:1px solid #ccc;border-radius:4px;padding:5px;margin-bottom:5px;break-inside:avoid}
   .sab-detalle-t{display:flex;justify-content:space-between}.sab-detalle-l{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:3px}
@@ -424,7 +445,7 @@ function imprimirSabana() {
     <button class="no-print" onclick="window.print()">🖨️ Imprimir</button>
     ${encabezadoSabana("SÁBANA DE NOTAS", `${escHtml(grado)}${seccion ? " · Sección " + escHtml(seccion) : ""} · ${escHtml(vista || "")}`)}
     ${htmlTablaSabana(d, false)}
-    <div style="font-size:9px;color:#555">Rojo: menos de 10 · C: cambiada por el consejo · cursiva: faltan evaluaciones.</div>
+    <div style="font-size:9px;color:#555">Def.: definitiva de los 3 lapsos · M: nota modificada por el consejo · Rojo: menos de 10 · cursiva: faltan evaluaciones.</div>
     ${htmlAjustesSabana(ajustesSabana(grado, seccion), false)}
     <div class="firmas"><div>Docente guía</div><div>Coordinación</div><div>Dirección</div></div>
   </body></html>`);

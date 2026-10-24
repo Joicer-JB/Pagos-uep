@@ -74,8 +74,8 @@ test("la sábana y el boletín usan esas notas; la sábana no tiene el detalle p
     .locator(".sabana-wrap .sab-tabla tbody tr", { hasText: "Luis Alberto Gómez" })
     .locator("td")
     .allTextContents();
-  assert.deepEqual(luis.slice(3, 7), ["16,5", "-", "-", "16,5"]); // Matemáticas
-  assert.deepEqual(luis.slice(11, 15), ["9", "-", "-", "9"]); // Inglés (reprobada)
+  assert.deepEqual(luis.slice(3, 8), ["16,5", "-", "-", "16,5", ""]); // Matemáticas (sin cambio del consejo: M vacía)
+  assert.deepEqual(luis.slice(13, 18), ["9", "-", "-", "9", ""]); // Inglés (reprobada)
   assert.equal(luis.at(-1), "12,8"); // (16,5 + 9) / 2
 
   await llamar(`imprimirBoletin("est2")`);

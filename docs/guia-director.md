@@ -96,14 +96,15 @@ Cuando quieras que cada profesor cargue su plan de evaluación y sus evaluacione
 En **📝 Notas → 📋 Sábana de notas** están todas las notas de un año (y sección, si hay varias), para discutirlas
 con los docentes. El boletín sigue siendo para los representantes.
 
-- **Ver:** todo el año (1er, 2do y 3er lapso, definitiva y promedio), un lapso, o el **detalle por materia** con
+- **Ver:** todo el año (por materia: 1er, 2do y 3er lapso, **Def.** y **M**; al final, el promedio), un lapso, o el **detalle por materia** con
   cada evaluación que puso el profesor y su porcentaje. Abajo salen el promedio de la sección y cuántos quedaron
   por debajo de 10.
 - Toca el **nombre** de un estudiante para ver todas sus evaluaciones (y imprimirlas).
-- **Cambiar una nota por decisión del consejo (solo tú):** toca la nota (de un lapso o la definitiva), escribe
-  la nota nueva, el **motivo** y, si quieres, el acta. Queda la nota original, quién la cambió y cuándo; en la
-  sábana sale con una **C** y en la lista **🏛️ Cambios del consejo**. La definitiva y el boletín ya usan la nota
-  nueva. Para deshacerlo: toca la nota → **Quitar el cambio**.
+- **Cambiar la nota final por decisión del consejo (solo tú), al terminar los 3 lapsos:** en «Todo el año», toca la
+  **Def.** o la **M** de la materia, escribe la nota nueva, el **motivo** y, si quieres, el acta. La **Def.** sigue
+  diciendo la que dan los 3 lapsos y la **M** dice la del consejo; queda quién la cambió y cuándo, y sale en la
+  lista **🏛️ Cambios del consejo**. El promedio, el cuadro de honor y el boletín ya usan la nota de la **M**. Para
+  deshacerlo: toca la M → **Quitar el cambio**.
 - Si después el profesor corrige sus notas, el cambio del consejo se mantiene y te avisa que la nota del
   profesor cambió.
 - **🖨️ Imprimir** (hoja horizontal, con la lista de cambios y espacio para firmas) o **📥 Excel**.

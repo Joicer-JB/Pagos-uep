@@ -95,21 +95,22 @@ before(async () => {
 });
 after(async () => nav && nav.cerrar());
 
-test("todo el año: por materia 1er, 2do y 3er lapso y definitiva, y el promedio del estudiante", async () => {
+test("todo el año: por materia 1er, 2do y 3er lapso, definitiva y M (la del consejo), y el promedio", async () => {
   await abrirSabana();
   // Solo años de media general: 1er Año primero
   assert.deepEqual(await s.pagina.$$eval("#sab-grado option", (o) => o.map((x) => x.value)), ["1er Año", "5to Año"]);
   const cab = await s.pagina.textContent(".sab-tabla thead");
-  for (const m of ["Matemáticas", "Lengua y Literatura", "Inglés", "Promedio", "1° L", "Def."])
+  for (const m of ["Matemáticas", "Lengua y Literatura", "Inglés", "Promedio", "1° L", "Def.", "M"])
     assert.match(cab, new RegExp(m));
   // En orden alfabético, con su número y cédula
   const nombres = await s.pagina.$$eval(".sab-tabla tbody .sab-nombre", (t) => t.map((x) => x.textContent.trim()));
   assert.deepEqual(nombres, ["Andrea Blanco", "Luis Alberto Gómez", "Pedro Zambrano"]);
   // Luis, Matemáticas: 1er lapso 15,3 (con porcentajes) · 2do 15 (sin plan: promedio) · definitiva 15,2
   const luis = await fila("Luis Alberto Gómez").locator("td").allTextContents();
-  assert.deepEqual(luis.slice(3, 7), ["15,3", "15", "-", "15,2"]);
+  // y la M vacía (el consejo no la cambió)
+  assert.deepEqual(luis.slice(3, 8), ["15,3", "15", "-", "15,2", ""]);
   // Inglés: 17 y 15 → 16. Lengua sin notas. Promedio: (15,2 + 16) / 2 = 15,6
-  assert.deepEqual(luis.slice(11, 15), ["17", "15", "-", "16"]);
+  assert.deepEqual(luis.slice(13, 18), ["17", "15", "-", "16", ""]);
   assert.equal(luis.at(-1), "15,6");
   // Andrea reprobó Matemáticas en el 1er lapso (rojo) y le falta la exposición (cursiva)
   const celda = fila("Andrea Blanco").locator("td").nth(3);
@@ -156,11 +157,13 @@ test("un lapso y el detalle por materia, con cada evaluación y su porcentaje", 
   assert.deepEqual(s.errores, []);
 });
 
-test("el director cambia una nota por decisión del consejo: queda la original, el motivo y la marca C", async () => {
+test("al final de los 3 lapsos el director cambia la nota por decisión del consejo: va en la columna M", async () => {
   await s.pagina.selectOption("#sab-ver", "anio");
   await s.pagina.waitForSelector(".sab-tabla >> text=Def.");
-  // Andrea, Matemáticas 1er lapso: de 9 a 10
-  await fila("Andrea Blanco").locator("td").nth(3).click();
+  // Las notas de los lapsos no se tocan: solo la Def. y la M
+  assert.doesNotMatch((await fila("Andrea Blanco").locator("td").nth(3).getAttribute("class")) || "", /sab-toca/);
+  // Andrea, Matemáticas: definitiva 9, el consejo la sube a 10
+  await fila("Andrea Blanco").locator("td").nth(6).click();
   await s.pagina.waitForSelector("#aj-nota");
   assert.match(await s.pagina.textContent(".modal-body"), /Nota que dan las evaluaciones\s*9/);
   await s.pagina.fill("#aj-nota", "10");
@@ -171,28 +174,33 @@ test("el director cambia una nota por decisión del consejo: queda la original, 
   await s.pagina.click("text=💾 Guardar");
   await s.pagina.waitForSelector(".sab-ajustes >> text=Andrea Blanco");
 
-  const doc = await notaDoc("est7_Lapso 1");
+  const doc = await notaDoc("est7_Definitiva");
   assert.equal(doc.consejo.Matemáticas.nota, 10);
   assert.equal(doc.consejo.Matemáticas.original, 9);
   assert.equal(doc.consejo.Matemáticas.por, "herrerajoicer@gmail.com");
   assert.equal(doc.consejo.Matemáticas.acta, "Acta N° 1");
-  assert.equal(doc.Matemáticas_1, "9"); // lo que puso el profesor no se toca
+  assert.equal((await notaDoc("est7_Lapso 1")).Matemáticas_1, "9"); // lo que puso el profesor no se toca
 
-  const celda = fila("Andrea Blanco").locator("td").nth(3);
-  assert.equal(await celda.textContent(), "10C");
-  assert.match(await celda.getAttribute("class"), /sab-aj/);
-  assert.doesNotMatch(await celda.getAttribute("class"), /sab-rep/);
+  // Def. sigue diciendo 9 (en rojo); la M dice 10
+  const def = fila("Andrea Blanco").locator("td").nth(6);
+  assert.equal(await def.textContent(), "9");
+  assert.match(await def.getAttribute("class"), /sab-rep/);
+  const m = fila("Andrea Blanco").locator("td").nth(7);
+  assert.equal(await m.textContent(), "10");
+  assert.match(await m.getAttribute("class"), /sab-mod/);
+  assert.doesNotMatch(await m.getAttribute("class"), /sab-rep/);
+  assert.match(await m.getAttribute("title"), /Modificada por el consejo \(antes 9\)/);
   const aj = await s.pagina.textContent(".sab-ajustes");
-  assert.match(aj, /Andrea Blanco\s*Matemáticas\s*Lapso 1\s*9\s*10\s*Consejo de sección/);
+  assert.match(aj, /Andrea Blanco\s*Matemáticas\s*Definitiva\s*9\s*10\s*Consejo de sección/);
 
-  // La definitiva también: Luis, Matemáticas de 15,2 a 16
-  await fila("Luis Alberto Gómez").locator("td").nth(6).click();
+  // También tocando la M vacía: Luis, Matemáticas de 15,2 a 16
+  await fila("Luis Alberto Gómez").locator("td").nth(7).click();
   await s.pagina.fill("#aj-nota", "16");
   await s.pagina.fill("#aj-motivo", "Revisión del consejo final");
   await s.pagina.click("text=💾 Guardar");
   await s.pagina.waitForSelector(".sab-ajustes >> text=Revisión del consejo final");
   assert.equal((await notaDoc("est2_Definitiva")).consejo.Matemáticas.original, 15.2);
-  assert.equal(await fila("Luis Alberto Gómez").locator("td").last().textContent(), "16"); // (16 + 16) / 2
+  assert.equal(await fila("Luis Alberto Gómez").locator("td").last().textContent(), "16"); // el promedio cuenta la M: (16 + 16) / 2
 
   // El boletín del representante ya sale con la nota del consejo
   await llamar(`imprimirBoletin("est2")`);
@@ -204,14 +212,14 @@ test("el director cambia una nota por decisión del consejo: queda la original, 
   const esc = await llamar(`__ESCRITURAS__.filter((e) => e.ruta === "notas/est7_Lapso 1").at(-1)`);
   assert.equal(esc.op, "set-merge");
   assert.equal("consejo" in esc.datos, false);
-  assert.equal((await notaDoc("est7_Lapso 1")).consejo.Matemáticas.nota, 10);
+  assert.equal((await notaDoc("est7_Definitiva")).consejo.Matemáticas.nota, 10);
 
   // Y se puede quitar
-  await fila("Andrea Blanco").locator("td").nth(3).click();
+  await fila("Andrea Blanco").locator("td").nth(7).click();
   await s.pagina.click("text=Quitar el cambio");
   await s.pagina.waitForFunction(() => !document.querySelector(".modal"));
-  assert.equal((await notaDoc("est7_Lapso 1")).consejo.Matemáticas, undefined);
-  assert.equal(await fila("Andrea Blanco").locator("td").nth(3).textContent(), "9");
+  assert.equal((await notaDoc("est7_Definitiva")).consejo.Matemáticas, undefined);
+  assert.equal(await fila("Andrea Blanco").locator("td").nth(7).textContent(), "");
   assert.deepEqual(s.errores, []);
 });
 
@@ -230,10 +238,13 @@ test("se imprime en hoja horizontal y se descarga en Excel, con los cambios del 
   assert.deepEqual(wb.SheetNames, ["Sábana", "Cambios del consejo"]);
   const filas = XLSX.utils.sheet_to_json(wb.Sheets["Sábana"], { header: 1 });
   assert.deepEqual(filas[0].slice(0, 4), ["N°", "Estudiante", "Cédula", "Matemáticas"]);
-  assert.deepEqual(filas[1].slice(3, 7), ["1° L", "2° L", "3° L", "Def."]);
+  assert.deepEqual(filas[1].slice(3, 8), ["1° L", "2° L", "3° L", "Def.", "M"]);
   const luis = filas.find((f) => f[1] === "Luis Alberto Gómez");
-  assert.deepEqual([luis[3], luis[4], luis[5], luis[6]], [15.3, 15, undefined, 16]); // el 3er lapso, vacío
-  assert.ok(wb.Sheets["Sábana"]["!merges"].some((m) => m.s.c === 3 && m.e.c === 6)); // «Matemáticas» sobre sus 4 columnas
+  assert.deepEqual(
+    [3, 4, 5, 6, 7].map((i) => luis[i]),
+    [15.3, 15, undefined, 15.2, 16]
+  ); // 3er lapso vacío; M del consejo
+  assert.ok(wb.Sheets["Sábana"]["!merges"].some((m) => m.s.c === 3 && m.e.c === 7)); // «Matemáticas» sobre sus 5 columnas
 });
 
 test("plan de evaluación: nombres y porcentajes que deben sumar 100%, en uno o en los 3 lapsos", async () => {
@@ -275,9 +286,9 @@ test("los docentes ven la sábana pero no pueden cambiar notas por consejo", asy
   await entrar("docente.prueba@example.com");
   await abrirSabana();
   assert.equal(await s.pagina.locator(".sab-toca").count(), 0);
-  assert.doesNotMatch(await s.pagina.textContent(".ayuda"), /consejo, tócala/);
-  // Las notas del consejo sí las ven (Pedro, definitiva de Inglés)
-  assert.equal(await fila("Pedro Zambrano").locator("td").nth(14).textContent(), "19C");
+  assert.doesNotMatch(await s.pagina.textContent(".ayuda"), /toca su/);
+  // Las notas del consejo sí las ven (Pedro, Inglés: la M)
+  assert.equal(await fila("Pedro Zambrano").locator("td").nth(17).textContent(), "19");
   await llamar(`abrirAjusteConsejo("est2", "Matemáticas", "Lapso 1")`);
   assert.equal(await s.pagina.locator("#aj-nota").count(), 0);
   await assert.rejects(

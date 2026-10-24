@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — Sábana: columna M
+
+- En «Todo el año», cada materia tiene **1° L, 2° L, 3° L, Def. y M**. **Def.** es la que dan los 3 lapsos; **M** es
+  la nota que fija el consejo al terminar el año (vacía si no la cambió). El director la cambia tocando la Def. o la
+  M; las notas de los lapsos ya no se tocan desde la sábana. El promedio, el cuadro de honor y el boletín usan la M.
+  También en la impresión y el Excel.
+
 ## Octubre 2026 — Sin cuenta fija de notas, y «¿Olvidaste tu contraseña?»
 
 - En la pantalla de entrada, **«¿Olvidaste tu contraseña?»**: con el correo escrito, Firebase manda (en español) un
