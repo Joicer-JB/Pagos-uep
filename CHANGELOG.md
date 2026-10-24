@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Octubre 2026 — App Check con Fraud Defense
+
+- Firebase ya no deja registrar el reCAPTCHA v3 clásico: App Check pasa a **Google Cloud Fraud Defense** (antes
+  reCAPTCHA Enterprise), con la clave nueva en `js/config.js` (`APP_CHECK_ENTERPRISE = true`). Sigue siendo invisible.
+  Pasos en `docs/app-check.md`.
+
 ## Octubre 2026 — Montar la matrícula por grado desde Word o Excel
 
 - **📥 Importar:** se elige el grado o año y se sube el Excel con su lista. Los nuevos se crean. A los que ya están

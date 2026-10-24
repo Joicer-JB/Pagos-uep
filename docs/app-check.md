@@ -6,35 +6,35 @@ se lee ni se escribe nada). App Check agrega otra capa: Firebase **solo atiende 
 programa que copie la configuración para atacar la base de datos o gastar la cuota del plan gratis queda rechazado,
 aunque tenga una contraseña robada.
 
-Usa reCAPTCHA v3 de Google. Es invisible: ni la secretaria ni tú tienen que marcar casillas ni elegir imágenes.
+Usa **Google Cloud Fraud Defense** (antes reCAPTCHA Enterprise). Es invisible: ni la secretaria ni tú tienen que
+marcar casillas ni elegir imágenes.
 
-## Activarlo (unos 15 minutos)
+> En octubre de 2026 Firebase ya no dejaba registrar el reCAPTCHA v3 «clásico» (el campo de la clave secreta salía
+> bloqueado y decía «reCAPTCHA Classic está obsoleto»). Por eso se usa Fraud Defense. La clave v3 vieja ya no se usa.
 
-### 1. Crear la clave de reCAPTCHA
+## Activarlo
 
-1. Entra a [google.com/recaptcha/admin/create](https://www.google.com/recaptcha/admin/create) con tu cuenta de Gmail.
-2. **Etiqueta**: `Pagos UEP`.
-3. **Tipo de reCAPTCHA**: **Basado en puntuaciones (v3)**.
-4. **Dominios**: `joicer-jb.github.io` (el de la página de la plataforma, sin `https://` ni `/Pagos-uep`).
-5. Acepta las condiciones y pulsa **Enviar**.
-   - Si Google te manda a la consola de **Google Cloud** (reCAPTCHA ahora vive ahí), crea la clave allí: tipo
-     **Sitio web**, dominio `joicer-jb.github.io`, y **sin** «desafío de casilla». En ese caso es una clave
-     **reCAPTCHA Enterprise**: en el paso 2 elige **reCAPTCHA Enterprise** en vez de v3 y avísame cuál usaste.
-6. Te muestra dos claves:
-   - **Clave del sitio**: es pública. **Mándamela** y la pongo en la plataforma.
-   - **Clave secreta**: no la compartas. Se pega en Firebase (paso 2).
+### 1. Crear la clave en Fraud Defense
+
+1. Entra a [console.cloud.google.com/security/recaptcha?project=pagos-jjs](https://console.cloud.google.com/security/recaptcha?project=pagos-jjs)
+   con tu cuenta de Gmail. Si pide **Habilitar** la API, púlsalo. (No hace falta tarjeta: el plan gratis cubre
+   10.000 verificaciones al mes, de sobra para un colegio).
+2. **Crear clave** → nombre `Pagos UEP`, plataforma **Web**, dominio `joicer-jb.github.io` (sin `https://` ni
+   `/Pagos-uep`), **sin** «desafío de casilla de verificación».
+3. Copia el **ID de clave** (empieza por `6L…`). Es público: se pone en la plataforma. Esta clave **no tiene clave
+   secreta**.
 
 ### 2. Registrar la app en Firebase
 
 1. [console.firebase.google.com](https://console.firebase.google.com) → proyecto **pagos-jjs** → menú
-   **Compilación** (Build) → **App Check**.
-2. Pestaña **Apps** → tu app web → **reCAPTCHA v3**.
-3. Pega la **clave secreta** y pulsa **Guardar**.
+   **Compilación** (Build) → **App Check** → pestaña **Apps**.
+2. En **Pagos-JJS** pulsa **Registrar** → **Fraud Defense (antes conocido como reCAPTCHA Enterprise)**.
+3. Pega el **ID de clave** y pulsa **Guardar**. Debe quedar como **Registrada**.
 
-### 3. Poner la clave del sitio en la plataforma
+### 3. Poner la clave en la plataforma
 
-Me pasas la clave del sitio y la pongo en `APP_CHECK_CLAVE` (en `js/config.js`). Desde ese momento la plataforma se
-identifica ante Firebase en cada operación. ✅ Ya está puesta (octubre 2026, reCAPTCHA v3).
+La clave va en `APP_CHECK_CLAVE` (en `js/config.js`) con `APP_CHECK_ENTERPRISE = true`. Desde ese momento la
+plataforma se identifica ante Firebase en cada operación. ✅ Ya está puesta (octubre 2026, Fraud Defense).
 
 ### 4. Revisar y aplicar (después de 1 o 2 días)
 
