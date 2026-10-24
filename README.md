@@ -49,7 +49,7 @@ Guías de uso por rol: [Director](docs/guia-director.md) · [Administradora](doc
 - **Director** y **administradora**: se reconocen por su correo, en la lista `ROLES` de
   [`js/config.js`](js/config.js).
 - **Docentes**: el director los crea en ⚙️ Configuración → Docentes. Cada uno queda con un perfil en la
-  colección `usuarios` de Firestore. El correo fijo `notasjjs@gmail.com` también entra como docente.
+  colección `usuarios` de Firestore. No hay cuentas fijas de docentes: el director desactiva o elimina cada una.
 
 **Moneda:** todos los montos se guardan en **$ de referencia**. Cada pago y cada gasto guarda además la
 **tasa BCV** de su día y su valor en bolívares. La tasa del día se carga con el botón 💱 de la cabecera. La tasa

@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## Octubre 2026 — Sin cuenta fija de notas, y «¿Olvidaste tu contraseña?»
+
+- En la pantalla de entrada, **«¿Olvidaste tu contraseña?»**: con el correo escrito, Firebase manda (en español) un
+  enlace para poner una contraseña nueva. Siempre responde igual, exista o no la cuenta.
+
+- Se quita la cuenta fija `notasjjs@gmail.com` (de `js/config.js` y de las reglas de Firestore). Control de estudio y
+  cada docente entran con su propia cuenta, creada en ⚙️ Config → 👨‍🏫 Docentes, que el director desactiva o elimina
+  cuando quiera. **Hay que publicar las reglas nuevas** en Firebase.
+
 ## Octubre 2026 — App Check con Fraud Defense
 
 - Firebase ya no deja registrar el reCAPTCHA v3 clásico: App Check pasa a **Google Cloud Fraud Defense** (antes

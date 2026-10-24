@@ -147,7 +147,11 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 **⚙️ Configuración → 👨‍🏫 Docentes → Nuevo docente**:
 
 - Escribe nombre, correo y una contraseña de al menos 6 caracteres. Elige jornada, grado y materias.
-- El docente entra con ese correo y esa contraseña, y solo ve la pestaña 📝 Notas.
+- El docente entra con ese correo y esa contraseña en https://joicer-jb.github.io/Pagos-uep/, y solo ve la pestaña
+  📝 Notas. Si olvida la contraseña, toca **«¿Olvidaste tu contraseña?»** en la pantalla de entrada y le llega un
+  correo para ponerse una nueva.
+- **Control de estudio:** marca **🗂️ Control de estudio** (y, si también da clase, su grado): ve todos los grados y
+  carga todas las notas. No hay cuentas fijas de notas: cada quien tiene la suya.
 - **Qué le toca:** en Inicial y Primaria, su **grado** (ve ese grado y carga todas las áreas). En Media General, sus
   **materias por año** (ve esos años y carga solo esas materias). Sin grado ni materias asignadas, ve todo.
 - La sábana dice quién da cada materia (de los perfiles de los docentes o de las clases de la nómina), y el boletín

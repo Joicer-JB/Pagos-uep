@@ -390,6 +390,11 @@
         actual = null;
         avisar();
       },
+      // «¿Olvidaste tu contraseña?»: se anota a qué correo se habría mandado el enlace
+      async sendPasswordResetEmail(email) {
+        if (!/@/.test(email)) throw error("auth/invalid-email", "Correo no válido");
+        (window.__CLAVE_OLVIDADA__ = window.__CLAVE_OLVIDADA__ || []).push(email);
+      },
       async setPersistence(tipo) {
         window.__PERSISTENCIA__ = tipo;
       },

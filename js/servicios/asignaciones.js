@@ -4,7 +4,7 @@
 // · Media General: un docente por materia y año. En su perfil, «materias» = ["1er Año::Matemáticas", …] (los perfiles
 //   viejos guardaban solo la materia: vale para todos los años); en la nómina, una clase con la materia y los años.
 // El director ve y hace todo. Control de estudio (perfil con controlEstudio), un docente sin grado ni materias
-// asignadas o la cuenta fija de notas ven todo y cargan todas las notas.
+// asignadas ven todo y cargan todas las notas.
 // Los profesores guía de Media General están en ⚙️ Config → 🏫 Institución (configInst.guias = {año: nombre}).
 
 const normMateria = (m) =>

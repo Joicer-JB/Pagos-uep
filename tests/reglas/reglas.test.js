@@ -23,7 +23,7 @@ const CUENTAS = {
   director: { uid: "uid-director", email: "herrerajoicer@gmail.com" },
   administradora: { uid: "uid-admin", email: "josefajsanquez@gmail.com" },
   docente: { uid: "uid-docente", email: "docente@example.com" },
-  docenteFijo: { uid: "uid-notas", email: "notasjjs@gmail.com" },
+  notasViejo: { uid: "uid-notas", email: "notasjjs@gmail.com" }, // la antigua cuenta fija de notas, sin perfil
   docenteInactivo: { uid: "uid-inactivo", email: "inactivo@example.com" },
   desconocido: { uid: "uid-intruso", email: "intruso@example.com" },
 };
@@ -155,7 +155,7 @@ test("documentos del personal: el director los adjunta, ve y quita; nadie los mo
     await assertSucceeds(deleteDoc(doc(db, "documentos_trabajadores/adj1_0")));
   }
   await assertSucceeds(setDoc(doc(como("director"), "documentos_trabajadores/adj1_0"), trozo()));
-  for (const rol of ["administradora", "docente", "docenteFijo", "desconocido"]) {
+  for (const rol of ["administradora", "docente", "notasViejo", "desconocido"]) {
     await assertFails(getDoc(doc(como(rol), "documentos_trabajadores/adj1_0")));
     await assertFails(setDoc(doc(como(rol), "documentos_trabajadores/adj2_0"), trozo(0, { adjuntoId: "adj2" })));
     await assertFails(deleteDoc(doc(como(rol), "documentos_trabajadores/adj1_0")));
@@ -205,7 +205,7 @@ test("administradora: carga la tasa BCV de un día sin tasa, pero no corrige las
 });
 
 test("docente: lee las fichas de estudiantes y la configuración, carga notas, y nada más", async () => {
-  for (const rol of ["docente", "docenteFijo"]) {
+  for (const rol of ["docente"]) {
     const db = como(rol);
     await assertSucceeds(getDoc(doc(db, "estudiantes_docentes/est1")));
     await assertSucceeds(getDocs(collection(db, "estudiantes_docentes")));
@@ -228,6 +228,14 @@ test("docente: lee las fichas de estudiantes y la configuración, carga notas, y
   }
 });
 
+test("la antigua cuenta fija de notas (notasjjs@gmail.com) ya no entra: sin perfil de docente no lee ni carga nada", async () => {
+  const db = como("notasViejo");
+  await assertFails(getDocs(collection(db, "notas")));
+  await assertFails(setDoc(doc(db, "notas/est1_Lapso 2"), { estId: "est1", Matemáticas_1: "18" }));
+  await assertFails(getDocs(collection(db, "estudiantes_docentes")));
+  await assertFails(getDoc(doc(db, "config/materias")));
+});
+
 test("notas: solo el director cambia notas por decisión del consejo; los docentes arman el plan de evaluación", async () => {
   const ajuste = { nota: 10, original: 9, motivo: "Consejo", por: CUENTAS.director.email, fecha: "2026-12-12" };
   await entorno.withSecurityRulesDisabled((ctx) =>
@@ -237,7 +245,7 @@ test("notas: solo el director cambia notas por decisión del consejo; los docent
       consejo: { Matemáticas: ajuste },
     })
   );
-  for (const rol of ["docente", "docenteFijo"]) {
+  for (const rol of ["docente"]) {
     const db = como(rol);
     // No pueden poner, cambiar ni quitar un cambio del consejo
     await assertFails(setDoc(doc(db, "notas/est1_Definitiva"), { estId: "est1", consejo: { Matemáticas: ajuste } }));

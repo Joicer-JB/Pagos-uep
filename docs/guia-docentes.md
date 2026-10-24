@@ -3,6 +3,12 @@
 Los docentes entran con el correo y la contraseña que les asignó el director, y solo ven la pestaña
 **📝 Notas**.
 
+Dirección de la plataforma: **https://joicer-jb.github.io/Pagos-uep/** (en el teléfono se puede instalar como app:
+menú del navegador → «Agregar a la pantalla principal»).
+
+**¿Olvidaste la contraseña?** Escribe tu correo en la pantalla de entrada y toca **«¿Olvidaste tu contraseña?»**: te
+llega un correo con un enlace para poner una contraseña nueva (revisa también la carpeta de spam).
+
 ## Cargar notas
 
 > **Por ahora las notas las carga la encargada de control de estudio**: en Media General, la nota final de cada lapso
