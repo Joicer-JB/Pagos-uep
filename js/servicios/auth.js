@@ -14,7 +14,42 @@ function renderLogin() {
   ${avisoSalidaInactividad()}
   <div id="login-err" style="margin-top:0.4rem"></div>
   <button class="btn btn-primary btn-full" id="login-btn" style="margin-top:0.85rem" onclick="doLogin()">🔐 Entrar al Sistema</button>
+  <div style="text-align:center;margin-top:0.6rem"><button type="button" id="login-olvide" onclick="olvideClave()" style="background:none;border:none;color:#00509e;font-size:0.8rem;text-decoration:underline;cursor:pointer;font-family:inherit">¿Olvidaste tu contraseña?</button></div>
 </div></div>`;
+}
+// «¿Olvidaste tu contraseña?»: Firebase manda al correo un enlace para poner una contraseña nueva. Siempre dice lo
+// mismo, exista o no la cuenta, para no revelar qué correos tienen acceso.
+async function olvideClave() {
+  const email = (document.getElementById("l-email").value || "").trim();
+  const caja = document.getElementById("login-err");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    mostrarError("login-err", "Escribe tu correo arriba y vuelve a tocar «¿Olvidaste tu contraseña?».");
+    return;
+  }
+  const btn = document.getElementById("login-olvide");
+  if (btn) btn.disabled = true;
+  try {
+    fbAuth.languageCode = "es";
+    await fbAuth.sendPasswordResetEmail(email);
+  } catch (e) {
+    if (e.code !== "auth/user-not-found") {
+      if (btn) btn.disabled = false;
+      mostrarError(
+        "login-err",
+        e.code === "auth/invalid-email"
+          ? "Ese correo no es válido."
+          : e.code === "auth/too-many-requests"
+            ? "Demasiados intentos. Espera unos minutos y vuelve a intentar."
+            : e.code === "auth/network-request-failed"
+              ? "Sin conexión a internet. Intenta de nuevo cuando tengas conexión."
+              : "No se pudo enviar el correo (" + e.message + ")."
+      );
+      return;
+    }
+  }
+  if (btn) btn.disabled = false;
+  if (caja)
+    caja.innerHTML = `<div class="alert-item alert-info" style="font-size:0.8rem">📧 Si <strong>${escHtml(email)}</strong> tiene una cuenta, le llegó un correo para poner una contraseña nueva. Revisa también la carpeta de spam o «no deseado». Después entra aquí con la contraseña nueva.</div>`;
 }
 // Después de cerrarse sola la sesión por inactividad, la pantalla de entrada lo explica (hasta que se vuelve a entrar)
 function avisoSalidaInactividad() {

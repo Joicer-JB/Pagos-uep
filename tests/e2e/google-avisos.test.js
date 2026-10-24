@@ -85,3 +85,26 @@ test("avisos al teléfono: se activan en el equipo, se elige qué avisos y se qu
   assert.equal(await p.evaluate(`__DATOS_FALSOS__.avisos_dispositivos.size`), 0);
   assert.deepEqual(s.errores, []);
 });
+
+test("¿Olvidaste tu contraseña?: pide el correo y manda el enlace, sin revelar si la cuenta existe", async () => {
+  const s = await nav.nuevaPagina();
+  await s.pagina.goto(nav.base);
+  await s.pagina.waitForSelector("#login-olvide");
+  await s.pagina.click("#login-olvide");
+  assert.match(await s.pagina.textContent("#login-err"), /Escribe tu correo arriba/);
+  for (const correo of ["docente.prueba@example.com", "nadie@example.com"]) {
+    await s.pagina.fill("#l-email", correo);
+    await s.pagina.click("#login-olvide");
+    await s.pagina.waitForSelector("#login-err .alert-info");
+    assert.match(
+      await s.pagina.textContent("#login-err"),
+      new RegExp("Si " + correo.replace(/\./g, "\\.") + " tiene una cuenta")
+    );
+  }
+  assert.deepEqual(await s.pagina.evaluate("window.__CLAVE_OLVIDADA__"), [
+    "docente.prueba@example.com",
+    "nadie@example.com",
+  ]);
+  assert.equal(await s.pagina.evaluate("fbAuth.languageCode"), "es");
+  assert.deepEqual(s.errores, []);
+});
