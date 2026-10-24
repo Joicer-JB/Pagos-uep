@@ -121,9 +121,8 @@ function encabezadoBoletin(est, nivelTexto) {
   const inst = configInst || {};
   const extra = [
     inst.direccion || "Turumo - Caucagüita, Estado Miranda",
-    "Código " + (inst.codigo || "PD13831519"),
-    inst.rif ? "RIF " + inst.rif : "",
-  ].filter(Boolean);
+    "Código del plantel " + (inst.codigo || "PD13831519"),
+  ].filter(Boolean); // el RIF va en los recibos, no en el boletín
   return `<img class="b-marca" src="data:image/png;base64,${LOGO}" alt=""/>
   <header class="b-enc">
     <img class="b-escudo" src="data:image/png;base64,${LOGO}" alt="Escudo"/>

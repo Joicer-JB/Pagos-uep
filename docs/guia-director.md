@@ -81,7 +81,7 @@ con los docentes. El boletín sigue siendo para los representantes.
 
 En **📝 Notas**, elige un estudiante y pulsa **🖨️ Boletín**. Para entregar los de todo un grado, filtra por ese
 grado y pulsa **🖨️ Boletines de todo …**: sale uno por hoja, en orden alfabético. El boletín lleva el escudo, los
-datos de ⚙️ Configuración → 🏫 Institución (nombre, dirección, código, RIF, directora y coordinadores) y las notas ya
+datos de ⚙️ Configuración → 🏫 Institución (nombre, dirección, código del plantel, directora y coordinadores) y las notas ya
 con los cambios del consejo.
 
 ## Cuadro de honor (media general)

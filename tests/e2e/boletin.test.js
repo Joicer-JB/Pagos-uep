@@ -120,3 +120,12 @@ test("los boletines de todo un grado, uno por hoja y en orden alfabético", asyn
   await p.close();
   assert.deepEqual(s.errores, []);
 });
+
+test("el boletín lleva el código del plantel, no el RIF (ese va en los recibos)", async () => {
+  await llamar(`imprimirBoletin("est2")`);
+  const p = await enPagina(await ultima());
+  const dir = await p.textContent(".b-dir");
+  assert.match(dir, /Código del plantel/);
+  assert.doesNotMatch(dir, /RIF/);
+  await p.close();
+});
