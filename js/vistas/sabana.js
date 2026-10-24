@@ -23,7 +23,7 @@ const seccionesSabana = (grado) =>
 const estudiantesSabana = (grado, seccion) =>
   estudiantes
     .filter((e) => activo(e) && e.grado === grado && (!seccion || (e.seccion || "") === seccion))
-    .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
+    .sort(ordenNombre);
 const puedeAjustarConsejo = () => rolUsuario === "director" && !soloLectura();
 const promedioDeNotas = (lista) => {
   const v = lista.filter((x) => x !== null && x !== undefined);

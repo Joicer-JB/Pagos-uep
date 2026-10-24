@@ -382,7 +382,7 @@ function htmlCajaResultados() {
           return toks.every((t) => hay.includes(t));
         })()
     )
-    .sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)))
+    .sort(ordenNombre)
     .slice(0, 8);
   if (!lista.length)
     return `<div style="text-align:center;color:#888;font-size:0.85rem;padding:0.8rem">No hay estudiantes con «${escHtml(caja.q)}»</div>`;

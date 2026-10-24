@@ -52,6 +52,11 @@ const escJs = (t) =>
       .replace(/\r?\n/g, "\\n")
   );
 
+// Orden alfabético de estudiantes (o cualquier lista con «nombre»), como en un diccionario: sin importar
+// mayúsculas ni tildes (Ángel va con la A)
+const ordenNombre = (a, b) =>
+  String((a && a.nombre) || "").localeCompare(String((b && b.nombre) || ""), "es", { sensitivity: "base" });
+
 // ---- Números en letras, para documentos formales: 12345,5 → «doce mil trescientos cuarenta y cinco con 50/100»
 const LETRAS_UNIDAD = ["", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"];
 const LETRAS_10_29 = [

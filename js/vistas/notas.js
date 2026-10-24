@@ -53,6 +53,7 @@ function renderNotas() {
           <option value="">-- Seleccionar estudiante --</option>
           ${estudiantes
             .filter((e) => activo(e) && (!filtros.gradoNotas || e.grado === filtros.gradoNotas))
+            .sort(ordenNombre)
             .map(
               (e) =>
                 `<option value="${e.id}" ${estSelId === e.id ? "selected" : ""}>${escHtml(e.nombre)} ${e.grado ? "(" + escHtml(e.grado) + ")" : ""}</option>`
