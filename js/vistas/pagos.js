@@ -330,7 +330,7 @@ function aplicarInscripcionPago() {
     nota.textContent = a.ins
       ? "Incluye " + detalle + " = " + fmt(total) + "." + pagados
       : "Escribe el total que pagó: los meses marcados se descuentan primero y lo demás es la inscripción." + pagados;
-  const sinMensualidad = !(Number(a.est.mensualidad) > 0);
+  const sinMensualidad = !(mensualidadDe(a.est) > 0);
   if (box)
     box.innerHTML = `<label class="field-label">¿Qué paga con la inscripción?</label>
       ${
@@ -339,7 +339,7 @@ function aplicarInscripcionPago() {
           : `<div class="alert-item alert-mora" style="margin-bottom:0.4rem;font-size:0.75rem">⚠️ La estructura de costos del año no está guardada, por eso el monto de la inscripción no se llena solo. El director la guarda en 🔔 Cobranza → ⚙️ Cuotas del año.</div>`
       }
       ${a.ins && a.ins.concepto === CONCEPTO_CARNET ? `<div class="alert-item alert-info" style="margin-bottom:0.4rem;font-size:0.75rem">🎟️ No paga inscripción: solo carnet y papelería.</div>` : ""}
-      ${sinMensualidad ? `<div class="alert-item alert-mora" style="margin-bottom:0.4rem;font-size:0.75rem">⚠️ Este estudiante no tiene mensualidad en su ficha: no hay meses que descontar.</div>` : ""}
+      ${sinMensualidad ? `<div class="alert-item alert-mora" style="margin-bottom:0.4rem;font-size:0.75rem">⚠️ Este estudiante no paga mensualidad (no la tiene en su ficha, o es becado): no hay meses que descontar.</div>` : ""}
       <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
         <span class="ins-op on" style="${estiloOpIns(true)};opacity:0.85">✓ ${a.ins ? escHtml(a.ins.concepto) + " " + fmt(a.ins.pendiente) : "Inscripción (el resto)"}</span>
         ${a.pendientes

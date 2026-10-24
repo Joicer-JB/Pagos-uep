@@ -185,8 +185,8 @@ con más decimales también cuentan con 2.
 
 - **Borrar** recibos, estudiantes, gastos, pagos de nómina y trabajadores (botón 🗑️). Un recibo nunca se
   puede _editar_, y un ingreso o gasto tampoco: si está mal, se borra (queda en la bitácora) y se registra de nuevo.
-- Registrar y editar estudiantes, sus mensualidades y **exoneraciones** (no paga recargo, no paga inscripción,
-  perdonar el recargo de un mes, deuda anterior).
+- Registrar y editar estudiantes, sus mensualidades y **exoneraciones** (beca, exonerar un mes, no paga recargo, no
+  paga inscripción, perdonar el recargo de un mes, deuda anterior).
 - **Corregir una tasa BCV** ya guardada e importar las tasas del Excel del BCV.
 - **Cambiar notas por decisión del consejo** (📋 Sábana de notas).
 - Ingresos y gastos, cuentas por pagar, conciliación, nómina, asistencia y documentos del personal.
@@ -260,6 +260,16 @@ Debajo del tablero: escribe el **aumento de la mensualidad**, cuántos pagan (sa
 estudiantes se irían por el aumento y si también sube la **nómina**. Ves la nueva mensualidad promedio, lo que
 entraría al mes, los costos, el resultado del mes y del año, y **la mensualidad con la que se cubren los costos**
 (y el aumento que haría falta).
+
+## Becas y meses exonerados
+
+- **Beca:** en la ficha del estudiante (✏️), **🎓 Beca (%)**. **100** = becado todo el año: no paga mensualidades.
+  **50** = media beca: paga la mitad cada mes. Escribe también el **motivo** (hijo del personal, excelencia…). La
+  inscripción va aparte: si tampoco la paga, marca «🎟️ No paga inscripción».
+- **Exonerar un mes:** en su estado de cuenta (👁️ ver estudiante), en el mes que no va a pagar, toca **🎁 Exonerar este
+  mes** y escribe el motivo. Ese mes ya no se le cobra ni genera recargo; queda quién lo exoneró y cuándo. Para
+  volver a cobrarlo: **Deshacer**. Si ya había pagado algo de ese mes, pasa al mes siguiente.
+- Solo el director lo hace. La Caja, la cobranza y los avisos ya cobran con la beca descontada.
 
 ## Perdonar el recargo de un mes
 

@@ -189,7 +189,7 @@ function renderEstudiantes() {
         </div>
         <div class="item-right">
           <span class="badge ${enMora(e) ? "badge-red" : e.estado === "retirado" ? "badge-gray" : e.graduado ? "badge-gold" : "badge-green"}">${enMora(e) ? "⚠️ Mora" : e.estado === "retirado" ? "🚪 Retirado" : e.graduado ? "🎓 Graduado" : "✅ Al Saldo"}</span>
-          <div style="font-size:0.7rem;color:#888;margin-top:3px">${fmt(e.mensualidad || 0)}/mes</div>
+          <div style="font-size:0.7rem;color:#888;margin-top:3px">${fmt(mensualidadDe(e))}/mes${becaDe(e) ? ` · 🎓 ${becaDe(e) >= 100 ? "Becado" : "Beca " + becaDe(e) + "%"}` : ""}</div>
         </div>
       </div>
     </div>`
@@ -242,6 +242,13 @@ function renderModalEstudiante(e) {
         <div class="field"><label class="field-label">Paga cuotas desde (opcional)</label>
           <input class="inp" type="month" id="e-cuota-desde" value="${escHtml(e.cuotaDesde) || ""}"/>
           <div style="font-size:0.68rem;color:#888;margin-top:2px">Déjalo vacío si paga desde la primera cuota. Úsalo para quien entró después de que empezó el año.</div></div>
+        <div class="form-row">
+          <div class="field"><label class="field-label">🎓 Beca (%)</label>
+            <input class="inp" id="e-beca" type="number" min="0" max="100" step="1" placeholder="0" value="${becaDe(e) || ""}"/>
+            <div style="font-size:0.68rem;color:#888;margin-top:2px">100 = becado todo el año (no paga mensualidades) · 50 = media beca. Para un solo mes, usa «🎁 Exonerar este mes» en su estado de cuenta.</div></div>
+          <div class="field"><label class="field-label">Motivo de la beca</label>
+            <input class="inp" id="e-beca-motivo" placeholder="Ej.: hijo del personal, excelencia" value="${escHtml(e.becaMotivo || "")}"/></div>
+        </div>
         <div class="form-row">
           <div class="field"><label class="field-label">Estado</label>
             <select class="inp" id="e-estado" onchange="toggleMoraFields()">
@@ -312,7 +319,7 @@ function renderModalVerEstudiante(m) {
         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
           <div style="flex:1;background:#f0f4ff;border-radius:10px;padding:0.75rem;text-align:center">
             <div style="font-size:0.62rem;color:#888">Mensualidad</div>
-            <div style="font-weight:800;color:#003366">${fmt(e.mensualidad || 0)}</div>
+            <div style="font-weight:800;color:#003366">${fmt(mensualidadDe(e))}</div>${becaDe(e) ? `<div style="font-size:0.62rem;color:#1a7a4a">🎓 ${becaDe(e) >= 100 ? "Becado" : "Beca " + becaDe(e) + "% de " + fmt(e.mensualidad || 0)}</div>` : ""}
           </div>
           <div style="flex:1;background:#e6f7ef;border-radius:10px;padding:0.75rem;text-align:center">
             <div style="font-size:0.62rem;color:#888">Total Pagado</div>
@@ -509,6 +516,8 @@ async function guardarEstudiante(editId) {
     graduado: !!(document.getElementById("e-graduado") || {}).checked,
     sinRecargo: !!(document.getElementById("e-sinrec") || {}).checked,
     sinInscripcion: !!(document.getElementById("e-sinins") || {}).checked,
+    beca: Math.min(100, Math.max(0, Math.round(parseFloat((document.getElementById("e-beca") || {}).value) || 0))),
+    becaMotivo: ((document.getElementById("e-beca-motivo") || {}).value || "").trim().slice(0, 120),
     horario: getNivel(grado) === "preescolar" ? (document.getElementById("e-horario") || {}).value || "completo" : "",
     anioEscolar,
     estado,
@@ -573,6 +582,39 @@ async function guardarRecargosPerdonados(e, recargosPerdonados) {
   const i = estudiantes.findIndex((x) => x.id === e.id);
   if (i >= 0) estudiantes[i] = { ...estudiantes[i], recargosPerdonados };
   render();
+}
+// Exonerar la mensualidad de un mes (solo el director, con su motivo): ese mes no se cobra
+async function exonerarMes(estId, ym, motivo) {
+  if (rolUsuario !== "director") return alert("Solo el director puede exonerar mensualidades.");
+  const e = estudiantes.find((x) => x.id === estId);
+  if (!e) return;
+  if (motivo === undefined)
+    motivo = prompt("¿Por qué se exonera la mensualidad de " + nombreMesYM(ym) + " a " + e.nombre + "?", "");
+  if (motivo == null) return; // canceló
+  motivo = String(motivo).trim().slice(0, 120);
+  if (!motivo) return alert("Escribe el motivo para exonerar el mes.");
+  await guardarMesesExonerados(e, {
+    ...(e.mesesExonerados || {}),
+    [ym]: { motivo, por: correoUsuario(), fecha: todayStr() },
+  });
+}
+async function quitarExoneracionMes(estId, ym) {
+  if (rolUsuario !== "director") return alert("Solo el director puede cambiar esto.");
+  const e = estudiantes.find((x) => x.id === estId);
+  if (!e || !confirm("¿Volver a cobrar la mensualidad de " + nombreMesYM(ym) + "?")) return;
+  const resto = { ...(e.mesesExonerados || {}) };
+  delete resto[ym];
+  await guardarMesesExonerados(e, resto);
+}
+async function guardarMesesExonerados(e, mesesExonerados) {
+  try {
+    await db.collection("estudiantes").doc(e.id).update({ mesesExonerados });
+    const i = estudiantes.findIndex((x) => x.id === e.id);
+    if (i >= 0) estudiantes[i] = { ...estudiantes[i], mesesExonerados };
+    render();
+  } catch (ex) {
+    alert("No se pudo guardar: " + ex.message);
+  }
 }
 async function perdonarRecargo(estId, ym, motivo) {
   if (rolUsuario !== "director") return alert("Solo el director puede perdonar recargos.");

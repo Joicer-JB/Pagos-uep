@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — Becas y meses exonerados
+
+- En la ficha del estudiante, **🎓 Beca (%)** con su motivo: 100% = becado todo el año (no paga mensualidades), 50% =
+  media beca. La Caja, la cobranza, los avisos, el estado de cuenta y el tablero usan la mensualidad con la beca.
+- En el estado de cuenta, el director puede **🎁 exonerar la mensualidad de un mes** con su motivo (queda quién y
+  cuándo; se deshace). Ese mes no se cobra ni genera recargo.
+
 ## Octubre 2026 — Un documento con dos grupos
 
 - Al montar la matrícula, si un Word o Excel trae **dos grupos** con su título (por ejemplo «Grupo: MATERNAL» y
