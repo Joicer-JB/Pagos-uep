@@ -50,7 +50,7 @@ const calcEdad = (fn) => {
 // Promedio de notas con un decimal, ignorando las vacías (null si no hay ninguna)
 const promedio = (notas) => {
   const v = notas.filter((n) => n !== null && n !== "");
-  return v.length ? Math.round((v.reduce((a, b) => a + parseFloat(b), 0) / v.length) * 10) / 10 : null;
+  return v.length ? Math.round((v.reduce((a, b) => a + parseFloat(b), 0) / v.length) * 10 + 1e-9) / 10 : null;
 };
 // Color de una nota sobre 20: verde desde 18, dorado desde 14, rojo por debajo
 const colorNota = (n) => {

@@ -47,12 +47,13 @@ Mientras falten evaluaciones por nota, la nota del lapso se calcula con las que 
 
 **📋 Sábana de notas** muestra las notas de todo el año (o sección) en una sola tabla, para el consejo de sección:
 
-- **Todo el año:** por materia, 1er, 2do y 3er lapso y la definitiva; al final, el promedio de cada estudiante.
+- **Todo el año:** por materia, 1er, 2do y 3er lapso, la definitiva (**Def.**) y la **M** (la nota que fijó el
+  consejo al final, si la cambió); al final, el promedio de cada estudiante.
 - **Un lapso:** la nota de ese lapso en cada materia.
 - **Detalle por materia:** cada evaluación que puso el profesor, con su porcentaje.
 - Toca el nombre de un estudiante para ver todas sus evaluaciones. Se puede **🖨️ Imprimir** y descargar en
   **📥 Excel**.
-- En rojo, las notas por debajo de 10. Con **C**, las que cambió el consejo: esas solo las cambia el director.
+- En rojo, las notas por debajo de 10. La columna **M** solo la llena el director, por decisión del consejo.
 
 ## Cuadro de honor (media general)
 

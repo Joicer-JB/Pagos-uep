@@ -1,5 +1,21 @@
 # Historial de cambios
 
+## Octubre 2026 — Redondeo de notas y definitiva provisional
+
+- **Corregido:** el redondeo a un decimal a veces bajaba una décima por los errores de la máquina con decimales:
+  el promedio de 5,6 y 13,7 (9,65) daba 9,6 en vez de **9,7**, y una definitiva de 9,95 daba 9,9 (reprobada) en vez
+  de **10**. Ahora el 5 siempre redondea hacia arriba (definitivas, promedios, sábana, cuadro de honor y boletín).
+- En la sábana, mientras falte algún lapso, la **Def.** sale en cursiva: es provisional.
+- Al cargar notas de Media General, una nota fuera de **0 a 20** (por ejemplo un 155 por error) no se acepta: avisa
+  y la casilla queda como estaba.
+
+## Octubre 2026 — Sábana: columna M
+
+- En «Todo el año», cada materia tiene **1° L, 2° L, 3° L, Def. y M**. **Def.** es la que dan los 3 lapsos; **M** es
+  la nota que fija el consejo al terminar el año (vacía si no la cambió). El director la cambia tocando la Def. o la
+  M; las notas de los lapsos ya no se tocan desde la sábana. El promedio, el cuadro de honor y el boletín usan la M.
+  También en la impresión y el Excel.
+
 ## Octubre 2026 — Sin cuenta fija de notas, y «¿Olvidaste tu contraseña?»
 
 - En la pantalla de entrada, **«¿Olvidaste tu contraseña?»**: con el correo escrito, Firebase manda (en español) un

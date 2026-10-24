@@ -54,6 +54,12 @@ test("control de estudio ve todos los grados y carga la nota de cada lapso, sin 
   await s.pagina.dispatchEvent(campo("Matemáticas"), "change");
   await s.pagina.fill(campo("Inglés"), "9");
   await s.pagina.dispatchEvent(campo("Inglés"), "change");
+  // Una nota fuera de 0 a 20 (un 155 por error) no se acepta: avisa y la casilla queda como estaba
+  await s.pagina.fill(campo("Lengua y Literatura"), "155");
+  await s.pagina.dispatchEvent(campo("Lengua y Literatura"), "change");
+  await s.pagina.waitForSelector("text=La nota debe ser de 0 a 20");
+  assert.equal(await s.pagina.inputValue(campo("Lengua y Literatura")), "");
+  assert.match(await s.pagina.getAttribute(campo("Lengua y Literatura"), "class"), /nota-mal/);
   await llamar(`guardarNotas("est2", "Lapso 1")`);
   const esc = await llamar(`__ESCRITURAS__.filter((e) => e.ruta === "notas/est2_Lapso 1").at(-1)`);
   assert.deepEqual(Object.keys(esc.datos).sort(), ["Inglés_lapso", "Matemáticas_lapso", "estId", "lapso", "updatedAt"]);
@@ -74,8 +80,8 @@ test("la sábana y el boletín usan esas notas; la sábana no tiene el detalle p
     .locator(".sabana-wrap .sab-tabla tbody tr", { hasText: "Luis Alberto Gómez" })
     .locator("td")
     .allTextContents();
-  assert.deepEqual(luis.slice(3, 7), ["16,5", "-", "-", "16,5"]); // Matemáticas
-  assert.deepEqual(luis.slice(11, 15), ["9", "-", "-", "9"]); // Inglés (reprobada)
+  assert.deepEqual(luis.slice(3, 8), ["16,5", "-", "-", "16,5", ""]); // Matemáticas (sin cambio del consejo: M vacía)
+  assert.deepEqual(luis.slice(13, 18), ["9", "-", "-", "9", ""]); // Inglés (reprobada)
   assert.equal(luis.at(-1), "12,8"); // (16,5 + 9) / 2
 
   await llamar(`imprimirBoletin("est2")`);
