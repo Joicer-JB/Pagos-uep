@@ -38,6 +38,11 @@ Mientras falten evaluaciones por nota, la nota del lapso se calcula con las que 
   **📥 Excel**.
 - En rojo, las notas por debajo de 10. Con **C**, las que cambió el consejo: esas solo las cambia el director.
 
+## Cuadro de honor (media general)
+
+**🏆 Cuadro de honor** muestra qué año tiene el mejor promedio y los mejores promedios de media general (los 10
+mejores y los 3 mejores de cada año), por lapso o del año. Se puede imprimir.
+
 ## Preguntas frecuentes
 
 - **No aparece una materia o un indicador:** el director los configura en ⚙️ Configuración.

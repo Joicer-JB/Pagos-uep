@@ -21,10 +21,12 @@ function renderNotas() {
       ? `<div class="card" style="background:#fff8e1;color:#7a5c00;font-size:0.82rem">⏳ La lista de estudiantes todavía no está lista. Pide al director o a la administradora que entre a la plataforma (se prepara sola) y luego vuelve a entrar.</div>`
       : "";
   const vistas = `<div class="stabs">
-    <button class="stab ${filtros.notasVista !== "sabana" ? "active" : ""}" onclick="filtros.notasVista='estudiante';renderTabContent()">📝 Por estudiante</button>
+    <button class="stab ${!["sabana", "honor"].includes(filtros.notasVista) ? "active" : ""}" onclick="filtros.notasVista='estudiante';renderTabContent()">📝 Por estudiante</button>
     <button class="stab ${filtros.notasVista === "sabana" ? "active" : ""}" onclick="filtros.notasVista='sabana';renderTabContent()">📋 Sábana de notas</button>
+    <button class="stab ${filtros.notasVista === "honor" ? "active" : ""}" onclick="filtros.notasVista='honor';renderTabContent()">🏆 Cuadro de honor</button>
   </div>`;
   if (filtros.notasVista === "sabana") return sinFichas + vistas + renderSabana();
+  if (filtros.notasVista === "honor") return sinFichas + vistas + renderCuadroHonor();
   return `${sinFichas}${vistas}
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>📝 Consultar Notas</h2></div>
