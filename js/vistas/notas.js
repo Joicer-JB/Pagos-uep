@@ -114,7 +114,7 @@ function renderTablaNotasLapso(est, lapso) {
           const guia = !info.directa && info.calculada !== null ? textoNota(info.calculada) : "-";
           return `<tr style="border-bottom:1px dashed #eef2f9"${editable ? "" : ' class="nota-ajena"'}>
           <td style="padding:0.45rem 0.6rem;font-weight:600;color:#333">${escHtml(m)}${prof ? `<div class="item-sub" style="font-weight:400">👤 ${escHtml(prof)}</div>` : ""}</td>
-          <td style="padding:0.3rem;text-align:center"><input class="nota-input${info.nota !== null && info.nota < 10 ? " nota-rep" : ""}" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] ?? "")}" placeholder="${escHtml(guia)}" ${editable ? "" : "disabled"} onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(k)}',this.value)"/>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo: ${textoNota(notaNum(info.ajuste.nota))}</div>` : ""}</td>
+          <td style="padding:0.3rem;text-align:center"><input class="nota-input${info.nota !== null && info.nota < 10 ? " nota-rep" : ""}" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] ?? "")}" placeholder="${escHtml(guia)}" ${editable ? "" : "disabled"} onchange="cambiarNotaNumerica(this,'${est.id}','${lapso}','${escJs(k)}')"/>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo: ${textoNota(notaNum(info.ajuste.nota))}</div>` : ""}</td>
         </tr>`;
         })
         .join("")}</tbody>
@@ -155,7 +155,7 @@ function renderTablaNotasMedia(est, lapso) {
               <td style="padding:0.3rem"><div class="evals-fila">${evals
                 .map((ev) => {
                   const k = m + "_" + ev.n;
-                  return `<label class="eval-celda"><span>${escHtml(ev.nombre)}${Number(ev.peso) > 0 ? " · " + ev.peso + "%" : ""}</span><input class="nota-input" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] || "")}" placeholder="-" ${editable ? "" : "disabled"} onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(k)}',this.value)"/></label>`;
+                  return `<label class="eval-celda"><span>${escHtml(ev.nombre)}${Number(ev.peso) > 0 ? " · " + ev.peso + "%" : ""}</span><input class="nota-input" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] || "")}" placeholder="-" ${editable ? "" : "disabled"} onchange="cambiarNotaNumerica(this,'${est.id}','${lapso}','${escJs(k)}')"/></label>`;
                 })
                 .join("")}</div></td>
               <td style="padding:0.3rem;text-align:center;vertical-align:top"><span class="promedio-badge" style="background:${prom === null ? "#f1f3f5" : prom >= 18 ? "#e6f7ef" : prom >= 14 ? "#fff8e1" : "#fef0f0"};color:${prom === null ? "#888" : colorNota(prom)}">${prom !== null ? prom : "-"}${info.ajuste ? "<sup>C</sup>" : ""}</span>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo (antes ${info.ajuste.original ?? "-"})</div>` : ""}</td>
@@ -397,6 +397,19 @@ function renderNotaFinal(est) {
 // Notas cambiadas en este equipo y aún sin guardar ({"estId_Lapso N": Set de campos}). Al guardar solo se envían esas:
 // así dos profesores que cargan al mismo estudiante a la vez no se borran las notas uno al otro.
 const notasCambiadas = {};
+// Nota numérica (media general): de 0 a 20. Si se escribe otra cosa (155, -3…), se avisa y queda la que estaba.
+function cambiarNotaNumerica(el, estId, lapso, key) {
+  const v = String(el.value).trim().replace(",", ".");
+  if (v !== "" && !(Number(v) >= 0 && Number(v) <= 20)) {
+    el.value = (notas[`${estId}_${lapso}`] || {})[key] ?? "";
+    el.classList.add("nota-mal");
+    mostrarToast("⚠️ La nota debe ser de 0 a 20");
+    return;
+  }
+  el.classList.remove("nota-mal");
+  el.classList.toggle("nota-rep", v !== "" && Number(v) < 10);
+  updateNotaLocal(estId, lapso, key, v);
+}
 function updateNotaLocal(estId, lapso, key, val) {
   const k = `${estId}_${lapso}`;
   if (!notas[k]) notas[k] = {};

@@ -54,6 +54,12 @@ test("control de estudio ve todos los grados y carga la nota de cada lapso, sin 
   await s.pagina.dispatchEvent(campo("Matemáticas"), "change");
   await s.pagina.fill(campo("Inglés"), "9");
   await s.pagina.dispatchEvent(campo("Inglés"), "change");
+  // Una nota fuera de 0 a 20 (un 155 por error) no se acepta: avisa y la casilla queda como estaba
+  await s.pagina.fill(campo("Lengua y Literatura"), "155");
+  await s.pagina.dispatchEvent(campo("Lengua y Literatura"), "change");
+  await s.pagina.waitForSelector("text=La nota debe ser de 0 a 20");
+  assert.equal(await s.pagina.inputValue(campo("Lengua y Literatura")), "");
+  assert.match(await s.pagina.getAttribute(campo("Lengua y Literatura"), "class"), /nota-mal/);
   await llamar(`guardarNotas("est2", "Lapso 1")`);
   const esc = await llamar(`__ESCRITURAS__.filter((e) => e.ruta === "notas/est2_Lapso 1").at(-1)`);
   assert.deepEqual(Object.keys(esc.datos).sort(), ["Inglés_lapso", "Matemáticas_lapso", "estId", "lapso", "updatedAt"]);

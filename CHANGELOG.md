@@ -6,6 +6,8 @@
   el promedio de 5,6 y 13,7 (9,65) daba 9,6 en vez de **9,7**, y una definitiva de 9,95 daba 9,9 (reprobada) en vez
   de **10**. Ahora el 5 siempre redondea hacia arriba (definitivas, promedios, sábana, cuadro de honor y boletín).
 - En la sábana, mientras falte algún lapso, la **Def.** sale en cursiva: es provisional.
+- Al cargar notas de Media General, una nota fuera de **0 a 20** (por ejemplo un 155 por error) no se acepta: avisa
+  y la casilla queda como estaba.
 
 ## Octubre 2026 — Sábana: columna M
 

@@ -825,3 +825,7 @@ tr.nota-ajena .nota-input {
   color: #c0392b;
   font-weight: 700;
 }
+.nota-input.nota-mal {
+  border-color: #c0392b;
+  background: #fff5f5;
+}
