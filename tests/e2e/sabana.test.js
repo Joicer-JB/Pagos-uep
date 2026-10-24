@@ -196,7 +196,7 @@ test("el director cambia una nota por decisión del consejo: queda la original, 
   // El boletín del representante ya sale con la nota del consejo
   await llamar(`imprimirBoletin("est2")`);
   const bol = await llamar(`window.__IMPRESIONES__.at(-1).html`);
-  assert.match(bol, />16<\/span>/);
+  assert.match(bol, /<div class="b-def"><strong class="">16<\/strong>/);
 
   // Guardar notas del profesor después no borra el cambio del consejo
   await llamar(`guardarNotas("est7", "Lapso 1")`);

@@ -64,6 +64,7 @@ function renderNotas() {
         </select>
       </div>
     </div>
+    ${filtros.gradoNotas && rolUsuario !== "administradora" ? `<button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="imprimirBoletinesGrado('${escJs(filtros.gradoNotas)}')">🖨️ Boletines de todo ${escHtml(filtros.gradoNotas)}</button>` : ""}
   </div>
   ${
     estSel
