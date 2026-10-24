@@ -23,7 +23,6 @@ let NOTAS_DETALLADAS = false;
 const ROLES = {
   "herrerajoicer@gmail.com": "director",
   "josefajsanquez@gmail.com": "administradora",
-  "notasjjs@gmail.com": "docente",
 };
 const MESES = [
   "Enero",

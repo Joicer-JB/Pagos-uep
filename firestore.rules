@@ -31,13 +31,15 @@ rules_version = '2';
 //  11. (Octubre 2026) Avisos al teléfono: "avisos_dispositivos" (solo el director).
 //  12. (Octubre 2026) Sábana de notas: los cambios de notas por decisión del consejo (campo "consejo" de "notas")
 //      solo los hace el director.
+//  13. (Octubre 2026) Ya no hay cuenta fija de notas (notasjjs@gmail.com): cada docente, también control de
+//      estudio, entra con su propia cuenta creada en ⚙️ Config → Docentes, que el director desactiva o elimina.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ───────────── Quién es quién ─────────────
     // Director y administradora se reconocen por su correo (los mismos de la lista ROLES de la plataforma).
-    // Los docentes: el correo fijo de notas, o un perfil activo en la colección "usuarios" con rol "docente".
+    // Los docentes: un perfil activo en la colección "usuarios" con rol "docente" (los crea el director).
     function signedIn() { return request.auth != null; }
     function mail() { return request.auth.token.email.lower(); }
     function isDirector() { return signedIn() && mail() == 'herrerajoicer@gmail.com'; }
@@ -45,12 +47,10 @@ service cloud.firestore {
     function isStaff()    { return isDirector() || isAdmin(); }
     function perfilPath() { return /databases/$(database)/documents/usuarios/$(request.auth.uid); }
     function isDocente() {
-      return signedIn() && (
-        mail() == 'notasjjs@gmail.com' ||
-        (exists(perfilPath())
-          && get(perfilPath()).data.get('rol', '') == 'docente'
-          && get(perfilPath()).data.get('activo', true) != false)
-      );
+      return signedIn()
+        && exists(perfilPath())
+        && get(perfilPath()).data.get('rol', '') == 'docente'
+        && get(perfilPath()).data.get('activo', true) != false;
     }
 
     // ───────────── Perfiles de usuario (docentes) ─────────────
