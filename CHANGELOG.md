@@ -1,5 +1,10 @@
 # Historial de cambios
 
+## Octubre 2026 — Boletín sin la dirección de la página
+
+- Al imprimir el boletín ya no salen arriba y abajo la fecha, el título ni la dirección de la página (el encabezado y
+  pie que pone el navegador): la hoja no le deja margen para eso y el margen lo da el propio boletín.
+
 ## Octubre 2026 — Las notas las carga control de estudio
 
 - **Media General:** por ahora control de estudio carga **la nota final de cada lapso** en cada materia (la que entrega

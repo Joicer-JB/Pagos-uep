@@ -136,3 +136,10 @@ test("el boletín lleva el código del plantel, no el RIF (ese va en los recibos
   assert.doesNotMatch(dir, /RIF/);
   await p.close();
 });
+
+test("al imprimir no sale la dirección de la página: la hoja no deja margen al navegador para su encabezado y pie", async () => {
+  await llamar(`imprimirBoletin("est2")`);
+  const html = await ultima();
+  assert.match(html, /@page\{size:letter portrait;margin:0\}/);
+  assert.match(html, /@media print\{[^}]*\}\.b-hoja\{padding:9mm/);
+});

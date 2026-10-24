@@ -100,8 +100,10 @@ const ESTILOS_BOLETIN = `
   .b-prom{margin-top:8px;display:flex;gap:16px;align-items:center;border:1px solid #d9e2f1;border-radius:10px;padding:7px 10px;font-size:10px}
   .b-caja{display:inline-block;width:11px;height:11px;border:1.5px solid #003366;border-radius:2px;vertical-align:-2px;margin-right:4px}
   .no-print{margin:10px 16px 0;padding:7px 16px;background:#003366;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer}
-  @page{size:letter portrait;margin:9mm}
-  @media print{.no-print{display:none!important}}`;
+  /* Sin márgenes de página: así el navegador no imprime su encabezado y pie (fecha, título y la dirección de la
+     página). El margen lo da cada hoja. */
+  @page{size:letter portrait;margin:0}
+  @media print{.no-print{display:none!important}.b-hoja{padding:9mm 10mm 8mm}}`;
 
 function abrirBoletines(titulo, cuerpos) {
   const w = abrirVentanaImpresion();
