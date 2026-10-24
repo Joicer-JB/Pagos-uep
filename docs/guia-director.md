@@ -58,6 +58,15 @@ debe y las acciones de la Caja y Pagos.
 6. **⚙️ Configuración → 🏫 Institución:** nombre, código, dirección, director y coordinadores. Salen en
    los boletines y las constancias.
 
+## Control de estudio
+
+Por ahora las notas las carga **la encargada de control de estudio**. Créale su cuenta en ⚙️ Config → 👨‍🏫 Docentes y
+marca **🗂️ Control de estudio**: ve todos los grados y carga todas las notas. En Media General carga **la nota final
+de cada lapso** en cada materia (la que entrega el profesor); en Inicial y Primaria, el literal de cada indicador.
+
+Cuando quieras que cada profesor cargue su plan de evaluación y sus evaluaciones, se activa `NOTAS_DETALLADAS` en
+`js/config.js` (ya está hecho y probado).
+
 ## Sábana de notas y consejo de sección (media general)
 
 En **📝 Notas → 📋 Sábana de notas** están todas las notas de un año (y sección, si hay varias), para discutirlas

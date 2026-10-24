@@ -87,8 +87,44 @@ function renderNotas() {
   }`;
 }
 // ── Media General ──
-// Cada materia con las evaluaciones de su plan (nombre y %), y la nota del lapso (con el ajuste del consejo, si hubo)
+// Por ahora (NOTAS_DETALLADAS = false, config.js): control de estudio carga la nota final de cada lapso en cada materia,
+// la que entrega el profesor. Se guarda en <materia>_lapso.
+function renderTablaNotasLapso(est, lapso) {
+  const notasEst = notas[`${est.id}_${lapso}`] || {};
+  const areas = getAreas(est.grado);
+  const editables = areas.filter((m) => puedeEditarMateria(est.grado, m));
+  return `
+  <div class="card">
+    <div class="card-title"><div class="card-bar"></div><h2>Notas — ${lapso}</h2>
+      ${editables.length ? `<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="guardarNotas('${est.id}','${lapso}')">💾 Guardar</button>` : ""}
+    </div>
+    <div class="ayuda" style="margin-bottom:0.5rem">La nota final del lapso en cada materia (de 1 a 20, con un decimal), la que entrega el profesor.</div>
+    <table class="notas-lapso" style="width:100%;border-collapse:collapse;font-size:0.82rem">
+      <thead><tr style="background:#f0f4ff">
+        <th style="text-align:left;padding:0.5rem 0.6rem;color:#003366">Materia</th>
+        <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center;width:110px">Nota del lapso</th>
+      </tr></thead>
+      <tbody>${areas
+        .map((m) => {
+          const info = notaLapsoDe(est, m, lapso);
+          const editable = editables.includes(m);
+          const prof = profesorDe(est.grado, m);
+          const k = m + "_lapso";
+          // Si un profesor ya cargó evaluaciones (más adelante), su nota del lapso sale de guía
+          const guia = !info.directa && info.calculada !== null ? textoNota(info.calculada) : "-";
+          return `<tr style="border-bottom:1px dashed #eef2f9"${editable ? "" : ' class="nota-ajena"'}>
+          <td style="padding:0.45rem 0.6rem;font-weight:600;color:#333">${escHtml(m)}${prof ? `<div class="item-sub" style="font-weight:400">👤 ${escHtml(prof)}</div>` : ""}</td>
+          <td style="padding:0.3rem;text-align:center"><input class="nota-input${info.nota !== null && info.nota < 10 ? " nota-rep" : ""}" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] ?? "")}" placeholder="${escHtml(guia)}" ${editable ? "" : "disabled"} onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(k)}',this.value)"/>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo: ${textoNota(notaNum(info.ajuste.nota))}</div>` : ""}</td>
+        </tr>`;
+        })
+        .join("")}</tbody>
+    </table>
+  </div>`;
+}
+// Con las notas detalladas: cada materia con las evaluaciones de su plan (nombre y %), y la nota del lapso (con el
+// ajuste del consejo, si hubo)
 function renderTablaNotasMedia(est, lapso) {
+  if (!NOTAS_DETALLADAS) return renderTablaNotasLapso(est, lapso);
   const notasEst = notas[`${est.id}_${lapso}`] || {};
   const areas = getAreas(est.grado);
   const puedePlan = !soloLectura() && (rolUsuario === "director" || rolUsuario === "docente");

@@ -16,6 +16,10 @@ const MATERIAS = [
   "Turismo y Fotografía",
 ];
 const LAPSOS = ["Lapso 1", "Lapso 2", "Lapso 3"];
+// Notas de Media General: por ahora control de estudio carga solo la nota final de cada lapso, la que entrega el
+// profesor. true = cada profesor carga sus evaluaciones con su plan de evaluación (para más adelante: ya está hecho).
+// (let y no const: las pruebas de las notas detalladas lo activan)
+let NOTAS_DETALLADAS = false;
 const ROLES = {
   "herrerajoicer@gmail.com": "director",
   "josefajsanquez@gmail.com": "administradora",

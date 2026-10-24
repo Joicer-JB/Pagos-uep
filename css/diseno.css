@@ -814,3 +814,7 @@ tr.nota-ajena .nota-input {
   background: #f1f3f5;
   cursor: not-allowed;
 }
+.nota-input.nota-rep {
+  color: #c0392b;
+  font-weight: 700;
+}

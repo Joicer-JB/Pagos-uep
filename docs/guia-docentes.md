@@ -5,6 +5,10 @@ Los docentes entran con el correo y la contraseña que les asignó el director, 
 
 ## Cargar notas
 
+> **Por ahora las notas las carga la encargada de control de estudio**: en Media General, la nota final de cada lapso
+> en cada materia, la que entrega el profesor. El plan de evaluación y las evaluaciones de cada profesor están
+> apagados hasta que el director les dé acceso a los docentes (`NOTAS_DETALLADAS` en `js/config.js`).
+
 Ves a los estudiantes de **tus grados**, según lo que el director te asignó en tu cuenta:
 
 - **Inicial y Primaria:** tu grado, con todas sus áreas.

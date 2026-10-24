@@ -6,7 +6,12 @@
 // Al tocar el nombre de un estudiante se ve su detalle completo. El director cambia una nota tocándola (ajuste del
 // consejo: queda la nota original, el motivo, quién y cuándo). Los cálculos están en servicios/calificaciones.js.
 
-const VISTAS_SABANA = [["anio", "Todo el año"], ...LAPSOS.map((l) => [l, l]), ["materia", "Detalle por materia"]];
+// El detalle por materia (cada evaluación del profesor) solo con las notas detalladas (NOTAS_DETALLADAS, config.js)
+const vistasSabana = () => [
+  ["anio", "Todo el año"],
+  ...LAPSOS.map((l) => [l, l]),
+  ...(NOTAS_DETALLADAS ? [["materia", "Detalle por materia"]] : []),
+];
 
 function gradosSabana() {
   const g = new Set(
@@ -208,7 +213,7 @@ function renderSabana() {
   const grado = grados.includes(filtros.sabGrado) ? filtros.sabGrado : grados[0];
   const secciones = seccionesSabana(grado);
   const seccion = secciones.includes(filtros.sabSeccion) ? filtros.sabSeccion : "";
-  const ver = VISTAS_SABANA.some(([k]) => k === filtros.sabVer) ? filtros.sabVer : "anio";
+  const ver = vistasSabana().some(([k]) => k === filtros.sabVer) ? filtros.sabVer : "anio";
   const d = datosSabana(grado, seccion, ver, filtros.sabMateria);
   const ajustes = ajustesSabana(grado, seccion);
   const opcion = (v, t, sel) => `<option value="${escHtml(v)}" ${v === sel ? "selected" : ""}>${escHtml(t)}</option>`;
@@ -224,7 +229,9 @@ function renderSabana() {
         <select class="inp" id="sab-grado" onchange="filtros.sabGrado=this.value;filtros.sabSeccion='';renderTabContent()">${grados.map((g) => opcion(g, g, grado)).join("")}</select></div>
       ${secciones.length > 1 ? `<div class="field"><label class="field-label">Sección</label><select class="inp" id="sab-seccion" onchange="filtros.sabSeccion=this.value;renderTabContent()">${opcion("", "Todas", seccion)}${secciones.map((s) => opcion(s, s || "(sin sección)", seccion)).join("")}</select></div>` : ""}
       <div class="field"><label class="field-label">Ver</label>
-        <select class="inp" id="sab-ver" onchange="filtros.sabVer=this.value;renderTabContent()">${VISTAS_SABANA.map(([k, t]) => opcion(k, t, ver)).join("")}</select></div>
+        <select class="inp" id="sab-ver" onchange="filtros.sabVer=this.value;renderTabContent()">${vistasSabana()
+          .map(([k, t]) => opcion(k, t, ver))
+          .join("")}</select></div>
       ${
         ver === "materia"
           ? `<div class="field"><label class="field-label">Materia</label><select class="inp" id="sab-materia" onchange="filtros.sabMateria=this.value;renderTabContent()">${getAreas(
@@ -265,7 +272,7 @@ function htmlDetalleEstudiante(est, enPantalla) {
         ${d.lapsos
           .map(
             (x, i) => `<div class="sab-detalle-l"><span class="sab-detalle-lapso">${LAPSOS[i]}</span>
-            <span class="sab-detalle-evals">${x.evaluaciones
+            <span class="sab-detalle-evals">${(NOTAS_DETALLADAS && !x.directa ? x.evaluaciones : [])
               .map(
                 (ev) =>
                   `<span class="sab-chip${ev.nota !== null && ev.nota < 10 ? " sab-rep" : ""}">${escHtml(ev.nombre)}${Number(ev.peso) > 0 ? " " + ev.peso + "%" : ""}: <strong>${textoNota(ev.nota)}</strong></span>`
@@ -381,7 +388,7 @@ function estadoSabana() {
   const grados = gradosSabana();
   const grado = grados.includes(filtros.sabGrado) ? filtros.sabGrado : grados[0];
   const seccion = seccionesSabana(grado).includes(filtros.sabSeccion) ? filtros.sabSeccion : "";
-  const ver = VISTAS_SABANA.some(([k]) => k === filtros.sabVer) ? filtros.sabVer : "anio";
+  const ver = vistasSabana().some(([k]) => k === filtros.sabVer) ? filtros.sabVer : "anio";
   return { grado, seccion, ver };
 }
 const ESTILOS_SABANA = `*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#111;padding:10px}
@@ -410,7 +417,7 @@ function imprimirSabana() {
   const vista =
     ver === "materia"
       ? d.materia + (d.profesor ? " · Prof. " + d.profesor : "")
-      : (VISTAS_SABANA.find(([k]) => k === ver) || [])[1];
+      : (vistasSabana().find(([k]) => k === ver) || [])[1];
   const w = abrirVentanaImpresion();
   w.document
     .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sábana ${escHtml(grado)}</title><style>${ESTILOS_SABANA}</style></head><body>

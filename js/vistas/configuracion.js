@@ -138,6 +138,7 @@ function renderConfigDocentes() {
           ${d.trabajadorId ? `<div style="font-size:0.7rem;color:#1a9e5c;margin-top:1px">🔗 Vinculado a nómina</div>` : ""}
           <div style="display:flex;gap:0.4rem;margin-top:5px;flex-wrap:wrap">
             <span style="background:${d.jornada === "mañana" ? "#fff3e0" : d.jornada === "tarde" ? "#ede7f6" : "#e3f2fd"};color:${d.jornada === "mañana" ? "#e65100" : d.jornada === "tarde" ? "#4527a0" : "#0d47a1"};padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600">${d.jornada === "mañana" ? "🌅 Mañana" : d.jornada === "tarde" ? "🌆 Tarde" : "🌓 Ambas"}</span>
+            ${d.controlEstudio ? `<span style="background:#fff8e1;color:#7a5c00;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:700">🗂️ Control de estudio (carga todas las notas)</span>` : ""}
             ${d.grado ? `<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600">📚 ${escHtml(d.grado)}</span>` : ""}
             ${(d.materias || []).map((m) => `<span style="background:#e3f2fd;color:#0d47a1;padding:2px 8px;border-radius:20px;font-size:0.7rem">${escHtml(m)}</span>`).join("")}
           </div>
@@ -405,6 +406,10 @@ function renderModalDocente(docenteId) {
           <input class="inp" id="doc-pass" type="password" placeholder="Mínimo 6 caracteres"/></div>`
             : ""
         }
+        <label class="field" style="grid-column:1/-1;display:flex;gap:0.5rem;align-items:flex-start;cursor:pointer;background:#fff8e1;border-radius:10px;padding:0.6rem 0.75rem">
+          <input type="checkbox" id="doc-control" ${d.controlEstudio ? "checked" : ""} style="margin-top:3px"/>
+          <span><strong>🗂️ Control de estudio</strong><br/><span style="font-size:0.74rem;color:#666">Carga las notas de todos los grados y materias (no hace falta asignarle grado ni materias).</span></span>
+        </label>
         <div class="field" style="grid-column:1/-1"><label class="field-label">Jornada *</label>
           <div style="display:flex;gap:0.5rem">
             ${[
@@ -512,6 +517,7 @@ async function guardarNuevoDocente() {
       correo,
       cedula,
       cargo,
+      controlEstudio: !!(document.getElementById("doc-control") || {}).checked,
       rol: "docente",
       jornada,
       grado,
@@ -565,12 +571,14 @@ async function guardarEditarDocente(id) {
     return;
   }
   try {
-    await db.collection("usuarios").doc(id).update({ nombre, jornada, grado, materias });
+    const controlEstudio = !!(document.getElementById("doc-control") || {}).checked;
+    await db.collection("usuarios").doc(id).update({ nombre, jornada, grado, materias, controlEstudio });
     const d = configDocentes.find((x) => x.id === id);
     if (d) {
       d.nombre = nombre;
       d.jornada = jornada;
       d.grado = grado;
+      d.controlEstudio = controlEstudio;
       d.materias = materias;
     }
     cerrarModal();

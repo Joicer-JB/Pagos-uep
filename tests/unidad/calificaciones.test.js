@@ -101,6 +101,21 @@ test("promedio del estudiante: de las definitivas que ya tiene", () => {
   assert.equal(app.evaluar("promedioEstudiante")(est, ["Química"]), null);
 });
 
+test("la nota del lapso que carga control de estudio (<materia>_lapso) manda sobre las evaluaciones", () => {
+  conNotas({ "e1_Lapso 1": { Matemáticas_lapso: "17.5", Matemáticas_1: "10", Inglés_1: "14" } });
+  const m = lapso("Matemáticas", "Lapso 1");
+  assert.equal(m.nota, 17.5);
+  assert.equal(m.directa, true);
+  assert.equal(m.faltan, 0);
+  // Sin nota del lapso, se calcula con las evaluaciones como siempre
+  const i = lapso("Inglés", "Lapso 1");
+  assert.equal(i.nota, 14);
+  assert.equal(i.directa, false);
+  // Y la definitiva promedia las notas de los lapsos
+  conNotas({ "e1_Lapso 1": { Matemáticas_lapso: "16" }, "e1_Lapso 2": { Matemáticas_lapso: "19" } });
+  assert.equal(definitiva("Matemáticas").nota, 17.5);
+});
+
 test("el id del plan no lleva caracteres que Firestore no acepta en un id", () => {
   assert.equal(app.evaluar("idPlanEval")("1er Año"), "plan__1er Año");
   assert.equal(app.evaluar("idPlanEval")("4to/5to A.B"), "plan__4to_5to A_B");

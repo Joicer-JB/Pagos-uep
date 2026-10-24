@@ -3,7 +3,8 @@
 //   «grado»; en la nómina, una clase sin materia en ese grado.
 // · Media General: un docente por materia y año. En su perfil, «materias» = ["1er Año::Matemáticas", …] (los perfiles
 //   viejos guardaban solo la materia: vale para todos los años); en la nómina, una clase con la materia y los años.
-// El director ve y hace todo. Un docente sin grado ni materias asignadas, o la cuenta fija de notas, ve todo como antes.
+// El director ve y hace todo. Control de estudio (perfil con controlEstudio), un docente sin grado ni materias
+// asignadas o la cuenta fija de notas ven todo y cargan todas las notas.
 // Los profesores guía de Media General están en ⚙️ Config → 🏫 Institución (configInst.guias = {año: nombre}).
 
 const normMateria = (m) =>
@@ -15,7 +16,7 @@ const normMateria = (m) =>
 
 // Lo que le toca al docente que entró: {grado, porAnio: Map(año → Set de materias)}, o null = sin límite
 function asignacionActual() {
-  if (rolUsuario !== "docente" || !usuarioActual) return null;
+  if (rolUsuario !== "docente" || !usuarioActual || usuarioActual.controlEstudio) return null;
   const grado = usuarioActual.grado || "";
   const materias = Array.isArray(usuarioActual.materias) ? usuarioActual.materias.filter(Boolean) : [];
   if (!grado && !materias.length) return null;

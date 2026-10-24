@@ -31,6 +31,7 @@ async function entrar(correo) {
   await s.pagina.click("#login-btn");
   await s.pagina.waitForSelector(".tabs .tab");
   s.llamar = (c) => s.pagina.evaluate(c);
+  await s.llamar(`NOTAS_DETALLADAS = true`); // las evaluaciones y el plan de cada profesor
   return s;
 }
 const opciones = (s, sel) => s.pagina.$$eval(sel + " option", (o) => o.map((x) => x.value).filter(Boolean));

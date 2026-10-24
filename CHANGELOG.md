@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## Octubre 2026 — Las notas las carga control de estudio
+
+- **Media General:** por ahora control de estudio carga **la nota final de cada lapso** en cada materia (la que entrega
+  el profesor), una casilla por materia (se guarda en `<materia>_lapso`). El plan de evaluación, las evaluaciones y el
+  «detalle por materia» de la sábana quedan apagados (`NOTAS_DETALLADAS = false` en `js/config.js`) hasta que los
+  profesores carguen sus notas detalladas.
+- **⚙️ Config → 👨‍🏫 Docentes:** casilla **🗂️ Control de estudio**: esa cuenta ve todos los grados y carga todas las
+  notas.
+
 ## Octubre 2026 — Cada profesor con lo suyo
 
 - **Notas:** cada docente ve a los estudiantes de sus grados. En Inicial y Primaria (un docente por grado) carga todas
