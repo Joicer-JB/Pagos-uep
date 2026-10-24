@@ -72,6 +72,41 @@ async function unificarGrados() {
     renderTabContent();
   }
 }
+// Matrícula por grado, para compararla con la oficial: inscritos (por sexo), retirados y graduados de cada grado
+function matriculaPorGrado(lista) {
+  const filas = new Map();
+  lista.forEach((e) => {
+    const g = e.grado || "(sin grado)";
+    const f = filas.get(g) || { grado: g, inscritos: 0, F: 0, M: 0, sinSexo: 0, retirados: 0, graduados: 0 };
+    if (e.graduado) f.graduados++;
+    else if (e.estado === "retirado") f.retirados++;
+    else {
+      f.inscritos++;
+      if (e.sexo === "F" || e.sexo === "M") f[e.sexo]++;
+      else f.sinSexo++;
+    }
+    filas.set(g, f);
+  });
+  const orden = [...filas.values()].sort((a, b) => ordenGrados(a.grado, b.grado));
+  const total = { grado: "Total", inscritos: 0, F: 0, M: 0, sinSexo: 0, retirados: 0, graduados: 0 };
+  orden.forEach((f) => Object.keys(total).forEach((k) => k !== "grado" && (total[k] += f[k])));
+  return { filas: orden, total };
+}
+function htmlMatriculaGrado() {
+  const { filas, total } = matriculaPorGrado(estudiantes);
+  if (!filas.length) return "";
+  const fila = (f, pie) =>
+    `<tr${pie ? ' style="font-weight:800;background:#f0f4ff"' : ""}><td style="text-align:left">${escHtml(f.grado)}</td><td><strong>${f.inscritos}</strong></td><td>${f.F}</td><td>${f.M}</td><td>${f.sinSexo || ""}</td><td>${f.retirados || ""}</td><td>${f.graduados || ""}</td></tr>`;
+  return `<details class="card matricula-grado" style="padding:0.7rem 0.85rem;margin-bottom:0.75rem">
+    <summary style="cursor:pointer;font-weight:700;color:#003366">📊 Matrícula por grado · ${total.inscritos} inscritos${total.retirados ? " · " + total.retirados + " retirados" : ""}${total.graduados ? " · " + total.graduados + " graduados" : ""}</summary>
+    <div style="overflow-x:auto;margin-top:0.5rem"><table class="sab-tabla" style="width:100%">
+      <thead><tr><th style="text-align:left">Grado</th><th>Inscritos</th><th>Niñas</th><th>Niños</th><th>Sin sexo</th><th>Retirados</th><th>Graduados</th></tr></thead>
+      <tbody>${filas.map((f) => fila(f)).join("")}</tbody>
+      <tfoot>${fila(total, true)}</tfoot>
+    </table></div>
+    <div class="ayuda" style="margin-top:0.4rem">Inscritos: los de este año (sin retirados ni graduados). Es la cifra que debe coincidir con la matrícula oficial.</div>
+  </details>`;
+}
 function renderEstudiantes() {
   const mora = estudiantes.filter(enMora);
   const activos = estudiantes.filter(activo);
@@ -96,13 +131,14 @@ function renderEstudiantes() {
   });
   return `
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val">${estudiantes.filter((e) => !e.graduado).length}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-val">${activos.length}</div><div class="stat-label">🎒 Inscritos</div></div>
     <div class="stat-card green"><div class="stat-val">${activos.length - mora.length}</div><div class="stat-label">✅ Al Saldo</div></div>
     <div class="stat-card red"><div class="stat-val">${mora.length}</div><div class="stat-label">⚠️ En Mora</div></div>
     <div class="stat-card gold"><div class="stat-val">${fmt(mora.reduce((s, e) => s + deudaDe(e), 0))}</div><div class="stat-label">Total Mora</div></div>
   </div>
   ${htmlAvisoGrados()}
   ${htmlAvisoDuplicados()}
+  ${htmlMatriculaGrado()}
   <button class="btn btn-primary btn-full" style="margin-bottom:0.75rem" onclick="abrirModal({tipo:'nuevo-estudiante'})">➕ Agregar Estudiante</button>
   <div class="search-bar">
     <input class="inp" id="search-input" placeholder="🔍 Buscar estudiante..." value="${filtros.busq}" oninput="onBusqInput(this.value)"/>

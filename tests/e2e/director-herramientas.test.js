@@ -120,3 +120,16 @@ test("Config → Año escolar: estado del respaldo automático y abrir uno con s
   assert.match(await texto("#tab-content"), /Último respaldo automático: 02\/10\/2026 a las 17:01 · 120 registros/);
   assert.deepEqual(s.errores, []);
 });
+
+test("Estudiantes: inscritos (sin retirados ni graduados) y matrícula por grado para compararla con la oficial", async () => {
+  await llamar(`setTab("estudiantes")`);
+  await s.pagina.waitForSelector(".matricula-grado");
+  // Semilla: 6 fichas, una retirada (Sofía, 3er Grado)
+  assert.match(await texto(".stats-grid"), /5\s*🎒 Inscritos/);
+  assert.match(await texto(".matricula-grado summary"), /5 inscritos · 1 retirados/);
+  const m = await llamar(`JSON.parse(JSON.stringify(matriculaPorGrado(estudiantes)))`);
+  const tercero = m.filas.find((f) => f.grado === "3er Grado");
+  assert.deepEqual([tercero.inscritos, tercero.M, tercero.F, tercero.retirados], [1, 1, 0, 1]);
+  assert.deepEqual([m.total.inscritos, m.total.F, m.total.M], [5, 2, 3]);
+  assert.deepEqual(s.errores, []);
+});
