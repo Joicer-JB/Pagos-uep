@@ -13,7 +13,13 @@
 // pago obligatorio por año que incluye la inscripción de su nivel, el carnet QR y la papelería; en la Caja se cobra
 // junto con el primer mes (septiembre). La cubren los pagos de «Inscripción» desde config.inscripcionDesde.
 // El estudiante marcado «sinInscripcion» (exonerado) solo paga el carnet y la papelería.
+// BECA: estudiante.beca = % de la mensualidad que no paga (100 = becado todo el año, 50 = media beca), con becaMotivo.
+// MES EXONERADO: el director exonera la mensualidad de un mes: estudiante.mesesExonerados = {"2026-12": {motivo, por,
+// fecha}}. Ese mes no se cobra (ni genera recargo); lo que ya se hubiera pagado de él pasa a los otros meses.
 let cobCfg = null;
+const becaDe = (e) => Math.min(100, Math.max(0, Number(e && e.beca) || 0));
+// Lo que paga cada mes, con la beca descontada
+const mensualidadDe = (e) => r2((Number(e.mensualidad) || 0) * (1 - becaDe(e) / 100));
 const PLANES_COSTO = [
   ["inicialCompleto", "Inicial · tiempo completo"],
   ["inicialMedio", "Inicial · medio tiempo"],
@@ -133,12 +139,20 @@ function pagosDeEstudiante(e) {
 function calcCuotas(e, hoy) {
   hoy = hoy || todayStr();
   if (!cobCfgActiva() || !activo(e)) return null;
-  const m = Number(e.mensualidad) || 0;
+  const m = mensualidadDe(e);
+  const exonerados = e.mesesExonerados && typeof e.mesesExonerados === "object" ? e.mesesExonerados : {};
   const lista = [];
   for (let k = 0; k < cobCfg.cuotas; k++) {
     const ym = sumarMeses(cobCfg.primerMes, k);
     if (e.cuotaDesde && ym < e.cuotaDesde) continue;
-    lista.push({ ym, mes: nombreMesYM(ym), vence: ym + "-" + String(cobCfg.diaVence).padStart(2, "0"), monto: m });
+    const exonerado = exonerados[ym] || null;
+    lista.push({
+      ym,
+      mes: nombreMesYM(ym),
+      vence: ym + "-" + String(cobCfg.diaVence).padStart(2, "0"),
+      monto: exonerado ? 0 : m,
+      exonerado,
+    });
   }
   const desde = cobCfg.primerMes + "-01";
   const delEst = pagosDeEstudiante(e).filter((p) => p.fecha && p.fecha >= desde);
@@ -236,6 +250,7 @@ function calcCuotas(e, hoy) {
   const saldo = r2(vencidas.reduce((s, c) => s + c.pendiente, 0));
   const obligPend = inscripcion ? inscripcion.pendiente : 0;
   return {
+    beca: becaDe(e),
     inscripcion,
     obligPend,
     primera, // el primer mes que paga (se cobra con la inscripción)
@@ -293,6 +308,19 @@ function conceptoDeE(e) {
 }
 // Tabla del estado de cuenta (cuota por cuota) que se muestra en la ficha del estudiante
 // Recargo de un mes en el estado de cuenta: cuándo se pagó, y el director puede perdonarlo (con su motivo)
+// Mes exonerado (con quién y por qué), o el botón para exonerarlo (solo el director, si el mes no está pagado)
+function htmlExoneracionMes(e, q) {
+  const director = rolUsuario === "director" && !soloLectura();
+  const boton = (txt, accion) =>
+    director
+      ? ` <button class="btn btn-gray btn-sm recargo-accion" style="padding:1px 6px;font-size:0.62rem" onclick="${accion}('${e.id}','${q.ym}')">${txt}</button>`
+      : "";
+  if (q.exonerado) {
+    const x = q.exonerado;
+    return `<div class="mes-exonerado" style="font-size:0.65rem;color:#1a7a4a">🎁 ${escHtml(x.motivo || "Exonerado")}${x.por ? ` <span style="color:#888">(${escHtml(nombreUsuario(x.por))}${x.fecha ? ", " + fechaCorta(x.fecha) : ""})</span>` : ""}${boton("Deshacer", "quitarExoneracionMes")}</div>`;
+  }
+  return q.monto > 0 && q.pendiente > 0.004 ? `<div>${boton("🎁 Exonerar este mes", "exonerarMes")}</div>` : "";
+}
 function htmlRecargoMes(e, q) {
   const director = rolUsuario === "director" && !soloLectura();
   const boton = (txt, accion) =>
@@ -312,15 +340,20 @@ function htmlEstadoCuenta(e) {
   const tv = tasaHoyValor();
   const bsl = (u) => (tv ? `<div style="font-size:0.65rem;color:#888">${fmtBs(r2(u * tv))}</div>` : "");
   const est = (q) =>
-    q.pendiente <= 0.004
-      ? `<span class="badge badge-green">✅ Pagada</span>`
-      : q.pagado > 0
-        ? `<span class="badge badge-gold">🟡 Abonada (falta ${fmt(q.pendiente)})</span>`
-        : q.vencida
-          ? `<span class="badge badge-red">🔴 Vencida</span>`
-          : `<span class="badge badge-gray">⏳ Por vencer</span>`;
+    q.exonerado
+      ? `<span class="badge badge-green">🎁 Exonerado</span>`
+      : q.monto === 0 && c.beca >= 100
+        ? `<span class="badge badge-green">🎓 Becado</span>`
+        : q.pendiente <= 0.004
+          ? `<span class="badge badge-green">✅ Pagada</span>`
+          : q.pagado > 0
+            ? `<span class="badge badge-gold">🟡 Abonada (falta ${fmt(q.pendiente)})</span>`
+            : q.vencida
+              ? `<span class="badge badge-red">🔴 Vencida</span>`
+              : `<span class="badge badge-gray">⏳ Por vencer</span>`;
   return `<div class="card" style="padding:0.75rem;margin:0.75rem 0">
     <div style="font-size:0.62rem;color:#003366;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px">📅 Estado de cuenta · mensualidades</div>
+    ${c.beca > 0 && e.mensualidad > 0 ? `<div class="alert-item alert-info" style="font-size:0.75rem;margin-bottom:6px">🎓 ${c.beca >= 100 ? "Becado todo el año: no paga mensualidades" : `Beca del ${c.beca}%: paga ${fmt(mensualidadDe(e))} de ${fmt(Number(e.mensualidad))} al mes`}${e.becaMotivo ? " · " + escHtml(e.becaMotivo) : ""}</div>` : ""}
     ${
       !(e.mensualidad > 0)
         ? `<div style="font-size:0.8rem;color:#888">Sin mensualidad asignada (no se generan cuotas)</div>`
@@ -329,7 +362,7 @@ function htmlEstadoCuenta(e) {
               (q) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px dashed #eee;font-size:0.8rem">
       <div><strong>${escHtml(q.mes)}</strong><div style="font-size:0.65rem;color:#888">vence ${fechaCorta(q.vence)}</div></div>
-      <div style="text-align:right">${fmt(q.monto)}${bsl(q.monto)}${est(q)}${htmlRecargoMes(e, q)}</div></div>`
+      <div style="text-align:right">${fmt(q.monto)}${bsl(q.monto)}${est(q)}${htmlExoneracionMes(e, q)}${htmlRecargoMes(e, q)}</div></div>`
             )
             .join("")
     }

@@ -539,7 +539,9 @@ function htmlCajaPanel() {
         ? `<div class="alert-item alert-mora" style="margin-top:0.6rem">⚠️ Las cuotas del año no están configuradas o este estudiante no tiene mensualidad. Usa «Otro monto».</div>`
         : !(e.mensualidad > 0)
           ? `<div class="alert-item alert-mora" style="margin-top:0.6rem">⚠️ Este estudiante no tiene mensualidad asignada (ficha del estudiante).</div>`
-          : ""
+          : becaDe(e)
+            ? `<div class="alert-item alert-info" style="margin-top:0.6rem">🎓 ${becaDe(e) >= 100 ? "Becado: no paga mensualidades" : `Beca del ${becaDe(e)}%: paga ${fmt(mensualidadDe(e))} al mes`}.</div>`
+            : ""
     }
     <div class="field" style="margin:0.6rem 0 0"><label class="field-label">💵 ¿Cuánto trae? <span style="font-weight:400;color:#888">(opcional: se reparte solo)</span></label>
       <input class="inp" id="caja-trae-inp" readonly inputmode="none" data-pad="monto" data-pad-label="¿Cuánto trae? ($)" data-pad-unit="$" onclick="cajaPadAbrir(this)" onfocus="cajaPadAbrir(this)" autocomplete="off" placeholder="Toca aquí y escribe el monto" value="${escHtml(caja.trae)}" oninput="cajaTrae(this.value)" style="cursor:pointer"/></div>

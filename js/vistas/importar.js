@@ -342,6 +342,8 @@ function inscritosDespues(filasOut, fuera, retirar) {
 // Busca en cada hoja la fila de encabezados (no importa si hay títulos arriba). Si la hoja no tiene columna «Grado»,
 // el grado sale del nombre de la hoja o de un título encima de los encabezados.
 // hojas: [{nombre, rows}] (las hojas de un Excel, o el documento de Word como una sola hoja)
+// El grado sale del título más cercano encima de la tabla (o del nombre de la hoja). Si más abajo aparece otro título
+// con un grado (un documento con dos partes, por ejemplo «Maternal» y luego «I Grupo»), desde ahí cuenta ese grado.
 const esEncabezado = (m) => "nombre" in m || "apellidos" in m;
 function localizarTabla(hojas) {
   const filas = [];
@@ -351,15 +353,25 @@ function localizarTabla(hojas) {
       const m = mapaEncabezados(rows[i].map(textoCelda));
       if (!esEncabezado(m)) continue;
       const titulos = rows.slice(0, i).map((r) => r.map(textoCelda).join(" "));
-      let gradoHoja = "";
-      for (const t of titulos) gradoHoja = gradoHoja || gradoDeTexto(t);
-      gradoHoja = gradoHoja || gradoDeTexto(sn);
-      const seccionHoja = titulos.map(seccionDeTexto).find(Boolean) || "";
+      let gradoHoja = titulos.map(gradoDeTexto).filter(Boolean).pop() || gradoDeTexto(sn);
+      let seccionHoja = titulos.map(seccionDeTexto).filter(Boolean).pop() || "";
       mapa = mapa || m;
+      const celda = (r, k) => (m[k] == null ? "" : textoCelda(r[m[k]]));
       rows.slice(i + 1).forEach((r, j) => {
+        const textos = r.map(textoCelda);
         // en Word, la tabla puede repetir los encabezados en cada página
-        if (!esEncabezado(mapaEncabezados(r.map(textoCelda))))
-          filas.push({ n: i + j + 2, r, hoja: sn, mapa: m, gradoHoja, seccionHoja });
+        if (esEncabezado(mapaEncabezados(textos))) return;
+        // un título entre tablas (sin estudiante): si dice un grado, cambia el grado de lo que sigue
+        if (!celda(r, "nombre") && !celda(r, "apellidos") && !celda(r, "cedula")) {
+          const t = textos.join(" ");
+          const g = gradoDeTexto(t);
+          if (g) {
+            gradoHoja = g;
+            seccionHoja = seccionDeTexto(t) || seccionHoja;
+          }
+          return;
+        }
+        filas.push({ n: i + j + 2, r, hoja: sn, mapa: m, gradoHoja, seccionHoja });
       });
       break;
     }

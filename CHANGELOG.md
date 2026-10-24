@@ -1,5 +1,18 @@
 # Historial de cambios
 
+## Octubre 2026 — Becas y meses exonerados
+
+- En la ficha del estudiante, **🎓 Beca (%)** con su motivo: 100% = becado todo el año (no paga mensualidades), 50% =
+  media beca. La Caja, la cobranza, los avisos, el estado de cuenta y el tablero usan la mensualidad con la beca.
+- En el estado de cuenta, el director puede **🎁 exonerar la mensualidad de un mes** con su motivo (queda quién y
+  cuándo; se deshace). Ese mes no se cobra ni genera recargo.
+
+## Octubre 2026 — Un documento con dos grupos
+
+- Al montar la matrícula, si un Word o Excel trae **dos grupos** con su título (por ejemplo «Grupo: MATERNAL» y
+  más abajo «Grupo: I GRUPO», de una misma maestra), cada estudiante va a su grado. Se usa «📚 Varios grados»; si se
+  elige un grado, los del otro se ignoran.
+
 ## Octubre 2026 — Redondeo de notas y definitiva provisional
 
 - **Corregido:** el redondeo a un decimal a veces bajaba una décima por los errores de la máquina con decimales:

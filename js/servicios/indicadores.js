@@ -82,8 +82,8 @@ function indicadoresFinancieros(hoy) {
       }
     }
     recargos = r2(recargos + c.recargoPend);
-    if (Number(e.mensualidad) > 0) {
-      mensualidades = r2(mensualidades + Number(e.mensualidad));
+    if (mensualidadDe(e) > 0) {
+      mensualidades = r2(mensualidades + mensualidadDe(e));
       conMensualidad++;
     }
     if (debe > 0.004) deudores.push({ id: e.id, nombre: e.nombre, grado: e.grado || "", monto: debe, dias });

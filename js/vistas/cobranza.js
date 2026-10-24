@@ -97,7 +97,7 @@ function mensajeCobro(r) {
         : baseAnio()
           ? "no registra pagos en el año escolar en curso"
           : "no registra pagos en nuestro sistema";
-    if (e.mensualidad > 0) detalle += `. Mensualidad: *${fmt(e.mensualidad)}*${eq(e.mensualidad)}`;
+    if (mensualidadDe(e) > 0) detalle += `. Mensualidad: *${fmt(mensualidadDe(e))}*${eq(mensualidadDe(e))}`;
   }
   const pie = conTasa
     ? `💱 Tasa BCV del ${fechaCorta(tv.fecha)}: Bs. ${fmtTasa(tv.valor)} por $. El pago se recibe en bolívares a la tasa oficial BCV del día del pago.`
@@ -150,7 +150,7 @@ function modeloReciboCobranza(r) {
     filas.push({
       desc: "Mensualidad",
       sub: r.ultimo ? "Último pago: " + fechaCorta(r.ultimo.fecha) : "Sin pagos registrados",
-      usd: e.mensualidad || 0,
+      usd: mensualidadDe(e),
     });
   const totalUsd = r2(filas.reduce((s, f) => s + f.usd, 0));
   filas.forEach((f) => {
@@ -295,7 +295,7 @@ async function reciboCobranzaBlob(r) {
 function captionCobro(r) {
   const tv = tasaDe(todayStr()),
     con = !!(tv && tv.exacta);
-  const tot = r.enMora ? r.deuda : r.e.mensualidad || 0;
+  const tot = r.enMora ? r.deuda : mensualidadDe(r.e);
   return `🏫 *${EMPRESA}*\nRecibo de cobranza — *${r.e.nombre}*\n${r.enMora ? "Saldo pendiente" : "Mensualidad"}: *${fmt(tot)}*${con ? " (*" + fmtBs(r2(tot * tv.valor)) + "* a tasa BCV del " + fechaCorta(tv.fecha) + ")" : ""}\nSi ya realizó el pago, envíenos el comprobante. ¡Gracias!`;
 }
 function descargarBlob(blob, nombre) {
@@ -530,7 +530,7 @@ function renderCobranza() {
         </div>
         <div class="item-right">
           ${r.enMora ? `<div class="item-amount" style="color:#e53e3e">${fmt(r.deuda)}</div>${hoyT ? `<div style="font-size:0.7rem;color:#888">${fmtBs(aBs(r.deuda))}</div>` : ""}` : `<span class="badge badge-gold">Sin pago reciente</span>`}
-          <div style="font-size:0.68rem;color:#888;margin-top:3px">${fmt(e.mensualidad || 0)}/mes</div>
+          <div style="font-size:0.68rem;color:#888;margin-top:3px">${fmt(mensualidadDe(e))}/mes${becaDe(e) ? " · 🎓" : ""}</div>
         </div>
       </div>
       <div style="display:flex;gap:0.4rem;margin-top:0.6rem;flex-wrap:wrap">

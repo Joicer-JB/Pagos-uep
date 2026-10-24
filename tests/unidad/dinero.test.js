@@ -198,6 +198,43 @@ test("calcCuotas: el director puede perdonar el recargo de un mes", () => {
   assert.equal(c.lista[1].recargoPerdonado, null);
 });
 
+test("beca: 100% no paga mensualidades en todo el año; 50% paga la mitad", () => {
+  app.__e = { ...estudiante, beca: 100 };
+  let c = f('calcCuotas(__e, "2026-10-07")');
+  assert.equal(c.beca, 100);
+  assert.ok(c.lista.every((q) => q.monto === 0));
+  assert.equal(c.saldo, 0);
+  assert.equal(c.total, 0);
+  assert.equal(f("deudaDe(__e)"), 0);
+  app.__e = { ...estudiante, beca: 50 };
+  c = f('calcCuotas(__e, "2026-10-07")');
+  assert.equal(c.lista[0].monto, 22.5);
+  assert.equal(c.saldo, 45); // septiembre y octubre a 22,50
+  assert.equal(f("mensualidadDe(__e)"), 22.5);
+  app.__e = { ...estudiante, beca: 150 }; // nunca más de 100%
+  assert.equal(f("becaDe(__e)"), 100);
+});
+
+test("mes exonerado: ese mes no se cobra ni genera recargo; lo pagado de él pasa al siguiente", () => {
+  poner("cobCfg", { primerMes: "2026-09", cuotas: 10, diaVence: 5, recargo: 5, recargoDesde: "" });
+  const x = { motivo: "Ayuda por enfermedad", por: "d@x.com", fecha: "2026-10-01" };
+  app.__e = { ...estudiante, mesesExonerados: { "2026-10": x } };
+  let c = f('calcCuotas(__e, "2026-10-07")');
+  assert.equal(c.lista[1].monto, 0);
+  assert.equal(c.lista[1].exonerado.motivo, "Ayuda por enfermedad");
+  assert.equal(c.lista[1].recargo, 0);
+  assert.deepEqual(
+    c.pendientes.map((q) => q.mes),
+    ["Septiembre 2026"]
+  );
+  assert.equal(c.saldo, 45);
+  // Ya había pagado septiembre y octubre: lo de octubre queda para noviembre
+  poner("pagos", [pago("2026-09-03", 45), { ...pago("2026-10-03", 45), cuotas: { "2026-10": 45 } }]);
+  c = f('calcCuotas(__e, "2026-10-07")');
+  assert.equal(c.saldo, 0);
+  assert.equal(c.lista[2].pagado, 45); // noviembre
+});
+
 test("calcCuotas: el recargo no es retroactivo (recargoDesde) y no aplica a exonerados", () => {
   poner("cobCfg", { primerMes: "2026-09", cuotas: 10, diaVence: 5, recargo: 5, recargoDesde: "2026-10-01" });
   assert.equal(cuotas("2026-10-07").nRecargos, 1); // solo octubre
