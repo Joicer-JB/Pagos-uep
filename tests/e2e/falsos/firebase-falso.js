@@ -452,6 +452,9 @@
         ReCaptchaV3Provider: function (clave) {
           this.clave = clave;
         },
+        ReCaptchaEnterpriseProvider: function (clave) {
+          this.clave = clave;
+        },
       }
     ),
   };
