@@ -16,7 +16,9 @@
 
 const LAPSO_DEF = "Definitiva";
 const EVALS_BASE = [1, 2, 3].map((n) => ({ n, nombre: "Eval " + n, peso: 0 }));
-const unDecimal = (x) => Math.round(x * 10) / 10;
+// Un decimal, redondeando el 5 hacia arriba (9,65 → 9,7). El 1e-9 corrige los errores de la máquina con decimales:
+// (5,6 + 13,7) / 2 da 9,6499999… y sin él saldría 9,6.
+const unDecimal = (x) => Math.round(x * 10 + (x >= 0 ? 1e-9 : -1e-9)) / 10;
 const idPlanEval = (grado) => "plan__" + String(grado || "").replace(/[/.#[\]]/g, "_");
 const notaNum = (v) => {
   if (v === undefined || v === null || v === "") return null;

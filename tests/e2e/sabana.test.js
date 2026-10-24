@@ -109,6 +109,10 @@ test("todo el año: por materia 1er, 2do y 3er lapso, definitiva y M (la del con
   const luis = await fila("Luis Alberto Gómez").locator("td").allTextContents();
   // y la M vacía (el consejo no la cambió)
   assert.deepEqual(luis.slice(3, 8), ["15,3", "15", "-", "15,2", ""]);
+  // Le falta el 3er lapso: la Def. es provisional (cursiva)
+  const defLuis = fila("Luis Alberto Gómez").locator("td").nth(6);
+  assert.match(await defLuis.getAttribute("class"), /sab-parcial/);
+  assert.match(await defLuis.getAttribute("title"), /Provisional: faltan lapsos/);
   // Inglés: 17 y 15 → 16. Lengua sin notas. Promedio: (15,2 + 16) / 2 = 15,6
   assert.deepEqual(luis.slice(13, 18), ["17", "15", "-", "16", ""]);
   assert.equal(luis.at(-1), "15,6");

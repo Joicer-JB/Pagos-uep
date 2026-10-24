@@ -120,3 +120,18 @@ test("el id del plan no lleva caracteres que Firestore no acepta en un id", () =
   assert.equal(app.evaluar("idPlanEval")("1er Año"), "plan__1er Año");
   assert.equal(app.evaluar("idPlanEval")("4to/5to A.B"), "plan__4to_5to A_B");
 });
+
+test("redondeo a un decimal con el 5 hacia arriba, aunque la máquina dé 9,6499999…", () => {
+  const u = app.evaluar("unDecimal");
+  assert.equal(u((5.6 + 13.7) / 2), 9.7); // 9,649999…
+  assert.equal(u((17.4 + 15.7) / 2), 16.6);
+  assert.equal(u(9.95), 10);
+  assert.equal(u(16.33), 16.3);
+  assert.equal(u(14), 14);
+  // Una definitiva de 9,9 y 10 es 9,95 → 10: aprueba
+  conNotas({ "e1_Lapso 1": { Química_lapso: "9.9" }, "e1_Lapso 2": { Química_lapso: "10" } });
+  assert.equal(definitiva("Química").nota, 10);
+  // El promedio del estudiante, igual: 5,6 y 13,7 → 9,7
+  conNotas({ "e1_Lapso 1": { Química_lapso: "5.6", Física_lapso: "13.7" } });
+  assert.equal(app.evaluar("promedioEstudiante")(est, ["Química", "Física"]), 9.7);
+});

@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — Redondeo de notas y definitiva provisional
+
+- **Corregido:** el redondeo a un decimal a veces bajaba una décima por los errores de la máquina con decimales:
+  el promedio de 5,6 y 13,7 (9,65) daba 9,6 en vez de **9,7**, y una definitiva de 9,95 daba 9,9 (reprobada) en vez
+  de **10**. Ahora el 5 siempre redondea hacia arriba (definitivas, promedios, sábana, cuadro de honor y boletín).
+- En la sábana, mientras falte algún lapso, la **Def.** sale en cursiva: es provisional.
+
 ## Octubre 2026 — Sábana: columna M
 
 - En «Todo el año», cada materia tiene **1° L, 2° L, 3° L, Def. y M**. **Def.** es la que dan los 3 lapsos; **M** es

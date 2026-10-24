@@ -108,7 +108,14 @@ function datosSabana(grado, seccion, ver, materia) {
           const d = definitivaDe(est, m);
           return [
             ...d.lapsos.map((x, i) => nota(x, m, LAPSOS[i])),
-            { v: d.calculada, materia: m, lapso: LAPSO_DEF, tipo: "def" },
+            // mientras falte algún lapso, la Def. es provisional (en cursiva)
+            {
+              v: d.calculada,
+              faltanLapsos: d.calculada !== null && !d.completa,
+              materia: m,
+              lapso: LAPSO_DEF,
+              tipo: "def",
+            },
             {
               v: d.ajuste ? d.nota : null,
               ajuste: d.ajuste,
@@ -157,7 +164,9 @@ const tituloCelda = (c) =>
     ? `${c.tipo === "mod" ? "Modificada" : "Cambiada"} por el consejo (antes ${c.ajuste.original ?? "-"}): ${c.ajuste.motivo || ""}`
     : c.faltan
       ? `Faltan ${c.faltan} evaluación(es) por nota`
-      : "";
+      : c.faltanLapsos
+        ? "Provisional: faltan lapsos por nota"
+        : "";
 const textoNota = (v) => (v === null || v === undefined ? "-" : String(v).replace(".", ","));
 
 // HTML de la tabla. enPantalla: con los toques (detalle del estudiante y ajuste del consejo)
@@ -176,7 +185,7 @@ function htmlTablaSabana(d, enPantalla) {
       c.tipo === "prom" ? "sab-prom" : "",
       c.v !== null && c.v < 10 ? "sab-rep" : "",
       c.ajuste ? "sab-aj" : "",
-      c.faltan ? "sab-parcial" : "",
+      c.faltan || c.faltanLapsos ? "sab-parcial" : "",
       ajustar && c.materia && c.lapso === LAPSO_DEF ? "sab-toca" : "",
     ]
       .filter(Boolean)
@@ -265,7 +274,7 @@ function renderSabana() {
           : ""
       }
     </div>
-    <div class="ayuda" style="margin-top:0.5rem">Toca el nombre de un estudiante para ver todas sus evaluaciones.${puedeAjustarConsejo() ? " Al terminar los 3 lapsos, para cambiar la nota final por decisión del consejo, toca su <strong>Def.</strong> o su <strong>M</strong> (en «Todo el año»)." : ""} <span class="sab-rep">Rojo</span>: menos de 10 · <strong>M</strong>: nota modificada por el consejo · <em>cursiva</em>: faltan evaluaciones.</div>
+    <div class="ayuda" style="margin-top:0.5rem">Toca el nombre de un estudiante para ver todas sus evaluaciones.${puedeAjustarConsejo() ? " Al terminar los 3 lapsos, para cambiar la nota final por decisión del consejo, toca su <strong>Def.</strong> o su <strong>M</strong> (en «Todo el año»)." : ""} <span class="sab-rep">Rojo</span>: menos de 10 · <strong>M</strong>: nota modificada por el consejo · <em>cursiva</em>: faltan evaluaciones o lapsos (nota provisional).</div>
   </div>
   <div class="card" style="padding:0.6rem">
     ${d.filas.length ? `<div class="sabana-wrap">${htmlTablaSabana(d, true)}</div>` : `<div class="empty-state">No hay estudiantes activos en ${escHtml(grado)}.</div>`}
@@ -445,7 +454,7 @@ function imprimirSabana() {
     <button class="no-print" onclick="window.print()">🖨️ Imprimir</button>
     ${encabezadoSabana("SÁBANA DE NOTAS", `${escHtml(grado)}${seccion ? " · Sección " + escHtml(seccion) : ""} · ${escHtml(vista || "")}`)}
     ${htmlTablaSabana(d, false)}
-    <div style="font-size:9px;color:#555">Def.: definitiva de los 3 lapsos · M: nota modificada por el consejo · Rojo: menos de 10 · cursiva: faltan evaluaciones.</div>
+    <div style="font-size:9px;color:#555">Def.: definitiva de los 3 lapsos · M: nota modificada por el consejo · Rojo: menos de 10 · cursiva: faltan evaluaciones o lapsos (nota provisional).</div>
     ${htmlAjustesSabana(ajustesSabana(grado, seccion), false)}
     <div class="firmas"><div>Docente guía</div><div>Coordinación</div><div>Dirección</div></div>
   </body></html>`);
