@@ -146,3 +146,27 @@ test("Estudiantes: inscritos (sin retirados ni graduados) y matrícula por grado
   ]);
   assert.deepEqual(s.errores, []);
 });
+
+test("⚙️ Config → Institución: el logo del Ministerio se sube una vez y sale en las constancias de estudio", async () => {
+  await llamar(`imprimirConstancia("est1")`);
+  assert.doesNotMatch(await llamar(`window.__IMPRESIONES__.at(-1).html`), /class="logo logo-ministerio"/); // sin logo: el escudo
+  await llamar(`setTab("config"); subTab.config = "institucion"; renderTabContent()`);
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAAEUlEQVR42mP8z8Dwn4EIwDiqEAAuIgP9Xr0HJwAAAABJRU5ErkJggg==",
+    "base64"
+  );
+  await s.pagina.setInputFiles("#inst-logo-min", { name: "mppe.png", mimeType: "image/png", buffer: png });
+  await s.pagina.waitForSelector(".logo-ministerio-vista");
+  const guardado = await llamar(`JSON.parse(JSON.stringify(__DATOS_FALSOS__.config.get("logos")))`);
+  assert.match(guardado.ministerio, /^data:image\/png;base64,/);
+  await llamar(`imprimirConstancia("est1")`);
+  const html = await llamar(`window.__IMPRESIONES__.at(-1).html`);
+  assert.match(
+    html,
+    /<img src="data:image\/png;base64,[^"]+" class="logo logo-ministerio" alt="Ministerio del Poder Popular para la Educación"/
+  );
+  // Un valor raro guardado a mano no llega a la constancia
+  await llamar(`configLogos.ministerio = 'x" onerror="alert(1)'; imprimirConstancia("est1")`);
+  assert.doesNotMatch(await llamar(`window.__IMPRESIONES__.at(-1).html`), /onerror|class="logo logo-ministerio"/);
+  assert.deepEqual(s.errores, []);
+});

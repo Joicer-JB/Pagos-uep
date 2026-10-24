@@ -19,6 +19,39 @@ const excel = (hojas) => {
     buffer: XLSX.write(libro, { type: "buffer", bookType: "xlsx" }),
   };
 };
+// Un documento de Word como la «Matricula Inicial» de los docentes: títulos, «Docente / Grado / Sección» y la tabla
+// (con la columna vacía junto al número, celdas combinadas y los encabezados repetidos en la página 2)
+function wordMatricula(nombreArchivo, lineas, filas) {
+  const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const p = (t) => `<w:p><w:r><w:t xml:space="preserve">${esc(t)}</w:t></w:r></w:p>`;
+  const celda = (t, span) =>
+    `<w:tc>${span ? `<w:tcPr><w:gridSpan w:val="${span}"/></w:tcPr>` : ""}<w:p><w:r><w:t>${esc(t)}</w:t></w:r></w:p></w:tc>`;
+  const fila = (cs) => `<w:tr>${cs.map((c) => (Array.isArray(c) ? celda(c[0], c[1]) : celda(c))).join("")}</w:tr>`;
+  const enc = fila([
+    ["n nro.", 2],
+    "Cedula Escolar",
+    "Nombres y Apellidos",
+    "Edad",
+    "Sexo",
+    "F. Nac.",
+    "Representante",
+    "Fecha Nac. Del Rep.",
+    "Teléfono",
+    "Padece alguna enfermedad",
+  ]);
+  const tabla = (fs) => `<w:tbl>${enc}${fs.map(fila).join("")}</w:tbl>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+${lineas.map(p).join("")}${tabla(filas.slice(0, 2))}${p("")}${tabla(filas.slice(2))}${p("Total Hembras: 2 Varones: 1")}
+</w:body></w:document>`;
+  const zip = XLSX.CFB.utils.cfb_new();
+  XLSX.CFB.utils.cfb_add(zip, "/word/document.xml", Buffer.from(xml, "utf8"));
+  return {
+    name: nombreArchivo,
+    mimeType: "application/octet-stream",
+    buffer: XLSX.CFB.write(zip, { type: "buffer", fileType: "zip" }),
+  };
+}
 async function subir(grado, archivo) {
   await llamar(`setTab("importar")`);
   await s.pagina.selectOption("#imp-grado", grado);
@@ -149,4 +182,67 @@ test("sin elegir el grado no se puede guardar", async () => {
   await s.pagina.setInputFiles("#imp-file", excel([["Hoja1", [["Nombres y apellidos"], ["Alguien Nuevo"]]]]));
   await s.pagina.waitForSelector("text=Elige arriba el grado");
   assert.equal(await s.pagina.locator("#imp-btn").count(), 0);
+});
+
+test("la matrícula en Word (.docx) de los docentes: lee la tabla, el grado y la sección del título", async () => {
+  const doc = wordMatricula(
+    "MATRICULA 5TO AÑO 26-27.docx",
+    [
+      "REPUBLICA BOLIVARIANA DE VENEZUELA",
+      "UNIDAD EDUCATIVA PRIVADA JOSEFA JOAQUINA SÁNCHEZ",
+      "Matricula Inicial MEDIA GENERAL Año Escolar 2026-2027",
+      "Docente: ILIANA SAN MARTIN\tAño: 5TO AÑO\tSección: “U”",
+    ],
+    [
+      [
+        "1",
+        "",
+        "V-30444555",
+        "Carlos Eduardo Díaz",
+        "16",
+        "M",
+        "05/05/10",
+        "Rosa Díaz",
+        "01/01/80",
+        "0412-5550101 / 0414-5550102",
+        "No",
+      ],
+      [["2", 2], "V-32000111", "MARÍA JOSÉ LÓPEZ", "15", "F", "12/08/2011", "Pedro López", "", "04245550103", "Asma"],
+      ["3", "", "", "Andrea Silva", "15", "F", "2011-02-01", "", "", "", "ninguna"],
+    ]
+  );
+  await subir("5to Año", doc);
+  const t = (await s.pagina.textContent("#imp-preview")).replace(/\s+/g, " ");
+  assert.match(t, /2 nuevos/);
+  assert.match(t, /5to Año: 3 inscritos \(2 niñas · 1 niño\)/);
+  assert.doesNotMatch(t, /Nombres y Apellidos|Total Hembras/); // ni los encabezados repetidos ni el total
+  const filas = await llamar(
+    `JSON.parse(JSON.stringify(importFilas.map((x) => [x.estado, x.datos.nombre, x.datos.grado, x.datos.seccion])))`
+  );
+  assert.deepEqual(filas, [
+    ["actualizar", "Carlos Eduardo Díaz", "5to Año", "U"],
+    ["nuevo", "MARÍA JOSÉ LÓPEZ", "5to Año", "U"],
+    ["nuevo", "Andrea Silva", "5to Año", "U"],
+  ]);
+  const maria = await llamar(`JSON.parse(JSON.stringify(importFilas[1].datos))`);
+  assert.equal(maria.cedula, "V-32000111");
+  assert.equal(maria.fechaNac, "2011-08-12");
+  assert.equal(maria.acudiente, "Pedro López");
+  assert.equal(maria.telefonoAcudiente, "04245550103");
+  assert.equal(maria.observacionesMedicas, "Asma");
+  // Si se elige otro grado, nada del documento se mezcla
+  await s.pagina.selectOption("#imp-grado", "4to Año");
+  assert.match((await s.pagina.textContent("#imp-preview")).replace(/\s+/g, " "), /3 de otros grados \(se ignoran\)/);
+  assert.deepEqual(s.errores, []);
+});
+
+test("un Word viejo (.doc) pide guardarlo como .docx", async () => {
+  await llamar(`setTab("importar")`);
+  await s.pagina.selectOption("#imp-grado", "1er Grado");
+  await s.pagina.setInputFiles("#imp-file", {
+    name: "MATRICULA.doc",
+    mimeType: "application/msword",
+    buffer: Buffer.from("x"),
+  });
+  await s.pagina.waitForSelector("text=guárdalo como");
 });

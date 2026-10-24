@@ -58,13 +58,31 @@ function sexoDe(v) {
   return "";
 }
 // Grado de un texto como el nombre de una hoja o un título: «1er Año», «1ER AÑO A», «Sección B 3er Grado»…
+// (busca el grado dentro del texto: «MATRICULA 1ER GRADO 26-27», «Docente: … Grado: 1ER GRADO Sección: "U"»)
+const PATRONES_GRADO = [
+  /\b\d\s*(?:er|ro|do|to|vo|mo|no|ero)?\s*(?:grado|ano)\b/,
+  /\b(?:primer|primero|segundo|tercer|tercero|cuarto|quinto|sexto)\s+(?:grado|ano)\b/,
+  /\b(?:iii|ii|i|[123])\s*(?:er|ro|do|ero)?\s*(?:nivel|grupo)\b/,
+  /\b(?:nivel|grupo)\s*(?:iii|ii|i|[123])\b/,
+  /\bmaternal\b/,
+];
 function gradoDeTexto(t) {
   const s = String(t == null ? "" : t).trim();
-  return (
-    gradoCanon(s) ||
-    gradoCanon(s.replace(/\s*(secc?i?o?n?\.?\s*)?["'«]?[a-e]["'»]?\s*$/i, "")) ||
-    gradoCanon(s.replace(/^.*?(matr[ií]cula|grado:|a[ñn]o:)\s*/i, ""))
-  );
+  if (!s) return "";
+  const directo = gradoCanon(s);
+  if (directo) return directo;
+  const n = sinAcento(s).toLowerCase().replace(/[°º.]/g, " ");
+  for (const re of PATRONES_GRADO) {
+    const m = n.match(re);
+    const g = m && gradoCanon(m[0]);
+    if (g) return g;
+  }
+  return "";
+}
+// Sección escrita en un título: «Sección: "U"» → "U"
+function seccionDeTexto(t) {
+  const m = sinAcento(String(t == null ? "" : t)).match(/seccion\s*:?\s*["'“”«]?\s*([a-z0-9])\b/i);
+  return m ? m[1].toUpperCase() : "";
 }
 // Texto de una celda: las fechas reales de Excel pasan a aaaa-mm-dd; los números (cédulas) a texto
 function textoCelda(v) {
@@ -87,10 +105,11 @@ function fechaNacISO(s) {
   s = String(s || "").trim();
   if (!s) return { iso: "", aviso: "Sin fecha de nacimiento" };
   let d, mo, y, m;
-  if ((m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))) {
+  if ((m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4}|\d{2})$/))) {
     d = +m[1];
     mo = +m[2];
     y = +m[3];
+    if (m[3].length === 2) y += y <= new Date().getFullYear() % 100 ? 2000 : 1900; // 15/04/19 → 2019
   } else if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) {
     y = +m[1];
     mo = +m[2];
@@ -109,6 +128,12 @@ function fechaNacISO(s) {
 }
 // Teléfono → 0412XXXXXXX. Un número de 7 a 9 cifras casi seguro es una cédula escrita en la columna equivocada.
 function limpiarTelImport(raw) {
+  // Varios números («0412-1234567 / 0414-7654321»): el primero que sirva
+  const partes = String(raw || "").split(/[\/,;|]|\s+(?:y|o)\s+/);
+  if (partes.length > 1) {
+    const bueno = partes.map((p) => normalizarTelVE(p)).find((w) => w && w.length === 12);
+    if (bueno) return { tel: "0" + bueno.slice(2), ced: "", aviso: "" };
+  }
   const d = String(raw || "").replace(/\D/g, "");
   if (!d) return { tel: "", ced: "", aviso: "Sin teléfono" };
   if (d.length >= 7 && d.length <= 9)
@@ -246,7 +271,7 @@ function construirImportacion(filas, mapa, op, existentes) {
       cedula,
       fechaNac: f.iso,
       grado,
-      seccion: g("seccion"),
+      seccion: g("seccion") || fila.seccionHoja || "",
       jornada: op.jornada || "Mañana",
       sexo,
       telefono: t.tel,
@@ -316,23 +341,79 @@ function inscritosDespues(filasOut, fuera, retirar) {
 }
 // Busca en cada hoja la fila de encabezados (no importa si hay títulos arriba). Si la hoja no tiene columna «Grado»,
 // el grado sale del nombre de la hoja o de un título encima de los encabezados.
-function localizarTabla(wb) {
+// hojas: [{nombre, rows}] (las hojas de un Excel, o el documento de Word como una sola hoja)
+const esEncabezado = (m) => "nombre" in m || "apellidos" in m;
+function localizarTabla(hojas) {
   const filas = [];
   let mapa = null;
-  for (const sn of wb.SheetNames) {
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: "", cellDates: true });
-    for (let i = 0; i < Math.min(rows.length, 40); i++) {
+  for (const { nombre: sn, rows } of hojas) {
+    for (let i = 0; i < Math.min(rows.length, 60); i++) {
       const m = mapaEncabezados(rows[i].map(textoCelda));
-      if (!("nombre" in m) && !("apellidos" in m)) continue;
-      let gradoHoja = gradoDeTexto(sn);
-      for (let j = 0; j < i && !gradoHoja; j++)
-        gradoHoja = rows[j].map(textoCelda).map(gradoDeTexto).find(Boolean) || "";
+      if (!esEncabezado(m)) continue;
+      const titulos = rows.slice(0, i).map((r) => r.map(textoCelda).join(" "));
+      let gradoHoja = "";
+      for (const t of titulos) gradoHoja = gradoHoja || gradoDeTexto(t);
+      gradoHoja = gradoHoja || gradoDeTexto(sn);
+      const seccionHoja = titulos.map(seccionDeTexto).find(Boolean) || "";
       mapa = mapa || m;
-      rows.slice(i + 1).forEach((r, j) => filas.push({ n: i + j + 2, r, hoja: sn, mapa: m, gradoHoja }));
+      rows.slice(i + 1).forEach((r, j) => {
+        // en Word, la tabla puede repetir los encabezados en cada página
+        if (!esEncabezado(mapaEncabezados(r.map(textoCelda))))
+          filas.push({ n: i + j + 2, r, hoja: sn, mapa: m, gradoHoja, seccionHoja });
+      });
       break;
     }
   }
   return mapa ? { mapa, filas, hojas: new Set(filas.map((f) => f.hoja)).size } : null;
+}
+const hojasDeLibro = (wb) =>
+  wb.SheetNames.map((n) => ({
+    nombre: n,
+    rows: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: "", cellDates: true }),
+  }));
+// Documento de Word (.docx): sus tablas como filas (una celda por columna; las celdas combinadas ocupan su ancho) y los
+// párrafos de afuera (títulos como «Grado: 1ER GRADO Sección: "U"») como filas de una sola celda.
+function filasDeWord(bytes) {
+  const zip = XLSX.CFB.read(bytes, { type: "array" });
+  const doc = XLSX.CFB.find(zip, "/word/document.xml");
+  if (!doc) throw new Error("no es un documento de Word (.docx)");
+  const xml = new DOMParser().parseFromString(new TextDecoder().decode(new Uint8Array(doc.content)), "application/xml");
+  const hijos = (n, nombre) => [...n.children].filter((c) => c.localName === nombre);
+  const texto = (n) => {
+    let t = "";
+    const ir = (x) => {
+      for (const c of x.children) {
+        if (c.localName === "t") t += c.textContent;
+        else if (c.localName === "tab") t += "\t";
+        else if (c.localName === "br" || c.localName === "cr") t += " ";
+        else if (c.localName === "p" && t) ((t += " "), ir(c));
+        else ir(c);
+      }
+    };
+    ir(n);
+    return t.replace(/\s+/g, " ").trim();
+  };
+  const filas = [];
+  const recorrer = (n) => {
+    for (const c of n.children) {
+      if (c.localName === "p") filas.push([texto(c)]);
+      else if (c.localName === "tbl")
+        hijos(c, "tr").forEach((tr) => {
+          const fila = [];
+          hijos(tr, "tc").forEach((tc) => {
+            fila.push(texto(tc));
+            const pr = hijos(tc, "tcPr")[0];
+            const span = pr && hijos(pr, "gridSpan")[0];
+            const ancho = span ? +span.getAttribute("w:val") || 1 : 1;
+            for (let k = 1; k < ancho; k++) fila.push("");
+          });
+          filas.push(fila);
+        });
+      else if (c.localName === "sdt" || c.localName === "sdtContent" || c.localName === "body") recorrer(c);
+    }
+  };
+  recorrer(xml.documentElement);
+  return filas;
 }
 let importGrado = "",
   importRetirar = false;
@@ -342,7 +423,7 @@ function renderImportar() {
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>📥 Montar la matrícula desde Excel</h2></div>
     <div style="background:#e8f0fe;border-radius:10px;padding:0.85rem;margin-bottom:0.85rem;font-size:0.8rem;color:#003366">
-      <strong>📋 Cómo funciona:</strong> elige el grado o año y sube el Excel con la lista de ese grado, una fila por estudiante. Se lee por el nombre de las columnas (el orden no importa; los nombres y apellidos pueden venir juntos o en dos columnas):<br/>
+      <strong>📋 Cómo funciona:</strong> elige el grado o año y sube la matrícula de ese grado: el mismo documento de Word que hacen los docentes (con la tabla de estudiantes) o un Excel, una fila por estudiante. Se lee por el nombre de las columnas (el orden no importa; los nombres y apellidos pueden venir juntos o en dos columnas):<br/>
       <code style="background:#fff;padding:2px 6px;border-radius:4px;font-size:0.72rem;display:inline-block;margin-top:4px">${PLANTILLA_COLS.join(" · ")}</code><br/>
       <span style="font-size:0.72rem;color:#555;display:block;margin-top:4px">Antes de subir verás qué pasa con cada uno: los nuevos se crean; a los que ya están se les reactiva si estaban retirados, se les corrige el grado y el sexo y se les completa lo que falte. Los del grado que no estén en tu lista se te muestran aparte.</span>
       <button class="btn btn-gray btn-sm" style="margin-top:0.5rem" onclick="descargarPlantillaMatricula()">⬇️ Descargar plantilla</button>
@@ -366,8 +447,8 @@ function renderImportar() {
       </div>
       <div class="ayuda" style="margin-top:-0.3rem">La mensualidad solo se usa para los estudiantes nuevos; a los que ya están no se les cambia.</div>
       <div class="field">
-        <label class="field-label">📂 Archivo Excel (.xlsx)</label>
-        <input type="file" accept=".xlsx,.xls" id="imp-file" class="inp" style="padding:0.6rem" onchange="previsualizarExcel(this)"/>
+        <label class="field-label">📂 Archivo de la matrícula: Word (.docx) o Excel (.xlsx)</label>
+        <input type="file" accept=".docx,.doc,.xlsx,.xls" id="imp-file" class="inp" style="padding:0.6rem" onchange="previsualizarExcel(this)"/>
       </div>
     </div>
     <div id="imp-preview"></div>
@@ -396,18 +477,28 @@ function previsualizarExcel(input) {
   const file = input.files[0];
   const box = document.getElementById("imp-preview");
   if (!file) return;
+  if (/\.doc$/i.test(file.name)) {
+    mostrarError(
+      box,
+      "Ese archivo es de un Word viejo (.doc). Ábrelo en Word y guárdalo como «Documento de Word (.docx)»: Archivo → Guardar como."
+    );
+    importRaw = null;
+    return;
+  }
   const reader = new FileReader();
   reader.onerror = () => {
     mostrarError(box, "No se pudo leer el archivo");
   };
   reader.onload = (e) => {
     try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array", cellDates: true });
-      const t = localizarTabla(wb);
+      const bytes = new Uint8Array(e.target.result);
+      const t = /\.docx$/i.test(file.name)
+        ? localizarTabla([{ nombre: file.name.replace(/\.docx$/i, ""), rows: filasDeWord(bytes) }])
+        : localizarTabla(hojasDeLibro(XLSX.read(bytes, { type: "array", cellDates: true })));
       if (!t) {
         mostrarError(
           box,
-          "No encontré la columna de los nombres («Nombres y apellidos», o «Apellidos» y «Nombres»). Descarga la plantilla y usa esos encabezados."
+          "No encontré la tabla de estudiantes: falta la columna de los nombres («Nombres y Apellidos», o «Apellidos» y «Nombres»)."
         );
         importRaw = null;
         importPreview = [];

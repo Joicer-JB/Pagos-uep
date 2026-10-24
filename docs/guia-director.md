@@ -53,18 +53,22 @@ debe y las acciones de la Caja y Pagos.
 4. **⚙️ Configuración → 📚 Materias:** materias de cada año de media general (1er a 5to Año).
 5. **⚙️ Configuración → 📋 Indicadores:** indicadores de cada área en preescolar y primaria.
 6. **⚙️ Configuración → 🏫 Institución:** nombre, código, dirección, director y coordinadores. Salen en
-   los boletines y las constancias.
+   los boletines y las constancias. Ahí también se sube una vez el **logo del Ministerio del Poder Popular para la
+   Educación**, que sale arriba a la derecha en las constancias de estudio (puedes sacarlo del Word de la matrícula:
+   clic derecho sobre el logo → «Guardar como imagen»).
 
-## Montar la matrícula por grado (Excel)
+## Montar la matrícula por grado (Word o Excel)
 
 Sirve para cargar la matrícula sin agregar estudiante por estudiante, y para que la plataforma cuadre con la
 matrícula oficial.
 
 1. Pestaña **📥 Importar** → elige el **grado o año** (por ejemplo «1er Año»).
-2. Sube el Excel con la lista de ese grado: una fila por estudiante. Basta con el nombre; mejor si trae también
-   **sexo** y **cédula escolar**. Los nombres y apellidos pueden venir juntos o en dos columnas («Apellidos» y
-   «Nombres»). El sexo puede escribirse F/M, H/V, Hembra/Varón o Femenino/Masculino. Si no tienes el Excel, pulsa
-   **⬇️ Descargar plantilla**.
+2. Sube la matrícula de ese grado: **el mismo Word (.docx) que hacen los docentes** («Matricula Inicial», con la
+   tabla de Cédula Escolar, Nombres y Apellidos, Sexo, F. Nac., Representante, Teléfono…), o un Excel con una fila
+   por estudiante. No hay que cambiarle nada: los títulos de arriba, el total de abajo y los encabezados repetidos
+   en cada página se saltan solos, y la sección («Sección: "U"») se toma del título. Si el Word es viejo (.doc),
+   ábrelo y guárdalo como .docx. En un Excel los nombres y apellidos pueden venir juntos o en dos columnas, y el sexo
+   como F/M, H/V o Hembra/Varón.
 3. Revisa la vista previa antes de guardar:
    - **✅ Nuevo:** no está en la plataforma; se crea con la mensualidad de su nivel.
    - **🔄 Se actualiza:** ya está. Si estaba retirado se reactiva, si estaba en otro grado se pasa a este, y se le
