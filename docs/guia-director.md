@@ -49,14 +49,34 @@ debe y las acciones de la Caja y Pagos.
    - Mes de la primera cuota, número de cuotas y día de vencimiento (del 1 al 28).
    - Recargo por mensualidad atrasada (opcional). Se suma **una sola vez** por cada cuota pagada tarde
      o vencida, y solo para las cuotas que vencen desde que lo activas, salvo que marques lo contrario.
-3. **📥 Importar** la matrícula desde Excel:
-   - Descarga la plantilla, llénala (una fila por estudiante, todos los grados en la misma hoja) y súbela.
-   - Revisa la vista previa: marca los duplicados, los datos que faltan y los grados que no se entienden.
-     Hasta que pulses **Importar** no se guarda nada.
+3. **📥 Importar:** monta la matrícula desde Excel, **un grado o año a la vez** (ver «Montar la matrícula por grado»).
 4. **⚙️ Configuración → 📚 Materias:** materias de cada año de media general (1er a 5to Año).
 5. **⚙️ Configuración → 📋 Indicadores:** indicadores de cada área en preescolar y primaria.
 6. **⚙️ Configuración → 🏫 Institución:** nombre, código, dirección, director y coordinadores. Salen en
    los boletines y las constancias.
+
+## Montar la matrícula por grado (Excel)
+
+Sirve para cargar la matrícula sin agregar estudiante por estudiante, y para que la plataforma cuadre con la
+matrícula oficial.
+
+1. Pestaña **📥 Importar** → elige el **grado o año** (por ejemplo «1er Año»).
+2. Sube el Excel con la lista de ese grado: una fila por estudiante. Basta con el nombre; mejor si trae también
+   **sexo** y **cédula escolar**. Los nombres y apellidos pueden venir juntos o en dos columnas («Apellidos» y
+   «Nombres»). El sexo puede escribirse F/M, H/V, Hembra/Varón o Femenino/Masculino. Si no tienes el Excel, pulsa
+   **⬇️ Descargar plantilla**.
+3. Revisa la vista previa antes de guardar:
+   - **✅ Nuevo:** no está en la plataforma; se crea con la mensualidad de su nivel.
+   - **🔄 Se actualiza:** ya está. Si estaba retirado se reactiva, si estaba en otro grado se pasa a este, y se le
+     corrige el sexo y se le completa lo que le falte. Su mensualidad, sus pagos y su deuda no se tocan.
+   - **✔️ Ya está:** no hay nada que cambiar.
+   - **⏭️ Repetido u otro grado:** se salta.
+   - **«Así quedará»:** cuántos inscritos tendrá el grado, con niñas y niños. Compáralo con la matrícula oficial.
+   - Si alguien del grado **no está en tu lista**, sale en amarillo. Solo se marca como retirado si marcas la casilla.
+4. Pulsa **✅ Guardar**. Repite con el siguiente grado.
+
+Un Excel con varios grados también sirve: elige «📚 Varios grados» y pon la columna «Grado» o una hoja por grado
+(el nombre de la hoja es el grado: «1er Año», «II Grupo»…).
 
 ## Control de estudio
 
@@ -161,7 +181,7 @@ con más decimales también cuentan con 2.
 - **Cambiar notas por decisión del consejo** (📋 Sábana de notas).
 - Ingresos y gastos, cuentas por pagar, conciliación, nómina, asistencia y documentos del personal.
 - Cambiar la configuración: cuotas, materias, indicadores e institución.
-- Importar matrícula, unificar grados escritos de formas distintas y pasar de grado.
+- Montar la matrícula desde Excel por grado, unificar grados escritos de formas distintas y pasar de grado.
 
 ## Estructura de costos del año
 

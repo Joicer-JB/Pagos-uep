@@ -1,5 +1,15 @@
 # Historial de cambios
 
+## Octubre 2026 — Montar la matrícula por grado desde Excel
+
+- **📥 Importar:** se elige el grado o año y se sube el Excel con su lista. Los nuevos se crean. A los que ya están
+  se les reactiva si estaban retirados, se les pasa a ese grado y se les corrige el sexo y se les completa lo que
+  falte, sin tocar su mensualidad ni sus pagos. Los inscritos del grado que no están en la lista se muestran aparte y
+  solo se retiran si se marca.
+- La vista previa dice **cómo quedará el grado** (inscritos, niñas y niños), para compararlo con la matrícula oficial.
+- Acepta los nombres y apellidos en dos columnas, el sexo como H/V, Hembra/Varón o F/M, títulos encima de la tabla,
+  y un Excel con varios grados (columna «Grado» o una hoja por grado). «I/II/III Grupo» se lee como Nivel I/II/III.
+
 ## Octubre 2026 — La tasa BCV con 2 decimales
 
 - La tasa cuenta con **2 decimales, sin redondear**: 883,6923 → 883,69. Vale para la tasa escrita a mano, la que trae
