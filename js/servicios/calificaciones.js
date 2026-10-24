@@ -3,7 +3,8 @@
 //
 // Todo se guarda en la colección «notas»: así se archiva con el año escolar y pasa a la ficha que se conserva al
 // fusionar estudiantes duplicados.
-// · notas/<estId>_<Lapso N>: lo que puso el profesor, en <materia>_<n> (n = número de la evaluación en el plan).
+// · notas/<estId>_<Lapso N>: la nota del lapso que carga control de estudio, en <materia>_lapso; o las evaluaciones
+//   del profesor, en <materia>_<n> (n = número de la evaluación en el plan). Si están las dos, manda la del lapso.
 //   Los ajustes del consejo de ese lapso van en «consejo»: {<materia>: {nota, original, motivo, acta, por, fecha}}.
 // · notas/<estId>_Definitiva: solo «consejo», con los ajustes de la nota definitiva.
 // · notas/plan__<grado>: el plan de evaluación del grado: materias: {<materia>: {<Lapso N>: {evals, ultimoN}}},
@@ -59,14 +60,16 @@ const ajusteConsejo = (estId, materia, lapso) => {
 // Nota de un lapso: {nota, calculada (la del profesor), ajuste (del consejo o null), evaluaciones, faltan}
 function notaLapsoDe(est, materia, lapso) {
   const evaluaciones = evaluacionesDe(est.id, est.grado, materia, lapso);
-  const calculada = calcularNotaLapso(evaluaciones);
+  const directa = notaNum((notas[`${est.id}_${lapso}`] || {})[materia + "_lapso"]);
+  const calculada = directa !== null ? directa : calcularNotaLapso(evaluaciones);
   const ajuste = ajusteConsejo(est.id, materia, lapso);
   return {
     nota: ajuste ? notaNum(ajuste.nota) : calculada,
     calculada,
     ajuste,
     evaluaciones,
-    faltan: calculada === null ? 0 : evaluaciones.filter((e) => e.nota === null).length,
+    directa: directa !== null,
+    faltan: directa !== null || calculada === null ? 0 : evaluaciones.filter((e) => e.nota === null).length,
   };
 }
 // Definitiva de una materia: promedio de los lapsos con nota (ya con los ajustes del consejo), o la que fijó el consejo

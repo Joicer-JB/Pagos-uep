@@ -58,6 +58,15 @@ debe y las acciones de la Caja y Pagos.
 6. **⚙️ Configuración → 🏫 Institución:** nombre, código, dirección, director y coordinadores. Salen en
    los boletines y las constancias.
 
+## Control de estudio
+
+Por ahora las notas las carga **la encargada de control de estudio**. Créale su cuenta en ⚙️ Config → 👨‍🏫 Docentes y
+marca **🗂️ Control de estudio**: ve todos los grados y carga todas las notas. En Media General carga **la nota final
+de cada lapso** en cada materia (la que entrega el profesor); en Inicial y Primaria, el literal de cada indicador.
+
+Cuando quieras que cada profesor cargue su plan de evaluación y sus evaluaciones, se activa `NOTAS_DETALLADAS` en
+`js/config.js` (ya está hecho y probado).
+
 ## Sábana de notas y consejo de sección (media general)
 
 En **📝 Notas → 📋 Sábana de notas** están todas las notas de un año (y sección, si hay varias), para discutirlas
@@ -115,6 +124,11 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
 
 - Escribe nombre, correo y una contraseña de al menos 6 caracteres. Elige jornada, grado y materias.
 - El docente entra con ese correo y esa contraseña, y solo ve la pestaña 📝 Notas.
+- **Qué le toca:** en Inicial y Primaria, su **grado** (ve ese grado y carga todas las áreas). En Media General, sus
+  **materias por año** (ve esos años y carga solo esas materias). Sin grado ni materias asignadas, ve todo.
+- La sábana dice quién da cada materia (de los perfiles de los docentes o de las clases de la nómina), y el boletín
+  lleva el nombre del docente del grado (Primaria e Inicial) o del **profesor guía** (Media General: ⚙️ Config →
+  🏫 Institución).
 - **Desactivar** quita el acceso sin borrar el perfil. Las reglas de Firestore también le cierran la base
   de datos.
 - **Privacidad:** los docentes no ven los datos privados de los estudiantes (teléfonos y correo del

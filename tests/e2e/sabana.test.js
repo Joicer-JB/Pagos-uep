@@ -81,6 +81,7 @@ async function entrar(correo) {
   await s.pagina.fill("#l-pwd", "prueba123");
   await s.pagina.click("#login-btn");
   await s.pagina.waitForSelector(".tabs .tab");
+  await llamar(`NOTAS_DETALLADAS = true`); // esta prueba usa las evaluaciones y el plan de evaluación
 }
 async function abrirSabana() {
   await llamar(`setTab("notas")`);

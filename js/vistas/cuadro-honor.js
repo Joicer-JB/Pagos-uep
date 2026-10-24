@@ -1,5 +1,6 @@
 // 🏆 Cuadro de honor (media general): los mejores promedios de un lapso o del año, en toda media general y en cada
-// año, y qué año tiene el mejor promedio. Lo usan el director y los docentes (📝 Notas → 🏆 Cuadro de honor), y se imprime para la cartelera o el acto.
+// salón (año y sección: el mejor, o los 3, 5 o 10 mejores), y qué año tiene el mejor promedio. Lo usan el director
+// y los docentes (📝 Notas → 🏆 Cuadro de honor), y se imprime para la cartelera o el acto.
 // Para que sea justo, solo entra quien ya tiene nota en todas sus materias en ese período; por defecto tampoco quien
 // tiene una materia reprobada (se puede incluir). Los empatados comparten el puesto. Cálculos: calificaciones.js.
 
@@ -7,6 +8,11 @@ const PERIODOS_HONOR = [["anio", "Todo el año"], ...LAPSOS.map((l) => [l, l])];
 const MEDALLAS = ["🥇", "🥈", "🥉"];
 const periodoHonor = () => (PERIODOS_HONOR.some(([k]) => k === filtros.honorPeriodo) ? filtros.honorPeriodo : "anio");
 const conReprobadasHonor = () => filtros.honorReprobadas === true;
+// Cuántos de cada salón (año y sección): 3 por defecto
+const POR_SALON_HONOR = [1, 3, 5, 10];
+const porSalonHonor = () =>
+  POR_SALON_HONOR.includes(Number(filtros.honorPorSalon)) ? Number(filtros.honorPorSalon) : 3;
+const nombreSalon = (est) => (est.grado || "") + (est.seccion ? " " + est.seccion : "");
 const nombrePeriodoHonor = (p) => (p === "anio" ? "año escolar completo" : p);
 
 // Nota de cada materia del estudiante en el período: la definitiva, o la del lapso (null = sin nota)
@@ -54,8 +60,8 @@ function promediosPorAnio(periodo) {
     .sort((a, b) => b.promedio - a.promedio || ordenGrados(a.grado, b.grado));
 }
 
-// {general: top 10, porAnio: [{grado, lista: top 3}], anios: promediosPorAnio, incompletos, conReprobada}
-function cuadroHonor(periodo, incluirReprobadas) {
+// {general: top 10, porSalon: [{salon, lista: los n mejores}], anios: promediosPorAnio, incompletos, conReprobada}
+function cuadroHonor(periodo, incluirReprobadas, porSalon = 3) {
   const candidatos = [];
   let incompletos = 0,
     conReprobada = 0;
@@ -74,14 +80,18 @@ function cuadroHonor(periodo, incluirReprobadas) {
       }
       candidatos.push({ est, promedio: unDecimal(n.reduce((a, b) => a + b, 0) / n.length), reprobadas });
     });
-  const grados = [...new Set(candidatos.map((c) => c.est.grado))].sort(ordenGrados);
+  // Cada salón: año y sección (si el año tiene una sola sección, es el año)
+  const salones = [...new Map(candidatos.map((c) => [nombreSalon(c.est), c.est])).entries()].sort(
+    (a, b) =>
+      ordenGrados(a[1].grado, b[1].grado) || String(a[1].seccion || "").localeCompare(String(b[1].seccion || ""))
+  );
   return {
     general: puestosHonor(candidatos, 10),
-    porAnio: grados.map((g) => ({
-      grado: g,
+    porSalon: salones.map(([salon]) => ({
+      salon,
       lista: puestosHonor(
-        candidatos.filter((c) => c.est.grado === g),
-        3
+        candidatos.filter((c) => nombreSalon(c.est) === salon),
+        porSalon
       ),
     })),
     anios: promediosPorAnio(periodo),
@@ -114,9 +124,10 @@ function htmlCuadroHonor(c) {
   return `${htmlAniosHonor(c.anios)}<div class="section-title">Mejores promedios de media general</div>
     <table class="sab-tabla honor-tabla"><thead><tr><th>Puesto</th><th style="text-align:left">Estudiante</th><th>Año</th><th>Promedio</th></tr></thead>
     <tbody>${c.general.map((x) => filaHonor(x, true)).join("")}</tbody></table>
-    <div class="honor-anios">${c.porAnio
+    <div class="section-title">Los mejores de cada salón</div>
+    <div class="honor-anios">${c.porSalon
       .map(
-        (a) => `<div class="honor-anio"><div class="section-title">${escHtml(a.grado)}</div>
+        (a) => `<div class="honor-anio"><div class="section-title">${escHtml(a.salon)}</div>
       <table class="sab-tabla honor-tabla"><tbody>${a.lista.map((x) => filaHonor(x, false)).join("")}</tbody></table></div>`
       )
       .join("")}</div>`;
@@ -134,7 +145,7 @@ function notaExcluidosHonor(c) {
 
 function renderCuadroHonor() {
   const periodo = periodoHonor();
-  const c = cuadroHonor(periodo, conReprobadasHonor());
+  const c = cuadroHonor(periodo, conReprobadasHonor(), porSalonHonor());
   const fuera = notaExcluidosHonor(c);
   return `<div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>🏆 Cuadro de honor</h2>
@@ -144,6 +155,11 @@ function renderCuadroHonor() {
       <div class="field"><label class="field-label">Período</label>
         <select class="inp" id="honor-periodo" onchange="filtros.honorPeriodo=this.value;renderTabContent()">${PERIODOS_HONOR.map(
           ([k, t]) => `<option value="${k}" ${k === periodo ? "selected" : ""}>${t}</option>`
+        ).join("")}</select></div>
+      <div class="field"><label class="field-label">De cada salón</label>
+        <select class="inp" id="honor-por-salon" onchange="filtros.honorPorSalon=this.value;renderTabContent()">${POR_SALON_HONOR.map(
+          (n) =>
+            `<option value="${n}" ${n === porSalonHonor() ? "selected" : ""}>${n === 1 ? "El mejor" : "Los " + n + " mejores"}</option>`
         ).join("")}</select></div>
     </div>
     <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.8rem;margin-top:0.5rem;cursor:pointer"><input type="checkbox" id="honor-reprobadas" ${conReprobadasHonor() ? "checked" : ""} onchange="filtros.honorReprobadas=this.checked;renderTabContent()"/> Incluir a quienes tienen alguna materia reprobada</label>
@@ -158,7 +174,7 @@ function renderCuadroHonor() {
 
 function imprimirCuadroHonor() {
   const periodo = periodoHonor();
-  const c = cuadroHonor(periodo, conReprobadasHonor());
+  const c = cuadroHonor(periodo, conReprobadasHonor(), porSalonHonor());
   const w = abrirVentanaImpresion();
   w.document
     .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cuadro de honor</title><style>${ESTILOS_SABANA.replace("letter landscape", "letter")}

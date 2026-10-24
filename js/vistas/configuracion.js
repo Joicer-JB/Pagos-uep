@@ -138,6 +138,7 @@ function renderConfigDocentes() {
           ${d.trabajadorId ? `<div style="font-size:0.7rem;color:#1a9e5c;margin-top:1px">🔗 Vinculado a nómina</div>` : ""}
           <div style="display:flex;gap:0.4rem;margin-top:5px;flex-wrap:wrap">
             <span style="background:${d.jornada === "mañana" ? "#fff3e0" : d.jornada === "tarde" ? "#ede7f6" : "#e3f2fd"};color:${d.jornada === "mañana" ? "#e65100" : d.jornada === "tarde" ? "#4527a0" : "#0d47a1"};padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600">${d.jornada === "mañana" ? "🌅 Mañana" : d.jornada === "tarde" ? "🌆 Tarde" : "🌓 Ambas"}</span>
+            ${d.controlEstudio ? `<span style="background:#fff8e1;color:#7a5c00;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:700">🗂️ Control de estudio (carga todas las notas)</span>` : ""}
             ${d.grado ? `<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600">📚 ${escHtml(d.grado)}</span>` : ""}
             ${(d.materias || []).map((m) => `<span style="background:#e3f2fd;color:#0d47a1;padding:2px 8px;border-radius:20px;font-size:0.7rem">${escHtml(m)}</span>`).join("")}
           </div>
@@ -245,10 +246,22 @@ function renderConfigInstitucion() {
       <input class="inp" id="inst-directora" value="${escHtml(inst.directora) || "Lic. Ligia Herrera"}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Cédula de la directora <span style="font-weight:400;color:#888">(para las constancias)</span></label>
       <input class="inp" id="inst-cedula-directora" value="${escHtml(inst.cedulaDirectora) || ""}" placeholder="V-12345678"/></div>
-    <div class="field"><label class="field-label">Coordinador/a de Media General</label>
+    <div class="field"><label class="field-label">Coordinadora de Media General</label>
       <input class="inp" id="inst-coordinador" value="${escHtml(inst.coordinador) || "Lic. Carlos Carrascal"}" placeholder="Nombre y título"/></div>
-    <div class="field"><label class="field-label">Coordinador/a de Primaria</label>
+    <div class="field"><label class="field-label">Coordinadora de Primaria</label>
       <input class="inp" id="inst-coordinador-prim" value="${escHtml(inst.coordinadorPrimaria) || ""}" placeholder="Nombre y título"/></div>
+    <div class="field"><label class="field-label">Coordinadora de Educación Inicial</label>
+      <input class="inp" id="inst-coordinador-ini" value="${escHtml(inst.coordinadorInicial) || ""}" placeholder="Nombre y título"/></div>
+    <div class="field" style="grid-column:1/-1"><label class="field-label">Profesores guía de Media General <span style="font-weight:400;color:#888">(firman el boletín)</span></label>
+      <div class="form-grid">${[
+        ...new Set([...GRADOS_MG, ...Object.keys(configMaterias || {}).filter((g) => getNivel(g) === "media")]),
+      ]
+        .sort(ordenGrados)
+        .map(
+          (g) =>
+            `<div class="field" style="margin:0"><label class="field-label" style="font-weight:400">${escHtml(g)}</label><input class="inp inst-guia" data-grado="${escHtml(g)}" value="${escHtml((inst.guias || {})[g] || "")}" placeholder="Nombre del profesor guía"/></div>`
+        )
+        .join("")}</div></div>
     <div class="field"><label class="field-label">Año escolar actual</label>
       <input class="inp" id="inst-anio" value="${escHtml(inst.anioEscolar) || "2025-2026"}" placeholder="2025-2026"/></div>
   </div>
@@ -319,6 +332,10 @@ async function guardarInstitucion() {
     cedulaDirectora: document.getElementById("inst-cedula-directora").value.trim(),
     coordinador: document.getElementById("inst-coordinador").value.trim(),
     coordinadorPrimaria: document.getElementById("inst-coordinador-prim").value.trim(),
+    coordinadorInicial: document.getElementById("inst-coordinador-ini").value.trim(),
+    guias: Object.fromEntries(
+      [...document.querySelectorAll(".inst-guia")].map((i) => [i.dataset.grado, i.value.trim()]).filter(([, v]) => v)
+    ),
     anioEscolar: document.getElementById("inst-anio").value.trim(),
   };
   try {
@@ -389,6 +406,10 @@ function renderModalDocente(docenteId) {
           <input class="inp" id="doc-pass" type="password" placeholder="Mínimo 6 caracteres"/></div>`
             : ""
         }
+        <label class="field" style="grid-column:1/-1;display:flex;gap:0.5rem;align-items:flex-start;cursor:pointer;background:#fff8e1;border-radius:10px;padding:0.6rem 0.75rem">
+          <input type="checkbox" id="doc-control" ${d.controlEstudio ? "checked" : ""} style="margin-top:3px"/>
+          <span><strong>🗂️ Control de estudio</strong><br/><span style="font-size:0.74rem;color:#666">Carga las notas de todos los grados y materias (no hace falta asignarle grado ni materias).</span></span>
+        </label>
         <div class="field" style="grid-column:1/-1"><label class="field-label">Jornada *</label>
           <div style="display:flex;gap:0.5rem">
             ${[
@@ -496,6 +517,7 @@ async function guardarNuevoDocente() {
       correo,
       cedula,
       cargo,
+      controlEstudio: !!(document.getElementById("doc-control") || {}).checked,
       rol: "docente",
       jornada,
       grado,
@@ -549,12 +571,14 @@ async function guardarEditarDocente(id) {
     return;
   }
   try {
-    await db.collection("usuarios").doc(id).update({ nombre, jornada, grado, materias });
+    const controlEstudio = !!(document.getElementById("doc-control") || {}).checked;
+    await db.collection("usuarios").doc(id).update({ nombre, jornada, grado, materias, controlEstudio });
     const d = configDocentes.find((x) => x.id === id);
     if (d) {
       d.nombre = nombre;
       d.jornada = jornada;
       d.grado = grado;
+      d.controlEstudio = controlEstudio;
       d.materias = materias;
     }
     cerrarModal();
