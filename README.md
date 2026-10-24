@@ -52,7 +52,8 @@ Guías de uso por rol: [Director](docs/guia-director.md) · [Administradora](doc
   colección `usuarios` de Firestore. El correo fijo `notasjjs@gmail.com` también entra como docente.
 
 **Moneda:** todos los montos se guardan en **$ de referencia**. Cada pago y cada gasto guarda además la
-**tasa BCV** de su día y su valor en bolívares. La tasa del día se carga con el botón 💱 de la cabecera.
+**tasa BCV** de su día y su valor en bolívares. La tasa del día se carga con el botón 💱 de la cabecera. La tasa
+cuenta con 2 decimales, sin redondear (883,6923 → 883,69).
 
 **Recibos:** se numeran en orden (`FAC-000001`, `FAC-000002`…) con un contador en Firestore, así dos equipos
 que cobran al mismo tiempo nunca reciben el mismo número. Los recibos de antes de este cambio conservan su
