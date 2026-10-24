@@ -80,7 +80,8 @@ matrícula oficial.
 4. Pulsa **✅ Guardar**. Repite con el siguiente grado.
 
 Un Excel con varios grados también sirve: elige «📚 Varios grados» y pon la columna «Grado» o una hoja por grado
-(el nombre de la hoja es el grado: «1er Año», «II Grupo»…).
+(el nombre de la hoja es el grado: «1er Año», «II Grupo»…). Un **Word con dos grupos** (por ejemplo Maternal e
+I Grupo, que lleva una misma maestra) también: con «📚 Varios grados», cada parte va al grado que dice su título.
 
 ## Control de estudio
 

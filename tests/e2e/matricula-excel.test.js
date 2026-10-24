@@ -21,7 +21,7 @@ const excel = (hojas) => {
 };
 // Un documento de Word como la «Matricula Inicial» de los docentes: títulos, «Docente / Grado / Sección» y la tabla
 // (con la columna vacía junto al número, celdas combinadas y los encabezados repetidos en la página 2)
-function wordMatricula(nombreArchivo, lineas, filas) {
+function wordMatricula(nombreArchivo, lineas, filas, entreTablas = "") {
   const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const p = (t) => `<w:p><w:r><w:t xml:space="preserve">${esc(t)}</w:t></w:r></w:p>`;
   const celda = (t, span) =>
@@ -42,7 +42,7 @@ function wordMatricula(nombreArchivo, lineas, filas) {
   const tabla = (fs) => `<w:tbl>${enc}${fs.map(fila).join("")}</w:tbl>`;
   const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
-${lineas.map(p).join("")}${tabla(filas.slice(0, 2))}${p("")}${tabla(filas.slice(2))}${p("Total Hembras: 2 Varones: 1")}
+${lineas.map(p).join("")}${tabla(filas.slice(0, 2))}${p(entreTablas)}${tabla(filas.slice(2))}${p("Total Hembras: 2 Varones: 1")}
 </w:body></w:document>`;
   const zip = XLSX.CFB.utils.cfb_new();
   XLSX.CFB.utils.cfb_add(zip, "/word/document.xml", Buffer.from(xml, "utf8"));
@@ -233,6 +233,32 @@ test("la matrícula en Word (.docx) de los docentes: lee la tabla, el grado y la
   // Si se elige otro grado, nada del documento se mezcla
   await s.pagina.selectOption("#imp-grado", "4to Año");
   assert.match((await s.pagina.textContent("#imp-preview")).replace(/\s+/g, " "), /3 de otros grados \(se ignoran\)/);
+  assert.deepEqual(s.errores, []);
+});
+
+test("un Word con dos grupos (Maternal e I Grupo, de una misma maestra): cada uno a su grado", async () => {
+  const doc = wordMatricula(
+    "MATRICULA MATERNAL Y I GRUPO.docx",
+    [
+      "Matricula Inicial EDUCACIÓN INICIAL Año Escolar 2026-2027",
+      "Docente: MARÍA PÉREZ\tGrupo: MATERNAL\tSección: “U”",
+    ],
+    [
+      ["1", "", "", "Camila Ruiz", "2", "F", "01/02/2024", "Ana Ruiz", "", "", ""],
+      ["2", "", "", "Mateo Díaz", "2", "M", "03/04/2024", "Luis Díaz", "", "", ""],
+      ["1", "", "", "Sara León", "3", "F", "05/06/2023", "Eva León", "", "", ""],
+    ],
+    "Docente: MARÍA PÉREZ\tGrupo: I GRUPO\tSección: “U”"
+  );
+  await subir("todos", doc);
+  const t = (await s.pagina.textContent("#imp-preview")).replace(/\s+/g, " ");
+  assert.match(t, /Maternal: 2 inscritos \(1 niña · 1 niño\)/);
+  assert.match(t, /Nivel I: 1 inscrito \(1 niña · 0 niños\)/);
+  // Eligiendo «Maternal», los de I Grupo se ignoran
+  await s.pagina.selectOption("#imp-grado", "Maternal");
+  const t2 = (await s.pagina.textContent("#imp-preview")).replace(/\s+/g, " ");
+  assert.match(t2, /1 de otro grado \(se ignoran\)/);
+  assert.doesNotMatch(await s.pagina.textContent(".matricula-despues"), /Nivel I/);
   assert.deepEqual(s.errores, []);
 });
 
