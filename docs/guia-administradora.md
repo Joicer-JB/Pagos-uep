@@ -34,6 +34,8 @@ es la correcta, avísale al director: **solo él puede corregir una tasa ya guar
 
 Todos los montos están en **$ de referencia**. Cada pago guarda la tasa de su día y su valor en Bs.
 
+La tasa cuenta con **2 decimales**, sin redondear: si el BCV publica 883,6923, se usa **883,69**.
+
 ## Cobrar en la 💳 Caja (lo más rápido)
 
 1. Busca al estudiante por nombre, cédula o representante y tócalo.

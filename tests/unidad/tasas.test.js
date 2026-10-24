@@ -34,6 +34,14 @@ test("Excel del BCV: la fecha valor puede venir en la celda de al lado, y los nÃ
   assert.deepEqual(r, [{ fecha: "2025-10-02", valor: 181.25 }]);
 });
 
+test("las tasas del archivo cuentan con 2 decimales: 883,6923 â†’ 883,69", () => {
+  const r = tasasDeHojas([hojaBCV("03/10/2025", 883.5012, 883.6923), hojaBCV("06/10/2025", "884,10", "884,9999")]);
+  assert.deepEqual(r, [
+    { fecha: "2025-10-03", valor: 883.69 },
+    { fecha: "2025-10-06", valor: 884.99 },
+  ]);
+});
+
 test("tabla sencilla: fecha y tasa (fecha como texto o como fecha de Excel)", () => {
   const r = tasasDeHojas([
     {

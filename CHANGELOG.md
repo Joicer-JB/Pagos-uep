@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — La tasa BCV con 2 decimales
+
+- La tasa cuenta con **2 decimales, sin redondear**: 883,6923 → 883,69. Vale para la tasa escrita a mano, la que trae
+  «🔄 Traer del BCV», la del Excel del BCV y las que ya estaban guardadas con 4 decimales. Los pagos ya registrados
+  conservan la tasa y los bolívares con que se cobraron.
+- Guía del director: cómo bajar el Excel de tasas del BCV e importarlo.
+
 ## Octubre 2026 — Boletín sin la dirección de la página
 
 - Al imprimir el boletín ya no salen arriba y abajo la fecha, el título ni la dirección de la página (el encabezado y

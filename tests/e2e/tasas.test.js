@@ -116,6 +116,24 @@ test("no se aceptan fechas futuras", async () => {
   assert.deepEqual(sesion.errores, []);
 });
 
+test("la tasa cuenta solo con 2 decimales: 883,6923 se guarda y se usa como 883,69", async () => {
+  await llamar(`cerrarModal()`);
+  await nuevoPago();
+  await ponerFecha("2026-08-20");
+  await escribirTasa("883,6923");
+  const pago = await guardar("10");
+  assert.equal(pago.tasa, 883.69);
+  assert.equal(pago.totalBs, 8836.9);
+  assert.equal(await tasaGuardada("2026-08-20"), 883.69);
+  // En la ventana de la tasa BCV, igual
+  await llamar(`cerrarModal(); abrirModal({ tipo: "tasa" })`);
+  await pagina().fill("#tz-fecha", "2026-08-21");
+  await pagina().fill("#tz-valor", "884,1299");
+  await llamar(`guardarTasaModal()`);
+  assert.equal(await tasaGuardada("2026-08-21"), 884.12);
+  assert.deepEqual(sesion.errores, []);
+});
+
 // ---- Importar el Excel del BCV (una hoja por día), hecho aquí mismo con SheetJS
 function excelBCV(dias) {
   const XLSX = require("xlsx");

@@ -136,6 +136,21 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
   cédula, fecha de nacimiento, grado, sección, año escolar y representante (lo que sale en el boletín). La app
   prepara y actualiza esas fichas sola cuando entras tú.
 
+## Tasas de días pasados: el Excel del BCV
+
+Para que los pagos viejos salgan en bolívares hacen falta las tasas de esos días. El BCV las publica en Excel:
+
+1. En la computadora entra a **bcv.org.ve** → menú **Estadísticas** → **Tipo de cambio de referencia** (o
+   «Tipo de Cambio de Referencia SMC»).
+2. Baja el archivo del trimestre que necesitas (por ejemplo **julio – septiembre** y **octubre – diciembre**). Es un
+   Excel con una hoja por día.
+3. En la plataforma, botón **💱** de la cabecera → abajo, en **📥 Tasas de días anteriores**, toca el campo del
+   archivo y elige el Excel tal como se bajó (sin abrirlo ni cambiarlo).
+4. Revisa la lista (compara uno o dos días con la página del BCV) y pulsa **💾 Guardar tasas del archivo**.
+
+Las tasas cuentan con **2 decimales**, sin redondear: 883,6923 se guarda como **883,69**. Las que ya estaban guardadas
+con más decimales también cuentan con 2.
+
 ## Lo que solo puede hacer el director
 
 - **Borrar** recibos, estudiantes, gastos, pagos de nómina y trabajadores (botón 🗑️). Un recibo nunca se

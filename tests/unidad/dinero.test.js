@@ -32,11 +32,21 @@ beforeEach(() => {
 });
 
 test("parseTasa: acepta coma o punto decimal", () => {
-  assert.equal(f('parseTasa("396,3674")'), 396.3674);
-  assert.equal(f('parseTasa("396.3674")'), 396.3674);
+  assert.equal(f('parseTasa("396,36")'), 396.36);
+  assert.equal(f('parseTasa("396.36")'), 396.36);
   assert.equal(f('parseTasa("1.396,36")'), 1396.36);
   assert.equal(f('parseTasa("Bs. 184,5")'), 184.5);
   assert.equal(f('parseTasa("")'), 0);
+});
+
+test("la tasa cuenta solo con 2 decimales, sin redondear: 883,6923 → 883,69", () => {
+  assert.equal(f('parseTasa("883,6923")'), 883.69);
+  assert.equal(f('parseTasa("883,6999")'), 883.69); // no redondea hacia arriba
+  assert.equal(f('parseTasa("883.69")'), 883.69); // 883,69 no se convierte en 883,68 por los decimales de la máquina
+  assert.equal(f("tasa2(36.5)"), 36.5);
+  assert.equal(f("tasa2(1396.3674)"), 1396.36);
+  assert.equal(f("tasa2(0.29)"), 0.29);
+  assert.equal(f("aBs(10)"), 0); // sin tasa de hoy
 });
 
 test("tasaDe: la del día, o la última anterior hasta 10 días", () => {

@@ -3,14 +3,17 @@
 // Todos los montos del sistema están en $ de referencia. Cada operación guarda además la tasa BCV usada
 // y su valor real en bolívares, para que el flujo de caja pueda mostrarse en Bs. con la referencia en $.
 let tasas = {}; // {"YYYY-MM-DD": Bs. por $1}  (compartidas: config/tasasBCV)
-// Lee una tasa escrita a mano: acepta "396,3674", "396.3674" y "1.396,36"
+// La tasa cuenta con 2 decimales, sin redondear: 883,6923 → 883,69 (el redondeo previo a 6 decimales evita que
+// 883,69 se lea como 883,6899999…)
+const tasa2 = (v) => Math.floor(Math.round((Number(v) || 0) * 1e6) / 1e4) / 100;
+// Lee una tasa escrita a mano: acepta "396,36", "396.36" y "1.396,36" (los decimales de más no cuentan)
 function parseTasa(s) {
   s = String(s || "")
     .trim()
     .replace(/[^0-9.,]/g, "");
   if (!s) return 0;
   if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-  return parseFloat(s) || 0;
+  return tasa2(parseFloat(s));
 }
 // Carga las tasas guardadas (más las que quedaron solo en este equipo si falló la nube)
 async function cargarTasas() {
@@ -18,12 +21,13 @@ async function cargarTasas() {
   try {
     const s = await db.collection("config").doc("tasasBCV").get();
     if (s.exists) tasas = { ...(s.data().tasas || {}) };
+    for (const k in tasas) tasas[k] = tasa2(tasas[k]); // las guardadas antes con 4 decimales cuentan con 2
   } catch (e) {
     console.warn("tasasBCV:", e.message);
   }
   try {
     const l = JSON.parse(localStorage.getItem("tasasBCV_local") || "{}");
-    for (const k in l) if (!(k in tasas)) tasas[k] = l[k];
+    for (const k in l) if (!(k in tasas)) tasas[k] = tasa2(l[k]);
   } catch (e) {}
 }
 // Tasa vigente en una fecha: la de ese día o, si no hay (fin de semana/feriado), la última anterior (máx. 10 días)
@@ -53,6 +57,7 @@ const puedeCorregirTasa = () => rolUsuario === "director";
 const tasaFija = (fecha) => !puedeCorregirTasa() && tasas[fecha] > 0;
 // Guarda la tasa de una fecha en Firestore (compartida); si falla, la guarda solo en este equipo
 async function guardarTasaDia(fecha, valor) {
+  valor = tasa2(valor);
   if (tasaFija(fecha) && Math.abs(tasas[fecha] - valor) > 0.00005) {
     alert("La tasa del " + fechaCorta(fecha) + " ya está guardada. Solo el director puede corregirla.");
     return false;
@@ -132,7 +137,7 @@ const notaTasa = (t) =>
 function campoTasaHTML(pref, fecha, onInput) {
   const t = tasaDe(fecha || todayStr());
   return `<div class="field"><label class="field-label">💱 Tasa BCV (Bs. por $1) *</label>
-    <input class="inp" id="${pref}-tasa" inputmode="decimal" autocomplete="off" placeholder="Ej: 396,3674" value="${t ? String(t.valor).replace(".", ",") : ""}" ${t && t.exacta && tasaFija(t.fecha) ? "readonly" : ""} oninput="${onInput};revisarTasaCampo('${pref}')"/>
+    <input class="inp" id="${pref}-tasa" inputmode="decimal" autocomplete="off" placeholder="Ej: 396,36" value="${t ? String(t.valor).replace(".", ",") : ""}" ${t && t.exacta && tasaFija(t.fecha) ? "readonly" : ""} oninput="${onInput};revisarTasaCampo('${pref}')"/>
     <div id="${pref}-tasa-nota" style="font-size:0.7rem;color:${t && t.exacta ? "#1a9e5c" : "#b8860b"};margin-top:2px">${notaTasa(t)}</div>
     <label id="${pref}-tasa-corr" style="display:none;gap:0.4rem;align-items:center;font-size:0.72rem;color:#7a5c00;margin-top:4px"><input type="checkbox" id="${pref}-tasa-corregir"/> <span></span></label></div>`;
 }
@@ -245,7 +250,7 @@ function renderModalTasa() {
     <div class="modal-body"><div class="form-grid">
       <div class="form-row">
         <div class="field"><label class="field-label">Fecha</label><input class="inp" type="date" id="tz-fecha" value="${hoy}" max="${hoy}"/></div>
-        <div class="field"><label class="field-label">Tasa (Bs. por $1)</label><input class="inp" id="tz-valor" inputmode="decimal" placeholder="Ej: 396,3674" value="${tasas[hoy] ? String(tasas[hoy]).replace(".", ",") : ""}"/></div>
+        <div class="field"><label class="field-label">Tasa (Bs. por $1)</label><input class="inp" id="tz-valor" inputmode="decimal" placeholder="Ej: 396,36" value="${tasas[hoy] ? String(tasas[hoy]).replace(".", ",") : ""}"/></div>
       </div>
       <div id="tz-msg" style="font-size:0.74rem;color:#555">La tasa se comparte con todos los usuarios y queda guardada por fecha.</div>
       <div style="display:flex;gap:0.5rem"><button class="btn btn-gray btn-sm" onclick="traerTasaAPI()">🔄 Traer del BCV</button><button class="btn btn-primary" style="flex:1" onclick="guardarTasaModal()">💾 Guardar tasa</button></div>
@@ -275,7 +280,7 @@ async function traerTasaAPI() {
     const r = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
     if (!r.ok) throw new Error("HTTP " + r.status);
     const d = await r.json();
-    const v = Number(d.promedio || d.venta);
+    const v = tasa2(d.promedio || d.venta);
     if (!v || v <= 0) throw new Error("respuesta sin tasa");
     document.getElementById("tz-valor").value = String(v).replace(".", ",");
     if (msg)
@@ -294,7 +299,7 @@ async function guardarTasaModal() {
     return;
   }
   if (!v || v <= 0) {
-    if (msg) msg.innerHTML = "⚠️ Escribe una tasa válida, por ejemplo 396,3674";
+    if (msg) msg.innerHTML = "⚠️ Escribe una tasa válida, por ejemplo 396,36";
     return;
   }
   const prev = tasaDe(fecha);
@@ -333,9 +338,9 @@ function fechaDeCelda(v) {
   m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
   return m ? fechaValida(m[1], m[2], m[3]) : "";
 }
-// Número de una celda (acepta "36,3732" y "1.396,36"); 0 si no es un número
+// Número de una celda, con 2 decimales (acepta "36,3732" y "1.396,36"); 0 si no es un número
 const numeroDeCelda = (v) =>
-  typeof v === "number" ? v : /^\s*\d[\d.,]*\s*$/.test(String(v == null ? "" : v)) ? parseTasa(v) : 0;
+  typeof v === "number" ? tasa2(v) : /^\s*\d[\d.,]*\s*$/.test(String(v == null ? "" : v)) ? parseTasa(v) : 0;
 
 // Hoja con el formato del BCV: fecha valor y fila USD. null si la hoja no tiene ese formato.
 function tasaDeHojaBCV(filas) {
