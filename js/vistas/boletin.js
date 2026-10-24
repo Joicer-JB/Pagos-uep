@@ -190,7 +190,7 @@ function cuerpoBoletinMedia(est) {
   ${pieBoletin([
     [inst.directora || "Lic. Ligia Herrera", "Directora"],
     [inst.coordinador || "Lic. Carlos Carrascal", "Coordinación de Media General"],
-    ["", "Docente guía"],
+    [profesorGuia(est.grado), "Docente guía"],
     ["", "Representante (recibido)"],
   ])}
   </section>`;
@@ -252,7 +252,7 @@ function cuerpoBoletinPrimaria(est) {
     esPreescolar
       ? [inst.coordinadorInicial || "", "Coordinación de Educación Inicial"]
       : [inst.coordinadorPrimaria || "", "Coordinación de Primaria"],
-    ["", "Docente"],
+    [docenteDeGrado(est.grado), "Docente"],
     ["", "Representante (recibido)"],
   ])}
   </section>`;

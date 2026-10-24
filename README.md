@@ -101,6 +101,7 @@ js/
     resumen-quincenal.js   Resumen de cada quincena para el director (deudores, al día, entradas y salidas)
     respaldo.js            Abrir (descifrar) los respaldos automáticos semanales
     avisos-telefono.js     Activar los avisos al teléfono en cada equipo (solo el director)
+    asignaciones.js        Qué grados y materias le tocan a cada docente, y quién da cada clase
     calificaciones.js      Notas de media general: plan de evaluación con %, nota del lapso, definitiva, cambios
                            del consejo y promedio (lo usan Notas, la sábana y el boletín)
     cobros.js              Guarda cada cobro en una transacción: recibo correlativo y deuda anterior al día;

@@ -412,9 +412,8 @@ const PASOS = {
   async docente(r) {
     await r.verNotasDe(["est2", "est6"]);
     await r.elegirEnSelects("docente notas", "primera");
-    const nota = await r.pagina.$(
-      "#tab-content input[oninput*='updateNotaLocal'], #tab-content input[onchange*='updateNotaLocal']"
-    );
+    // Una nota numérica que pueda cargar (en Primaria las notas son letras; en Media, solo sus materias)
+    const nota = await r.pagina.$("#tab-content input.nota-input:not([disabled])");
     if (nota) {
       await nota.fill("17");
       await nota.dispatchEvent("change");

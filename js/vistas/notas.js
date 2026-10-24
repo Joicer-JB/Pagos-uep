@@ -13,7 +13,7 @@ function getIndicadores(grado, area) {
 }
 function renderNotas() {
   const estSelId = filtros.estSelId || "";
-  const estSel = estudiantes.find((e) => e.id === estSelId);
+  const estSel = estudiantes.find((e) => e.id === estSelId && veEstudiante(e));
   const lapso = filtros.lapso || LAPSOS[0];
   // Las fichas de los docentes las prepara la app cuando entra el director o la administradora
   const sinFichas =
@@ -30,6 +30,7 @@ function renderNotas() {
   return `${sinFichas}${vistas}
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>📝 Consultar Notas</h2></div>
+    ${docenteLimitado() ? `<div class="ayuda" style="margin-bottom:0.5rem">Ves a los estudiantes de tus grados y cargas las notas de tus materias. Las de otros profesores salen en gris.</div>` : ""}
     <div class="form-grid">
       <div class="field"><label class="field-label">Filtrar por Grado</label>
         <select class="inp" onchange="filtros.gradoNotas=this.value;filtros.estSelId='';renderTabContent()">
@@ -39,7 +40,7 @@ function renderNotas() {
               estudiantes
                 .filter(activo)
                 .map((e) => e.grado)
-                .filter(Boolean)
+                .filter((g) => g && veGrado(g))
             ),
           ]
             .sort(ordenGrados)
@@ -54,7 +55,7 @@ function renderNotas() {
         <select class="inp" onchange="filtros.estSelId=this.value;renderTabContent()">
           <option value="">-- Seleccionar estudiante --</option>
           ${estudiantes
-            .filter((e) => activo(e) && (!filtros.gradoNotas || e.grado === filtros.gradoNotas))
+            .filter((e) => activo(e) && veEstudiante(e) && (!filtros.gradoNotas || e.grado === filtros.gradoNotas))
             .sort(ordenNombre)
             .map(
               (e) =>
@@ -91,11 +92,12 @@ function renderTablaNotasMedia(est, lapso) {
   const notasEst = notas[`${est.id}_${lapso}`] || {};
   const areas = getAreas(est.grado);
   const puedePlan = !soloLectura() && (rolUsuario === "director" || rolUsuario === "docente");
+  const editables = areas.filter((m) => puedeEditarMateria(est.grado, m));
 
   return `
   <div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>Notas — ${lapso}</h2>
-      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="guardarNotas('${est.id}','${lapso}')">💾 Guardar</button>
+      ${editables.length ? `<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="guardarNotas('${est.id}','${lapso}')">💾 Guardar</button>` : ""}
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
@@ -110,12 +112,14 @@ function renderTablaNotasMedia(est, lapso) {
               const evals = planEvaluacion(est.grado, m, lapso);
               const info = notaLapsoDe(est, m, lapso);
               const prom = info.nota;
-              return `<tr style="border-bottom:1px dashed #eef2f9">
-              <td style="padding:0.45rem 0.6rem;font-weight:600;color:#333;vertical-align:top">${escHtml(m)}${puedePlan ? `<div><button class="btn btn-gray btn-sm" style="margin-top:0.3rem;font-size:0.68rem;padding:0.15rem 0.45rem" onclick="abrirPlanEvaluacion('${escJs(est.grado)}','${escJs(m)}','${lapso}')">⚙️ Plan${tienePorcentajes(evals) ? "" : " de evaluación"}</button></div>` : ""}</td>
+              const editable = editables.includes(m);
+              const prof = profesorDe(est.grado, m);
+              return `<tr style="border-bottom:1px dashed #eef2f9"${editable ? "" : ' class="nota-ajena"'}>
+              <td style="padding:0.45rem 0.6rem;font-weight:600;color:#333;vertical-align:top">${escHtml(m)}${prof ? `<div class="item-sub" style="font-weight:400">👤 ${escHtml(prof)}</div>` : ""}${puedePlan && editable ? `<div><button class="btn btn-gray btn-sm" style="margin-top:0.3rem;font-size:0.68rem;padding:0.15rem 0.45rem" onclick="abrirPlanEvaluacion('${escJs(est.grado)}','${escJs(m)}','${lapso}')">⚙️ Plan${tienePorcentajes(evals) ? "" : " de evaluación"}</button></div>` : ""}</td>
               <td style="padding:0.3rem"><div class="evals-fila">${evals
                 .map((ev) => {
                   const k = m + "_" + ev.n;
-                  return `<label class="eval-celda"><span>${escHtml(ev.nombre)}${Number(ev.peso) > 0 ? " · " + ev.peso + "%" : ""}</span><input class="nota-input" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] || "")}" placeholder="-" onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(k)}',this.value)"/></label>`;
+                  return `<label class="eval-celda"><span>${escHtml(ev.nombre)}${Number(ev.peso) > 0 ? " · " + ev.peso + "%" : ""}</span><input class="nota-input" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] || "")}" placeholder="-" ${editable ? "" : "disabled"} onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(k)}',this.value)"/></label>`;
                 })
                 .join("")}</div></td>
               <td style="padding:0.3rem;text-align:center;vertical-align:top"><span class="promedio-badge" style="background:${prom === null ? "#f1f3f5" : prom >= 18 ? "#e6f7ef" : prom >= 14 ? "#fff8e1" : "#fef0f0"};color:${prom === null ? "#888" : colorNota(prom)}">${prom !== null ? prom : "-"}${info.ajuste ? "<sup>C</sup>" : ""}</span>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo (antes ${info.ajuste.original ?? "-"})</div>` : ""}</td>
@@ -130,6 +134,8 @@ function renderTablaNotasMedia(est, lapso) {
 // ── Plan de evaluación (director y docentes): evaluaciones de una materia en un lapso, con su porcentaje ──
 function abrirPlanEvaluacion(grado, materia, lapso) {
   if (soloLectura()) return alert("Estás viendo un año anterior (solo consulta).");
+  if (!puedeEditarMateria(grado, materia))
+    return alert("El plan de evaluación de " + materia + " lo arma su profesor.");
   abrirModal({
     tipo: "plan-eval",
     grado,
@@ -255,7 +261,7 @@ function renderTablaNotasPrimaria(est, lapso) {
                 <td style="padding:0.35rem 0.5rem;font-size:0.76rem;color:#333;border:1px solid #ddd">${escHtml(ind)}</td>
                 ${LETRAS.map(
                   (letra) => `<td style="padding:0.2rem;text-align:center;border:1px solid #ddd">
-                  <input type="radio" name="nota_${est.id}_${lapso}_${escHtml(fieldKey)}" value="${letra}" ${valActual === letra ? "checked" : ""} onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(fieldKey)}','${letra}')"/>
+                  <input type="radio" name="nota_${est.id}_${lapso}_${escHtml(fieldKey)}" value="${letra}" ${valActual === letra ? "checked" : ""} ${puedeEditarMateria(est.grado, area) ? "" : "disabled"} onchange="updateNotaLocal('${est.id}','${lapso}','${escJs(fieldKey)}','${letra}')"/>
                 </td>`
                 ).join("")}
               </tr>`;
@@ -352,20 +358,27 @@ function renderNotaFinal(est) {
     </div>`;
   }
 }
+// Notas cambiadas en este equipo y aún sin guardar ({"estId_Lapso N": Set de campos}). Al guardar solo se envían esas:
+// así dos profesores que cargan al mismo estudiante a la vez no se borran las notas uno al otro.
+const notasCambiadas = {};
 function updateNotaLocal(estId, lapso, key, val) {
   const k = `${estId}_${lapso}`;
   if (!notas[k]) notas[k] = {};
   notas[k][key] = val;
+  (notasCambiadas[k] = notasCambiadas[k] || new Set()).add(key);
 }
 async function guardarNotas(estId, lapso) {
   const key = `${estId}_${lapso}`;
   // Los ajustes del consejo («consejo») no se tocan aquí: son del director (ver servicios/calificaciones.js)
-  const { consejo, ...datos } = notas[key] || {};
+  const local = notas[key] || {};
+  const campos = [...(notasCambiadas[key] || [])].filter((c) => c !== "consejo");
+  const datos = Object.fromEntries(campos.map((c) => [c, local[c] ?? ""]));
   try {
     await db
       .collection("notas")
       .doc(key)
       .set({ estId, lapso, ...datos, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    delete notasCambiadas[key];
     alert("✅ Notas guardadas correctamente");
   } catch (e) {
     alert("Error: " + e.message);

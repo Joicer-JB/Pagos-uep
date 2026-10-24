@@ -16,7 +16,7 @@ function gradosSabana() {
       .filter((x) => x && getNivel(x) === "media")
   );
   Object.keys(configMaterias || {}).forEach((x) => getNivel(x) === "media" && g.add(x));
-  return [...g].sort(ordenGrados);
+  return [...g].filter(veGrado).sort(ordenGrados); // un docente, solo los años donde da clase
 }
 const seccionesSabana = (grado) =>
   [...new Set(estudiantes.filter((e) => activo(e) && e.grado === grado).map((e) => e.seccion || ""))].sort();
@@ -77,7 +77,7 @@ function datosSabana(grado, seccion, ver, materia) {
     cabecera = [
       [
         ...fijas.map((c) => ({ ...c, rs: 1 })),
-        ...areas.map((m) => ({ t: m })),
+        ...areas.map((m) => ({ t: m, sub: profesorDe(grado, m) })),
         { t: "Promedio del lapso", tipo: "prom" },
       ],
     ];
@@ -87,7 +87,11 @@ function datosSabana(grado, seccion, ver, materia) {
     });
   } else {
     cabecera = [
-      [...fijas, ...areas.map((m) => ({ t: m, cs: LAPSOS.length + 1 })), { t: "Promedio", rs: 2 }],
+      [
+        ...fijas,
+        ...areas.map((m) => ({ t: m, sub: profesorDe(grado, m), cs: LAPSOS.length + 1 })),
+        { t: "Promedio", rs: 2 },
+      ],
       areas.flatMap(() => [...LAPSOS.map((l, i) => ({ t: i + 1 + "° L" })), { t: "Def." }]),
     ];
     filas = lista.map((est) => ({
@@ -111,7 +115,8 @@ function datosSabana(grado, seccion, ver, materia) {
       celdas: [...Array(columnas).keys()].map((i) => col(i).filter((v) => v < 10).length),
     },
   ];
-  return { cabecera, filas, pie, materia: ver === "materia" ? (areas.includes(materia) ? materia : areas[0]) : "" };
+  const mat = ver === "materia" ? (areas.includes(materia) ? materia : areas[0]) : "";
+  return { cabecera, filas, pie, materia: mat, profesor: mat ? profesorDe(grado, mat) : "" };
 }
 
 // Ajustes del consejo de los estudiantes de la sábana (para la lista de abajo y el acta)
@@ -138,7 +143,7 @@ const textoNota = (v) => (v === null || v === undefined ? "-" : String(v).replac
 function htmlTablaSabana(d, enPantalla) {
   const ajustar = enPantalla && puedeAjustarConsejo();
   const th = (c) =>
-    `<th${c.cs > 1 ? ` colspan="${c.cs}"` : ""}${c.rs > 1 ? ` rowspan="${c.rs}"` : ""}>${escHtml(c.t)}</th>`;
+    `<th${c.cs > 1 ? ` colspan="${c.cs}"` : ""}${c.rs > 1 ? ` rowspan="${c.rs}"` : ""}>${escHtml(c.t)}${c.sub ? `<small class="sab-prof">${escHtml(c.sub)}</small>` : ""}</th>`;
   const td = (c) => {
     if (c.tipo === "eval")
       return `<td class="sab-eval${c.v !== null && c.v < 10 ? " sab-rep" : ""}">${textoNota(c.v)}</td>`;
@@ -226,7 +231,9 @@ function renderSabana() {
               grado
             )
               .map((m) => opcion(m, m, d.materia))
-              .join("")}</select></div>`
+              .join(
+                ""
+              )}</select>${d.profesor ? `<div class="item-sub" style="margin-top:3px">👤 ${escHtml(d.profesor)}</div>` : ""}</div>`
           : ""
       }
     </div>
@@ -379,7 +386,7 @@ function estadoSabana() {
 }
 const ESTILOS_SABANA = `*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#111;padding:10px}
   .enc{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #003366;padding-bottom:6px;margin-bottom:8px}
-  .enc h1{font-size:13px;color:#003366;margin:0}.enc p{margin:2px 0;color:#444}
+  .enc h1{font-size:13px;color:#003366;margin:0}th small.sab-prof{display:block;font-weight:400;font-size:7px;opacity:.85}.enc p{margin:2px 0;color:#444}
   table{border-collapse:collapse;width:100%;margin-bottom:8px}th,td{border:1px solid #999;padding:2px 3px;text-align:center}
   th{background:#003366;color:#fff;font-size:9px}td.sab-nombre,td.sab-pie-t{text-align:left;white-space:nowrap}
   .sab-def,.sab-prom{font-weight:700;background:#f0f4ff}.sab-rep{color:#b91c1c;font-weight:700}.sab-parcial{font-style:italic}
@@ -400,7 +407,10 @@ function imprimirSabana() {
   const { grado, seccion, ver } = estadoSabana();
   if (!grado) return;
   const d = datosSabana(grado, seccion, ver, filtros.sabMateria);
-  const vista = ver === "materia" ? d.materia : (VISTAS_SABANA.find(([k]) => k === ver) || [])[1];
+  const vista =
+    ver === "materia"
+      ? d.materia + (d.profesor ? " · Prof. " + d.profesor : "")
+      : (VISTAS_SABANA.find(([k]) => k === ver) || [])[1];
   const w = abrirVentanaImpresion();
   w.document
     .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sábana ${escHtml(grado)}</title><style>${ESTILOS_SABANA}</style></head><body>

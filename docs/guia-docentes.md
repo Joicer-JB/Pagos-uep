@@ -5,6 +5,12 @@ Los docentes entran con el correo y la contraseña que les asignó el director, 
 
 ## Cargar notas
 
+Ves a los estudiantes de **tus grados**, según lo que el director te asignó en tu cuenta:
+
+- **Inicial y Primaria:** tu grado, con todas sus áreas.
+- **Media General:** los años donde das clase. Solo puedes cargar las notas y el plan de evaluación de **tus
+  materias**; las de otros profesores salen en gris.
+
 1. **Filtrar por grado** (opcional) y **Seleccionar estudiante**.
 2. Elige el **lapso** (Lapso 1, 2 o 3).
 3. Carga las notas:

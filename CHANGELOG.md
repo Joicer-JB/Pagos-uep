@@ -1,5 +1,16 @@
 # Historial de cambios
 
+## Octubre 2026 — Cada profesor con lo suyo
+
+- **Notas:** cada docente ve a los estudiantes de sus grados. En Inicial y Primaria (un docente por grado) carga todas
+  las áreas de su grado; en Media General (un profesor por materia) carga solo sus materias y su plan de evaluación, y
+  las de otros profesores salen en gris. El director ve y hace todo.
+- Al guardar notas solo viaja lo que se cambió: dos profesores que cargan al mismo estudiante ya no se pisan las notas.
+- **Sábana:** debajo de cada materia, el profesor que la da.
+- **Boletín:** firma el docente del grado (Inicial y Primaria) o el **profesor guía** del año (Media General), que se
+  anota en ⚙️ Configuración → 🏫 Institución.
+- **Cuadro de honor:** los mejores de **cada salón** (año y sección): el mejor, o los 3, 5 o 10 mejores.
+
 ## Octubre 2026 — Coordinadora de Educación Inicial
 
 - ⚙️ Configuración → 🏫 Institución: campo para la **coordinadora de Educación Inicial**. Cada boletín firma la

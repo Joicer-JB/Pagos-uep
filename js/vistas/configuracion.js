@@ -251,6 +251,16 @@ function renderConfigInstitucion() {
       <input class="inp" id="inst-coordinador-prim" value="${escHtml(inst.coordinadorPrimaria) || ""}" placeholder="Nombre y título"/></div>
     <div class="field"><label class="field-label">Coordinadora de Educación Inicial</label>
       <input class="inp" id="inst-coordinador-ini" value="${escHtml(inst.coordinadorInicial) || ""}" placeholder="Nombre y título"/></div>
+    <div class="field" style="grid-column:1/-1"><label class="field-label">Profesores guía de Media General <span style="font-weight:400;color:#888">(firman el boletín)</span></label>
+      <div class="form-grid">${[
+        ...new Set([...GRADOS_MG, ...Object.keys(configMaterias || {}).filter((g) => getNivel(g) === "media")]),
+      ]
+        .sort(ordenGrados)
+        .map(
+          (g) =>
+            `<div class="field" style="margin:0"><label class="field-label" style="font-weight:400">${escHtml(g)}</label><input class="inp inst-guia" data-grado="${escHtml(g)}" value="${escHtml((inst.guias || {})[g] || "")}" placeholder="Nombre del profesor guía"/></div>`
+        )
+        .join("")}</div></div>
     <div class="field"><label class="field-label">Año escolar actual</label>
       <input class="inp" id="inst-anio" value="${escHtml(inst.anioEscolar) || "2025-2026"}" placeholder="2025-2026"/></div>
   </div>
@@ -322,6 +332,9 @@ async function guardarInstitucion() {
     coordinador: document.getElementById("inst-coordinador").value.trim(),
     coordinadorPrimaria: document.getElementById("inst-coordinador-prim").value.trim(),
     coordinadorInicial: document.getElementById("inst-coordinador-ini").value.trim(),
+    guias: Object.fromEntries(
+      [...document.querySelectorAll(".inst-guia")].map((i) => [i.dataset.grado, i.value.trim()]).filter(([, v]) => v)
+    ),
     anioEscolar: document.getElementById("inst-anio").value.trim(),
   };
   try {

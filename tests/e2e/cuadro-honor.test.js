@@ -110,6 +110,30 @@ test("mejores promedios: solo con nota en todas las materias y sin reprobadas; l
   assert.deepEqual(s.errores, []);
 });
 
+test("los mejores de cada salón (año y sección): el mejor, o los 3, 5 o 10 mejores", async () => {
+  await llamar(`estudiantes.find((e) => e.id === "a2").seccion = "B"; renderTabContent()`);
+  const salones = () =>
+    s.pagina.$$eval(".honor-anio", (d) =>
+      d.map((x) => [
+        x.querySelector(".section-title").textContent,
+        [...x.querySelectorAll("tr")].map((r) => r.children[1].textContent.trim()),
+      ])
+    );
+  assert.deepEqual(await salones(), [
+    ["1er Año", ["Andrea Blanco", "Luis Alberto Gómez"]],
+    ["1er Año B", ["Pedro Zambrano"]],
+    ["5to Año", ["Carlos Eduardo Díaz", "Daniela Mora"]],
+  ]);
+  await s.pagina.selectOption("#honor-por-salon", "1");
+  assert.deepEqual(await salones(), [
+    ["1er Año", ["Andrea Blanco"]],
+    ["1er Año B", ["Pedro Zambrano"]],
+    ["5to Año", ["Carlos Eduardo Díaz"]],
+  ]);
+  await s.pagina.selectOption("#honor-por-salon", "3");
+  await llamar(`estudiantes.find((e) => e.id === "a2").seccion = ""; renderTabContent()`);
+});
+
 test("por lapso, e impreso para la cartelera", async () => {
   await s.pagina.selectOption("#honor-periodo", "Lapso 2");
   assert.match(await s.pagina.textContent(".cuadro-honor"), /Todavía no hay estudiantes .* en el Lapso 2/);

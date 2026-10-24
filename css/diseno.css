@@ -798,3 +798,19 @@ textarea.inp {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 0.6rem;
 }
+
+/* Profesores: quién da cada materia, y las materias de otros profesores (en gris) */
+.sab-tabla th small.sab-prof {
+  display: block;
+  font-weight: 400;
+  font-size: 0.6rem;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+tr.nota-ajena {
+  opacity: 0.55;
+}
+tr.nota-ajena .nota-input {
+  background: #f1f3f5;
+  cursor: not-allowed;
+}
