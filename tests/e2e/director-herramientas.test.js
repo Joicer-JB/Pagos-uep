@@ -131,5 +131,18 @@ test("Estudiantes: inscritos (sin retirados ni graduados) y matrícula por grado
   const tercero = m.filas.find((f) => f.grado === "3er Grado");
   assert.deepEqual([tercero.inscritos, tercero.M, tercero.F, tercero.retirados], [1, 1, 0, 1]);
   assert.deepEqual([m.total.inscritos, m.total.F, m.total.M], [5, 2, 3]);
+  // La lista, en orden alfabético (sin importar tildes ni mayúsculas)
+  await llamar(
+    `estudiantes.push({ id: "x1", nombre: "ángel Bravo", grado: "1er Año", estado: "alsaldo" }); renderTabContent()`
+  );
+  assert.deepEqual(await s.pagina.$$eval(".list .item-name", (t) => t.map((x) => x.textContent.trim())), [
+    "Ana María Pérez",
+    "ángel Bravo",
+    "Carlos Eduardo Díaz",
+    "Luis Alberto Gómez",
+    "Miguel Ángel Torres",
+    "Sofía Hernández",
+    "Valentina Rojas",
+  ]);
   assert.deepEqual(s.errores, []);
 });

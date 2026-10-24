@@ -110,25 +110,27 @@ function htmlMatriculaGrado() {
 function renderEstudiantes() {
   const mora = estudiantes.filter(enMora);
   const activos = estudiantes.filter(activo);
-  let filtrados = estudiantes.filter((e) => {
-    const mB =
-      !filtros.busq ||
-      e.nombre.toLowerCase().includes(filtros.busq.toLowerCase()) ||
-      (e.cedula || "").includes(filtros.busq);
-    const mE =
-      filtros.estado === "graduado"
-        ? !!e.graduado
-        : filtros.estado === "retirado"
-          ? e.estado === "retirado"
-          : filtros.estado === "mora"
-            ? enMora(e)
-            : filtros.estado === "alsaldo"
-              ? activo(e) && !enMora(e)
-              : !e.graduado || enMora(e); // sin filtro: los graduados sin deuda no aparecen
-    const mA = !filtros.anioEst || e.anioEscolar === filtros.anioEst;
-    const mG = !filtros.gradoEst || e.grado === filtros.gradoEst;
-    return mB && mE && mA && mG;
-  });
+  let filtrados = estudiantes
+    .filter((e) => {
+      const mB =
+        !filtros.busq ||
+        e.nombre.toLowerCase().includes(filtros.busq.toLowerCase()) ||
+        (e.cedula || "").includes(filtros.busq);
+      const mE =
+        filtros.estado === "graduado"
+          ? !!e.graduado
+          : filtros.estado === "retirado"
+            ? e.estado === "retirado"
+            : filtros.estado === "mora"
+              ? enMora(e)
+              : filtros.estado === "alsaldo"
+                ? activo(e) && !enMora(e)
+                : !e.graduado || enMora(e); // sin filtro: los graduados sin deuda no aparecen
+      const mA = !filtros.anioEst || e.anioEscolar === filtros.anioEst;
+      const mG = !filtros.gradoEst || e.grado === filtros.gradoEst;
+      return mB && mE && mA && mG;
+    })
+    .sort(ordenNombre); // en orden alfabético
   return `
   <div class="stats-grid">
     <div class="stat-card"><div class="stat-val">${activos.length}</div><div class="stat-label">🎒 Inscritos</div></div>
