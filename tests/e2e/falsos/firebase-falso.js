@@ -220,6 +220,14 @@
     acuses.get(col).add(id);
   }
   function notificar(o, pendientes = new Set(), confirmados = new Set()) {
+    if (o.ref) {
+      // Escucha de un solo documento: avisa la primera vez y cada vez que cambia
+      const valor = coleccion(o.ref._col).get(o.ref.id);
+      const texto = JSON.stringify(valor === undefined ? null : valor);
+      if (o.ultimo === texto) return;
+      o.ultimo = texto;
+      return o.cb(new DocumentSnapshot(o.ref, valor));
+    }
     const snap = o.query._resultado();
     const ahora = new Map(snap.docs.map((d) => [d.id, JSON.stringify(d._valor)]));
     const cambios = [];
@@ -243,6 +251,15 @@
   }
   Query.prototype.onSnapshot = function (cb) {
     const o = { query: this, cb, ultimo: null };
+    oyentes.push(o);
+    setTimeout(() => notificar(o), 0);
+    return () => {
+      const i = oyentes.indexOf(o);
+      if (i >= 0) oyentes.splice(i, 1);
+    };
+  };
+  DocumentReference.prototype.onSnapshot = function (cb) {
+    const o = { query: { _col: this._col }, ref: this, cb, ultimo: undefined };
     oyentes.push(o);
     setTimeout(() => notificar(o), 0);
     return () => {
@@ -403,7 +420,9 @@
         const g = window.__CUENTA_GOOGLE__;
         if (!g) throw error("auth/popup-closed-by-user", "Se cerró la ventana");
         if (g.error) throw error(g.error, g.error);
-        actual = { uid: "uid-google-" + g.email, email: g.email };
+        // Como en Firebase (una cuenta por correo): si ya existe con contraseña, es la misma cuenta (mismo uid)
+        const ya = cuentas.find((c) => c.email === g.email);
+        actual = { uid: ya ? ya.uid : "uid-google-" + g.email, email: g.email };
         avisar();
         return { user: actual };
       },

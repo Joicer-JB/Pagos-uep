@@ -18,6 +18,7 @@ fbAuth.onAuthStateChanged(async (user) => {
     }
     fbAuth.signOut(); // sin acceso: el aviso vuelve con user = null y se muestra el login
   } else {
+    detenerEspera();
     auth = false;
     // Si el login ya está en pantalla no se redibuja, para no borrar un mensaje de error
     if (!document.getElementById("login-btn")) render();

@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## Octubre 2026 — Autorización del día
+
+- La **secretaria** y **control de estudio**, al entrar, esperan a que el director las autorice; vale hasta la
+  medianoche. Mientras tanto las reglas de Firestore no les dejan leer ni escribir nada (solo pedir la autorización).
+- El director ve el pedido al instante (aviso abajo y notificación, con la plataforma abierta) y lo autoriza con un
+  toque; en ⚙️ Config → Docentes → **🔐 Accesos de hoy** puede autorizar antes o **quitar el acceso** (se les cierra
+  la sesión).
+- **Hay que publicar las reglas nuevas** (`firestore.rules`) en Firebase.
+
 ## Octubre 2026 — Becas y meses exonerados
 
 - En la ficha del estudiante, **🎓 Beca (%)** con su motivo: 100% = becado todo el año (no paga mensualidades), 50% =

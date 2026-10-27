@@ -1016,3 +1016,32 @@ textarea.inp {
     flex: 1;
   }
 }
+
+/* 🔐 Pedidos de autorización del día (aviso flotante del director) */
+.pedidos-autorizacion {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: min(460px, calc(100vw - 32px));
+}
+.pedido-aut {
+  background: #fffbe6;
+  border: 2px solid #f0b400;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.82rem;
+  color: #333;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+.pedido-aut .btn {
+  margin-left: auto;
+}

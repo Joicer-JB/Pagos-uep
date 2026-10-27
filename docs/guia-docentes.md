@@ -9,6 +9,9 @@ menú del navegador → «Agregar a la pantalla principal»).
 **¿Olvidaste la contraseña?** Escribe tu correo en la pantalla de entrada y toca **«¿Olvidaste tu contraseña?»**: te
 llega un correo con un enlace para poner una contraseña nueva (revisa también la carpeta de spam).
 
+**Control de estudio** espera, al entrar, la autorización del director («⏳ Esperando la autorización del
+director»): cuando te autorice, la plataforma se abre sola y vale por todo el día.
+
 ## Cargar notas
 
 > **Por ahora las notas las carga la encargada de control de estudio**: en Media General, la nota final de cada lapso

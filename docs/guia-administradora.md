@@ -8,6 +8,9 @@ exoneraciones, recargos, gastos, nómina y configuración los maneja el director
 [Lo que hace el director](#lo-que-hace-el-director)). En **Inicio** ves lo cobrado hoy por método, los estudiantes
 con deuda (tócalos para cobrarles en la Caja) y los últimos pagos.
 
+**Al entrar, espera la autorización del director**: verás «⏳ Esperando la autorización del director». Cuando te
+autorice, la plataforma se abre sola (no cierres la ventana). Vale por todo el día; al día siguiente se vuelve a pedir.
+
 ## 🔍 Buscar cualquier cosa
 
 Arriba está el botón **🔍 Buscar** (y en Inicio, la barra «¿Qué necesitas?»). En la computadora también se abre con

@@ -20,6 +20,8 @@ datos.colecciones.usuarios["uid-control"] = {
   grado: "3er Grado",
   materias: ["1er Año::Inglés"],
 };
+// Autorizada por el director hoy (la espera de la autorización se prueba en autorizacion.test.js)
+datos.colecciones.autorizaciones["uid-control"] = { rol: "control", hasta: 4102444800000 };
 semilla.ponerFichas(datos);
 
 let nav, s;

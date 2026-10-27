@@ -117,7 +117,7 @@ function seleccionarTrabajadorDoc(trabId) {
 function renderConfigDocentes() {
   const activos = configDocentes.filter((d) => d.activo !== false);
   const inactivos = configDocentes.filter((d) => d.activo === false);
-  return `
+  return `${htmlAccesosHoy()}
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
     <div>
       <span style="font-weight:700;color:#003366;font-size:1rem">${activos.length} docentes activos</span>
