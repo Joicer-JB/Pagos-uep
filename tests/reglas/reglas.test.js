@@ -25,6 +25,8 @@ const CUENTAS = {
   docente: { uid: "uid-docente", email: "docente@example.com" },
   notasViejo: { uid: "uid-notas", email: "notasjjs@gmail.com" }, // la antigua cuenta fija de notas, sin perfil
   docenteInactivo: { uid: "uid-inactivo", email: "inactivo@example.com" },
+  control: { uid: "uid-control", email: "control@example.com" }, // control de estudio
+  adminSinPermiso: { uid: "uid-admin", email: "josefajsanquez@gmail.com" }, // la misma, antes de autorizarla
   desconocido: { uid: "uid-intruso", email: "intruso@example.com" },
 };
 const firma = (rol) => ({ registradoPor: CUENTAS[rol].email });
@@ -56,6 +58,14 @@ beforeEach(async () => {
     const db = ctx.firestore();
     await setDoc(doc(db, "usuarios/uid-docente"), { rol: "docente", activo: true, nombre: "Profe" });
     await setDoc(doc(db, "usuarios/uid-inactivo"), { rol: "docente", activo: false, nombre: "Ex profe" });
+    await setDoc(doc(db, "usuarios/uid-control"), {
+      rol: "docente",
+      activo: true,
+      nombre: "Control",
+      controlEstudio: true,
+    });
+    // La administradora está autorizada hoy (las pruebas de la autorización la quitan)
+    await setDoc(doc(db, "autorizaciones/uid-admin"), { hasta: Date.now() + 3600e3, por: "herrerajoicer@gmail.com" });
     await setDoc(doc(db, "estudiantes/est1"), { nombre: "Ana", grado: "1er Grado", telefonoAcudiente: "0414" });
     await setDoc(doc(db, "estudiantes_docentes/est1"), { nombre: "Ana", grado: "1er Grado" });
     await setDoc(doc(db, "pagos/pag1"), { nombre: "Ana", total: 45 });
@@ -460,4 +470,62 @@ test("sin conexión: un recibo pendiente recibe su número correlativo, y nada m
   // ya numerado: no se puede volver a cambiar
   await assertFails(numerar(admin, { ...bien, factura: "FAC-000009", recibo: 9 }, 9));
   await assertFails(updateDoc(doc(admin, "pagos/pag1"), { total: 1 }));
+});
+
+test("autorización del día: sin ella, la administradora y control de estudio no leen ni cobran nada", async () => {
+  await entorno.withSecurityRulesDisabled((ctx) =>
+    setDoc(doc(ctx.firestore(), "autorizaciones/uid-admin"), { hasta: 0 })
+  );
+  const adm = como("adminSinPermiso");
+  await assertFails(getDoc(doc(adm, "estudiantes/est1")));
+  await assertFails(getDoc(doc(adm, "pagos/pag1")));
+  await assertFails(setDoc(doc(adm, "pagos/nuevo"), { total: 10, ...firma("administradora") }));
+  await assertFails(getDoc(doc(adm, "config/institucion")));
+  const ctl = como("control");
+  await assertFails(getDocs(collection(ctl, "notas")));
+  await assertFails(setDoc(doc(ctl, "notas/est1_Lapso 2"), { estId: "est1", Matemáticas_lapso: "18" }));
+  // Un docente sin control de estudio entra normal
+  await assertSucceeds(getDocs(collection(como("docente"), "notas")));
+});
+
+test("autorización del día: cada quien la pide, pero no se puede autorizar a sí mismo", async () => {
+  const pedido = {
+    correo: "control@example.com",
+    nombre: "Control",
+    rol: "docente",
+    pide: "2026-10-27",
+    pideHora: "07:50",
+  };
+  const ctl = como("control");
+  await assertSucceeds(setDoc(doc(ctl, "autorizaciones/uid-control"), pedido));
+  await assertSucceeds(getDoc(doc(ctl, "autorizaciones/uid-control")));
+  await assertFails(setDoc(doc(ctl, "autorizaciones/uid-control"), { ...pedido, hasta: Date.now() + 3600e3 }));
+  await assertFails(updateDoc(doc(ctl, "autorizaciones/uid-control"), { hasta: Date.now() + 3600e3 }));
+  await assertFails(setDoc(doc(ctl, "autorizaciones/uid-otro"), pedido)); // la de otro, no
+  await assertFails(getDoc(doc(ctl, "autorizaciones/uid-admin")));
+  await assertFails(setDoc(doc(como("desconocido"), "autorizaciones/uid-intruso"), pedido)); // sin rol, no pide
+  // La administradora pide la suya aunque su autorización haya vencido
+  await entorno.withSecurityRulesDisabled((ctx) =>
+    setDoc(doc(ctx.firestore(), "autorizaciones/uid-admin"), { hasta: 0 })
+  );
+  await assertSucceeds(
+    updateDoc(doc(como("adminSinPermiso"), "autorizaciones/uid-admin"), { pide: "2026-10-27", pideHora: "08:00" })
+  );
+  await assertFails(
+    updateDoc(doc(como("adminSinPermiso"), "autorizaciones/uid-admin"), { hasta: Date.now() + 3600e3 })
+  );
+  // El director autoriza hasta medianoche, y desde ahí entran
+  const dir = como("director");
+  await assertSucceeds(getDocs(collection(dir, "autorizaciones")));
+  await assertSucceeds(
+    setDoc(
+      doc(dir, "autorizaciones/uid-control"),
+      { hasta: Date.now() + 3600e3, por: "herrerajoicer@gmail.com" },
+      { merge: true }
+    )
+  );
+  await assertSucceeds(getDocs(collection(ctl, "notas")));
+  // Y quita el acceso: hasta = 0
+  await assertSucceeds(setDoc(doc(dir, "autorizaciones/uid-control"), { hasta: 0 }, { merge: true }));
+  await assertFails(getDocs(collection(ctl, "notas")));
 });

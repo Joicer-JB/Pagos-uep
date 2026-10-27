@@ -33,6 +33,9 @@ rules_version = '2';
 //      solo los hace el director.
 //  13. (Octubre 2026) Ya no hay cuenta fija de notas (notasjjs@gmail.com): cada docente, también control de
 //      estudio, entra con su propia cuenta creada en ⚙️ Config → Docentes, que el director desactiva o elimina.
+//  14. (Octubre 2026) Autorización del día: la administradora y control de estudio solo leen o escriben algo si el
+//      director los autorizó hoy ("autorizaciones/<uid>".hasta, que vence a medianoche). Mientras tanto solo pueden
+//      pedir la autorización.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -43,14 +46,35 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function mail() { return request.auth.token.email.lower(); }
     function isDirector() { return signedIn() && mail() == 'herrerajoicer@gmail.com'; }
-    function isAdmin()    { return signedIn() && mail() == 'josefajsanquez@gmail.com'; }
+    function esSecretaria() { return signedIn() && mail() == 'josefajsanquez@gmail.com'; }
+    // Autorizado por el director hasta hoy a medianoche
+    function autorizadoHoy() {
+      let a = /databases/$(database)/documents/autorizaciones/$(request.auth.uid);
+      return exists(a) && get(a).data.get('hasta', 0) > request.time.toMillis();
+    }
+    function isAdmin()    { return esSecretaria() && autorizadoHoy(); }
     function isStaff()    { return isDirector() || isAdmin(); }
     function perfilPath() { return /databases/$(database)/documents/usuarios/$(request.auth.uid); }
+    // Control de estudio (perfil con controlEstudio) necesita, además, la autorización del día
     function isDocente() {
       return signedIn()
         && exists(perfilPath())
         && get(perfilPath()).data.get('rol', '') == 'docente'
-        && get(perfilPath()).data.get('activo', true) != false;
+        && get(perfilPath()).data.get('activo', true) != false
+        && (get(perfilPath()).data.get('controlEstudio', false) != true || autorizadoHoy());
+    }
+
+    // ───────────── Autorización del día ─────────────
+    // Cada quien pide la suya (solo esos campos: no se puede autorizar a sí mismo); el director autoriza hasta
+    // medianoche (hasta, en milisegundos) o quita el acceso (hasta: 0).
+    function puedePedir(uid) { return signedIn() && request.auth.uid == uid && (esSecretaria() || exists(perfilPath())); }
+    function soloPedido(datos) { return datos.hasOnly(['correo', 'nombre', 'rol', 'pide', 'pideHora']); }
+    match /autorizaciones/{uid} {
+      allow read:   if isDirector() || (signedIn() && request.auth.uid == uid);
+      allow create: if isDirector() || (puedePedir(uid) && soloPedido(request.resource.data.keys()));
+      allow update: if isDirector()
+        || (puedePedir(uid) && soloPedido(request.resource.data.diff(resource.data).affectedKeys()));
+      allow delete: if isDirector();
     }
 
     // ───────────── Perfiles de usuario (docentes) ─────────────

@@ -11,7 +11,7 @@ function renderLogin() {
     <div><label class="field-label">Correo electrónico</label><input class="inp" type="email" id="l-email" placeholder="tucorreo@gmail.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
     <div><label class="field-label">Contraseña</label><input class="inp" type="password" id="l-pwd" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/></div>
   </div>
-  ${avisoSalidaInactividad()}
+  ${avisoSalidaInactividad()}${avisoSalidaAutorizacion()}
   <div id="login-err" style="margin-top:0.4rem"></div>
   <button class="btn btn-primary btn-full" id="login-btn" style="margin-top:0.85rem" onclick="doLogin()">🔐 Entrar al Sistema</button>
   <div style="text-align:center;margin-top:0.6rem"><button type="button" id="login-olvide" onclick="olvideClave()" style="background:none;border:none;color:#00509e;font-size:0.8rem;text-decoration:underline;cursor:pointer;font-family:inherit">¿Olvidaste tu contraseña?</button></div>
@@ -75,10 +75,17 @@ async function rolDe(user) {
   return null;
 }
 // Abre el sistema con el rol indicado. Solo carga los datos una vez aunque la llamen doLogin y el aviso de Firebase.
-function iniciarSesion({ rol, perfil }) {
+// La secretaria y control de estudio esperan antes la autorización del director (autorizaciones.js).
+function iniciarSesion(r) {
+  if (auth || _espera) return;
+  if (necesitaAutorizacion(r)) return esperarAutorizacion(r);
+  abrirSesion(r);
+}
+function abrirSesion({ rol, perfil }) {
   if (auth) return;
   try {
     sessionStorage.removeItem("salidaPorInactividad");
+    sessionStorage.removeItem("salidaSinAutorizacion");
   } catch (e) {}
   rolUsuario = rol;
   if (perfil) usuarioActual = perfil;
@@ -86,6 +93,7 @@ function iniciarSesion({ rol, perfil }) {
   tabActual = rol === "docente" ? "notas" : "dashboard";
   auth = true;
   cargarTodo();
+  escucharAutorizaciones();
 }
 // Botón «Entrar»: inicia sesión en Firebase y comprueba que el usuario tenga un rol
 async function doLogin() {
@@ -223,6 +231,8 @@ async function logout(op) {
   const compartido = equipoCompartido(rolUsuario);
   if (compartido && !(await listoParaSalir(automatico))) return;
   detenerTiempoReal();
+  detenerEspera();
+  dejarDeEscucharAutorizaciones();
   olvidarFichasDocentes();
   const saliendo = Promise.resolve(fbAuth.signOut()).catch(() => {});
   auth = false;
@@ -237,7 +247,7 @@ async function logout(op) {
   notas = {};
   if (compartido) {
     try {
-      if (automatico) sessionStorage.setItem("salidaPorInactividad", "1");
+      if (automatico && !op.sinAutorizacion) sessionStorage.setItem("salidaPorInactividad", "1");
     } catch (e) {}
     await saliendo;
     return borrarCopiaDelEquipo();

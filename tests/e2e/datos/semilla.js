@@ -260,6 +260,11 @@ const semilla = {
         activo: true,
       },
     },
+    // La secretaria ya está autorizada (hasta muy lejos) para que las pruebas entren directo; la espera se
+    // prueba en autorizacion.test.js
+    autorizaciones: {
+      "uid-admin": { correo: "josefajsanquez@gmail.com", rol: "administradora", hasta: 4102444800000 },
+    },
     usuarios: {
       "uid-docente": {
         nombre: "Profesora Prueba",

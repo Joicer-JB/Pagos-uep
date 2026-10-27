@@ -83,6 +83,22 @@ Un Excel con varios grados también sirve: elige «📚 Varios grados» y pon la
 (el nombre de la hoja es el grado: «1er Año», «II Grupo»…). Un **Word con dos grupos** (por ejemplo Maternal e
 I Grupo, que lleva una misma maestra) también: con «📚 Varios grados», cada parte va al grado que dice su título.
 
+## 🔐 Autorización del día (secretaria y control de estudio)
+
+Cuando la secretaria o la encargada de control de estudio entran, ven **«⏳ Esperando la autorización del
+director»** y no pueden ver ni cambiar nada (la base de datos misma no las deja) hasta que tú las autorices:
+
+- Si tienes la plataforma abierta, te sale abajo el aviso **«🔔 … pide entrar»** con el botón **✅ Autorizar hoy**
+  (y una notificación del teléfono o la computadora si le diste permiso a los avisos). Al tocarlo, a ella se le abre
+  la plataforma sola.
+- En **⚙️ Config → 👨‍🏫 Docentes → 🔐 Accesos de hoy** ves cómo está cada una y puedes **autorizarla antes de que
+  llegue** (la secretaria aparece ahí desde la primera vez que pide entrar).
+- La autorización vale **hasta la medianoche**: al día siguiente vuelve a pedirla.
+- **🔒 Quitar acceso** se la quita en el momento: si está usando la plataforma, se le cierra la sesión.
+
+> El aviso llega mientras tengas la plataforma abierta (en el teléfono o la computadora). Si no la tienes abierta,
+> ábrela y te aparece el pedido, o déjala autorizada temprano desde «Accesos de hoy».
+
 ## Control de estudio
 
 Por ahora las notas las carga **la encargada de control de estudio**. Créale su cuenta en ⚙️ Config → 👨‍🏫 Docentes y
