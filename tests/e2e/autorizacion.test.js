@@ -114,5 +114,10 @@ test("el director ve el pedido al instante, lo autoriza hoy y luego le quita el 
   await s.pagina.waitForFunction(() => __DATOS_FALSOS__.autorizaciones.get("uid-admin").hasta === 0);
   await s.pagina.waitForSelector("#accesos-hoy button:has-text('Autorizar hoy')");
   assert.equal(await s.pagina.$("#pedidos-autorizacion"), null); // no reaparece como pedido
+  // Al salir deja de escuchar los pedidos
+  assert.equal(await s.llamar(`__OTRO_EQUIPO__.oyentes("autorizaciones")`), 1);
+  await s.llamar(`logout()`);
+  await s.pagina.waitForSelector("#l-email");
+  assert.equal(await s.llamar(`__OTRO_EQUIPO__.oyentes("autorizaciones")`), 0);
   assert.deepEqual(s.errores, []);
 });

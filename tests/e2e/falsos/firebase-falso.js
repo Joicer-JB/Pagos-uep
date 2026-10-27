@@ -277,7 +277,8 @@
       coleccion(col).delete(id);
       avisarCambio(col, false);
     },
-    oyentes: () => oyentes.length,
+    // Escuchas de datos (sin la de la autorización del día); con una colección, solo las de esa colección
+    oyentes: (col) => oyentes.filter((o) => (col ? o.query._col === col : o.query._col !== "autorizaciones")).length,
   };
 
   class CollectionReference extends Query {
