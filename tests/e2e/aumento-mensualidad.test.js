@@ -36,6 +36,10 @@ test("el director agrega +5 $ desde noviembre: de noviembre en adelante sube, se
   await llamar(`window.confirm = (m) => { window.__PREGUNTA__ = m; return true; }`);
   await s.pagina.click("#aumentos-mens .btn-success");
   await s.pagina.waitForFunction(() => (__DATOS_FALSOS__.config.get("cobranza").aumentos || []).length === 1);
+  // Lo guardado se ve en la pantalla cuando termina de guardarse (cobCfg al día y la pestaña redibujada)
+  await s.pagina.waitForFunction(() =>
+    /Desde Noviembre 2026/i.test(document.getElementById("aumentos-mens").textContent)
+  );
   assert.match(await llamar(`window.__PREGUNTA__`), /Desde Noviembre 2026 la mensualidad de \d+ estudiante\(s\) sube/i);
   const a = (await guardado()).aumentos[0];
   assert.deepEqual([a.desde, a.monto, a.por], ["2026-11", 5, "herrerajoicer@gmail.com"]);
@@ -59,11 +63,11 @@ test("guardar las cuotas del año no borra el aumento; quitarlo vuelve al precio
   // Al guardar las cuotas no se cambia la mensualidad de las fichas; quitar el aumento sí se confirma
   await llamar(`window.confirm = (m) => /Quitar el aumento/.test(m)`);
   await llamar(`guardarCobCfg()`);
-  await s.pagina.waitForTimeout(200);
   assert.equal((await guardado()).aumentos.length, 1);
   await s.pagina.evaluate(() => (document.querySelector("#aumentos-mens").closest("details").open = true));
   await s.pagina.click("#aumentos-mens button:has-text('Quitar')");
   await s.pagina.waitForFunction(() => __DATOS_FALSOS__.config.get("cobranza").aumentos.length === 0);
+  await s.pagina.waitForFunction(() => cobCfg.aumentos.length === 0);
   assert.equal((await cuotas())["2026-11"], 45);
   assert.deepEqual(s.errores, []);
 });
