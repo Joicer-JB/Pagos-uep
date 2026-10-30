@@ -102,8 +102,9 @@ test("arrastrar con el dedo sube y baja la página, sin abrir lo que estaba deba
   await s.pagina.mouse.move(x, y - 300, { steps: 10 });
   await s.pagina.waitForTimeout(150); // sin impulso: se soltó quieto
   await s.pagina.mouse.up();
+  // La página se mueve 1,6 veces lo que se arrastró (desde que empezó a moverse, pasados los 10 px de margen)
   const bajo = await llamar(`Math.round(window.scrollY)`);
-  assert.ok(bajo >= 250 && bajo <= 320, "bajó lo que se arrastró: " + bajo);
+  assert.ok(bajo >= 420 && bajo <= 490, "bajó 1,6 veces lo que se arrastró: " + bajo);
   assert.equal(await llamar(`modalActual`), null, "no se abrió el estudiante que estaba debajo");
   // Arrastrar hacia abajo vuelve a subir
   await s.pagina.mouse.move(x, 200);
@@ -111,7 +112,23 @@ test("arrastrar con el dedo sube y baja la página, sin abrir lo que estaba deba
   await s.pagina.mouse.move(x, 450, { steps: 10 });
   await s.pagina.waitForTimeout(150);
   await s.pagina.mouse.up();
-  assert.ok((await llamar(`window.scrollY`)) < bajo - 200);
+  assert.ok((await llamar(`window.scrollY`)) < bajo - 300);
+  // Soltar en movimiento: sigue deslizándose después de soltar y frena sola
+  await llamar(`window.scrollTo(0, 0)`);
+  await s.pagina.mouse.move(x, 500);
+  await s.pagina.mouse.down();
+  for (let k = 1; k <= 8; k++) {
+    await s.pagina.mouse.move(x, 500 - k * 25);
+    await s.pagina.waitForTimeout(10);
+  }
+  await s.pagina.mouse.up();
+  const alSoltar = await llamar(`window.scrollY`);
+  await s.pagina.waitForTimeout(2500);
+  const despues = await llamar(`window.scrollY`);
+  assert.ok(despues > alSoltar + 150, `siguió deslizándose: ${alSoltar} → ${despues}`);
+  await s.pagina.waitForTimeout(300);
+  assert.equal(await llamar(`window.scrollY`), despues, "y se detuvo");
+  assert.equal(await llamar(`modalActual`), null);
   // Un toque sin arrastrar sigue funcionando
   await llamar(`window.scrollTo(0, 0)`);
   await s.pagina.locator(".list-item").first().click();

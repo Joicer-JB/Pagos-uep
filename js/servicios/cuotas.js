@@ -16,10 +16,20 @@
 // BECA: estudiante.beca = % de la mensualidad que no paga (100 = becado todo el año, 50 = media beca), con becaMotivo.
 // MES EXONERADO: el director exonera la mensualidad de un mes: estudiante.mesesExonerados = {"2026-12": {motivo, por,
 // fecha}}. Ese mes no se cobra (ni genera recargo); lo que ya se hubiera pagado de él pasa a los otros meses.
+// AUMENTO DE MENSUALIDAD: config.aumentos = [{desde: "YYYY-MM", monto, por, fecha}]. Desde ese mes la mensualidad de
+// todos los que pagan mensualidad sube ese monto; los meses anteriores quedan con su precio. Si hay varios, se suman.
+// La mensualidad de la ficha (y la de la estructura de costos) es la del inicio del año: no se cambia.
 let cobCfg = null;
 const becaDe = (e) => Math.min(100, Math.max(0, Number(e && e.beca) || 0));
-// Lo que paga cada mes, con la beca descontada
-const mensualidadDe = (e) => r2((Number(e.mensualidad) || 0) * (1 - becaDe(e) / 100));
+const aumentoEn = (ym) =>
+  ((cobCfg && cobCfg.aumentos) || []).reduce((s, a) => (a.desde <= ym ? r2(s + a.monto) : s), 0);
+// Mensualidad de un mes (por defecto, la de este mes): la de su ficha más los aumentos hasta ese mes, sin la beca
+const mensualidadPlena = (e, ym) => {
+  const base = Number(e.mensualidad) || 0;
+  return base > 0 ? r2(base + aumentoEn(ym || todayStr().slice(0, 7))) : 0;
+};
+// Lo que paga ese mes, con la beca descontada
+const mensualidadDe = (e, ym) => r2(mensualidadPlena(e, ym) * (1 - becaDe(e) / 100));
 const PLANES_COSTO = [
   ["inicialCompleto", "Inicial · tiempo completo"],
   ["inicialMedio", "Inicial · medio tiempo"],
@@ -72,6 +82,9 @@ async function cargarCobCfg() {
             : null,
           carnet: montoCfg(d.carnet),
           papeleria: montoCfg(d.papeleria),
+          aumentos: (Array.isArray(d.aumentos) ? d.aumentos : [])
+            .filter((a) => a && /^\d{4}-\d{2}$/.test(a.desde || "") && Number(a.monto) > 0)
+            .map((a) => ({ ...a, monto: r2(Number(a.monto)) })),
           inscripcionDesde: /^\d{4}-\d{2}-\d{2}$/.test(d.inscripcionDesde || "")
             ? d.inscripcionDesde
             : sumarMeses(d.primerMes, -3) + "-01",
@@ -139,7 +152,6 @@ function pagosDeEstudiante(e) {
 function calcCuotas(e, hoy) {
   hoy = hoy || todayStr();
   if (!cobCfgActiva() || !activo(e)) return null;
-  const m = mensualidadDe(e);
   const exonerados = e.mesesExonerados && typeof e.mesesExonerados === "object" ? e.mesesExonerados : {};
   const lista = [];
   for (let k = 0; k < cobCfg.cuotas; k++) {
@@ -150,7 +162,7 @@ function calcCuotas(e, hoy) {
       ym,
       mes: nombreMesYM(ym),
       vence: ym + "-" + String(cobCfg.diaVence).padStart(2, "0"),
-      monto: exonerado ? 0 : m,
+      monto: exonerado ? 0 : mensualidadDe(e, ym),
       exonerado,
     });
   }
@@ -353,7 +365,7 @@ function htmlEstadoCuenta(e) {
               : `<span class="badge badge-gray">⏳ Por vencer</span>`;
   return `<div class="card" style="padding:0.75rem;margin:0.75rem 0">
     <div style="font-size:0.62rem;color:#003366;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px">📅 Estado de cuenta · mensualidades</div>
-    ${c.beca > 0 && e.mensualidad > 0 ? `<div class="alert-item alert-info" style="font-size:0.75rem;margin-bottom:6px">🎓 ${c.beca >= 100 ? "Becado todo el año: no paga mensualidades" : `Beca del ${c.beca}%: paga ${fmt(mensualidadDe(e))} de ${fmt(Number(e.mensualidad))} al mes`}${e.becaMotivo ? " · " + escHtml(e.becaMotivo) : ""}</div>` : ""}
+    ${c.beca > 0 && e.mensualidad > 0 ? `<div class="alert-item alert-info" style="font-size:0.75rem;margin-bottom:6px">🎓 ${c.beca >= 100 ? "Becado todo el año: no paga mensualidades" : `Beca del ${c.beca}%: paga ${fmt(mensualidadDe(e))} de ${fmt(mensualidadPlena(e))} al mes`}${e.becaMotivo ? " · " + escHtml(e.becaMotivo) : ""}</div>` : ""}
     ${
       !(e.mensualidad > 0)
         ? `<div style="font-size:0.8rem;color:#888">Sin mensualidad asignada (no se generan cuotas)</div>`
@@ -449,6 +461,7 @@ async function guardarCobCfg() {
       carnet,
       papeleria,
       inscripcionDesde,
+      aumentos: (cobCfg && cobCfg.aumentos) || [],
     };
     await db.collection("config").doc("cobranza").set(nueva);
     cobCfg = nueva;
@@ -518,7 +531,71 @@ function htmlCfgCuotas() {
     </div>
     ${htmlCfgCostos()}
     <button class="btn btn-primary btn-sm" onclick="guardarCobCfg()">💾 Guardar</button>
+    ${c ? htmlAumentos() : ""}
   </details>`;
+}
+// 📈 Aumento de mensualidad desde un mes (se guarda aparte del formulario de cuotas)
+function htmlAumentos() {
+  const lista = cobCfg.aumentos || [];
+  const meses = Array.from({ length: cobCfg.cuotas }, (_, k) => sumarMeses(cobCfg.primerMes, k));
+  const proximo = sumarMeses(todayStr().slice(0, 7), 1);
+  return `<div id="aumentos-mens" style="background:#eefaf3;border-radius:10px;padding:0.7rem;margin-top:0.8rem">
+    <div style="font-weight:700;font-size:0.82rem;color:#1a7a4a">📈 Aumento de mensualidad</div>
+    <div style="font-size:0.7rem;color:#666;margin:0.2rem 0 0.5rem">Sube la mensualidad de <strong>todos</strong> los estudiantes desde un mes. Los meses anteriores quedan con su precio y lo ya cobrado no cambia. No cambies la mensualidad de las fichas ni de la estructura de costos: el aumento se suma solo (también a los becados, según su beca).</div>
+    ${lista
+      .map(
+        (a, i) =>
+          `<div class="info-row"><span>Desde <strong>${nombreMesYM(a.desde)}</strong>: <strong>+${fmt(a.monto)}</strong></span><button class="btn btn-gray btn-sm" onclick="quitarAumento(${i})">✕ Quitar</button></div>`
+      )
+      .join("")}
+    <div class="form-row" style="margin-top:0.4rem">
+      <div class="field"><label class="field-label">Desde el mes</label><select class="inp" id="au-desde">${meses
+        .map((ym) => `<option value="${ym}" ${ym === proximo ? "selected" : ""}>${nombreMesYM(ym)}</option>`)
+        .join("")}</select></div>
+      <div class="field"><label class="field-label">Aumento ($)</label><input class="inp" id="au-monto" inputmode="decimal" placeholder="5,00" oninput="fmtInput(this)"/></div>
+    </div>
+    <button class="btn btn-success btn-sm" onclick="agregarAumento()">➕ Agregar aumento</button>
+  </div>`;
+}
+async function guardarAumentos(lista) {
+  await db.collection("config").doc("cobranza").update({ aumentos: lista });
+  cobCfg.aumentos = lista;
+  renderTabContent();
+}
+async function agregarAumento() {
+  if (rolUsuario !== "director" || !cobCfg) return;
+  const desde = (document.getElementById("au-desde") || {}).value || "";
+  const monto = r2(parseFmt((document.getElementById("au-monto") || {}).value || "0"));
+  if (!/^\d{4}-\d{2}$/.test(desde)) return alert("Elige desde qué mes");
+  if (!(monto > 0 && monto <= 1000)) return alert("Escribe cuánto sube la mensualidad en $ (ej: 5)");
+  const conMens = estudiantes.filter((e) => activo(e) && Number(e.mensualidad) > 0);
+  const ej = conMens[0];
+  if (
+    !confirm(
+      `Desde ${nombreMesYM(desde)} la mensualidad de ${conMens.length} estudiante(s) sube ${fmt(monto)}` +
+        (ej
+          ? ` (por ejemplo, ${ej.nombre}: ${fmt(mensualidadPlena(ej, desde))} → ${fmt(r2(mensualidadPlena(ej, desde) + monto))})`
+          : "") +
+        `.\nLos meses anteriores no cambian.\n\n¿Aplicar el aumento?`
+    )
+  )
+    return;
+  try {
+    await guardarAumentos([...(cobCfg.aumentos || []), { desde, monto, por: correoUsuario(), fecha: todayStr() }]);
+    mostrarToast("📈 Aumento guardado");
+  } catch (e) {
+    alert("No se pudo guardar: " + e.message);
+  }
+}
+async function quitarAumento(i) {
+  if (rolUsuario !== "director" || !cobCfg) return;
+  const a = (cobCfg.aumentos || [])[i];
+  if (!a || !confirm(`¿Quitar el aumento de ${fmt(a.monto)} desde ${nombreMesYM(a.desde)}?`)) return;
+  try {
+    await guardarAumentos(cobCfg.aumentos.filter((_, k) => k !== i));
+  } catch (e) {
+    alert("No se pudo quitar: " + e.message);
+  }
 }
 // Formulario de la estructura de costos del año (dentro de la configuración de cuotas)
 function htmlCfgCostos() {

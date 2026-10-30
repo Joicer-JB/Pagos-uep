@@ -284,6 +284,19 @@ estudiantes se irían por el aumento y si también sube la **nómina**. Ves la n
 entraría al mes, los costos, el resultado del mes y del año, y **la mensualidad con la que se cubren los costos**
 (y el aumento que haría falta).
 
+## 📈 Aumento de mensualidad
+
+En **🔔 Cobranza → ⚙️ Cuotas del año**, abajo, **📈 Aumento de mensualidad**: elige **desde qué mes** y **cuánto
+sube** (por ejemplo, desde noviembre, +5 $) y toca **➕ Agregar aumento**.
+
+- Desde ese mes la mensualidad de **todos** sube ese monto. Los meses anteriores quedan con su precio: lo que ya se
+  cobró de septiembre y octubre no cambia.
+- **No cambies** la mensualidad de las fichas ni la de la estructura de costos: el aumento se suma solo. En la ficha
+  de cada estudiante se ve el aviso «📈 Aumento: +5 $ desde noviembre».
+- A los becados también les toca, según su beca (con media beca, la mitad del aumento).
+- Si alguien ya había pagado noviembre por adelantado con el precio viejo, le queda pendiente la diferencia.
+- Si te equivocas, **✕ Quitar** lo deshace.
+
 ## Becas y meses exonerados
 
 - **Beca:** en la ficha del estudiante (✏️), **🎓 Beca (%)**. **100** = becado todo el año: no paga mensualidades.

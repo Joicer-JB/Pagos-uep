@@ -1138,3 +1138,8 @@ textarea.inp {
   background: #ffd700;
   border-color: #c9a800;
 }
+/* En modo táctil, sin el desenfoque detrás de las ventanas: en las PC sencillas hace lento el desplazamiento */
+.modo-tactil .modal-bg {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

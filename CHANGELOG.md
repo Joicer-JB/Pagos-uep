@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — Aumento de mensualidad y arrastre más rápido
+
+- **📈 Aumento de mensualidad desde un mes** (🔔 Cobranza → Cuotas del año): desde ese mes la mensualidad de todos
+  sube el monto indicado; los meses anteriores quedan con su precio. Se puede quitar.
+- **Pantalla táctil:** arrastrar mueve la página 1,6 veces lo que se mueve el dedo y, al soltar en movimiento, sigue
+  deslizándose y frena sola. Sin el desenfoque detrás de las ventanas (en las PC sencillas lo hacía lento).
+
 ## Octubre 2026 — Pantalla táctil y boletín con notas enteras
 
 - **🖐️ Modo pantalla táctil** (se activa en cada computadora desde la pantalla de entrada): al tocar un campo sale un

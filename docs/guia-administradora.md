@@ -137,7 +137,8 @@ Si al tocar un campo no sale el teclado, o arrastrar el dedo no sube ni baja la 
   y luego la vocal pone el acento (á, é…), **⌫** borra, **↵** es Enter (por ejemplo, para entrar) y **⌨️ Ocultar** lo
   esconde. Los montos de la Caja siguen con su teclado numérico.
 - **Arrastra el dedo** hacia arriba o hacia abajo para subir y bajar la página (también dentro de una ventana o una
-  tabla). Un toque normal sigue abriendo lo que tocas.
+  tabla). Si sueltas el dedo en movimiento, la página sigue deslizándose y frena sola, como en el teléfono. Un toque
+  normal sigue abriendo lo que tocas.
 
 Para quitarlo, toca el mismo botón en la pantalla de entrada.
 
