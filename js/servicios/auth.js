@@ -15,6 +15,7 @@ function renderLogin() {
   <div id="login-err" style="margin-top:0.4rem"></div>
   <button class="btn btn-primary btn-full" id="login-btn" style="margin-top:0.85rem" onclick="doLogin()">🔐 Entrar al Sistema</button>
   <div style="text-align:center;margin-top:0.6rem"><button type="button" id="login-olvide" onclick="olvideClave()" style="background:none;border:none;color:#00509e;font-size:0.8rem;text-decoration:underline;cursor:pointer;font-family:inherit">¿Olvidaste tu contraseña?</button></div>
+  <div style="text-align:center;margin-top:0.5rem">${botonModoTactil()}</div>
 </div></div>`;
 }
 // «¿Olvidaste tu contraseña?»: Firebase manda al correo un enlace para poner una contraseña nueva. Siempre dice lo

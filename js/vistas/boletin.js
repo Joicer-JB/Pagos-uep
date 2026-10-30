@@ -1,7 +1,9 @@
 // Boletín de calificaciones para los representantes (media general, y preescolar/primaria), con el escudo del colegio.
 // Hoja carta vertical: encabezado con el escudo, ficha del estudiante, resumen (promedio general, materias aprobadas y
 // promedio de cada lapso), las notas y, al pie, observaciones, firmas y sello. Las notas de media general salen de
-// servicios/calificaciones.js (ya con los cambios del consejo). También se imprimen los de todo un grado de una vez.
+// servicios/calificaciones.js (ya con los cambios del consejo, sin marcarlos: eso solo se ve en la sábana). En el
+// boletín las notas van en números enteros (9,5 → 10) y los promedios con un decimal, como en la sábana. También se
+// imprimen los de todo un grado de una vez.
 
 function imprimirBoletin(estId) {
   const est = estudiantes.find((e) => e.id === estId);
@@ -154,24 +156,28 @@ function pieBoletin(firmas) {
 }
 
 // ---- Media general ----
+// Nota entera del boletín: la de la sábana (un decimal) redondeada; desde ,5 sube (9,5 → 10)
+const notaEntera = (v) => (v === null || v === undefined ? null : Math.round(v + 1e-9));
 function cuerpoBoletinMedia(est) {
   const inst = configInst || {};
   const areas = getAreas(est.grado);
-  const defs = areas.map((m) => ({ m, d: definitivaDe(est, m) }));
+  const defs = areas.map((m) => {
+    const d = definitivaDe(est, m);
+    return { m, d, nota: notaEntera(d.nota), lapsos: d.lapsos.map((x) => notaEntera(x.nota)) };
+  });
   const ina = (l, m) => Number((notas[`${est.id}_${l}`] || {})[m + "_ina"]) || 0;
   const hayIna = areas.some((m) => LAPSOS.some((l) => ina(l, m) > 0));
-  const conNota = defs.filter(({ d }) => d.nota !== null);
-  const aprobadas = conNota.filter(({ d }) => d.nota >= 10);
-  const pendientes = conNota.filter(({ d }) => d.nota < 10).map(({ m }) => m);
+  const conNota = defs.filter(({ nota }) => nota !== null);
+  const aprobadas = conNota.filter(({ nota }) => nota >= 10);
+  const pendientes = conNota.filter(({ nota }) => nota < 10).map(({ m }) => m);
   const prom = promedioEstudiante(est, areas);
   const promLapso = LAPSOS.map((l, i) => promedioDeNotas(defs.map(({ d }) => d.lapsos[i].nota)));
   const n = (v) =>
     `<span class="b-n ${v === null ? "vacia" : v < 10 ? "rep" : ""}">${v === null ? "—" : textoNota(v)}</span>`;
   const filas = defs
-    .map(({ m, d }, i) => {
-      const nf = d.nota;
+    .map(({ m, nota: nf, lapsos }, i) => {
       return `<tr><td class="b-num">${i + 1}</td><td class="izq mat">${escHtml(m)}</td>
-      ${d.lapsos.map((x, li) => `<td>${n(x.nota)}</td>${hayIna ? `<td class="b-ina">${ina(LAPSOS[li], m) || ""}</td>` : ""}`).join("")}
+      ${lapsos.map((x, li) => `<td>${n(x)}</td>${hayIna ? `<td class="b-ina">${ina(LAPSOS[li], m) || ""}</td>` : ""}`).join("")}
       <td><div class="b-def"><strong class="${nf !== null && nf < 10 ? "rep" : ""}">${nf === null ? "—" : textoNota(nf)}</strong><span class="b-barra"><i class="${nf !== null && nf < 10 ? "rep" : ""}" style="width:${nf === null ? 0 : Math.max(0, Math.min(100, (nf / 20) * 100))}%"></i></span></div></td>
       <td>${nf === null ? "" : nf >= 10 ? '<span class="b-sit ok">Aprobada</span>' : '<span class="b-sit pend">Pendiente</span>'}</td></tr>`;
     })
@@ -188,7 +194,7 @@ function cuerpoBoletinMedia(est) {
     <tbody>${filas}</tbody>
   </table>
   ${pendientes.length ? `<div class="b-aviso"><strong>Materias pendientes:</strong> ${pendientes.map(escHtml).join(", ")}. Se recuperan en el proceso de revisión.</div>` : ""}
-  <div class="b-escala">Escala de 01 a 20 puntos · Mínima aprobatoria: 10 puntos</div>
+  <div class="b-escala">Escala de 01 a 20 puntos · Mínima aprobatoria: 10 puntos · Promedios con un decimal</div>
   ${pieBoletin([
     [inst.directora || "Lic. Ligia Herrera", "Directora"],
     [inst.coordinador || "Lic. Carlos Carrascal", "Coordinación de Media General"],

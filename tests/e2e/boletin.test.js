@@ -37,6 +37,23 @@ col.notas["est6_Lapso 2"] = {
   updatedAt: ts,
 };
 col.estudiantes.est7 = { ...col.estudiantes.est2, nombre: "Andrea Blanco", cedula: "V-30777888" };
+// Andrea: notas con decimales (como en la sábana) y una definitiva cambiada por el consejo
+const lapsoDec = (n, extra) => ({ estId: "est7", lapso: "Lapso " + n, ...extra, updatedAt: ts });
+col.notas["est7_Lapso 1"] = lapsoDec(1, {
+  Matemáticas_lapso: "9.5",
+  "Lengua y Literatura_lapso": "15.6",
+  Inglés_lapso: "12.4",
+});
+col.notas["est7_Lapso 2"] = lapsoDec(2, { Matemáticas_lapso: "9.4" });
+col.notas["est7_Lapso 3"] = lapsoDec(3, { Matemáticas_lapso: "9.6" });
+col.notas["est7_Definitiva"] = {
+  estId: "est7",
+  lapso: "Definitiva",
+  consejo: {
+    "Lengua y Literatura": { nota: 12, original: 15.6, motivo: "Acta del consejo", por: "herrerajoicer@gmail.com" },
+  },
+  updatedAt: ts,
+};
 semilla.ponerFichas(datos);
 
 let nav, s;
@@ -86,6 +103,27 @@ test("media general: escudo, ficha, resumen y notas de cada lapso con la definit
     await p.textContent(".b-firmas"),
     /Directora[\s\S]*Coordinación de Media General[\s\S]*Docente guía[\s\S]*Representante/
   );
+  await p.close();
+});
+
+test("en el boletín las notas van enteras (desde ,5 sube) y el cambio del consejo no se marca; los promedios con decimal", async () => {
+  await llamar(`imprimirBoletin("est7")`);
+  const html = await ultima();
+  const p = await enPagina(html);
+  const filas = await p.$$eval(".b-notas tbody tr", (t) =>
+    t.map((r) => [...r.children].map((c) => c.textContent.trim()))
+  );
+  // Matemáticas 9,5 · 9,4 · 9,6 → definitiva 9,5 en la sábana → 10 (aprobada). Lengua: el consejo la dejó en 12.
+  assert.deepEqual(filas, [
+    ["1", "Matemáticas", "10", "9", "10", "10", "Aprobada"],
+    ["2", "Lengua y Literatura", "16", "—", "—", "12", "Aprobada"],
+    ["3", "Inglés", "12", "—", "—", "12", "Aprobada"],
+  ]);
+  assert.doesNotMatch(html, /consejo|Acta del consejo|ajustad|modificad/i);
+  // Promedio general de las definitivas de la sábana: (9,5 + 12 + 12,4) / 3 = 11,3; el del 1er lapso, 12,5
+  const kpis = await p.$$eval(".b-kpi strong", (k) => k.map((x) => x.textContent.replace(/\s+/g, " ").trim()));
+  assert.deepEqual(kpis, ["11,3", "3 / 3", "12,5", "9,4", "9,6"]);
+  assert.equal(await llamar(`definitivaDe(estudiantes.find((e) => e.id === "est7"), "Matemáticas").nota`), 9.5); // la sábana sigue con decimal
   await p.close();
 });
 

@@ -128,6 +128,19 @@ una hoja carta con el **ORIGINAL** arriba y la **COPIA** abajo, separados por un
 mitad para el representante y otra para el archivo. El equipo recuerda la elección; desmárcala para volver a un
 solo recibo por hoja.
 
+## 🖐️ Pantalla táctil
+
+Si al tocar un campo no sale el teclado, o arrastrar el dedo no sube ni baja la página, en la pantalla de entrada toca
+**«🖐️ ¿Pantalla táctil? Activar teclado en pantalla»** (una sola vez: queda activado en esa computadora). Desde ahí:
+
+- Al tocar un campo de texto sale abajo un **teclado en pantalla**: **⇧** pone la siguiente letra en mayúscula, **´**
+  y luego la vocal pone el acento (á, é…), **⌫** borra, **↵** es Enter (por ejemplo, para entrar) y **⌨️ Ocultar** lo
+  esconde. Los montos de la Caja siguen con su teclado numérico.
+- **Arrastra el dedo** hacia arriba o hacia abajo para subir y bajar la página (también dentro de una ventana o una
+  tabla). Un toque normal sigue abriendo lo que tocas.
+
+Para quitarlo, toca el mismo botón en la pantalla de entrada.
+
 ## Imprimir desde el teléfono
 
 Al tocar 🖨️ en un recibo (o en el cierre de caja, reportes, boletines…), el documento se abre dentro de la app con
