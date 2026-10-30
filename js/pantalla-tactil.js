@@ -225,7 +225,9 @@ document.addEventListener("focusout", () => {
 
 // ---- Desplazar arrastrando ----
 // Con una pantalla táctil de verdad el navegador ya lo hace (pointerType «touch»): esto es para las que se comportan
-// como un ratón. Arrastrar más de 10 px desplaza y no cuenta como toque (no se abre lo que estaba debajo).
+// como un ratón. Arrastrar más de 10 px desplaza y no cuenta como toque (no se abre lo que estaba debajo). La página se
+// mueve un poco más que el dedo (GANANCIA) y, si se suelta en movimiento, sigue deslizándose y frena sola.
+const GANANCIA = 1.6;
 let arrastre = null,
   _sinClick = 0,
   _impulso = 0;
@@ -241,9 +243,9 @@ function contenedorDesplazable(el, vertical) {
   }
   return document.scrollingElement || document.documentElement;
 }
-function desplazar(cont, dx, dy) {
-  cont.scrollLeft += dx;
-  cont.scrollTop += dy;
+function desplazar(a, d) {
+  if (a.vertical) a.cont.scrollTop += d;
+  else a.cont.scrollLeft += d;
 }
 document.addEventListener(
   "pointerdown",
@@ -251,7 +253,7 @@ document.addEventListener(
     cancelAnimationFrame(_impulso);
     if (!modoTactil || e.pointerType === "touch" || e.button !== 0) return;
     if (e.target.closest("input, textarea, select, [contenteditable], #teclado-pantalla, #caja-pad, canvas")) return;
-    arrastre = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, v: 0, cont: null, moviendo: false };
+    arrastre = { id: e.pointerId, x0: e.clientX, y0: e.clientY, pos: 0, cont: null, moviendo: false, muestras: [] };
   },
   true
 );
@@ -259,22 +261,22 @@ document.addEventListener(
   "pointermove",
   (e) => {
     if (!arrastre || e.pointerId !== arrastre.id) return;
-    const dx = e.clientX - arrastre.x,
-      dy = e.clientY - arrastre.y;
-    if (!arrastre.moviendo) {
+    const a = arrastre,
+      dx = e.clientX - a.x0,
+      dy = e.clientY - a.y0;
+    if (!a.moviendo) {
       if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-      arrastre.moviendo = true;
-      arrastre.vertical = Math.abs(dy) >= Math.abs(dx);
-      arrastre.cont = contenedorDesplazable(e.target, arrastre.vertical);
+      a.moviendo = true;
+      a.vertical = Math.abs(dy) >= Math.abs(dx);
+      a.cont = contenedorDesplazable(e.target, a.vertical);
+      a.pos = a.vertical ? dy : dx; // desde aquí se cuenta lo que se mueve el dedo
     }
-    const d = arrastre.vertical ? dy : dx,
-      dt = Math.max(1, e.timeStamp - arrastre.t);
-    if (arrastre.vertical) desplazar(arrastre.cont, 0, -dy);
-    else desplazar(arrastre.cont, -dx, 0);
-    arrastre.v = -d / dt; // px por ms, para el impulso al soltar
-    arrastre.x = e.clientX;
-    arrastre.y = e.clientY;
-    arrastre.t = e.timeStamp;
+    const pos = a.vertical ? dy : dx;
+    desplazar(a, -(pos - a.pos) * GANANCIA);
+    a.pos = pos;
+    // Las posiciones de los últimos 100 ms dan la velocidad al soltar
+    a.muestras.push({ t: e.timeStamp, pos });
+    while (a.muestras.length > 2 && e.timeStamp - a.muestras[0].t > 100) a.muestras.shift();
     e.preventDefault();
   },
   true
@@ -285,15 +287,18 @@ function soltar(e) {
   arrastre = null;
   if (!a.moviendo) return;
   _sinClick = Date.now();
-  let v = Math.max(-4, Math.min(4, a.v)) * 16; // px por cuadro
+  const m = a.muestras,
+    ult = m[m.length - 1];
+  if (m.length < 2 || e.timeStamp - ult.t > 150) return; // se soltó quieto: no sigue
+  const vel = (ult.pos - m[0].pos) / Math.max(1, ult.t - m[0].t); // px por ms
+  let v = -Math.max(-6, Math.min(6, vel)) * GANANCIA * 16; // px por cuadro
   const paso = () => {
     if (Math.abs(v) < 0.5) return;
-    if (a.vertical) desplazar(a.cont, 0, v);
-    else desplazar(a.cont, v, 0);
-    v *= 0.93;
+    desplazar(a, v);
+    v *= 0.95;
     _impulso = requestAnimationFrame(paso);
   };
-  if (e.timeStamp - a.t < 80) _impulso = requestAnimationFrame(paso);
+  if (Math.abs(vel) > 0.2) _impulso = requestAnimationFrame(paso);
 }
 document.addEventListener("pointerup", soltar, true);
 document.addEventListener("pointercancel", soltar, true);

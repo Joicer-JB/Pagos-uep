@@ -319,7 +319,7 @@ function renderModalVerEstudiante(m) {
         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
           <div style="flex:1;background:#f0f4ff;border-radius:10px;padding:0.75rem;text-align:center">
             <div style="font-size:0.62rem;color:#888">Mensualidad</div>
-            <div style="font-weight:800;color:#003366">${fmt(mensualidadDe(e))}</div>${becaDe(e) ? `<div style="font-size:0.62rem;color:#1a7a4a">🎓 ${becaDe(e) >= 100 ? "Becado" : "Beca " + becaDe(e) + "% de " + fmt(e.mensualidad || 0)}</div>` : ""}
+            <div style="font-weight:800;color:#003366">${fmt(mensualidadDe(e))}</div>${becaDe(e) ? `<div style="font-size:0.62rem;color:#1a7a4a">🎓 ${becaDe(e) >= 100 ? "Becado" : "Beca " + becaDe(e) + "% de " + fmt(mensualidadPlena(e))}</div>` : ""}
           </div>
           <div style="flex:1;background:#e6f7ef;border-radius:10px;padding:0.75rem;text-align:center">
             <div style="font-size:0.62rem;color:#888">Total Pagado</div>
@@ -557,9 +557,13 @@ async function eliminarEstudiante(id) {
 // Mensualidad e inscripción que corresponden a la ficha según la estructura de costos del año
 function notaMensualidadEst(e) {
   const c = costoDe(e);
-  return c
-    ? `Según la estructura de costos: mensualidad ${fmt(c.mensualidad)} · inscripción ${fmt(c.inscripcion)}`
-    : "";
+  const aum = ((cobCfg && cobCfg.aumentos) || [])
+    .map((a) => `+${fmt(a.monto)} desde ${nombreMesYM(a.desde)}`)
+    .join(", ");
+  return (
+    (c ? `Según la estructura de costos: mensualidad ${fmt(c.mensualidad)} · inscripción ${fmt(c.inscripcion)}` : "") +
+    (aum ? `${c ? " · " : ""}📈 Aumento: ${aum} (se suma solo)` : "")
+  );
 }
 // Al cambiar el grado o el horario: muestra el horario solo en inicial y llena la mensualidad si está vacía
 // (o si se cambió el horario, que define el monto)
