@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Octubre 2026 — Pantalla táctil y boletín con notas enteras
+
+- **🖐️ Modo pantalla táctil** (se activa en cada computadora desde la pantalla de entrada): al tocar un campo sale un
+  teclado en pantalla propio (con mayúsculas, acentos, ñ, @ y .com), y arrastrar el dedo sube y baja la página. Es
+  para pantallas táctiles en las que no sale el teclado de Windows y arrastrar selecciona en vez de desplazar.
+- **Boletín:** las notas de cada lapso y la definitiva van en números enteros (desde ,5 sube); los promedios, con un
+  decimal. No dice que el consejo cambió una nota (eso solo se ve en la sábana).
+
 ## Octubre 2026 — Autorización del día
 
 - La **secretaria** y **control de estudio**, al entrar, esperan a que el director las autorice; vale hasta la

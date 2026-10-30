@@ -135,6 +135,13 @@ grado y pulsa **🖨️ Boletines de todo …**: sale uno por hoja, en orden alf
 datos de ⚙️ Configuración → 🏫 Institución (nombre, dirección, código del plantel, directora y coordinadores) y las notas ya
 con los cambios del consejo.
 
+- En el boletín las notas van en **números enteros**: la de la sábana redondeada, desde ,5 sube (9,5 → 10; 15,4 → 15).
+  Los **promedios** (general y de cada lapso) llevan un decimal.
+- El boletín **no dice** que el consejo cambió una nota: sale la nota final y nada más. Eso solo se ve en la sábana
+  (columna M) y en 📝 Notas.
+- En Inicial y Primaria cada área lleva **los indicadores que le pongas** en ⚙️ Config → Indicadores (3 o más), y cada
+  indicador su literal en cada lapso.
+
 ## Cuadro de honor (media general)
 
 En **📝 Notas → 🏆 Cuadro de honor**, por lapso o del año completo:

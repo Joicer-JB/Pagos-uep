@@ -1045,3 +1045,96 @@ textarea.inp {
 .pedido-aut .btn {
   margin-left: auto;
 }
+
+/* 🖐️ Modo pantalla táctil (pantalla-tactil.js): teclado en pantalla y arrastrar para desplazar */
+.btn-modo-tactil {
+  background: none;
+  border: 1px dashed #b8c6e0;
+  border-radius: 20px;
+  color: #00509e;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.modo-tactil body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.modo-tactil input,
+.modo-tactil textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.modo-tactil img,
+.modo-tactil a {
+  -webkit-user-drag: none;
+}
+.teclado-pantalla {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2600;
+  background: #dfe6f2;
+  box-shadow: 0 -6px 24px rgba(0, 30, 80, 0.28);
+  padding: 6px 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.tp-fila {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.tp-tecla {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 54px;
+  border: 1px solid #c3cee2;
+  border-radius: 9px;
+  background: #fff;
+  color: #003366;
+  font-size: 1.3rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 2px 0 #b8c6e0;
+}
+.tp-tecla:active {
+  background: #e8f0fe;
+  transform: translateY(1px);
+}
+.tp-borrar,
+.tp-mayus,
+.tp-acento {
+  background: #fff4e5;
+}
+.tp-enter {
+  background: #1a9e5c;
+  color: #fff;
+  border-color: #1a9e5c;
+}
+.tp-espacio {
+  flex-grow: 5;
+  font-size: 0.9rem;
+  color: #667;
+}
+.tp-ocultar {
+  flex-grow: 2;
+  font-size: 0.9rem;
+  background: #003366;
+  color: #fff;
+  border-color: #003366;
+}
+.tp-activa {
+  background: #ffd700;
+  border-color: #c9a800;
+}
