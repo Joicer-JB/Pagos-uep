@@ -6,7 +6,7 @@
 // nómina y notas del año escolar que está viendo. En el año actual, pagos, estudiantes y finanzas
 // quedan en tiempo real (ver servicios/tiempo-real.js).
 async function cargarTodo() {
-  document.getElementById("app").innerHTML = '<div class="loading">⏳ Cargando datos del sistema...</div>';
+  document.getElementById("app").innerHTML = pantallaCarga("Cargando los datos del colegio…");
   detenerTiempoReal();
   try {
     let sp, se, st, sf, sn;

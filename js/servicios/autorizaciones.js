@@ -72,8 +72,8 @@ async function terminarAutorizacion(motivo) {
 }
 function renderEsperaAutorizacion() {
   const nombre = (_espera && _espera.r.perfil && _espera.r.perfil.nombre) || correoUsuario();
-  return `<div class="login-wrap"><div class="login-card espera-autorizacion" style="text-align:center">
-    <div class="login-logo" style="justify-content:center"><img src="data:image/png;base64,${LOGO}" alt="Logo"/><div><h1>${EMPRESA}</h1></div></div>
+  return `<div class="login-wrap">${fondoEntrada()}<div class="login-card espera-autorizacion" style="text-align:center">
+    <div class="login-logo" style="justify-content:center">${escudo3D()}<div><h1>${EMPRESA}</h1></div></div>
     <div style="font-size:2.4rem;margin:0.6rem 0">⏳</div>
     <h2 style="color:#003366;font-size:1.05rem;margin:0 0 0.4rem">Esperando la autorización del director</h2>
     <p style="font-size:0.85rem;color:#555;margin:0 0 0.6rem">Hola, <strong>${escHtml(nombre)}</strong>. Ya se le avisó al director: cuando te autorice, la plataforma se abre sola. No cierres esta ventana.</p>
@@ -102,6 +102,7 @@ function escucharAutorizaciones() {
     (snap) => {
       autorizaciones = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       pintarPedidosAutorizacion();
+      pintarInsignias();
       // Solo se redibuja la tarjeta (no la pestaña entera: no se pierde lo que el director esté escribiendo)
       const tarjeta = document.getElementById("accesos-hoy");
       if (tarjeta) tarjeta.outerHTML = htmlAccesosHoy();

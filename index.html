@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Sistema de Gestión - U.E.P Josefa Joaquina Sánchez</title>
     <link rel="icon" type="image/png" href="assets/logo.png" />
     <!-- App instalable (ver sw.js y js/servicios/app-instalable.js) -->
@@ -10,10 +10,13 @@
     <meta name="theme-color" content="#003366" />
     <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="JJS Gestión" />
     <link rel="stylesheet" href="css/estilos.css" />
     <link rel="stylesheet" href="css/animaciones.css" />
     <link rel="stylesheet" href="css/diseno.css" />
+    <link rel="stylesheet" href="css/navegacion.css" />
+    <link rel="stylesheet" href="css/oscuro.css" />
 
     <!-- Bibliotecas externas. Las de jsDelivr llevan versión exacta y huella (integrity): si el archivo del CDN
          cambiara, el navegador no lo ejecuta. tests/unidad/estructura.test.js comprueba las huellas. -->
@@ -34,7 +37,14 @@
     ></script>
   </head>
   <body>
-    <div class="app" id="app"><div class="loading">⏳ Iniciando sistema...</div></div>
+    <div class="app" id="app">
+      <div class="splash" role="status">
+        <div class="splash-escudo"><img src="assets/iconos/icono-192.png" alt="" /></div>
+        <div class="splash-nombre">U.E.P. Josefa Joaquina Sánchez</div>
+        <div class="splash-txt">Iniciando…</div>
+        <div class="splash-barra"><i></i></div>
+      </div>
+    </div>
 
     <!-- Código de la aplicación. El orden importa: primero configuración y utilidades, luego servicios y vistas, y al final el arranque (app.js). -->
     <script src="js/logo.js"></script>
@@ -45,6 +55,7 @@
     <script src="js/utils/grados.js"></script>
     <script src="js/estado.js"></script>
     <script src="js/interfaz.js"></script>
+    <script src="js/navegacion.js"></script>
     <script src="js/animaciones.js"></script>
     <script src="js/pantalla-tactil.js"></script>
     <script src="js/servicios/auth.js"></script>
@@ -69,6 +80,7 @@
     <script src="js/servicios/calificaciones.js"></script>
     <script src="js/servicios/asignaciones.js"></script>
     <script src="js/vistas/dashboard.js"></script>
+    <script src="js/vistas/inicio-saludo.js"></script>
     <script src="js/vistas/caja.js"></script>
     <script src="js/vistas/pagos.js"></script>
     <script src="js/vistas/pagos-lote.js"></script>

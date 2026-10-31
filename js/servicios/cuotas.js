@@ -82,6 +82,7 @@ async function cargarCobCfg() {
             : null,
           carnet: montoCfg(d.carnet),
           papeleria: montoCfg(d.papeleria),
+          meta: Number(d.meta) > 0 ? Number(d.meta) : 0, // meta de cobranza del mes, en % (inicio-saludo.js)
           aumentos: (Array.isArray(d.aumentos) ? d.aumentos : [])
             .filter((a) => a && /^\d{4}-\d{2}$/.test(a.desde || "") && Number(a.monto) > 0)
             .map((a) => ({ ...a, monto: r2(Number(a.monto)) })),
@@ -462,6 +463,7 @@ async function guardarCobCfg() {
       papeleria,
       inscripcionDesde,
       aumentos: (cobCfg && cobCfg.aumentos) || [],
+      meta: (cobCfg && cobCfg.meta) || 0,
     };
     await db.collection("config").doc("cobranza").set(nueva);
     cobCfg = nueva;

@@ -84,28 +84,6 @@ body {
 .logout-btn:hover {
   background: rgba(255, 255, 255, 0.25);
 }
-.tabs {
-  gap: 0.15rem;
-  /* en el teléfono, un desvanecido a la derecha indica que hay más pestañas */
-  -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, #000 92%, transparent);
-  padding-right: 1.5rem;
-}
-.tab {
-  border-radius: 10px 10px 0 0;
-  min-height: 40px;
-}
-.tab.active {
-  background: rgba(255, 255, 255, 0.1);
-}
-@media (min-width: 900px) {
-  .tabs {
-    -webkit-mask-image: none;
-    mask-image: none;
-    padding-right: 0;
-  }
-}
-
 /* ---- Contenido y tarjetas ---- */
 .content {
   max-width: 1120px;
@@ -599,12 +577,6 @@ textarea.inp {
   height: 1px;
   background: #e6e9f0;
 }
-/* En el teléfono, el selector del año más angosto para que los botones de la cabecera quepan en una fila */
-@media (max-width: 520px) {
-  .header-top select {
-    max-width: 96px !important; /* su estilo en línea dice 130px */
-  }
-}
 
 /* ---- Notas de media general: evaluaciones del plan ---- */
 .evals-fila {
@@ -828,4 +800,195 @@ tr.nota-ajena .nota-input {
 .nota-input.nota-mal {
   border-color: #c0392b;
   background: #fff5f5;
+}
+
+/* ---- 🏠 Inicio: saludo y resumen del día (js/vistas/inicio-saludo.js) ---- */
+.saludo {
+  margin-bottom: 0.85rem;
+}
+.saludo-cab {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.saludo-ico {
+  font-size: 2rem;
+  line-height: 1;
+  animation: saludo-mecer 3.5s ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+@keyframes saludo-mecer {
+  50% {
+    transform: rotate(-8deg) scale(1.06);
+  }
+}
+.saludo-titulo {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 1.45rem;
+  color: var(--azul);
+  line-height: 1.15;
+}
+.saludo-fecha {
+  font-size: 0.8rem;
+  color: var(--suave);
+  margin-top: 2px;
+}
+.saludo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+.saludo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid var(--borde);
+  background: #fff;
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 0.8rem;
+  box-shadow: var(--sombra);
+  cursor: default;
+}
+button.saludo-chip {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+button.saludo-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--sombra-alta);
+}
+.saludo-chip strong {
+  color: var(--azul);
+}
+.saludo-chip.rojo strong {
+  color: var(--rojo);
+}
+.saludo-chip.dorado {
+  border-color: rgba(184, 134, 11, 0.45);
+  background: #fffbea;
+}
+.saludo-chip.cumple {
+  border-color: rgba(229, 62, 62, 0.3);
+  background: linear-gradient(90deg, #fff5f8, #fffbea);
+}
+.saludo-chip.suave {
+  color: var(--suave);
+  box-shadow: none;
+}
+
+/* ---- 🎯 Meta de cobranza del mes ---- */
+.meta-cobranza {
+  position: relative;
+  overflow: hidden;
+}
+.meta-cab {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.meta-titulo {
+  font-weight: 800;
+  color: var(--azul);
+  font-size: 0.95rem;
+}
+.meta-sub {
+  font-size: 0.78rem;
+  color: var(--suave);
+  margin-top: 2px;
+}
+.meta-pct {
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--azul);
+}
+.meta-pct small {
+  font-size: 1rem;
+  margin-left: 1px;
+}
+.meta-cobranza.cumplida .meta-pct {
+  color: var(--verde);
+}
+.meta-barra {
+  position: relative;
+  height: 14px;
+  margin: 0.75rem 0 0.55rem;
+  border-radius: 8px;
+  background: #e9eef7;
+  overflow: visible;
+}
+.meta-barra i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--pct);
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--azul), var(--azul-2) 60%, #2f8be0);
+  overflow: hidden;
+  animation: meta-llenar 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s backwards;
+}
+.meta-cobranza.cumplida .meta-barra i {
+  background: linear-gradient(90deg, var(--verde), #2ecc71 60%, var(--dorado));
+}
+/* Un brillo que recorre la barra */
+.meta-barra i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.45) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: meta-brillo 2.8s ease-in-out 1.4s infinite;
+}
+.meta-marca {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: var(--meta);
+  width: 3px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--dorado-osc);
+  box-shadow: 0 0 0 2px #fff;
+}
+@keyframes meta-llenar {
+  from {
+    width: 0;
+  }
+}
+@keyframes meta-brillo {
+  60%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+.meta-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--texto);
+}
+.meta-cobranza.cumplida .meta-pie > span {
+  font-weight: 800;
+  color: var(--verde);
+}
+.meta-editar {
+  border: 1px solid var(--borde);
+  background: none;
+  border-radius: 14px;
+  padding: 0.2rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+  color: var(--suave);
+  cursor: pointer;
 }

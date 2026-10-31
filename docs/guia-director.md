@@ -9,6 +9,33 @@ cargar la tasa BCV de un día que no la tenga. **Todo lo demás lo haces tú:** 
 mensualidades y exoneraciones, cobranza, ingresos y gastos, nómina, reportes, notas y configuración. Las reglas de
 Firestore lo exigen también: aunque alguien intentara saltarse la pantalla, la base de datos no lo permite.
 
+## 🧭 Moverse por la plataforma (PC, tablet y teléfono)
+
+- **PC y laptop:** el menú está fijo a la izquierda, ordenado en grupos: **Cobros** (Inicio, Caja, Pagos, Cobranza),
+  **Colegio** (Estudiantes, Notas, Importar), **Administración** (Finanzas, Nómina, Reportes, Gráficas) y
+  **Configuración**. Abajo del menú, quién entró y **Cerrar sesión**. Arriba, el nombre de la pestaña, 🔍 Buscar, la
+  tasa del día y el año escolar.
+- **Tablet acostada:** el mismo menú, angosto (ícono con el nombre debajo).
+- **Teléfono y tablet parada:** **☰** arriba a la izquierda abre el menú (se cierra al elegir o al tocar fuera; en
+  Android también deslizando el dedo desde el borde izquierdo). Abajo queda la barra con **Inicio, Caja, Pagos,
+  Cobranza** y **Más** (abre el menú). El año escolar y Cerrar sesión están dentro del menú.
+- **Numeritos rojos:** en 🔔 Cobranza, los estudiantes en mora; en ⚙️ Configuración, quién espera tu autorización
+  para entrar hoy.
+- **iPhone:** para tenerla como app, **📲 Instalar** explica cómo (Compartir → «Agregar a pantalla de inicio»).
+- **Teléfono:** deslizando el dedo de lado sobre la pantalla pasas a la pestaña de al lado (Inicio ↔ Caja ↔ Pagos ↔
+  Cobranza).
+- **🌓 Tema:** el botón de la barra de arriba cambia entre automático (claro u oscuro según el equipo), 🌙 oscuro y
+  ☀️ claro. Queda guardado en cada equipo. Lo que se imprime sale siempre en blanco.
+
+## 🏠 Inicio: saludo, lo de hoy y la meta del mes
+
+- Arriba, el saludo según la hora y la fecha, y lo importante de hoy: **cobrado hoy**, **cuántos deben**, quién
+  **espera tu autorización** y los **🎂 cumpleaños** de los estudiantes (hoy y en los próximos 7 días). Al tocar cada
+  dato vas a su pestaña.
+- **🎯 Meta de cobranza:** qué parte de las mensualidades de este mes ya se cobró, con una marca en la meta (80 %;
+  cámbiala con **Meta: 80 % ✏️**). Al cumplirla, **confeti** (una vez al mes en cada equipo).
+- Las cifras de arriba cuentan rápido desde 0 al entrar.
+
 ## 🔍 Buscador inteligente
 
 Botón **🔍 Buscar** de la cabecera, la barra de Inicio, **Ctrl+K** o la tecla **/**. Se escribe como se habla, y
