@@ -1,0 +1,436 @@
+/* 🌙 Tema oscuro (js/navegacion.js pone la clase «tema-oscuro» en <html>: automático según el equipo, o elegido con
+   🌓 en la barra de arriba). Los mismos colores del colegio, sobre azul noche.
+   Muchas pantallas traen colores escritos en su HTML (style="color:#888"): al final se cambian por los oscuros, solo
+   dentro de la app (lo que se imprime sigue en blanco, como el papel). */
+
+.tema-oscuro {
+  color-scheme: dark;
+  --fondo: #0b1526;
+  --sup: #13213a;
+  --sup-2: #1a2c49;
+  --sup-3: #223659;
+  --borde: rgba(148, 178, 230, 0.16);
+  --texto: #e4ebf7;
+  --texto-2: #c9d4e6;
+  --suave: #9fb0c9;
+  --azul-claro: #8cbcff;
+  --verde-claro: #4ed49a;
+  --rojo-claro: #ff7b7b;
+  --dorado-claro: #ffd34d;
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 22px rgba(0, 0, 0, 0.3);
+  --sombra-alta: 0 2px 4px rgba(0, 0, 0, 0.4), 0 14px 30px rgba(0, 0, 0, 0.4);
+}
+.tema-oscuro body {
+  background: var(--fondo);
+  color: var(--texto);
+}
+/* Lo que se imprime en el teléfono se ve como en papel */
+.tema-oscuro .impresion-capa {
+  color-scheme: light;
+  color: #1f2a3d;
+}
+
+/* ---------- Estructura ---------- */
+@media (min-width: 900px) {
+  .tema-oscuro .header {
+    background: rgba(13, 24, 43, 0.97);
+    border-bottom-color: var(--borde);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+  .tema-oscuro .header-name {
+    color: #fff;
+  }
+  .tema-oscuro .header-label {
+    color: var(--azul-claro);
+  }
+  .tema-oscuro .header .logout-btn,
+  .tema-oscuro .header .hb-anio {
+    background: var(--sup-2);
+    border-color: var(--borde);
+    color: var(--texto);
+  }
+  .tema-oscuro .header .logout-btn:hover {
+    background: var(--sup-3);
+  }
+}
+.tema-oscuro .barra-inferior {
+  background: rgba(13, 24, 43, 0.98);
+  border-top-color: var(--borde);
+}
+.tema-oscuro .bi-tab {
+  color: var(--suave);
+}
+.tema-oscuro .bi-tab.active {
+  color: #fff;
+}
+.tema-oscuro .bi-tab .insignia {
+  box-shadow: 0 0 0 2px #0d182b;
+}
+.tema-oscuro .sidebar {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.06), transparent 40%),
+    linear-gradient(180deg, #071022 0%, #0c1c36 50%, #10264a 100%);
+}
+
+/* ---------- Tarjetas, listas y cifras ---------- */
+.tema-oscuro .card,
+.tema-oscuro .stat-card,
+.tema-oscuro .list-item,
+.tema-oscuro .modal,
+.tema-oscuro .exito-caja,
+.tema-oscuro .barra-buscar,
+.tema-oscuro .empty-icon,
+.tema-oscuro .saludo-chip {
+  background: var(--sup);
+  border-color: var(--borde);
+  color: var(--texto);
+}
+.tema-oscuro .card-title {
+  border-bottom-color: var(--borde);
+}
+.tema-oscuro .card-title h2,
+.tema-oscuro .stat-val,
+.tema-oscuro .item-name,
+.tema-oscuro .item-amount,
+.tema-oscuro .section-title,
+.tema-oscuro .saludo-titulo,
+.tema-oscuro .saludo-chip strong,
+.tema-oscuro .meta-titulo,
+.tema-oscuro .meta-pct,
+.tema-oscuro .sab-est,
+.tema-oscuro .sab-detalle-t,
+.tema-oscuro .sab-detalle-prom,
+.tema-oscuro .honor-prom {
+  color: var(--azul-claro);
+}
+.tema-oscuro .stat-card.green .stat-val,
+.tema-oscuro .meta-cobranza.cumplida .meta-pct,
+.tema-oscuro .meta-cobranza.cumplida .meta-pie > span {
+  color: var(--verde-claro);
+}
+.tema-oscuro .stat-card.red .stat-val,
+.tema-oscuro .saludo-chip.rojo strong {
+  color: var(--rojo-claro);
+}
+.tema-oscuro .stat-card.gold .stat-val {
+  color: var(--dorado-claro);
+}
+.tema-oscuro .stat-label,
+.tema-oscuro .item-sub,
+.tema-oscuro .saludo-fecha,
+.tema-oscuro .meta-sub,
+.tema-oscuro .meta-editar,
+.tema-oscuro .ayuda,
+.tema-oscuro .busq-linea span:last-child {
+  color: var(--suave);
+}
+.tema-oscuro .saludo-chip.dorado {
+  background: rgba(255, 200, 0, 0.12);
+}
+.tema-oscuro .saludo-chip.cumple {
+  background: linear-gradient(90deg, rgba(229, 62, 62, 0.14), rgba(255, 200, 0, 0.12));
+}
+.tema-oscuro .meta-barra {
+  background: var(--sup-3);
+}
+.tema-oscuro .meta-marca {
+  box-shadow: 0 0 0 2px var(--sup);
+}
+.tema-oscuro .meta-pie,
+.tema-oscuro .lote-opcion,
+.tema-oscuro .busq-item {
+  color: var(--texto-2);
+}
+.tema-oscuro .info-row {
+  border-bottom-color: var(--borde);
+}
+.tema-oscuro .busq-item:not(.info):hover {
+  background: var(--sup-2);
+}
+
+/* ---------- Campos y botones ---------- */
+.tema-oscuro .inp,
+.tema-oscuro .nota-input,
+.tema-oscuro .metodo-btn,
+.tema-oscuro .stab,
+.tema-oscuro select,
+.tema-oscuro textarea {
+  background: var(--sup-2);
+  border-color: var(--borde);
+  color: var(--texto);
+}
+.tema-oscuro .inp:focus {
+  background: var(--sup-3);
+  border-color: var(--azul-claro);
+}
+.tema-oscuro .inp::placeholder {
+  color: #6f819c;
+}
+.tema-oscuro .inp[readonly]:not([data-pad]) {
+  background: #172540;
+  color: var(--suave);
+}
+.tema-oscuro .field-label {
+  color: var(--texto-2);
+}
+.tema-oscuro .btn-gray,
+.tema-oscuro .buscador-cerrar,
+.tema-oscuro .badge-gray {
+  background: var(--sup-2);
+  border-color: var(--borde);
+  color: var(--texto);
+}
+.tema-oscuro .stab.active,
+.tema-oscuro .metodo-btn.selected,
+.tema-oscuro .chip-op:has(input:checked) {
+  background: rgba(140, 188, 255, 0.16);
+  border-color: var(--azul-claro);
+  color: #fff;
+}
+.tema-oscuro .chip-op {
+  border-color: var(--borde);
+  color: var(--texto-2);
+}
+.tema-oscuro .btn-google {
+  background: var(--sup-2);
+  border-color: var(--borde);
+  color: var(--texto);
+}
+
+/* ---------- Avisos e insignias ---------- */
+.tema-oscuro .alert-info,
+.tema-oscuro .badge-blue,
+.tema-oscuro .aviso-conexion.subiendo {
+  background: rgba(140, 188, 255, 0.13);
+  color: var(--azul-claro);
+}
+.tema-oscuro .alert-mora,
+.tema-oscuro .badge-red,
+.tema-oscuro .mora-box,
+.tema-oscuro .error-msg,
+.tema-oscuro .flujo-gas,
+.tema-oscuro .nota-input.nota-mal {
+  background: rgba(229, 62, 62, 0.15);
+  color: var(--rojo-claro);
+}
+.tema-oscuro .alert-ok,
+.tema-oscuro .badge-green,
+.tema-oscuro .flujo-ing,
+.tema-oscuro .aviso-conexion.al-dia,
+.tema-oscuro .lote-fila.marcada {
+  background: rgba(26, 158, 92, 0.16);
+  color: var(--verde-claro);
+}
+.tema-oscuro .badge-gold,
+.tema-oscuro .aviso-cambios,
+.tema-oscuro .aviso-conexion.sin-conexion,
+.tema-oscuro .pedido-aut,
+.tema-oscuro .sab-aj,
+.tema-oscuro .sab-mod {
+  background: rgba(255, 200, 0, 0.13) !important;
+  color: var(--dorado-claro);
+}
+.tema-oscuro .progress-bar {
+  background: var(--sup-3);
+}
+
+/* ---------- Sábana de notas ---------- */
+.tema-oscuro .sab-tabla td.sab-nombre,
+.tema-oscuro .sab-tabla tfoot td {
+  background: var(--sup);
+}
+.tema-oscuro .sab-prom,
+.tema-oscuro .sab-chip,
+.tema-oscuro .sab-lapso {
+  background: var(--sup-2);
+}
+.tema-oscuro .sab-eval,
+.tema-oscuro .sab-detalle-lapso {
+  color: var(--suave);
+}
+.tema-oscuro .sab-tabla th,
+.tema-oscuro .sab-tabla td {
+  border-color: var(--borde);
+}
+
+/* ---------- Teclados en pantalla ---------- */
+.tema-oscuro .teclado-pantalla {
+  background: #0d182b;
+}
+.tema-oscuro .tp-tecla {
+  background: var(--sup-2);
+  border-color: var(--borde);
+  color: var(--texto);
+  box-shadow: 0 2px 0 #071022;
+}
+.tema-oscuro .tp-borrar,
+.tema-oscuro .tp-mayus,
+.tema-oscuro .tp-acento {
+  background: var(--sup-3);
+}
+
+/* ---------- Entrada (tarjeta de vidrio oscura) ---------- */
+.tema-oscuro .login-card {
+  background: rgba(16, 29, 52, 0.84);
+  border-color: rgba(148, 178, 230, 0.2);
+  color: var(--texto);
+}
+.tema-oscuro.modo-tactil .login-card {
+  background: rgba(16, 29, 52, 0.97);
+}
+.tema-oscuro .login-logo h1 {
+  color: #fff;
+}
+.tema-oscuro .login-bienvenida,
+.tema-oscuro .login-o {
+  color: var(--suave);
+}
+.tema-oscuro .login-o::before,
+.tema-oscuro .login-o::after {
+  background: var(--borde);
+}
+.tema-oscuro #lema-txt {
+  background-image: linear-gradient(90deg, #8cbcff, #b9d6ff 55%, #ffd34d);
+}
+.tema-oscuro .btn-modo-tactil {
+  color: var(--azul-claro);
+  border-color: var(--borde);
+}
+
+/* ---------- Colores escritos en el HTML de cada pantalla ---------- */
+/* Fondos blancos y claros */
+.tema-oscuro
+  :is(.principal, .modal-bg, .login-card, #caja-pad, .pedidos-autorizacion)
+  :is(
+    [style*="background:#fff;"],
+    [style$="background:#fff"],
+    [style*="background: #fff;"],
+    [style*="background:white"]
+  ) {
+  background-color: var(--sup) !important;
+}
+.tema-oscuro
+  :is(.principal, .modal-bg, .login-card, #caja-pad)
+  :is(
+    [style*="background:#f8faff"],
+    [style*="background:#f0f4ff"],
+    [style*="background:#eef2f9"],
+    [style*="background:#f7f9ff"],
+    [style*="background:#f1f3f5"],
+    [style*="background:#f3f5f9"],
+    [style*="background:#f5f7fb"],
+    [style*="background:#fafbff"],
+    [style*="background:#f9fafc"],
+    [style*="background:#eee"],
+    [style*="background:#e8ecf4"],
+    [style*="background:#e3e9f4"],
+    [style*="background:#f7f7f7"],
+    [style*="background:#f4f7ff"],
+    [style*="background:#f4f6fb"]
+  ) {
+  background-color: var(--sup-2) !important;
+}
+.tema-oscuro :is(.principal, .modal-bg, #caja-pad) :is([style*="background:#e8f0fe"], [style*="background:#e3f2fd"]) {
+  background-color: rgba(140, 188, 255, 0.14) !important;
+}
+.tema-oscuro
+  :is(.principal, .modal-bg)
+  :is(
+    [style*="background:#fff8e1"],
+    [style*="background:#fffbea"],
+    [style*="background:#fff3cd"],
+    [style*="background:#fffdf5"],
+    [style*="background:#fffbe6"],
+    [style*="background:#fff4e5"],
+    [style*="background:#fff0e0"]
+  ) {
+  background-color: rgba(255, 200, 0, 0.12) !important;
+}
+.tema-oscuro
+  :is(.principal, .modal-bg)
+  :is(
+    [style*="background:#fff5f5"],
+    [style*="background:#fef0f0"],
+    [style*="background:#fdecea"],
+    [style*="background:#fff0f0"],
+    [style*="background:#ffe0e0"]
+  ) {
+  background-color: rgba(229, 62, 62, 0.15) !important;
+}
+.tema-oscuro
+  :is(.principal, .modal-bg)
+  :is(
+    [style*="background:#e6f7ef"],
+    [style*="background:#f3fbf6"],
+    [style*="background:#f0fff4"],
+    [style*="background:#eefaf3"],
+    [style*="background:#e8f5e9"]
+  ) {
+  background-color: rgba(26, 158, 92, 0.16) !important;
+}
+/* Textos */
+.tema-oscuro
+  :is(.principal, .modal-bg, .login-card, #caja-pad, .pedidos-autorizacion)
+  [style*="color:#003366"]:not([style*="background:#ffd700"]):not([style*="background:linear"]):not(
+    [style*="background:#003366"]
+  ) {
+  color: var(--azul-claro) !important;
+}
+.tema-oscuro
+  :is(.principal, .modal-bg, .login-card, #caja-pad)
+  :is(
+    [style*="color:#888"],
+    [style*="color:#999"],
+    [style*="color:#aaa"],
+    [style*="color:#777"],
+    [style*="color:#7a8599"],
+    [style*="color:#9aa5b8"],
+    [style*="color:#718096"]
+  ) {
+  color: var(--suave) !important;
+}
+.tema-oscuro
+  :is(.principal, .modal-bg, .login-card, #caja-pad)
+  :is(
+    [style*="color:#555"],
+    [style*="color:#666"],
+    [style*="color:#444"],
+    [style*="color:#333"],
+    [style*="color:#222"],
+    [style*="color:#5b6577"],
+    [style*="color:#4a5568"]
+  ) {
+  color: var(--texto-2) !important;
+}
+.tema-oscuro :is(.principal, .modal-bg) :is([style*="color:#1a9e5c"], [style*="color:#1a7a4a"]) {
+  color: var(--verde-claro) !important;
+}
+.tema-oscuro :is(.principal, .modal-bg) :is([style*="color:#e53e3e"], [style*="color:#c0392b"]) {
+  color: var(--rojo-claro) !important;
+}
+.tema-oscuro
+  :is(.principal, .modal-bg)
+  :is([style*="color:#7a5c00"], [style*="color:#7a5b00"], [style*="color:#b8860b"], [style*="color:#b7791f"]) {
+  color: var(--dorado-claro) !important;
+}
+/* Bordes */
+.tema-oscuro
+  :is(.principal, .modal-bg, #caja-pad)
+  :is(
+    [style*="solid #ddd"],
+    [style*="solid #eee"],
+    [style*="solid #dde3f0"],
+    [style*="solid #e0e8f0"],
+    [style*="solid #ccc"],
+    [style*="solid #e6e9f0"],
+    [style*="solid #cfd8ea"],
+    [style*="solid #e3e9f4"],
+    [style*="solid #c8d3e8"]
+  ) {
+  border-color: var(--borde) !important;
+}
+/* Las tablas sin color propio */
+.tema-oscuro :is(.principal, .modal-bg) td,
+.tema-oscuro :is(.principal, .modal-bg) th {
+  border-color: var(--borde);
+}

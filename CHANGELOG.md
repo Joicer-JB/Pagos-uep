@@ -2,6 +2,14 @@
 
 ## Octubre 2026 — Navegación adaptable (PC, tablet, Android y iPhone)
 
+- **Inicio:** saludo según la hora con la fecha y lo de hoy (cobrado, cuántos deben, autorizaciones pendientes y
+  🎂 cumpleaños de estudiantes de hoy y los próximos 7 días); **🎯 meta de cobranza del mes** con barra animada, meta
+  editable (80 % por defecto) y **confeti** al cumplirla (una vez al mes por equipo).
+- **🌙 Tema oscuro:** automático según el equipo, o elegido con 🌓 en la barra de arriba (queda guardado en el equipo).
+  Lo impreso sigue en blanco.
+- **Pantalla de carga** con el escudo latiendo, una onda dorada y una barra que avanza.
+- **Teléfono:** deslizar el dedo de lado pasa a la pestaña de al lado de la barra de abajo.
+
 - **Pantalla de entrada:**
   - De fondo: manchas de colores del colegio que se deslizan, una red de puntos luminosos que reacciona al ratón, el
     escudo grande y translúcido girando despacio y destellos dorados que suben.

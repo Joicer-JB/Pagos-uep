@@ -22,6 +22,19 @@ Firestore lo exigen también: aunque alguien intentara saltarse la pantalla, la 
 - **Numeritos rojos:** en 🔔 Cobranza, los estudiantes en mora; en ⚙️ Configuración, quién espera tu autorización
   para entrar hoy.
 - **iPhone:** para tenerla como app, **📲 Instalar** explica cómo (Compartir → «Agregar a pantalla de inicio»).
+- **Teléfono:** deslizando el dedo de lado sobre la pantalla pasas a la pestaña de al lado (Inicio ↔ Caja ↔ Pagos ↔
+  Cobranza).
+- **🌓 Tema:** el botón de la barra de arriba cambia entre automático (claro u oscuro según el equipo), 🌙 oscuro y
+  ☀️ claro. Queda guardado en cada equipo. Lo que se imprime sale siempre en blanco.
+
+## 🏠 Inicio: saludo, lo de hoy y la meta del mes
+
+- Arriba, el saludo según la hora y la fecha, y lo importante de hoy: **cobrado hoy**, **cuántos deben**, quién
+  **espera tu autorización** y los **🎂 cumpleaños** de los estudiantes (hoy y en los próximos 7 días). Al tocar cada
+  dato vas a su pestaña.
+- **🎯 Meta de cobranza:** qué parte de las mensualidades de este mes ya se cobró, con una marca en la meta (80 %;
+  cámbiala con **Meta: 80 % ✏️**). Al cumplirla, **confeti** (una vez al mes en cada equipo).
+- Las cifras de arriba cuentan rápido desde 0 al entrar.
 
 ## 🔍 Buscador inteligente
 

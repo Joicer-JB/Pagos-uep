@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/animaciones.css" />
     <link rel="stylesheet" href="css/diseno.css" />
     <link rel="stylesheet" href="css/navegacion.css" />
+    <link rel="stylesheet" href="css/oscuro.css" />
 
     <!-- Bibliotecas externas. Las de jsDelivr llevan versión exacta y huella (integrity): si el archivo del CDN
          cambiara, el navegador no lo ejecuta. tests/unidad/estructura.test.js comprueba las huellas. -->
@@ -36,7 +37,14 @@
     ></script>
   </head>
   <body>
-    <div class="app" id="app"><div class="loading">⏳ Iniciando sistema...</div></div>
+    <div class="app" id="app">
+      <div class="splash" role="status">
+        <div class="splash-escudo"><img src="assets/iconos/icono-192.png" alt="" /></div>
+        <div class="splash-nombre">U.E.P. Josefa Joaquina Sánchez</div>
+        <div class="splash-txt">Iniciando…</div>
+        <div class="splash-barra"><i></i></div>
+      </div>
+    </div>
 
     <!-- Código de la aplicación. El orden importa: primero configuración y utilidades, luego servicios y vistas, y al final el arranque (app.js). -->
     <script src="js/logo.js"></script>
@@ -72,6 +80,7 @@
     <script src="js/servicios/calificaciones.js"></script>
     <script src="js/servicios/asignaciones.js"></script>
     <script src="js/vistas/dashboard.js"></script>
+    <script src="js/vistas/inicio-saludo.js"></script>
     <script src="js/vistas/caja.js"></script>
     <script src="js/vistas/pagos.js"></script>
     <script src="js/vistas/pagos-lote.js"></script>

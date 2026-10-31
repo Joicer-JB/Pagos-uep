@@ -11,7 +11,7 @@ function render() {
   const menu = menuDeRol(),
     actual = menu.find((t) => t.k === tabActual) || menu[0],
     conMenu = menu.length > 3, // el director: menú lateral (en el teléfono, con ☰); los demás no lo necesitan
-    rapidos = conMenu ? menu.filter((t) => BARRA_INFERIOR.includes(t.k)) : menu;
+    rapidos = barraDeRol();
   const boton = (t, clase) =>
     `<button class="${clase} ${tabActual === t.k ? "active" : ""}" onclick="setTab('${t.k}')" title="${t.nombre}"${tabActual === t.k ? ' aria-current="page"' : ""}><span class="tab-ico" aria-hidden="true">${t.ico}<span class="insignia" data-insignia="${t.k}" hidden></span></span><span class="tab-txt">${t.nombre}</span></button>`;
   const grupos = [...new Set(menu.map((t) => t.grupo))];
@@ -53,7 +53,7 @@ function render() {
       <div class="hb-acciones">
       ${rolUsuario !== "docente" ? `<button class="logout-btn busq-btn" onclick="abrirBuscador()" title="Buscar o preguntar (Ctrl+K)">🔍 <span class="busq-btn-txt">Buscar</span></button><button class="logout-btn hb-tasa${tasaHoy() ? "" : " sin-tasa"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día"><span class="hb-tasa-larga">${chipTasaTxt()}</span><span class="hb-tasa-corta">${chipTasaCorta()}</span></button>` : ""}
       ${selectorAnio("hb-anio")}
-      ${botonInstalar()}<button class="logout-btn hb-salir" onclick="logout()" title="Cerrar sesión">Salir</button>
+      ${botonTema()}${botonInstalar()}<button class="logout-btn hb-salir" onclick="logout()" title="Cerrar sesión">Salir</button>
       </div>
     </div>
   </div>

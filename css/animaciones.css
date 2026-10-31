@@ -593,6 +593,131 @@
   }
 }
 
+/* ---------- Pantalla de carga: el escudo latiendo y una barra que avanza ---------- */
+.splash {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 1.5rem;
+  color: #fff;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 215, 0, 0.16), transparent 40%),
+    linear-gradient(160deg, #002a55, #003366 50%, #00509e);
+}
+.splash-escudo {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  padding: 10px;
+  border-radius: 30px;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(255, 215, 0, 0.75),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+  animation: splash-latir 1.6s ease-in-out infinite;
+}
+.splash-escudo::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 32px;
+  border: 3px solid rgba(255, 215, 0, 0.8);
+  animation: splash-onda 1.6s ease-out infinite;
+}
+.splash-escudo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.splash-nombre {
+  margin-top: 0.4rem;
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.splash-txt {
+  font-size: 0.82rem;
+  color: #adc8ff;
+}
+.splash-barra {
+  position: relative;
+  width: 180px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+.splash-barra i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #ffd700, transparent);
+  animation: splash-avanzar 1.2s ease-in-out infinite;
+}
+@keyframes splash-latir {
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes splash-onda {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+@keyframes splash-avanzar {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+/* ---------- 🎉 Confeti (meta de cobranza cumplida) ---------- */
+.confeti {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  pointer-events: none;
+  overflow: hidden;
+}
+.confeti i {
+  position: absolute;
+  top: -20px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0.95;
+  animation-name: confeti-caer;
+  animation-timing-function: cubic-bezier(0.25, 0.6, 0.5, 1);
+  animation-fill-mode: both;
+}
+.confeti i:nth-child(3n) {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+@keyframes confeti-caer {
+  from {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate(var(--deriva), 110vh) rotate(var(--giro));
+    opacity: 0.8;
+  }
+}
+
 /* ---------- Cargando: círculo que gira ---------- */
 .loading::before {
   content: "";

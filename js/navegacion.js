@@ -121,16 +121,21 @@ if (typeof window !== "undefined" && window.matchMedia) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && menuAbierto) cerrarMenu();
   });
-  // Deslizar el dedo: desde el borde izquierdo abre el menú (no en el iPhone); hacia la izquierda lo cierra
+  // Deslizar el dedo:
+  // · desde el borde izquierdo abre el menú (no en el iPhone, donde ese gesto es «volver»); hacia la izquierda lo cierra;
+  // · de lado sobre la pantalla, pasa a la pestaña de al lado en la barra de abajo (Inicio ↔ Caja ↔ Pagos ↔ Cobranza).
   let toque = null;
   document.addEventListener(
     "touchstart",
     (e) => {
       const t = e.touches[0];
-      if (!t || e.touches.length > 1 || !esMenuFlotante() || !document.querySelector(".shell.con-menu"))
-        return (toque = null);
-      const desdeBorde = !menuAbierto && !ES_IOS && t.clientX < 24;
-      toque = desdeBorde || menuAbierto ? { x: t.clientX, y: t.clientY, abrir: desdeBorde } : null;
+      toque = null;
+      if (!t || e.touches.length > 1 || !esMenuFlotante() || !document.getElementById("shell")) return;
+      const base = { x: t.clientX, y: t.clientY, t: e.timeStamp };
+      if (menuAbierto) toque = { ...base, tipo: "cerrar" };
+      else if (document.querySelector(".shell.con-menu") && !ES_IOS && t.clientX < 24)
+        toque = { ...base, tipo: "abrir" };
+      else if (puedeDeslizarPestana(e.target, t.clientX)) toque = { ...base, tipo: "pestana" };
     },
     { passive: true }
   );
@@ -141,12 +146,87 @@ if (typeof window !== "undefined" && window.matchMedia) {
       if (!toque || !t) return;
       const dx = t.clientX - toque.x,
         dy = Math.abs(t.clientY - toque.y);
-      if (toque.abrir && dx > 50 && dy < 60) abrirMenu();
-      else if (!toque.abrir && menuAbierto && dx < -60 && dy < 60) cerrarMenu();
+      if (toque.tipo === "abrir" && dx > 50 && dy < 60) abrirMenu();
+      else if (toque.tipo === "cerrar" && menuAbierto && dx < -60 && dy < 60) cerrarMenu();
+      else if (
+        toque.tipo === "pestana" &&
+        Math.abs(dx) > 70 &&
+        dy < 45 &&
+        Math.abs(dx) > 2 * dy &&
+        e.timeStamp - toque.t < 700
+      )
+        pasarPestana(dx < 0 ? 1 : -1);
       toque = null;
     },
     { passive: true }
   );
+}
+// Pestañas de la barra de abajo de cada rol (el director: las 4 que más usa; los demás: todas las suyas)
+function barraDeRol() {
+  const m = menuDeRol();
+  return m.length > 3 ? m.filter((t) => BARRA_INFERIOR.includes(t.k)) : m;
+}
+// Se puede deslizar de pestaña si el dedo está sobre la pantalla (no en el menú ni en las barras), no en un campo, ni en una tabla o lista que se
+// desliza de lado, ni con una ventana abierta. En el iPhone tampoco desde los bordes (son gestos del sistema).
+function puedeDeslizarPestana(el, x) {
+  if (!auth || modalActual || !el || !el.closest || !el.closest(".shell")) return false;
+  if (el.closest(".sidebar, .sb-velo, .header, .barra-inferior")) return false;
+  if (ES_IOS && (x < 24 || x > window.innerWidth - 24)) return false;
+  if (el.closest("input, textarea, select, canvas, [contenteditable], #caja-pad, #teclado-pantalla")) return false;
+  for (let n = el; n && !n.classList.contains("shell"); n = n.parentElement)
+    if (n.scrollWidth > n.clientWidth + 1 && /(auto|scroll)/.test(getComputedStyle(n).overflowX)) return false;
+  return true;
+}
+function pasarPestana(dir) {
+  const orden = barraDeRol().map((t) => t.k),
+    i = orden.indexOf(tabActual),
+    k = i < 0 ? null : orden[i + dir];
+  if (!k) return;
+  setTab(k);
+  animar(
+    document.getElementById("tab-content"),
+    [
+      { transform: `translateX(${dir * 48}px)`, opacity: 0 },
+      { transform: "none", opacity: 1 },
+    ],
+    { duration: 280 }
+  );
+}
+
+// ---- Tema claro u oscuro ----
+// «Automático» sigue al teléfono o la computadora (oscuro de noche si así lo tiene); se cambia con 🌓 en la barra de
+// arriba y queda guardado en este equipo. Los colores oscuros están en css/oscuro.css.
+const TEMAS = { auto: ["🌓", "Automático"], oscuro: ["🌙", "Oscuro"], claro: ["☀️", "Claro"] };
+let tema = "auto";
+try {
+  tema = TEMAS[localStorage.getItem("tema")] ? localStorage.getItem("tema") : "auto";
+} catch (e) {}
+const mqOscuro =
+  typeof window !== "undefined" && window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+const temaOscuro = () => tema === "oscuro" || (tema === "auto" && !!mqOscuro && mqOscuro.matches);
+function aplicarTema() {
+  if (typeof document === "undefined" || !document.documentElement) return;
+  document.documentElement.classList.toggle("tema-oscuro", temaOscuro());
+  const meta = document.querySelector && document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", temaOscuro() ? "#0b1526" : "#003366");
+}
+aplicarTema();
+if (mqOscuro && mqOscuro.addEventListener) mqOscuro.addEventListener("change", aplicarTema);
+function botonTema() {
+  const [ico, nombre] = TEMAS[tema];
+  return `<button class="logout-btn hb-tema" id="btn-tema" onclick="cambiarTema()" title="Tema: ${nombre} (toca para cambiar)" aria-label="Tema: ${nombre}">${ico}</button>`;
+}
+function cambiarTema() {
+  const orden = Object.keys(TEMAS);
+  tema = orden[(orden.indexOf(tema) + 1) % orden.length];
+  try {
+    if (tema === "auto") localStorage.removeItem("tema");
+    else localStorage.setItem("tema", tema);
+  } catch (e) {}
+  aplicarTema();
+  const b = document.getElementById("btn-tema");
+  if (b) b.outerHTML = botonTema();
+  mostrarToast(TEMAS[tema][0] + " Tema " + TEMAS[tema][1].toLowerCase());
 }
 
 // ---- Insignias (numeritos) del menú ----

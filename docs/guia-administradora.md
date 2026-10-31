@@ -12,7 +12,8 @@ con deuda (tócalos para cobrarles en la Caja) y los últimos pagos.
 autorice, la plataforma se abre sola (no cierres la ventana). Vale por todo el día; al día siguiente se vuelve a pedir.
 
 **Tus pestañas:** en la computadora están en el menú de la izquierda (🏠 Inicio, 💳 Caja y 💰 Pagos), con
-**Cerrar sesión** abajo; en el teléfono, en la barra de abajo de la pantalla.
+**Cerrar sesión** abajo; en el teléfono, en la barra de abajo de la pantalla (también puedes deslizar el dedo de lado
+para pasar de una a otra). El botón **🌓** de arriba cambia entre tema claro, oscuro o automático.
 
 ## 🔍 Buscar cualquier cosa
 

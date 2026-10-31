@@ -1,5 +1,5 @@
 // Pestaña Inicio: resumen del mes, estudiantes en mora, accesos rápidos y nómina (director); lo cobrado hoy y
-// por cobrar (administradora).
+// por cobrar (administradora). Arriba, el saludo y la meta de cobranza (inicio-saludo.js).
 
 function renderDashboard() {
   if (rolUsuario === "administradora") return renderDashboardCaja();
@@ -20,9 +20,11 @@ function renderDashboard() {
   const mora = estudiantes.filter(enMora);
   const totalNomina = r2(trabajadoresActivos().reduce((s, t) => s + devengadoMensual(t), 0)); // al mes
 
-  return `${htmlBarraBuscar()}
+  return `${htmlSaludo()}
+  ${htmlBarraBuscar()}
   ${htmlAvisoRespaldo()}
   ${htmlAvisoQuincenal()}
+  ${htmlMetaCobranza()}
   <div style="background:linear-gradient(135deg,#003366,#00509e);border-radius:14px;padding:1.1rem 1.25rem;color:#fff;margin-bottom:0.85rem">
     <div style="font-size:0.65rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">Resumen del mes</div>
     <div style="font-size:1.5rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${mesNom} ${anio}</div>
@@ -132,7 +134,8 @@ function renderDashboardCaja() {
     porMetodo = totalesMetodo(deHoy),
     total = r2(deHoy.reduce((s, p) => s + (p.total || 0), 0)),
     mora = estudiantes.filter(enMora).sort((a, b) => deudaDe(b) - deudaDe(a));
-  return `${htmlBarraBuscar()}
+  return `${htmlSaludo()}
+  ${htmlBarraBuscar()}
   <div style="background:linear-gradient(135deg,#003366,#00509e);border-radius:14px;padding:1.1rem 1.25rem;color:#fff;margin-bottom:0.85rem">
     <div style="font-size:0.65rem;color:#adc8ff;text-transform:uppercase;letter-spacing:1px">Cobrado hoy · ${escHtml(fechaCorta(hoy))}</div>
     <div style="font-size:1.5rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(total)}</div>

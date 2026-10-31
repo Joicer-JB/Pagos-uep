@@ -91,6 +91,17 @@ function mostrarExito(titulo, detalle = "") {
   return o;
 }
 
+// ---- Pantalla de carga: el escudo latiendo con un brillo dorado y una barra que avanza ----
+// (La primera, mientras abre la página, está escrita en index.html con el ícono de la app.)
+function pantallaCarga(texto) {
+  return `<div class="splash" role="status">
+    <div class="splash-escudo"><img src="data:image/png;base64,${LOGO}" alt=""/></div>
+    <div class="splash-nombre">${escHtml(EMPRESA)}</div>
+    <div class="splash-txt">${escHtml(texto)}</div>
+    <div class="splash-barra"><i></i></div>
+  </div>`;
+}
+
 // ---- Pantalla de entrada: que se sienta viva desde el primer segundo ----
 // · De fondo: manchas de colores del colegio que se deslizan (malla), una red de puntos luminosos que reacciona al
 //   ratón, el escudo grande girando muy despacio y destellos dorados que suben.
