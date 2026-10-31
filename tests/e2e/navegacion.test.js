@@ -179,7 +179,7 @@ test("entrada viva: lema que se escribe, conexión real, red de puntos y tarjeta
   await s.pagina.goto(nav.base);
   await s.pagina.waitForSelector("#l-email");
   // El lema se escribe solo; los lectores de pantalla leen la frase completa
-  assert.equal(await s.pagina.getAttribute(".login-lema", "aria-label"), "Excelente y mejorando cada día más.");
+  assert.equal(await s.pagina.getAttribute(".login-lema", "aria-label"), "Excelente y mejorando cada día más");
   await s.pagina.waitForFunction(() => document.getElementById("lema-txt").textContent.startsWith("Excelente"));
   // Conexión de verdad
   assert.match(await s.pagina.textContent("#ef-estado"), /Conectado/);

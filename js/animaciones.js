@@ -100,7 +100,7 @@ function mostrarExito(titulo, detalle = "") {
 // · Todo aparece escalonado en menos de un segundo; una insignia dice si hay conexión (de verdad).
 // Liviano: casi todo es transform y opacity (la tarjeta de video). La red de puntos se apaga sola en equipos lentos,
 // en el modo pantalla táctil y si el equipo pide «reducir movimiento». Los estilos están en css/animaciones.css.
-const LEMA = ["Excelente", " y mejorando cada día más."];
+const LEMA = ["Excelente", " y mejorando cada día más"];
 const imgEscudo = () => `<img src="data:image/png;base64,${LOGO}" alt="" draggable="false"/>`;
 function fondoEntrada() {
   return `<div class="entrada-fondo" aria-hidden="true">
@@ -143,7 +143,7 @@ function lemaEntrada() {
   const frase = LEMA.join("");
   return `<div class="login-lema" aria-label="${frase}"><span id="lema-txt" aria-hidden="true">${sinMovimiento() ? frase : ""}</span><span class="lema-cursor" aria-hidden="true"></span></div>`;
 }
-// Máquina de escribir: «Excelente» (pausa) « y mejorando cada día más.» (pausa), se borra y vuelve a empezar
+// Máquina de escribir: «Excelente» (pausa) « y mejorando cada día más» (pausa), se borra y vuelve a empezar
 let _lema = 0;
 function escribirLema() {
   clearTimeout(_lema);
