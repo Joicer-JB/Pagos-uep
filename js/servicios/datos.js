@@ -50,12 +50,30 @@ async function cargarTodo() {
     await cargarConfig();
     render();
     animarEntradaPestana();
+    try {
+      sessionStorage.removeItem("recargaVersion"); // abrió bien: una próxima actualización a medias se puede arreglar
+    } catch (e) {}
     sincronizarFichasDocentes(); // director y administradora: pone al día las fichas de los docentes
     numerarRecibosPendientes(); // recibos cobrados sin conexión que aún no tienen su número
   } catch (e) {
+    if (recargarSiVersionMezclada(e)) return;
     document.getElementById("app").innerHTML =
       `<div class="loading">❌ Error: ${escHtml(e.message)}<br><br><button onclick="cargarTodo()" class="btn btn-primary">🔄 Reintentar</button></div>`;
   }
+}
+// Si en este equipo la página quedó de una versión y los scripts de otra (una actualización a medias, por la copia
+// que guarda el navegador), falta alguna función («… is not defined»): se vuelve a abrir la página pidiéndola de
+// nuevo al servidor. Una sola vez por sesión, para no quedar recargando si el error es otro.
+function recargarSiVersionMezclada(e) {
+  if (!(e instanceof ReferenceError)) return false;
+  try {
+    if (sessionStorage.getItem("recargaVersion")) return false;
+    sessionStorage.setItem("recargaVersion", "1");
+  } catch (x) {
+    return false;
+  }
+  location.replace(location.pathname + "?v=" + Date.now());
+  return true;
 }
 // Para ordenar del más reciente al más antiguo según la marca de tiempo de Firestore
 // (con la fracción de segundo: dos pagos guardados en el mismo segundo quedan en el orden en que se hicieron)

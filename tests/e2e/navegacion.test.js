@@ -228,3 +228,27 @@ test("en Inicio las cifras cuentan desde 0, pero el número escrito es siempre e
   cifras.forEach(([texto, fin]) => assert.equal(texto, fin));
   await s.pagina.waitForFunction(() => !document.querySelector(".stat-val.contando"), null, { timeout: 3000 });
 });
+
+test("si la página y los scripts quedaron de versiones distintas («… is not defined»), se vuelve a abrir sola y entra", async () => {
+  const s = await nav.nuevaPagina();
+  // La primera vez falta navegacion.js (como una página vieja guardada con los scripts nuevos)
+  let veces = 0;
+  await s.pagina.route("**/js/navegacion.js", (r) =>
+    veces++ === 0 ? r.fulfill({ status: 200, contentType: "text/javascript", body: "/* vieja */" }) : r.continue()
+  );
+  await s.pagina.goto(nav.base);
+  await s.pagina.waitForSelector("#l-email");
+  await s.pagina.fill("#l-email", "herrerajoicer@gmail.com");
+  await s.pagina.fill("#l-pwd", "prueba123");
+  await s.pagina.click("#login-btn");
+  // Se recarga sola (con ?v=…), ya con todos los archivos nuevos. (Firebase de verdad recuerda la sesión; el de
+  // prueba no, así que aquí se vuelve a entrar.)
+  await s.pagina.waitForURL(/\?v=\d+/, { waitUntil: "commit" });
+  await s.pagina.waitForSelector("#l-email");
+  await s.pagina.fill("#l-email", "herrerajoicer@gmail.com");
+  await s.pagina.fill("#l-pwd", "prueba123");
+  await s.pagina.click("#login-btn");
+  await s.pagina.waitForSelector(".tabs .tab");
+  assert.ok(veces >= 2);
+  assert.equal(await s.pagina.evaluate(() => sessionStorage.getItem("recargaVersion")), null);
+});

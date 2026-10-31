@@ -24,3 +24,8 @@ fbAuth.onAuthStateChanged(async (user) => {
     if (!document.getElementById("login-btn")) render();
   }
 });
+// Después de esa recarga, la dirección vuelve a quedar limpia (sin el «?v=…»)
+if (/[?&]v=\d+/.test(location.search)) history.replaceState(null, "", location.pathname);
+// Un error de versión mezclada antes de entrar (por ejemplo, al dibujar la entrada) se arregla igual. Ya adentro no:
+// recargar podría perder lo que se esté escribiendo.
+window.addEventListener("error", (ev) => !auth && recargarSiVersionMezclada(ev.error));
