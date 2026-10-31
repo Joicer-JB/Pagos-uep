@@ -172,3 +172,59 @@ test("la entrada lleva el escudo de fondo girando y el escudo 3D (con sus dos ca
   await s.pagina.waitForFunction(() => document.querySelector(".login-wrap").style.getPropertyValue("--incl-x") !== "");
   assert.deepEqual(s.errores, []);
 });
+
+test("entrada viva: lema que se escribe, conexión real, red de puntos y tarjeta que se inclina (quieta al escribir)", async () => {
+  const s = await nav.nuevaPagina();
+  await s.pagina.setViewportSize({ width: 1440, height: 900 });
+  await s.pagina.goto(nav.base);
+  await s.pagina.waitForSelector("#l-email");
+  // El lema se escribe solo; los lectores de pantalla leen la frase completa
+  assert.equal(await s.pagina.getAttribute(".login-lema", "aria-label"), "Excelente y mejorando cada día más.");
+  await s.pagina.waitForFunction(() => document.getElementById("lema-txt").textContent.startsWith("Excelente"));
+  // Conexión de verdad
+  assert.match(await s.pagina.textContent("#ef-estado"), /Conectado/);
+  await s.contexto.setOffline(true);
+  await s.pagina.waitForFunction(() => /Sin conexión/.test(document.getElementById("ef-estado").textContent));
+  await s.contexto.setOffline(false);
+  await s.pagina.waitForFunction(() => /Conectado/.test(document.getElementById("ef-estado").textContent));
+  // La red de puntos está andando
+  assert.equal(await s.pagina.evaluate(() => !!_red && _red.pts.length >= 18), true);
+  // La tarjeta se inclina hacia el ratón…
+  await s.pagina.mouse.move(1300, 120, { steps: 4 });
+  await s.pagina.waitForFunction(
+    () =>
+      document.querySelector(".login-wrap").style.getPropertyValue("--card-x") !== "0deg" &&
+      document.querySelector(".login-wrap").style.getPropertyValue("--card-x") !== ""
+  );
+  // …y queda quieta mientras se escribe
+  await s.pagina.click("#l-email");
+  await s.pagina.mouse.move(100, 800, { steps: 4 });
+  await s.pagina.waitForTimeout(100);
+  assert.equal(
+    await s.pagina.evaluate(() => document.querySelector(".login-wrap").style.getPropertyValue("--card-x")),
+    "0deg"
+  );
+  assert.deepEqual(s.errores, []);
+});
+
+test("en el modo pantalla táctil (PC sencilla) no hay red de puntos ni desenfoque real", async () => {
+  const s = await nav.nuevaPagina();
+  await s.pagina.addInitScript(() => localStorage.setItem("modoTactil", "1"));
+  await s.pagina.goto(nav.base);
+  await s.pagina.waitForSelector("#l-email");
+  assert.equal(await s.pagina.$("#ef-red"), null);
+  assert.equal(
+    await s.pagina.evaluate(() => getComputedStyle(document.querySelector(".login-card")).backdropFilter),
+    "none"
+  );
+});
+
+test("en Inicio las cifras cuentan desde 0, pero el número escrito es siempre el real", async () => {
+  const s = await entrar("herrerajoicer@gmail.com");
+  const cifras = await s.pagina.$$eval(".stat-val.contando", (n) =>
+    n.map((x) => [x.textContent, x.style.getPropertyValue("--fin")])
+  );
+  assert.ok(cifras.length >= 3);
+  cifras.forEach(([texto, fin]) => assert.equal(texto, fin));
+  await s.pagina.waitForFunction(() => !document.querySelector(".stat-val.contando"), null, { timeout: 3000 });
+});

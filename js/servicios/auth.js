@@ -3,7 +3,7 @@
 // Pantalla de inicio de sesión
 function renderLogin() {
   return `<div class="login-wrap">${fondoEntrada()}<div class="login-card">
-  <div class="login-logo">${escudo3D()}<div><h1>${EMPRESA}</h1><p style="font-size:0.7rem;color:#888">${EMPRESA_SUB}</p></div></div>
+  <div class="login-logo">${escudo3D()}<div><h1>${EMPRESA}</h1><p style="font-size:0.7rem;color:#888">${EMPRESA_SUB}</p>${lemaEntrada()}</div></div>
   <div class="login-bienvenida">Sistema de Gestión · entra con tu cuenta de Google o con tu correo y contraseña</div>
   <button class="btn btn-full btn-google" id="login-google" onclick="doLoginGoogle()">${LOGO_GOOGLE} Entrar con Google</button>
   <div class="login-o"><span>o con tu contraseña</span></div>

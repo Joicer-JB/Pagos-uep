@@ -5,6 +5,7 @@ function render() {
   const app = document.getElementById("app");
   if (!auth) {
     app.innerHTML = _espera ? renderEsperaAutorizacion() : renderLogin();
+    iniciarEntradaViva();
     return;
   }
   const menu = menuDeRol(),

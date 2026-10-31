@@ -2,10 +2,16 @@
 
 ## Octubre 2026 — Navegación adaptable (PC, tablet, Android y iPhone)
 
-- **Pantalla de entrada:** de fondo, el escudo del colegio grande y translúcido girando despacio, con destellos
-  dorados que suben; arriba de la tarjeta, el escudo como una medalla 3D con canto dorado que flota, da una vuelta
-  completa cada tanto y le pasa un brillo (en la computadora se inclina hacia el ratón). También en la pantalla de
-  «Esperando la autorización». Si el equipo pide «reducir movimiento», queda quieto.
+- **Pantalla de entrada:**
+  - De fondo: manchas de colores del colegio que se deslizan, una red de puntos luminosos que reacciona al ratón, el
+    escudo grande y translúcido girando despacio y destellos dorados que suben.
+  - Tarjeta de vidrio que se inclina hacia el ratón con un reflejo de luz (quieta mientras se escribe).
+  - El escudo como medalla 3D con canto dorado: baja con un rebote, brilla, flota y cada tanto da una vuelta.
+  - Debajo del nombre, el lema «Excelente y mejorando cada día más» escribiéndose solo.
+  - Todo aparece escalonado en menos de un segundo, y arriba a la derecha «🟢 Conectado» / «🟠 Sin conexión» (real).
+  - Liviano: la red de puntos se apaga sola en equipos lentos y en el modo pantalla táctil (ahí la tarjeta es de
+    vidrio «simulado», sin desenfoque real). Con «reducir movimiento», todo queda quieto.
+- **Inicio:** las cifras (estudiantes, en mora, pagos del mes, trabajadores) cuentan rápido desde 0 al entrar.
 
 - **PC y laptop:** menú fijo a la izquierda, con las pestañas en grupos (Cobros, Colegio, Administración y
   Configuración), quién entró y «Cerrar sesión»; arriba, una barra clara con el nombre de la pestaña.
