@@ -102,6 +102,7 @@ function escucharAutorizaciones() {
     (snap) => {
       autorizaciones = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       pintarPedidosAutorizacion();
+      pintarInsignias();
       // Solo se redibuja la tarjeta (no la pestaña entera: no se pierde lo que el director esté escribiendo)
       const tarjeta = document.getElementById("accesos-hoy");
       if (tarjeta) tarjeta.outerHTML = htmlAccesosHoy();

@@ -84,28 +84,6 @@ body {
 .logout-btn:hover {
   background: rgba(255, 255, 255, 0.25);
 }
-.tabs {
-  gap: 0.15rem;
-  /* en el teléfono, un desvanecido a la derecha indica que hay más pestañas */
-  -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, #000 92%, transparent);
-  padding-right: 1.5rem;
-}
-.tab {
-  border-radius: 10px 10px 0 0;
-  min-height: 40px;
-}
-.tab.active {
-  background: rgba(255, 255, 255, 0.1);
-}
-@media (min-width: 900px) {
-  .tabs {
-    -webkit-mask-image: none;
-    mask-image: none;
-    padding-right: 0;
-  }
-}
-
 /* ---- Contenido y tarjetas ---- */
 .content {
   max-width: 1120px;
@@ -598,12 +576,6 @@ textarea.inp {
   flex: 1;
   height: 1px;
   background: #e6e9f0;
-}
-/* En el teléfono, el selector del año más angosto para que los botones de la cabecera quepan en una fila */
-@media (max-width: 520px) {
-  .header-top select {
-    max-width: 96px !important; /* su estilo en línea dice 130px */
-  }
 }
 
 /* ---- Notas de media general: evaluaciones del plan ---- */

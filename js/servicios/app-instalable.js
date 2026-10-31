@@ -1,6 +1,7 @@
 // App instalable: con sw.js y manifest.webmanifest la plataforma se puede instalar en el teléfono o la computadora
 // (ícono propio, pantalla completa) y abrir sin internet.
-// En Chrome/Android aparece el botón «📲 Instalar» en la cabecera; en iPhone: Compartir → «Agregar a inicio».
+// En Chrome/Android aparece el botón «📲 Instalar» en la cabecera; en el iPhone ese botón explica cómo hacerlo
+// (Compartir → «Agregar a pantalla de inicio»): ver botonInstalar() en navegacion.js.
 
 let eventoInstalar = null; // lo da el navegador cuando la app se puede instalar
 

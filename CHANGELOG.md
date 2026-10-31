@@ -1,5 +1,21 @@
 # Historial de cambios
 
+## Octubre 2026 — Navegación adaptable (PC, tablet, Android y iPhone)
+
+- **PC y laptop:** menú fijo a la izquierda, con las pestañas en grupos (Cobros, Colegio, Administración y
+  Configuración), quién entró y «Cerrar sesión»; arriba, una barra clara con el nombre de la pestaña.
+- **Tablet acostada:** el menú angosto, con el ícono y el nombre debajo.
+- **Teléfono y tablet parada:** ☰ abre el menú encima de la pantalla y abajo queda una barra con Inicio, Caja, Pagos,
+  Cobranza y «Más». La secretaria tiene solo su barra de 3 pestañas.
+- **Numeritos** en el menú: estudiantes en mora (Cobranza) y pedidos de autorización (Configuración).
+- **iPhone:** respeta la ceja y la rayita de abajo, los campos ya no hacen zoom al tocarlos, el menú no se abre
+  desde el borde (ese gesto es «volver») y «📲 Instalar» explica cómo agregarla a la pantalla de inicio.
+  **Android:** deslizar desde el borde izquierdo abre el menú.
+- En el teléfono, en las tablas anchas el nombre queda fijo al deslizar de lado, y las ventanas quedan encima de la
+  barra de abajo.
+- **Pantalla táctil (secretaria):** menú y botones más grandes; tocar «Entrar» con el teclado en pantalla abierto ya
+  no falla (el teclado se cierra al soltar el dedo, sin mover el botón).
+
 ## Octubre 2026 — Aumento de mensualidad y arrastre más rápido
 
 - **📈 Aumento de mensualidad desde un mes** (🔔 Cobranza → Cuotas del año): desde ese mes la mensualidad de todos

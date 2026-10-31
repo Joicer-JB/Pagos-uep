@@ -135,3 +135,18 @@ test("arrastrar con el dedo sube y baja la página, sin abrir lo que estaba deba
   await s.pagina.waitForFunction(() => modalActual !== null);
   assert.deepEqual(s.errores, []);
 });
+
+test("con el teclado abierto, tocar «Entrar» entra (el teclado se cierra al soltar, sin mover el botón)", async () => {
+  const otra = await nav.nuevaPagina();
+  await otra.pagina.setViewportSize({ width: 1366, height: 768 });
+  await otra.pagina.addInitScript(() => localStorage.setItem("modoTactil", "1"));
+  await otra.pagina.goto(nav.base);
+  await otra.pagina.waitForSelector("#l-email");
+  await otra.pagina.fill("#l-email", "josefajsanquez@gmail.com");
+  await otra.pagina.fill("#l-pwd", "prueba123");
+  assert.ok(await otra.pagina.$("#teclado-pantalla"), "el teclado está abierto");
+  await otra.pagina.click("#login-btn");
+  await otra.pagina.waitForSelector(".tabs .tab");
+  assert.equal(await otra.pagina.$("#teclado-pantalla"), null);
+  assert.deepEqual(otra.errores, []);
+});

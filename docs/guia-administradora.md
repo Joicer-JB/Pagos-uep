@@ -11,6 +11,9 @@ con deuda (tócalos para cobrarles en la Caja) y los últimos pagos.
 **Al entrar, espera la autorización del director**: verás «⏳ Esperando la autorización del director». Cuando te
 autorice, la plataforma se abre sola (no cierres la ventana). Vale por todo el día; al día siguiente se vuelve a pedir.
 
+**Tus pestañas:** en la computadora están en el menú de la izquierda (🏠 Inicio, 💳 Caja y 💰 Pagos), con
+**Cerrar sesión** abajo; en el teléfono, en la barra de abajo de la pantalla.
+
 ## 🔍 Buscar cualquier cosa
 
 Arriba está el botón **🔍 Buscar** (y en Inicio, la barra «¿Qué necesitas?»). En la computadora también se abre con
@@ -156,7 +159,7 @@ tres botones:
 
 - **Android o computadora (Chrome/Edge):** entra a la plataforma y pulsa **📲 Instalar** en la cabecera (o, en el
   menú del navegador, «Instalar aplicación»). Queda un ícono con el escudo del colegio.
-- **iPhone (Safari):** botón **Compartir** → **Agregar a inicio**.
+- **iPhone (Safari):** botón **Compartir** → **Agregar a pantalla de inicio** (el botón **📲 Instalar** lo explica).
 
 La app instalada es la misma plataforma: se actualiza sola y usa tu misma cuenta.
 

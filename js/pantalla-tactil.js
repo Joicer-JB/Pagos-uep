@@ -194,7 +194,7 @@ function borrarAtras(el) {
 document.addEventListener("focusin", (e) => {
   if (!modoTactil) return;
   if (campoDeTexto(e.target)) tecladoAbrir(e.target);
-  else if (teclado.abierto && !e.target.closest("#teclado-pantalla")) tecladoOcultar();
+  else if (teclado.abierto && !e.target.closest("#teclado-pantalla")) setTimeout(revisarCierreTeclado, 0);
 });
 // Lo tecleado con un teclado físico ya avisó «change» al salir del campo: no se repite
 document.addEventListener(
@@ -208,19 +208,32 @@ document.addEventListener(
 document.addEventListener("click", (e) => {
   if (modoTactil && !teclado.abierto && campoDeTexto(e.target)) tecladoAbrir(e.target);
 });
+// Mientras el dedo (o el ratón) está apoyado no se cierra el teclado: al cerrarse la pantalla se acomoda, y el botón
+// que se estaba tocando (por ejemplo «Entrar») se movería y el toque no le llegaría. Se cierra al soltar.
+let _apoyado = false;
+document.addEventListener("pointerdown", () => (_apoyado = true), true);
+const soltarApoyo = () => setTimeout(() => (_apoyado = false), 0);
+document.addEventListener("pointerup", soltarApoyo, true);
+document.addEventListener("pointercancel", soltarApoyo, true);
+function revisarCierreTeclado() {
+  if (!teclado.abierto || campoDeTexto(document.activeElement)) return;
+  if (_apoyado) {
+    document.addEventListener("click", () => setTimeout(revisarCierreTeclado, 0), { once: true });
+    setTimeout(revisarCierreTeclado, 600); // por si el toque no termina en clic
+    return;
+  }
+  // Si la pantalla se redibujó, el campo es otro con el mismo id: se sigue escribiendo ahí
+  const el = campoActual();
+  if (el && el !== teclado.el) {
+    teclado.el = el;
+    el.focus();
+    return;
+  }
+  tecladoOcultar();
+}
 document.addEventListener("focusout", () => {
   if (!modoTactil || !teclado.abierto) return;
-  setTimeout(() => {
-    if (!teclado.abierto || campoDeTexto(document.activeElement)) return;
-    // Si la pantalla se redibujó, el campo es otro con el mismo id: se sigue escribiendo ahí
-    const el = campoActual();
-    if (el && el !== teclado.el) {
-      teclado.el = el;
-      el.focus();
-      return;
-    }
-    tecladoOcultar();
-  }, 0);
+  setTimeout(revisarCierreTeclado, 0);
 });
 
 // ---- Desplazar arrastrando ----

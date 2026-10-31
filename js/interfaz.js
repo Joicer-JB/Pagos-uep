@@ -7,62 +7,77 @@ function render() {
     app.innerHTML = _espera ? renderEsperaAutorizacion() : renderLogin();
     return;
   }
+  const menu = menuDeRol(),
+    actual = menu.find((t) => t.k === tabActual) || menu[0],
+    conMenu = menu.length > 3, // el director: menú lateral (en el teléfono, con ☰); los demás no lo necesitan
+    rapidos = conMenu ? menu.filter((t) => BARRA_INFERIOR.includes(t.k)) : menu;
+  const boton = (t, clase) =>
+    `<button class="${clase} ${tabActual === t.k ? "active" : ""}" onclick="setTab('${t.k}')" title="${t.nombre}"${tabActual === t.k ? ' aria-current="page"' : ""}><span class="tab-ico" aria-hidden="true">${t.ico}<span class="insignia" data-insignia="${t.k}" hidden></span></span><span class="tab-txt">${t.nombre}</span></button>`;
+  const grupos = [...new Set(menu.map((t) => t.grupo))];
   app.innerHTML = `
-  <div class="header">
-    <div class="header-inner">
-    <div class="header-top">
-      <img src="data:image/png;base64,${LOGO}" class="header-logo" alt="Logo"/>
-      <div style="flex:1;min-width:0">
-        <div class="header-label">Sistema de Gestión · <span style="color:#ffd700" id="rol-lbl"></span></div>
-        <div class="header-name">${EMPRESA}</div>
-      </div>
-      ${rolUsuario !== "docente" ? `<button class="logout-btn busq-btn" style="margin-left:auto" onclick="abrirBuscador()" title="Buscar o preguntar (Ctrl+K)">🔍 <span class="busq-btn-txt">Buscar</span></button><button class="logout-btn" style="margin-left:0.4rem;${tasaHoy() ? "" : "background:#c0392b;color:#fff"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día">${chipTasaTxt()}</button>` : ""}
-      ${escCfg && rolUsuario !== "docente" ? `<select onchange="cambiarAnioVista(this.value)" style="margin-left:0.4rem;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:0.28rem 0.4rem;font-size:0.7rem;max-width:130px">${[escCfg.actual, ...escCfg.anteriores.slice().reverse()].map((a) => `<option value="${a.id}" style="color:#000" ${a.id === anioVista ? "selected" : ""}>${escHtml(a.nombre)}${a.id === escCfg.actual.id ? " (actual)" : ""}</option>`).join("")}</select>` : ""}
-${eventoInstalar ? `<button class="logout-btn" style="margin-left:0.4rem" onclick="instalarApp()" title="Instalar la plataforma en este equipo">📲 Instalar</button>` : ""}<button class="logout-btn" style="${rolUsuario !== "docente" ? "margin-left:0.4rem" : ""}" onclick="logout()">Salir</button>
+  <div class="shell ${conMenu ? "con-menu" : "sin-menu"}${rapidos.length > 1 ? " con-barra" : ""}" id="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Menú principal">
+    <div class="sb-marca">
+      <img src="data:image/png;base64,${LOGO}" class="sb-logo" alt="Logo"/>
+      <div class="sb-marca-txt"><strong>${EMPRESA}</strong><small>Sistema de Gestión</small></div>
+      <button class="sb-cerrar" onclick="cerrarMenu()" aria-label="Cerrar menú">✕</button>
     </div>
-    <div class="tabs">
-      ${(rolUsuario === "docente"
-        ? [["notas", "📝 Notas"]]
-        : rolUsuario === "administradora"
-          ? [
-              ["dashboard", "🏠 Inicio"],
-              ["caja", "💳 Caja"],
-              ["pagos", "💰 Pagos"],
-            ]
-          : [
-              ["dashboard", "🏠 Inicio"],
-              ["caja", "💳 Caja"],
-              ["pagos", "💰 Pagos"],
-              ["cobranza", "🔔 Cobranza"],
-              ["estudiantes", "👨‍🎓 Estudiantes"],
-              ["finanzas", "📒 Finanzas"],
-              ["nomina", "👷 Nómina"],
-              ["reportes", "📊 Reportes"],
-              ["graficas", "📈 Gráficas"],
-              ["notas", "📝 Notas"],
-              ["importar", "📥 Importar"],
-              ["config", "⚙️ Config"],
-            ]
-      )
+    <nav class="tabs sb-nav">
+      ${grupos
         .map(
-          ([k, l]) => `<button class="tab ${tabActual === k ? "active" : ""}" onclick="setTab('${k}')">${l}</button>`
+          (g) =>
+            `<div class="sb-grupo">${conMenu && g ? `<div class="sb-grupo-titulo">${g}</div>` : ""}${menu
+              .filter((t) => t.grupo === g)
+              .map((t) => boton(t, "tab"))
+              .join("")}</div>`
         )
         .join("")}
+    </nav>
+    <div class="sb-pie">
+      ${conMenu ? selectorAnio("hb-anio sb-anio") : ""}
+      <div class="sb-usuario"><span class="sb-avatar" aria-hidden="true">${escHtml((correoUsuario() || "?")[0].toUpperCase())}</span><div class="sb-usuario-txt"><strong id="rol-lbl"></strong><small>${escHtml(correoUsuario() || "")}</small></div></div>
+      <button class="sb-salir" onclick="logout()" title="Cerrar sesión (${escHtml(correoUsuario() || "")})"><span aria-hidden="true">⏻</span><span class="sb-salir-txt">Cerrar sesión</span></button>
     </div>
+  </aside>
+  <div class="sb-velo" onclick="cerrarMenu()"></div>
+  <div class="principal">
+  <div class="header">
+    <div class="header-top">
+      ${conMenu ? `<button class="hb-menu" onclick="abrirMenu()" aria-label="Abrir el menú" title="Menú">☰</button>` : ""}
+      <img src="data:image/png;base64,${LOGO}" class="header-logo" alt="Logo"/>
+      <div class="hb-titulo">
+        <div class="header-label">${conMenu ? actual.grupo || "Sistema de Gestión" : "Sistema de Gestión"}</div>
+        <div class="header-name"><span aria-hidden="true">${actual.ico}</span> ${actual.nombre}</div>
+      </div>
+      <div class="hb-acciones">
+      ${rolUsuario !== "docente" ? `<button class="logout-btn busq-btn" onclick="abrirBuscador()" title="Buscar o preguntar (Ctrl+K)">🔍 <span class="busq-btn-txt">Buscar</span></button><button class="logout-btn hb-tasa${tasaHoy() ? "" : " sin-tasa"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día"><span class="hb-tasa-larga">${chipTasaTxt()}</span><span class="hb-tasa-corta">${chipTasaCorta()}</span></button>` : ""}
+      ${selectorAnio("hb-anio")}
+      ${botonInstalar()}<button class="logout-btn hb-salir" onclick="logout()" title="Cerrar sesión">Salir</button>
+      </div>
     </div>
   </div>
   ${soloLectura() ? `<div style="background:#fff8e1;border-bottom:2px solid #b8860b;color:#7a5c00;padding:0.55rem 1rem;font-size:0.8rem;text-align:center">📚 Estás viendo el año escolar <strong>${escHtml(anioVistaObj().nombre)}</strong> (solo consulta). <a href="#" onclick="cambiarAnioVista('${escCfg.actual.id}');return false" style="color:#003366;font-weight:700">Volver al año actual</a></div>` : ""}
 ${bannerTasa()}
 <div class="content" id="tab-content">${renderTab()}</div>
+  </div>
+  ${
+    rapidos.length > 1
+      ? `<nav class="barra-inferior" aria-label="Accesos rápidos">${rapidos.map((t) => boton(t, "bi-tab")).join("")}${
+          conMenu
+            ? `<button class="bi-tab bi-mas${rapidos.some((t) => t.k === tabActual) ? "" : " active"}" onclick="abrirMenu()" aria-label="Más opciones"><span class="tab-ico" aria-hidden="true">☰<span class="insignia" data-insignia="mas" hidden></span></span><span class="tab-txt">Más</span></button>`
+            : ""
+        }</nav>`
+      : ""
+  }
+  </div>
   ${modalActual ? renderModal() : ""}`;
-  // En el teléfono las pestañas no caben: la elegida queda a la vista
-  const pestanas = app.querySelector(".tabs"),
-    elegida = pestanas && pestanas.querySelector(".tab.active");
-  if (elegida) pestanas.scrollLeft = elegida.offsetLeft - (pestanas.clientWidth - elegida.offsetWidth) / 2;
   const rl = document.getElementById("rol-lbl");
   if (rl)
     rl.textContent =
       rolUsuario === "director" ? "👑 Director" : rolUsuario === "docente" ? "📝 Docente" : "✏️ Administradora";
+  menuAbierto = false;
+  sincronizarMenu();
+  pintarInsignias();
   animarModalSiEsNuevo();
 }
 // Pestañas y ventanas de cada rol que no es el director: los docentes solo Notas; la administradora cobra (Inicio,
@@ -184,7 +199,7 @@ function mostrarToast(msg) {
     t = document.createElement("div");
     t.id = "toast-msg";
     t.style.cssText =
-      "position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#003366;color:#fff;padding:0.65rem 1.2rem;border-radius:24px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,51,102,0.3);transition:opacity 0.3s";
+      "position:fixed;bottom:calc(var(--alto-barra, 0px) + 1.5rem);left:50%;transform:translateX(-50%);background:#003366;color:#fff;padding:0.65rem 1.2rem;border-radius:24px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,51,102,0.3);transition:opacity 0.3s";
     document.body.appendChild(t);
   }
   t.textContent = msg;

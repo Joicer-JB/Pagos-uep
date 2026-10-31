@@ -9,6 +9,20 @@ cargar la tasa BCV de un día que no la tenga. **Todo lo demás lo haces tú:** 
 mensualidades y exoneraciones, cobranza, ingresos y gastos, nómina, reportes, notas y configuración. Las reglas de
 Firestore lo exigen también: aunque alguien intentara saltarse la pantalla, la base de datos no lo permite.
 
+## 🧭 Moverse por la plataforma (PC, tablet y teléfono)
+
+- **PC y laptop:** el menú está fijo a la izquierda, ordenado en grupos: **Cobros** (Inicio, Caja, Pagos, Cobranza),
+  **Colegio** (Estudiantes, Notas, Importar), **Administración** (Finanzas, Nómina, Reportes, Gráficas) y
+  **Configuración**. Abajo del menú, quién entró y **Cerrar sesión**. Arriba, el nombre de la pestaña, 🔍 Buscar, la
+  tasa del día y el año escolar.
+- **Tablet acostada:** el mismo menú, angosto (ícono con el nombre debajo).
+- **Teléfono y tablet parada:** **☰** arriba a la izquierda abre el menú (se cierra al elegir o al tocar fuera; en
+  Android también deslizando el dedo desde el borde izquierdo). Abajo queda la barra con **Inicio, Caja, Pagos,
+  Cobranza** y **Más** (abre el menú). El año escolar y Cerrar sesión están dentro del menú.
+- **Numeritos rojos:** en 🔔 Cobranza, los estudiantes en mora; en ⚙️ Configuración, quién espera tu autorización
+  para entrar hoy.
+- **iPhone:** para tenerla como app, **📲 Instalar** explica cómo (Compartir → «Agregar a pantalla de inicio»).
+
 ## 🔍 Buscador inteligente
 
 Botón **🔍 Buscar** de la cabecera, la barra de Inicio, **Ctrl+K** o la tecla **/**. Se escribe como se habla, y

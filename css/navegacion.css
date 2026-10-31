@@ -1,0 +1,715 @@
+/* Navegación adaptable (js/navegacion.js). Tres formas según el ancho de la pantalla:
+   · 1180 px o más (PC y laptop): menú fijo a la izquierda, con grupos, y arriba una barra clara con el título.
+   · 900 a 1179 px (tablet acostada, laptop pequeña): el mismo menú, angosto (ícono y nombre debajo).
+   · Menos de 900 px (teléfono y tablet parada): el menú se abre con ☰ encima de la pantalla, y abajo queda una
+     barra con lo que más se usa. En el iPhone se respetan la ceja y la rayita de abajo (env(safe-area-inset-*)). */
+
+:root {
+  --sb-ancho: 256px;
+  --alto-barra: 0px; /* lo que ocupa la barra de abajo (para que avisos y botones no queden debajo de ella) */
+}
+
+/* ---------- Estructura ---------- */
+.shell {
+  min-height: 100vh;
+}
+.principal {
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  .shell {
+    display: grid;
+    grid-template-columns: var(--sb-ancho) minmax(0, 1fr);
+  }
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .sb-velo,
+  .sb-cerrar,
+  .hb-menu,
+  .barra-inferior {
+    display: none !important;
+  }
+}
+
+/* ---------- Menú lateral ---------- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: #fff;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1), transparent 40%),
+    linear-gradient(180deg, #002a55 0%, var(--azul) 45%, #00427c 100%);
+  border-right: 1px solid rgba(255, 215, 0, 0.25);
+  z-index: 70;
+}
+.sb-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.15rem 1rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sb-logo {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 12px;
+  padding: 3px;
+  box-shadow:
+    0 0 0 2px rgba(255, 215, 0, 0.55),
+    0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.sb-marca-txt {
+  min-width: 0;
+  flex: 1;
+}
+.sb-marca-txt strong {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.sb-marca-txt small {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dorado);
+}
+.sb-cerrar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.sb-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.6rem 0.75rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.sb-grupo-titulo {
+  margin: 0.95rem 0.7rem 0.35rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+.sb-grupo:first-child .sb-grupo-titulo {
+  margin-top: 0.35rem;
+}
+.sb-grupo:last-child:not(:first-child) {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sidebar .tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: 44px;
+  margin: 2px 0;
+  padding: 0.6rem 0.8rem;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.76);
+  font-family: inherit;
+  font-size: 0.87rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+.sidebar .tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.sidebar .tab.active {
+  color: #fff;
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+  box-shadow: inset 3px 0 0 var(--dorado);
+}
+.sidebar .tab.active .tab-txt {
+  color: var(--dorado);
+}
+.tab-ico {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  width: 1.6rem;
+  flex-shrink: 0;
+  font-size: 1.08rem;
+  line-height: 1;
+}
+.tab-txt {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Numerito (en mora, pedidos de autorización) */
+.insignia {
+  position: absolute;
+  top: -7px;
+  right: -11px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--rojo);
+  color: #fff;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--azul);
+}
+.insignia[hidden] {
+  display: none;
+}
+.sb-pie {
+  padding: 0.8rem 0.85rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.12);
+}
+.sb-usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.7rem;
+  min-width: 0;
+}
+.sb-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--dorado);
+  color: var(--azul);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.sb-usuario-txt {
+  min-width: 0;
+}
+.sb-usuario-txt strong {
+  display: block;
+  font-size: 0.78rem;
+}
+.sb-usuario-txt small {
+  display: block;
+  font-size: 0.66rem;
+  color: rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-salir {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+.sb-salir:hover {
+  background: rgba(229, 62, 62, 0.9);
+  border-color: transparent;
+}
+.sidebar .tab:focus-visible,
+.sb-salir:focus-visible,
+.sb-cerrar:focus-visible,
+.hb-menu:focus-visible,
+.bi-tab:focus-visible {
+  outline: 3px solid rgba(255, 215, 0, 0.9);
+  outline-offset: 2px;
+}
+
+/* ---------- Barra de arriba ---------- */
+.header-top {
+  margin-bottom: 0;
+}
+.hb-titulo {
+  flex: 1;
+  min-width: 0;
+}
+.header-name {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.hb-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+.hb-acciones .logout-btn {
+  margin-left: 0;
+  white-space: nowrap;
+}
+.hb-anio {
+  max-width: 140px;
+  min-height: 30px;
+  border: none;
+  border-radius: 9px;
+  padding: 0.28rem 0.4rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+.hb-anio option {
+  color: #000;
+}
+.hb-tasa-corta,
+.sb-anio {
+  display: none;
+}
+.hb-tasa.sin-tasa {
+  background: #c0392b !important;
+  color: #fff !important;
+}
+.hb-menu {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.hb-menu:active {
+  transform: scale(0.94);
+}
+
+/* PC: barra clara, el nombre de la pestaña grande; el logo y «Salir» ya están en el menú */
+@media (min-width: 900px) {
+  .header {
+    background: rgba(255, 255, 255, 0.97);
+    color: var(--texto);
+    padding: 0.85rem 1.75rem;
+    border-bottom: 1px solid rgba(0, 51, 102, 0.08);
+    box-shadow: 0 6px 20px rgba(0, 30, 70, 0.05);
+  }
+  .header .header-logo,
+  .hb-salir {
+    display: none;
+  }
+  .header-label {
+    color: var(--azul-2);
+    opacity: 0.75;
+    font-size: 0.6rem;
+  }
+  .header-name {
+    color: var(--azul);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .header .logout-btn,
+  .header .hb-anio {
+    min-height: 38px;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--borde);
+    border-radius: 11px;
+    background: #f3f6fb;
+    color: var(--azul);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .header .logout-btn:hover {
+    background: #e7edf7;
+  }
+  .header .hb-anio {
+    max-width: 170px;
+  }
+  .content {
+    padding: 1.6rem 1.75rem 2.5rem;
+  }
+}
+@media (min-width: 1440px) {
+  .content {
+    max-width: 1240px;
+  }
+}
+
+/* ---------- Tablet acostada / laptop pequeña: menú angosto ---------- */
+@media (min-width: 900px) and (max-width: 1179px) {
+  :root {
+    --sb-ancho: 92px;
+  }
+  .sb-marca {
+    justify-content: center;
+    padding: 0.7rem 0.5rem;
+  }
+  .sb-logo {
+    width: 40px;
+    height: 40px;
+  }
+  .sb-marca-txt,
+  .sb-grupo-titulo,
+  .sb-usuario-txt,
+  .sb-salir-txt {
+    display: none;
+  }
+  .sb-nav {
+    padding: 0.5rem 0.45rem;
+  }
+  .sb-grupo + .sb-grupo {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .sidebar .tab {
+    flex-direction: column;
+    gap: 0.15rem;
+    min-height: 0;
+    margin: 1px 0;
+    padding: 0.4rem 0.15rem;
+    font-size: 0.62rem;
+    text-align: center;
+  }
+  .sidebar .tab .tab-ico {
+    font-size: 1.2rem;
+  }
+  .sb-grupo:last-child:not(:first-child) {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+  }
+  .sidebar .tab .tab-txt {
+    max-width: 100%;
+  }
+  .sidebar .tab.active {
+    box-shadow: inset 0 -3px 0 var(--dorado);
+  }
+  .sb-pie {
+    padding: 0.55rem 0.5rem;
+  }
+  .sb-usuario {
+    display: none; /* quién entró se ve al pasar el ratón sobre «Cerrar sesión» */
+  }
+  .sb-salir {
+    min-height: 40px;
+  }
+}
+
+/* ---------- Teléfono y tablet parada ---------- */
+@media (max-width: 899px) {
+  /* Menú encima de la pantalla, desde la izquierda */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(86vw, 310px);
+    z-index: 1200;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    transform: translateX(-104%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-radius: 0 22px 22px 0;
+    will-change: transform;
+  }
+  .menu-abierto .sidebar {
+    transform: none;
+    box-shadow: 10px 0 40px rgba(0, 10, 30, 0.45);
+  }
+  .sb-velo {
+    position: fixed;
+    inset: 0;
+    z-index: 1150;
+    background: rgba(8, 20, 40, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .menu-abierto .sb-velo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  html:has(.menu-abierto) {
+    overflow: hidden;
+  }
+  .sidebar .tab {
+    min-height: 46px;
+    margin: 1px 0;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.92rem;
+  }
+  .sb-grupo-titulo {
+    margin-top: 0.7rem;
+  }
+  .sb-marca {
+    padding: 0.85rem 0.9rem 0.75rem;
+  }
+  .sb-pie {
+    padding: 0.6rem 0.85rem 0.75rem;
+  }
+  /* Pie en una fila: quién entró a la izquierda y «Cerrar sesión» a la derecha */
+  .sb-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .sb-usuario {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  .sb-salir {
+    width: auto;
+    padding: 0.5rem 0.85rem;
+  }
+  .con-menu .sb-anio {
+    display: block;
+    width: 100%;
+    max-width: none;
+    flex: 1 0 100%;
+    min-height: 38px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .sin-menu .sb-cerrar {
+    display: none;
+  }
+
+  /* Barra de arriba azul, compacta, debajo de la ceja del iPhone */
+  .header {
+    padding: calc(0.55rem + env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) 0.55rem
+      max(0.75rem, env(safe-area-inset-left));
+  }
+  .header-top {
+    gap: 0.55rem;
+  }
+  .header-logo {
+    width: 34px;
+    height: 34px;
+  }
+  .con-menu .header .header-logo {
+    display: none; /* el logo está en el menú */
+  }
+  .header-name {
+    font-size: 1rem;
+    font-family: Georgia, serif;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .header-label {
+    font-size: 0.52rem;
+  }
+  .con-menu .hb-salir {
+    display: none; /* «Cerrar sesión» está en el menú */
+  }
+  .logout-btn {
+    min-height: 34px;
+  }
+  .hb-txt {
+    display: none;
+  }
+
+  /* Barra de abajo, como en las apps del teléfono (la variable va en html: los avisos flotantes están fuera) */
+  html:has(.con-barra) {
+    --alto-barra: calc(64px + env(safe-area-inset-bottom));
+  }
+  .con-barra .principal {
+    padding-bottom: var(--alto-barra);
+  }
+  .barra-inferior {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    display: flex;
+    padding: 0 max(0.25rem, env(safe-area-inset-right)) env(safe-area-inset-bottom)
+      max(0.25rem, env(safe-area-inset-left));
+    background: rgba(255, 255, 255, 0.98);
+    border-top: 1px solid rgba(0, 51, 102, 0.1);
+    box-shadow: 0 -6px 24px rgba(0, 30, 70, 0.1);
+  }
+  .bi-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    border: none;
+    background: none;
+    color: var(--suave);
+    font-family: inherit;
+    font-size: 0.66rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bi-tab .tab-ico {
+    width: 56px;
+    height: 30px;
+    align-items: center;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    transition:
+      background 0.2s ease,
+      transform 0.2s ease;
+  }
+  .bi-tab.active {
+    color: var(--azul);
+    font-weight: 800;
+  }
+  .bi-tab.active .tab-ico {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.12), rgba(255, 215, 0, 0.35));
+  }
+  .bi-tab:active .tab-ico {
+    transform: scale(0.92);
+  }
+  .bi-tab .insignia {
+    top: -3px;
+    right: 6px;
+    box-shadow: 0 0 0 2px #fff;
+  }
+  /* Lo que flota abajo queda encima de la barra */
+  .aviso-conexion,
+  .pedidos-autorizacion {
+    bottom: calc(var(--alto-barra) + 0.75rem);
+  }
+  .lote-barra {
+    bottom: calc(var(--alto-barra) + 0.6rem);
+  }
+
+  /* Tablas anchas: el nombre (primera columna) queda fijo al deslizar de lado */
+  #tab-content div[style*="overflow-x:auto"] > table tbody td:first-child,
+  #tab-content div[style*="overflow-x: auto"] > table tbody td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: #fff;
+    box-shadow: 6px 0 8px -6px rgba(0, 30, 70, 0.25);
+  }
+  #tab-content div[style*="overflow-x:auto"] > table thead th:first-child,
+  #tab-content div[style*="overflow-x: auto"] > table thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: inherit;
+  }
+}
+
+/* Teléfonos angostos: los botones de la secretaria (sin menú) bajan a una segunda fila */
+@media (max-width: 600px) {
+  .sin-menu .header-top {
+    flex-wrap: wrap;
+    row-gap: 0.45rem;
+  }
+  .sin-menu .hb-acciones {
+    flex: 1 0 100%;
+    justify-content: flex-end;
+  }
+  .con-menu .header .hb-anio {
+    display: none; /* está dentro del menú */
+  }
+  .hb-tasa-larga {
+    display: none;
+  }
+  .hb-tasa-corta {
+    display: inline;
+  }
+}
+
+/* Las ventanas (fichas, recibos, formularios) quedan encima de la barra de abajo y del menú */
+.modal-bg {
+  z-index: 1300;
+}
+
+/* ---------- 🖐️ Pantalla táctil (PC de la secretaria): botones grandes, fáciles de tocar ---------- */
+.modo-tactil .sidebar .tab {
+  min-height: 56px;
+  font-size: 0.98rem;
+}
+.modo-tactil .sidebar .tab-ico {
+  font-size: 1.3rem;
+}
+.modo-tactil .sb-salir {
+  min-height: 52px;
+  font-size: 0.92rem;
+}
+.modo-tactil .header .logout-btn,
+.modo-tactil .header .hb-anio {
+  min-height: 46px;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+}
+.modo-tactil .header .hb-anio {
+  max-width: 220px;
+}
+
+/* ---------- iPhone y iPad ---------- */
+/* Con letra menor de 16 px el iPhone hace zoom al tocar un campo: aquí no */
+.ios input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.ios select,
+.ios textarea {
+  font-size: max(16px, 1em);
+}
+
+@media print {
+  .sidebar,
+  .sb-velo,
+  .barra-inferior,
+  .header {
+    display: none !important;
+  }
+  .shell {
+    display: block;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sb-velo,
+  .bi-tab .tab-ico {
+    transition: none;
+  }
+}
