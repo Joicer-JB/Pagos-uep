@@ -231,24 +231,30 @@ test("en Inicio las cifras cuentan desde 0, pero el número escrito es siempre e
 
 test("si la página y los scripts quedaron de versiones distintas («… is not defined»), se vuelve a abrir sola y entra", async () => {
   const s = await nav.nuevaPagina();
-  // La primera vez falta navegacion.js (como una página vieja guardada con los scripts nuevos)
-  let veces = 0;
-  await s.pagina.route("**/js/navegacion.js", (r) =>
-    veces++ === 0 ? r.fulfill({ status: 200, contentType: "text/javascript", body: "/* vieja */" }) : r.continue()
-  );
+  // La página abierta sin «?v=» recibe un navegacion.js vacío (como una página vieja guardada con los scripts nuevos);
+  // la que se vuelve a abrir sola (con «?v=…») recibe el de verdad
+  let vacio = 0;
+  await s.pagina.route("**/js/navegacion.js", (r) => {
+    if (/[?&]v=\d+/.test(r.request().headers()["referer"] || "")) return r.continue();
+    vacio++;
+    return r.fulfill({ status: 200, contentType: "text/javascript", body: "/* vieja */" });
+  });
   await s.pagina.goto(nav.base);
   await s.pagina.waitForSelector("#l-email");
+  assert.equal(await s.pagina.evaluate(() => typeof menuDeRol), "undefined");
   await s.pagina.fill("#l-email", "herrerajoicer@gmail.com");
   await s.pagina.fill("#l-pwd", "prueba123");
   await s.pagina.click("#login-btn");
-  // Se recarga sola (con ?v=…), ya con todos los archivos nuevos. (Firebase de verdad recuerda la sesión; el de
-  // prueba no, así que aquí se vuelve a entrar.)
+  // Se vuelve a abrir sola (con ?v=…), ya con todos los archivos nuevos. (Firebase de verdad recuerda la sesión; el
+  // de prueba no, así que aquí se vuelve a entrar.)
   await s.pagina.waitForURL(/\?v=\d+/, { waitUntil: "commit" });
-  await s.pagina.waitForSelector("#l-email");
+  await s.pagina.waitForLoadState("load");
+  await s.pagina.waitForFunction(() => typeof menuDeRol === "function" && !!document.getElementById("l-email"));
   await s.pagina.fill("#l-email", "herrerajoicer@gmail.com");
   await s.pagina.fill("#l-pwd", "prueba123");
   await s.pagina.click("#login-btn");
   await s.pagina.waitForSelector(".tabs .tab");
-  assert.ok(veces >= 2);
+  assert.equal(vacio, 1);
   assert.equal(await s.pagina.evaluate(() => sessionStorage.getItem("recargaVersion")), null);
+  assert.doesNotMatch(await s.pagina.evaluate(() => location.search), /v=/); // la dirección queda limpia
 });
