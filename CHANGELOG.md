@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Octubre 2026 — Arreglo: «menuDeRol is not defined» después de una actualización
+
+- Tras publicar una versión, un equipo podía abrir la página principal guardada de antes (el navegador la guarda
+  hasta 10 minutos) con los scripts nuevos, y no abría («Error: … is not defined»). Ahora la app instalada pide
+  siempre la página principal al servidor, y si aun así pasa, la plataforma se vuelve a abrir sola una vez con todo
+  nuevo.
+
 ## Octubre 2026 — Navegación adaptable (PC, tablet, Android y iPhone)
 
 - **Inicio:** saludo según la hora con la fecha y lo de hoy (cobrado, cuántos deben, autorizaciones pendientes y
