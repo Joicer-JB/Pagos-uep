@@ -2,6 +2,11 @@
 
 ## Octubre 2026 — Navegación adaptable (PC, tablet, Android y iPhone)
 
+- **Pantalla de entrada:** de fondo, el escudo del colegio grande y translúcido girando despacio, con destellos
+  dorados que suben; arriba de la tarjeta, el escudo como una medalla 3D con canto dorado que flota, da una vuelta
+  completa cada tanto y le pasa un brillo (en la computadora se inclina hacia el ratón). También en la pantalla de
+  «Esperando la autorización». Si el equipo pide «reducir movimiento», queda quieto.
+
 - **PC y laptop:** menú fijo a la izquierda, con las pestañas en grupos (Cobros, Colegio, Administración y
   Configuración), quién entró y «Cerrar sesión»; arriba, una barra clara con el nombre de la pestaña.
 - **Tablet acostada:** el menú angosto, con el ícono y el nombre debajo.

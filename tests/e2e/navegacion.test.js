@@ -147,3 +147,28 @@ test("teléfono: en una tabla ancha el nombre queda fijo al deslizar de lado", a
   })()`);
   assert.equal(await s.llamar(`getComputedStyle(document.getElementById("celda-nombre")).position`), "sticky");
 });
+
+test("la entrada lleva el escudo de fondo girando y el escudo 3D (con sus dos caras, nunca al revés)", async () => {
+  const s = await nav.nuevaPagina();
+  await s.pagina.goto(nav.base);
+  await s.pagina.waitForSelector("#l-email");
+  assert.equal(await s.pagina.locator(".login-wrap .entrada-fondo .ef-escudo img").count(), 1);
+  assert.equal(await s.pagina.locator(".login-card .escudo3d .e3-frente img").count(), 1);
+  assert.equal(await s.pagina.locator(".login-card .escudo3d .e3-atras img").count(), 1);
+  assert.equal(
+    await s.pagina.evaluate(() => getComputedStyle(document.querySelector(".e3-giro")).animationName),
+    "e3-girar"
+  );
+  assert.equal(
+    await s.pagina.evaluate(() => getComputedStyle(document.querySelector(".e3-atras")).backfaceVisibility),
+    "hidden"
+  );
+  // Los destellos tienen tamaño (no quedan en 0)
+  assert.ok(
+    await s.pagina.evaluate(() => parseFloat(getComputedStyle(document.querySelector(".ef-chispa")).width) >= 4)
+  );
+  // Con el ratón, el escudo se inclina hacia él
+  await s.pagina.mouse.move(1200, 100);
+  await s.pagina.waitForFunction(() => document.querySelector(".login-wrap").style.getPropertyValue("--incl-x") !== "");
+  assert.deepEqual(s.errores, []);
+});
