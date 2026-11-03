@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Noviembre 2026 — No registrar dos veces el mismo pago
+
+- **➕ Nuevo Pago** ya no deja registrar la **inscripción** (o el carnet y la papelería) si ya está pagada este año, ni
+  una **mensualidad** de un mes que ya está pagado: sale «⛔ Ya canceló…» con el recibo donde está. Sirve al pasar
+  pagos viejos del cuaderno sin recordar si ya se habían registrado.
+- Si ya hay un pago **igual** (mismo estudiante, fecha, concepto, mes y monto), la app pregunta antes de guardarlo.
+- (⚡ Pagos viejos ya lo hacía: solo muestra a quienes deben y no deja registrar a quien ya no debe.)
+
 ## Octubre 2026 — Navegación adaptable (PC, tablet, Android y iPhone)
 
 - **Inicio:** saludo según la hora con la fecha y lo de hoy (cobrado, cuántos deben, autorizaciones pendientes y

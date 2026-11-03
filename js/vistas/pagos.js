@@ -285,8 +285,8 @@ function sugerirInscripcionPago() {
     if (nota)
       nota.textContent =
         cu.inscripcion.concepto === "Inscripción"
-          ? "✅ La inscripción de este año ya está pagada."
-          : "✅ El carnet y la papelería de este año ya están pagados.";
+          ? "✅ La inscripción de este año ya está pagada: no se puede registrar de nuevo."
+          : "✅ El carnet y la papelería de este año ya están pagados: no se pueden registrar de nuevo.";
     return;
   }
   insPago = { estId: est.id, meses: new Set(cu.primera && cu.primera.pendiente > 0.004 ? [cu.primera.ym] : []) };
@@ -473,6 +473,63 @@ function desgloseRecibo(pago, t) {
   const totalBs = pago && pago.montoBs != null ? pago.montoBs : tasa ? r2(total * tasa) : null;
   return { lineas, total, tasa, totalBs };
 }
+// Antes de guardar: no deja registrar lo que ya está cancelado (la inscripción del año o un mes ya pagado) y pide
+// confirmar si ya hay un pago igual (mismo estudiante, fecha, concepto, mes y total). Devuelve el error, "cancelado"
+// o "" si se puede guardar.
+function avisoPagoRepetido(estId, fecha, total) {
+  const est = estId && estudiantes.find((e) => e.id === estId);
+  if (!est) return "";
+  const concepto = document.getElementById("p-concepto").value,
+    mes = document.getElementById("p-mes").value;
+  const previos = pagosDeEstudiante(est);
+  // Los pagos de un año escolar anterior no se comparan con las cuotas de este año
+  const inicio = cobCfgActiva() ? cobCfg.inscripcionDesde || cobCfg.primerMes + "-01" : "";
+  if (inicio && fecha >= inicio) {
+    const ym = concepto === "Mensualidad" ? ymDeMes(mes) : "";
+    const ya = avisoYaCancelado(calcCuotas(est), concepto, ym);
+    if (ya) {
+      const delConcepto = (p) =>
+        ym
+          ? p.concepto === "Mensualidad" && (p.mes === mes || !!(p.cuotas && p.cuotas[ym]))
+          : p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET;
+      const recibos = [
+        ...new Set(
+          previos
+            .filter((p) => p.fecha >= inicio && delConcepto(p))
+            .map((p) => (p.factura || "recibo") + " del " + fechaCorta(p.fecha))
+        ),
+      ];
+      return (
+        "⛔ " +
+        ya +
+        (recibos.length ? " Está en: " + recibos.join(", ") + "." : "") +
+        " No se puede registrar de nuevo. Si es otro pago, revisa el concepto o el mes."
+      );
+    }
+  }
+  const igual = previos.find(
+    (p) =>
+      p.fecha === fecha && p.concepto === concepto && (p.mes || "") === mes && Math.abs((p.total || 0) - total) < 0.005
+  );
+  if (
+    igual &&
+    !confirm(
+      "⚠️ Ya hay un pago igual de " +
+        est.nombre +
+        ": " +
+        (igual.factura || "recibo") +
+        " del " +
+        fechaCorta(fecha) +
+        ", " +
+        concepto +
+        " " +
+        fmt(total) +
+        ".\n\n¿Es otro pago distinto y quieres registrarlo de todos modos?"
+    )
+  )
+    return "cancelado";
+  return "";
+}
 async function guardarPago() {
   const nombre = document.getElementById("p-nombre").value.trim();
   const cedula = document.getElementById("p-cedula").value.trim();
@@ -491,6 +548,9 @@ async function guardarPago() {
   const errFecha = revisarFechaMovimiento(fecha);
   if (errFecha === "cancelado") return;
   if (errFecha) return mostrarError(errBox, errFecha);
+  const aviso = avisoPagoRepetido(window._pagoEstId, fecha, total);
+  if (aviso === "cancelado") return;
+  if (aviso) return mostrarError(errBox, aviso);
   const conRef = _metodoPago === "Transferencia Bs" || _metodoPago === "Punto";
   const referencia = conRef
     ? ((document.getElementById("p-ref") || {}).value || "").replace(/[^0-9A-Za-z-]/g, "").slice(0, 30)

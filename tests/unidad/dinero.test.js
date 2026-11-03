@@ -461,3 +461,40 @@ test("lo que pase de inscripción + septiembre sigue a los meses siguientes", ()
   assert.equal(c.lista[0].pendiente, 0);
   assert.equal(c.lista[1].pendiente, 0);
 });
+
+// ---------- No registrar dos veces lo que ya está cancelado ----------
+const yaCancelado = (e, concepto, ym = "") => {
+  app.__e = { id: "e1", nombre: "Ana", cedula: "V-1", estado: "alsaldo", ...e };
+  return f(`avisoYaCancelado(calcCuotas(__e, "2026-10-07"), ${JSON.stringify(concepto)}, ${JSON.stringify(ym)})`);
+};
+
+test("avisoYaCancelado: la inscripción ya pagada no se puede registrar de nuevo", () => {
+  conCostos();
+  poner("pagos", [pago("2026-09-01", 126, "Inscripción")]);
+  assert.match(yaCancelado({ grado: "5to Año", mensualidad: 55 }, "Inscripción"), /Ya canceló la inscripción/);
+});
+
+test("avisoYaCancelado: la inscripción con abono (preinscripción) se puede completar", () => {
+  conCostos();
+  poner("pagos", [pago("2026-08-15", 10, "Inscripción")]);
+  assert.equal(yaCancelado({ grado: "5to Año", mensualidad: 55 }, "Inscripción"), "");
+});
+
+test("avisoYaCancelado: un mes ya pagado no se puede registrar de nuevo; uno que se debe, sí", () => {
+  conCostos();
+  poner("pagos", [pago("2026-09-01", 126, "Inscripción")]); // 71 de inscripción + 55 de septiembre
+  const e = { grado: "5to Año", mensualidad: 55 };
+  assert.match(yaCancelado(e, "Mensualidad", "2026-09"), /Ya canceló la mensualidad de Septiembre/);
+  assert.equal(yaCancelado(e, "Mensualidad", "2026-10"), "");
+  assert.equal(yaCancelado(e, "Mensualidad", ""), ""); // sin mes: va al más antiguo que se deba
+  assert.equal(yaCancelado(e, "Uniformes"), "");
+});
+
+test("avisoYaCancelado: el carnet y la papelería de un exonerado de inscripción", () => {
+  conCostos();
+  poner("pagos", [pago("2026-09-02", 16, "Carnet y papelería")]);
+  assert.match(
+    yaCancelado({ grado: "3er Grado", mensualidad: 45, sinInscripcion: true }, "Inscripción"),
+    /Ya canceló el carnet y la papelería/
+  );
+});
