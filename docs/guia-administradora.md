@@ -211,7 +211,10 @@ Pago**:
    - si no hay ninguna tasa cercana, queda vacío: búscala en bcv.org.ve y escríbela. Quedará guardada para
      ese día.
 2. Si ese día **ya tiene tasa guardada**, el campo no se puede cambiar. Si crees que está mal, avísale al director.
-3. Si la fecha es de un **año escolar anterior**, la app te pide confirmar: el pago quedará en el historial de
+3. **No deja registrar dos veces lo mismo.** Si el estudiante ya tiene pagada la **inscripción** de este año, o el
+   **mes** que elegiste en «Mes que cancela», sale «⛔ Ya canceló…» con el recibo donde está, y no se guarda. Si ya hay
+   un pago **igual** (mismo estudiante, fecha, concepto, mes y monto), la app te pregunta antes de guardarlo.
+4. Si la fecha es de un **año escolar anterior**, la app te pide confirmar: el pago quedará en el historial de
    ese año y no aparecerá en las listas del año actual. No se aceptan fechas futuras.
 
 **Inscripción desde 💰 Pagos (también para pagos viejos):** al elegir el concepto **«Inscripción»** aparece

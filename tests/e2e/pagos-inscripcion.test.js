@@ -172,3 +172,26 @@ test("con el concepto «Mensualidad», avisa si todavía debe el carnet y la pap
   assert.match(await s.pagina.textContent("#caja-items"), /Carnet y papelería 2026-2027/);
   assert.deepEqual(s.errores, []);
 });
+
+test("no deja registrar de nuevo la inscripción o un mes que ya están cancelados", async () => {
+  // est3 ya pagó el carnet y la papelería y septiembre (prueba anterior)
+  await llamar(
+    `cerrarModal(); setTab("pagos"); subTab.pagos = "nuevo"; renderTabContent(); seleccionarEstudiantePago("est3")`
+  );
+  await s.pagina.selectOption("#p-concepto", "Inscripción");
+  assert.match(await s.pagina.textContent("#p-ins-nota"), /ya están pagados: no se pueden registrar de nuevo/);
+  await s.pagina.fill("#p-total", "16");
+  const antes = await llamar(`window.__ESCRITURAS__.length`);
+  await llamar(`guardarPago()`);
+  assert.match(
+    await s.pagina.textContent("#p-err"),
+    /⛔ Ya canceló el carnet y la papelería de este año\. Está en: .+\. No se puede registrar de nuevo/
+  );
+  await s.pagina.selectOption("#p-concepto", "Mensualidad");
+  await s.pagina.selectOption("#p-mes", "Septiembre");
+  await s.pagina.fill("#p-total", "45");
+  await llamar(`guardarPago()`);
+  assert.match(await s.pagina.textContent("#p-err"), /⛔ Ya canceló la mensualidad de Septiembre 2026/);
+  assert.equal(await llamar(`window.__ESCRITURAS__.length`), antes); // no se guardó nada
+  assert.deepEqual(s.errores, []);
+});

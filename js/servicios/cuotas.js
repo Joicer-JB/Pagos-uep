@@ -280,6 +280,27 @@ function calcCuotas(e, hoy) {
     proxima: lista.find((c) => !c.vencida && c.pendiente > 0.004) || null,
   };
 }
+// ¿Ya está cancelado lo que se quiere registrar? Evita registrar dos veces el mismo pago (por ejemplo, al pasar pagos
+// viejos del cuaderno sin recordar que ya se habían registrado). Recibe las cuotas del estudiante (calcCuotas), el
+// concepto y, para una mensualidad, el mes ("YYYY-MM"). Devuelve el aviso, o "" si se puede registrar.
+function avisoYaCancelado(cu, concepto, ym) {
+  if (!cu) return "";
+  if (concepto === "Inscripción") {
+    const ins = cu.inscripcion;
+    if (!ins || ins.pendiente > 0.004) return "";
+    return ins.concepto === "Inscripción"
+      ? "Ya canceló la inscripción de este año (con el carnet y la papelería)."
+      : "Ya canceló el carnet y la papelería de este año.";
+  }
+  if (concepto === "Mensualidad" && ym) {
+    const c = cu.lista.find((q) => q.ym === ym);
+    if (!c) return "";
+    if (c.monto <= 0.004)
+      return c.exonerado ? c.mes + " está exonerado: no se cobra." : c.mes + " no se le cobra (beca).";
+    if (c.pendiente <= 0.004) return "Ya canceló la mensualidad de " + c.mes + ".";
+  }
+  return "";
+}
 // Cuota del año escolar que corresponde a un mes por su nombre («Diciembre» → "2026-12"); "" si no hay
 function ymDeMes(nombreMes) {
   const i = MESES.indexOf(nombreMes) + 1;
