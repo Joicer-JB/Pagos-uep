@@ -135,9 +135,9 @@ function renderFormPago(data = {}) {
         <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="p-tel" placeholder="Teléfono" value="${escHtml(data.telefono) || ""}"/></div>
       </div>
       <div class="form-row">
-        <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="p-fecha" max="${todayStr()}" value="${escHtml(data.fecha) || todayStr()}" onchange="actualizarTasaCampo('p',calcBsPago)"/></div>
+        <div class="field"><label class="field-label">Fecha *</label><input class="inp" type="date" id="p-fecha" max="${todayStr()}" value="${escHtml(data.fecha) || todayStr()}" onchange="actualizarTasaCampo('p',calcBsPago);sugerirTotalMensualidadPago()"/></div>
         <div class="field"><label class="field-label">Concepto *</label>
-          <select class="inp" id="p-concepto" onchange="sugerirInscripcionPago()">
+          <select class="inp" id="p-concepto" onchange="sugerirInscripcionPago();sugerirTotalMensualidadPago()">
             <option value="">Seleccionar...</option>
             ${["Mensualidad", "Inscripción", "Uniformes", "Recargo", "Deuda anterior", "Otro"].map((c) => `<option value="${c}" ${data.concepto === c ? "selected" : ""}>${c === "Inscripción" ? "Inscripción / Carnet y papelería" : c}</option>`).join("")}
           </select>
@@ -146,10 +146,11 @@ function renderFormPago(data = {}) {
       </div>
       <div class="field" id="p-ins-box"></div>
       <div class="field"><label class="field-label">Mes que cancela</label>
-        <select class="inp" id="p-mes">
+        <select class="inp" id="p-mes" onchange="sugerirTotalMensualidadPago()">
           <option value="">-- Seleccionar mes --</option>
           ${MESES.map((m, i) => `<option value="${m}" ${data.mes === m ? "selected" : ""}>${m}</option>`).join("")}
         </select>
+        <div id="p-mes-nota" style="font-size:0.7rem;color:#b45309;margin-top:2px"></div>
       </div>
       <div class="field"><label class="field-label">Descripción</label><textarea class="inp" id="p-desc" rows="2" placeholder="Detalles adicionales">${escHtml(data.desc) || ""}</textarea></div>
       <div class="field"><label class="field-label">Método de Pago *</label>
@@ -231,6 +232,7 @@ function seleccionarEstudiantePago(estId) {
   window._pagoEstId = estId;
   window._pagoCedula = est.cedula;
   sugerirInscripcionPago();
+  sugerirTotalMensualidadPago();
 }
 // Concepto «Inscripción»: lista para marcar qué se paga con la inscripción (la inscripción, con carnet y papelería,
 // y los meses que se deban; por defecto el primer mes). El total, la descripción y el mes se llenan solos, y debajo
@@ -581,7 +583,7 @@ async function guardarPago() {
   // Mensualidad con «Mes que cancela»: se descuenta de ese mes (no del más antiguo que se deba)
   const ymPago = pago.concepto === "Mensualidad" ? ymDeMes(pago.mes) : "";
   if (ymPago) pago.cuotas = { [ymPago]: total };
-  const docs = docsInscripcionPago(pago);
+  const docs = ymPago ? docsRecargoPago(pago, ymPago) : docsInscripcionPago(pago);
   try {
     // Deuda manual anterior: con mora automática activa solo la reduce un pago de "Deuda anterior"
     // (las mensualidades se descuentan solas de las cuotas). Sin mora automática se mantiene el comportamiento de siempre.
@@ -843,6 +845,48 @@ function imprimirRecibo() {
   w.document.close();
 }
 
+// Mensualidad de un mes que se paga después de su fecha límite: el recargo va incluido en el mismo pago (p. ej. 50 $ =
+// 45 de octubre + 5 de recargo). Se guarda como dos pagos con el mismo recibo, «Mensualidad» y «Recargo», para que el
+// sobrante no se vaya como abono al mes siguiente. Lo que pase de mensualidad + recargo sí abona los meses siguientes.
+function docsRecargoPago(pago, ym) {
+  const est = estudiantes.find((e) => e.id === pago.estId);
+  const r = est ? recargoEnMensualidad(est, ym, pago.fecha, pago.total) : null;
+  if (!r) return [pago];
+  const mens = r2(pago.total - r.recargo);
+  const bsMens = r2(mens * pago.tasa);
+  const { cuotas: _sinCuotas, ...base } = pago;
+  return [
+    { ...pago, total: mens, totalBs: bsMens, cuotas: { [ym]: mens } },
+    { ...base, concepto: "Recargo", total: r.recargo, totalBs: r2(pago.totalBs - bsMens) },
+  ];
+}
+// Mensualidad con su mes elegido: dice cuánto se debe pagar y, si ya pasó la fecha límite, suma el recargo
+// (45 + 5 = 50). Llena el total si está vacío o si lo había llenado esta misma sugerencia.
+function sugerirTotalMensualidadPago() {
+  const concepto = (document.getElementById("p-concepto") || {}).value;
+  const mes = (document.getElementById("p-mes") || {}).value;
+  const fecha = (document.getElementById("p-fecha") || {}).value || todayStr();
+  const nota = document.getElementById("p-mes-nota"),
+    inp = document.getElementById("p-total");
+  if (!nota || !inp) return;
+  nota.textContent = "";
+  const est = estudiantes.find((e) => e.id === window._pagoEstId);
+  const ym = concepto === "Mensualidad" && mes ? ymDeMes(mes) : "";
+  const cu = est && ym ? calcCuotas(est) : null;
+  const c = cu && cu.lista.find((q) => q.ym === ym);
+  if (!c || !(c.pendiente > 0.004)) return;
+  // El recargo de ese mes si se paga hoy (o en la fecha del formulario)
+  const r = recargoEnMensualidad(est, ym, fecha, r2(c.pendiente + (cobCfg.recargo || 0)));
+  const total = r2(c.pendiente + (r ? r.recargo : 0));
+  nota.textContent = r
+    ? `⏰ ${c.mes} venció el ${fechaCorta(c.vence)}: ${fmt(c.pendiente)} + recargo ${fmt(r.recargo)} = ${fmt(total)}`
+    : `${c.mes}: ${fmt(c.pendiente)} (vence el ${fechaCorta(c.vence)})`;
+  if (!inp.value.trim() || inp.dataset.auto === inp.value) {
+    inp.value = String(total).replace(".", ",");
+    inp.dataset.auto = inp.value;
+    calcBsPago();
+  }
+}
 // Inscripción con meses marcados: un pago de «Inscripción» y otro de «Mensualidad» (con a qué mes va cada parte),
 // con el mismo recibo. Si el monto solo alcanza para la inscripción, va solo como antes.
 function docsInscripcionPago(pago) {

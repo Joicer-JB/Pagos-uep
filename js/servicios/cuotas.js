@@ -150,9 +150,11 @@ function pagosDeEstudiante(e) {
 // recargos y saldo a favor. Los pagos de «Mensualidad» se aplican primero a los meses que indican (los cobros de
 // Caja guardan «cuotas»: {"2026-10": 20}) y lo demás se reparte desde la cuota más antigua.
 // Devuelve null si no hay mora automática o el estudiante no está activo.
-function calcCuotas(e, hoy) {
+// «extras»: pagos que todavía no se guardan (para ver cómo quedaría la cuenta con ellos).
+function calcCuotas(e, hoy, extras) {
   hoy = hoy || todayStr();
   if (!cobCfgActiva() || !activo(e)) return null;
+  const suyos = pagosDeEstudiante(e).concat(extras || []);
   const exonerados = e.mesesExonerados && typeof e.mesesExonerados === "object" ? e.mesesExonerados : {};
   const lista = [];
   for (let k = 0; k < cobCfg.cuotas; k++) {
@@ -168,7 +170,7 @@ function calcCuotas(e, hoy) {
     });
   }
   const desde = cobCfg.primerMes + "-01";
-  const delEst = pagosDeEstudiante(e).filter((p) => p.fecha && p.fecha >= desde);
+  const delEst = suyos.filter((p) => p.fecha && p.fecha >= desde);
   // Inscripción del año (si hay estructura de costos): inscripción de su nivel + carnet QR + papelería, en un solo
   // pago obligatorio desde el inicio del año. Se paga junto con el primer mes: si un pago de «Inscripción» trae más
   // de lo que vale (p. ej. 106 $ = 61 de inscripción + 45 de septiembre), lo demás paga el primer mes.
@@ -183,7 +185,7 @@ function calcCuotas(e, hoy) {
       papeleria: cobCfg.papeleria || 0,
     };
     const monto = r2(partes.inscripcion + partes.carnet + partes.papeleria);
-    const pagosIns = pagosDeEstudiante(e)
+    const pagosIns = suyos
       .filter((p) => p.fecha && p.fecha >= (cobCfg.inscripcionDesde || desde))
       .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET);
     const pagadoIns = r2(pagosIns.reduce((s, p) => s + (p.total || 0), 0));
@@ -241,7 +243,7 @@ function calcCuotas(e, hoy) {
   // genera: se paga al inscribirse, aunque sea después del día de vencimiento.
   const rec = cobCfg.recargo > 0 && !e.sinRecargo ? cobCfg.recargo : 0;
   const diasInscripcion = new Set(
-    pagosDeEstudiante(e)
+    suyos
       .filter((p) => p.fecha >= (cobCfg.inscripcionDesde || desde))
       .filter((p) => p.concepto === "Inscripción" || p.concepto === CONCEPTO_CARNET)
       .map((p) => p.fecha)
@@ -279,6 +281,23 @@ function calcCuotas(e, hoy) {
     aFavor: r2(Math.max(0, resto)),
     proxima: lista.find((c) => !c.vencida && c.pendiente > 0.004) || null,
   };
+}
+// Un pago de «Mensualidad» de un mes que trae más de lo que falta de ese mes: si ese mes se paga tarde, lo que sobra
+// (hasta el recargo de ese mes) puede ser el recargo. Sin separarlo, ese sobrante se iría como abono al mes
+// siguiente y el recargo seguiría pendiente. Devuelve {mes, mensualidad, recargo} para preguntar, o null.
+function recargoEnMensualidad(e, ym, fecha, total) {
+  const cu = calcCuotas(e);
+  const c = cu && cu.lista.find((q) => q.ym === ym);
+  if (!c || !(c.pendiente > 0.004)) return null;
+  const sobra = r2(total - c.pendiente);
+  if (sobra <= 0.004) return null;
+  // Cómo queda la cuenta si de este pago solo se toma lo que falta del mes
+  const despues = calcCuotas(e, null, [
+    { estId: e.id, fecha, concepto: "Mensualidad", total: c.pendiente, cuotas: { [ym]: c.pendiente } },
+  ]);
+  const cd = despues.lista.find((q) => q.ym === ym);
+  const recargo = r2(Math.min(sobra, cd.recargo || 0, despues.recargoPend));
+  return recargo > 0.004 ? { mes: c.mes, mensualidad: c.pendiente, recargo } : null;
 }
 // ¿Ya está cancelado lo que se quiere registrar? Evita registrar dos veces el mismo pago (por ejemplo, al pasar pagos
 // viejos del cuaderno sin recordar que ya se habían registrado). Recibe las cuotas del estudiante (calcCuotas), el
