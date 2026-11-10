@@ -1,5 +1,34 @@
 # Historial de cambios
 
+## Noviembre 2026 — Desempate de puestos
+
+- Cuando dos o más estudiantes tienen el **mismo promedio**, la sábana (Todo el año o un lapso) muestra **⭐ Empates en el
+  puesto**. El director o control de estudio marcan **Destacar** a quien deba quedar adelante (por su conducta, por
+  ejemplo). Se decide aparte para el año y cada lapso, y cuenta en el boletín y en el cuadro de honor. Dos destacados
+  del mismo empate siguen empatados.
+
+## Noviembre 2026 — Sábana impresa en hoja oficio
+
+- La sábana se imprime en **hoja oficio horizontal** (21,6 × 33 cm) con la letra lo más grande que quepa a lo ancho,
+  y con el **mismo diseño de la plataforma**: encabezado azul, Def. y promedio resaltados, rojo debajo de 10, el
+  **escudo del colegio** y la franja amarilla, azul y roja. El detalle del estudiante y el cuadro de honor siguen en
+  carta, con el mismo encabezado.
+
+## Noviembre 2026 — Boletín de media general corregido
+
+- El boletín muestra la **C.I. del representante** y siempre la **sección** («Sección U» si el estudiante no tiene).
+  La ficha del estudiante tiene ahora el campo **Sección**.
+- Ya no lleva la firma del **representante** ni la del **docente guía** (solo la directora y la coordinación).
+- **Puesto por promedio** del estudiante en su salón (año y sección) y en toda media general, en el año completo y en
+  cada lapso. Entran los que tienen nota en todas sus materias; los empatados comparten el puesto.
+- **Inasistencias por materia** en cada lapso: se cargan en 📝 Notas junto a la nota y salen en el boletín (en blanco si
+  no hay).
+- **Área a revisar:** las materias con definitiva por debajo de 10, con la nota de la revisión. Esa nota la cargan el
+  director o control de estudio en la sábana (Todo el año → 📝 Área a revisar).
+- **Materia pendiente del año anterior:** «Aplica / No aplica», la materia y su nota, en la ficha del estudiante.
+- Las notas del boletín siguen en **enteros** (la definitiva redondeada desde ,5) y los promedios con un decimal.
+- El **escudo de fondo** está más arriba (del encabezado a los promedios) y se nota más.
+
 ## Noviembre 2026 — No registrar dos veces el mismo pago
 
 - **➕ Nuevo Pago** ya no deja registrar la **inscripción** (o el carnet y la papelería) si ya está pagada este año, ni

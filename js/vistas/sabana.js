@@ -236,6 +236,94 @@ function htmlAjustesSabana(lista, enPantalla) {
       .join("")}</tbody></table>`;
 }
 
+// Área a revisar: cada materia con definitiva por debajo de 10 (la entera del boletín) y la nota de la revisión. La
+// cargan el director o control de estudio; los demás solo la ven.
+function revisionesSabana(grado, seccion) {
+  const r = [];
+  estudiantesSabana(grado, seccion).forEach((est) =>
+    getAreas(grado).forEach((m) => {
+      const def = notaEntera(definitivaDe(est, m).nota);
+      if (def !== null && def < 10) r.push({ est, materia: m, def, rev: notaRevisionDe(est, m) });
+    })
+  );
+  return r;
+}
+function htmlRevisionSabana(lista, enPantalla) {
+  if (!lista.length) return "";
+  const editar = enPantalla && puedeCargarRevision();
+  return `<div class="section-title" style="margin-top:0.9rem">📝 Área a revisar (${lista.length})</div>
+    ${editar ? `<div class="ayuda" style="margin-bottom:0.4rem">Escribe la nota que sacó en la revisión (1 a 20) y se guarda sola. Sale en el boletín junto a la definitiva.</div>` : ""}
+    <table class="sab-tabla sab-revision"><thead><tr><th>Estudiante</th><th>Materia</th><th>Definitiva</th><th>Nota de revisión</th></tr></thead>
+    <tbody>${lista
+      .map(
+        (
+          x
+        ) => `<tr><td style="text-align:left">${escHtml(x.est.nombre)}</td><td style="text-align:left">${escHtml(x.materia)}</td>
+        <td class="sab-rep">${textoNota(x.def)}</td>
+        <td>${
+          editar
+            ? `<input class="nota-input" type="number" min="1" max="20" step="0.1" style="width:70px" value="${x.rev === null ? "" : escHtml(x.rev)}" placeholder="-" onchange="cambiarNotaRevision(this,'${x.est.id}','${escJs(x.materia)}')"/>`
+            : `<span class="${x.rev !== null && x.rev < 10 ? "sab-rep" : ""}">${textoNota(x.rev)}</span>`
+        }</td></tr>`
+      )
+      .join("")}</tbody></table>`;
+}
+async function cambiarNotaRevision(el, estId, materia) {
+  const est = estudiantes.find((e) => e.id === estId);
+  if (!est || !puedeCargarRevision()) return;
+  const txt = String(el.value).trim().replace(",", ".");
+  const nota = txt === "" ? null : notaNum(txt);
+  if (txt !== "" && (nota === null || nota < 1 || nota > 20)) {
+    const antes = notaRevisionDe(est, materia);
+    el.value = antes === null ? "" : antes;
+    return mostrarToast("⚠️ La nota de revisión debe ser de 1 a 20");
+  }
+  try {
+    await guardarNotaRevision(est, materia, nota === null ? null : unDecimal(nota));
+    mostrarToast(nota === null ? "Nota de revisión borrada" : "✅ Nota de revisión guardada");
+  } catch (e) {
+    mostrarToast("No se pudo guardar: " + e.message);
+  }
+}
+
+// ⭐ Empates: estudiantes de media general con el mismo promedio en el período (año o lapso), con al menos uno de esta
+// sábana. El director o control de estudio destacan a quien va adelante en el puesto (por su conducta, por ejemplo).
+function htmlEmpatesSabana(grado, seccion, ver) {
+  const periodo = ver === "anio" ? "anio" : LAPSOS.includes(ver) ? ver : null;
+  if (!periodo) return "";
+  const grupos = empatesPeriodo(periodo, estudiantesSabana(grado, seccion));
+  if (!grupos.length) return "";
+  const editar = puedeDesempatar();
+  return `<div class="section-title" style="margin-top:0.9rem">⭐ Empates en el puesto (${periodo === "anio" ? "año completo" : escHtml(periodo)})</div>
+    <div class="ayuda" style="margin-bottom:0.4rem">Tienen el mismo promedio, así que comparten el puesto en el boletín y el cuadro de honor.${editar ? " Marca <strong>Destacar</strong> a quien deba quedar adelante (por su conducta, por ejemplo)." : ""} Cuentan los estudiantes de toda media general con todas sus notas del período.</div>
+    <table class="sab-tabla sab-empates"><thead><tr><th>Promedio</th><th>Estudiante</th><th>Año</th><th>Destacar</th></tr></thead>
+    <tbody>${grupos
+      .map(({ promedio, ests }) =>
+        ests
+          .map(
+            (
+              { est, destacado },
+              i
+            ) => `<tr>${i === 0 ? `<td rowspan="${ests.length}"><strong>${textoNota(promedio)}</strong></td>` : ""}
+          <td style="text-align:left">${escHtml(est.nombre)}</td><td>${escHtml(est.grado)} «${escHtml(seccionDe(est))}»</td>
+          <td>${editar ? `<label style="cursor:pointer"><input type="checkbox" ${destacado ? "checked" : ""} onchange="cambiarDesempate(this,'${est.id}','${escJs(periodo)}')"/> ⭐</label>` : destacado ? "⭐" : ""}</td></tr>`
+          )
+          .join("")
+      )
+      .join("")}</tbody></table>`;
+}
+async function cambiarDesempate(el, estId, periodo) {
+  const est = estudiantes.find((e) => e.id === estId);
+  if (!est || !puedeDesempatar()) return;
+  try {
+    await guardarDesempate(est, periodo, el.checked);
+    mostrarToast(el.checked ? "⭐ Destacado en el desempate" : "Desempate quitado");
+  } catch (e) {
+    el.checked = !el.checked;
+    mostrarToast("No se pudo guardar: " + e.message);
+  }
+}
+
 function renderSabana() {
   const grados = gradosSabana();
   if (!grados.length)
@@ -279,6 +367,8 @@ function renderSabana() {
   <div class="card" style="padding:0.6rem">
     ${d.filas.length ? `<div class="sabana-wrap">${htmlTablaSabana(d, true)}</div>` : `<div class="empty-state">No hay estudiantes activos en ${escHtml(grado)}.</div>`}
     ${htmlAjustesSabana(ajustes, true)}
+    ${ver === "anio" ? htmlRevisionSabana(revisionesSabana(grado, seccion), true) : ""}
+    ${htmlEmpatesSabana(grado, seccion, ver)}
   </div>`;
 }
 
@@ -421,24 +511,62 @@ function estadoSabana() {
   const ver = vistasSabana().some(([k]) => k === filtros.sabVer) ? filtros.sabVer : "anio";
   return { grado, seccion, ver };
 }
-const ESTILOS_SABANA = `*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#111;padding:10px}
-  .enc{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #003366;padding-bottom:6px;margin-bottom:8px}
-  .enc h1{font-size:13px;color:#003366;margin:0}th small.sab-prof{display:block;font-weight:400;font-size:7px;opacity:.85}.enc p{margin:2px 0;color:#444}
-  table{border-collapse:collapse;width:100%;margin-bottom:8px}th,td{border:1px solid #999;padding:2px 3px;text-align:center}
-  th{background:#003366;color:#fff;font-size:9px}td.sab-nombre,td.sab-pie-t{text-align:left;white-space:nowrap}
-  .sab-def,.sab-prom{font-weight:700;background:#f0f4ff}.sab-rep{color:#b91c1c;font-weight:700}.sab-parcial{font-style:italic}
-  .sab-aj{background:#fff8e1}.sab-mod{font-weight:700;background:#fff8e1;min-width:22px}sup{font-size:7px;color:#7a5c00}tfoot td{font-weight:700;background:#f7f7f7}
-  .section-title{font-weight:700;color:#003366;margin:8px 0 4px}
-  .sab-detalle{border:1px solid #ccc;border-radius:4px;padding:5px;margin-bottom:5px;break-inside:avoid}
+// Lo impreso usa el mismo diseño de la pantalla (azul del colegio, Def. y promedio resaltados, rojo debajo de 10) con
+// el escudo y la franja amarilla, azul y roja arriba. La sábana va en hoja oficio horizontal (21,6 × 33 cm), con la
+// letra lo más grande que quepa a lo ancho (ver AJUSTAR_ANCHO). El detalle y el cuadro de honor, en carta.
+const ESTILOS_SABANA_BASE = `*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:"Segoe UI",Arial,sans-serif;font-size:11px;color:#1c2333;padding:10px;margin:0;background:#fff}
+  .enc{display:flex;align-items:center;gap:12px}
+  .enc-escudo{width:64px;height:64px;object-fit:contain;flex-shrink:0}
+  .enc-inst{flex:1}.enc-rep{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#5b6577}
+  .enc h1{font-family:Georgia,"Times New Roman",serif;font-size:19px;color:#003366;margin:2px 0}
+  .enc p{margin:1px 0;color:#5b6577;font-size:10px}
+  .enc-sello{flex-shrink:0;text-align:center;border-radius:10px;padding:6px 14px;background:linear-gradient(180deg,#003366,#00509e);color:#fff}
+  .enc-sello strong{display:block;font-family:Georgia,serif;font-size:14px;color:#ffd700;letter-spacing:.04em}
+  .enc-sello span{display:block;font-size:10px;margin-top:2px}.enc-sello em{display:block;font-style:normal;font-size:9px;opacity:.85}
+  .franja{height:5px;margin:8px 0 10px;border-radius:3px;background:linear-gradient(90deg,#f5c400 0 33.3%,#0b3d91 33.3% 66.6%,#c8102e 66.6%)}
+  table{border-collapse:collapse;width:100%;margin-bottom:8px}
+  th,td{border:1px solid #c9d3e3;padding:5px 3px;text-align:center;white-space:nowrap}
+  th{background:#003366;color:#fff;font-weight:700}
+  thead tr:nth-child(2) th{background:#00509e;font-size:.9em}
+  th small.sab-prof{display:block;font-weight:400;font-size:.8em;opacity:.85}
+  td.sab-nombre,td.sab-pie-t{text-align:left}td.sab-nombre{font-weight:600;color:#003366}
+  .sab-num,.sab-ced{color:#6b7385}
+  tbody tr:nth-child(even) td{background:#f7f9fd}
+  tbody td.sab-def,tbody td.sab-prom{font-weight:800;background:#e8eefc}
+  .sab-lapso{font-weight:700;background:#f7f9ff}.sab-eval{color:#555}
+  .sab-rep{color:#c0392b!important;font-weight:700}.sab-parcial{font-style:italic;color:#888}
+  tbody td.sab-aj{background:#fff8e1}tbody td.sab-mod{font-weight:800;color:#7a5c00;background:#fffdf5;border-left:2px solid #f0d77a}
+  sup{font-size:.7em;color:#7a5c00;font-weight:800}
+  tfoot td{font-weight:700;background:#eef2f9}
+  .leyenda{font-size:9px;color:#5b6577;margin-bottom:6px}
+  .section-title{font-weight:700;color:#003366;margin:10px 0 4px;font-size:12px}
+  .sab-ajustes td,.sab-revision td{white-space:normal}
+  .sab-detalle{border:1px solid #d9e2f1;border-radius:6px;padding:5px;margin-bottom:5px;break-inside:avoid}
   .sab-detalle-t{display:flex;justify-content:space-between}.sab-detalle-l{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:3px}
   .sab-detalle-lapso{font-weight:700;min-width:50px}.sab-chip{border:1px solid #ddd;border-radius:3px;padding:0 4px}
   .sab-aj-nota{color:#7a5c00}.sab-detalle-prom{text-align:right;font-size:12px;margin-top:6px}
-  .firmas{display:flex;justify-content:space-around;margin-top:28px}.firmas div{border-top:1px solid #333;width:160px;text-align:center;padding-top:3px}
-  @page{size:letter landscape;margin:8mm}@media print{.no-print{display:none}}`;
+  .firmas{display:flex;justify-content:space-around;margin-top:34px;break-inside:avoid}.firmas div{border-top:1px solid #333;width:190px;text-align:center;padding-top:3px;font-size:10px}
+  .no-print{margin-bottom:8px;padding:6px 14px;background:#003366;color:#fff;border:none;border-radius:8px;cursor:pointer}
+  @media print{.no-print{display:none}body{padding:0}}`;
+const ESTILOS_SABANA = ESTILOS_SABANA_BASE + "@page{size:legal landscape;margin:7mm}";
+const ESTILOS_CARTA = ESTILOS_SABANA_BASE + "@page{size:letter;margin:9mm}";
+// Achica la letra de la tabla hasta que quepa a lo ancho de la hoja (oficio horizontal: 33 cm menos los márgenes)
+const AJUSTAR_ANCHO = `<script>(function(){var t=document.querySelector("table.sab-tabla");if(!t)return;
+  var ancho=Math.round((330-14)/25.4*96),f=13;t.style.fontSize=f+"px";
+  while(t.scrollWidth>ancho&&f>6.5){f-=0.25;t.style.fontSize=f+"px";}})();<\/script>`;
 function encabezadoSabana(titulo, detalle) {
   const inst = configInst || {};
-  return `<div class="enc"><div><h1>${escHtml(inst.nombre || EMPRESA)}</h1><p>${escHtml(titulo)}</p></div>
-    <div style="text-align:right"><p>${detalle}</p><p>Año escolar ${escHtml(inst.anioEscolar || "")} · Impresa el ${fechaCorta(todayStr())}</p></div></div>`;
+  return `<header class="enc">
+    <img class="enc-escudo" src="data:image/png;base64,${LOGO}" alt="Escudo"/>
+    <div class="enc-inst">
+      <div class="enc-rep">República Bolivariana de Venezuela · Ministerio del Poder Popular para la Educación</div>
+      <h1>${escHtml(inst.nombre || EMPRESA)}</h1>
+      <p>${escHtml(inst.direccion || "Turumo - Caucagüita, Estado Miranda")} · Código del plantel ${escHtml(inst.codigo || "PD13831519")}</p>
+    </div>
+    <div class="enc-sello"><strong>${escHtml(titulo)}</strong><span>${detalle}</span><em>Año escolar ${escHtml(inst.anioEscolar || "")} · Impresa el ${fechaCorta(todayStr())}</em></div>
+  </header>
+  <div class="franja"></div>`;
 }
 function imprimirSabana() {
   const { grado, seccion, ver } = estadoSabana();
@@ -454,9 +582,11 @@ function imprimirSabana() {
     <button class="no-print" onclick="window.print()">🖨️ Imprimir</button>
     ${encabezadoSabana("SÁBANA DE NOTAS", `${escHtml(grado)}${seccion ? " · Sección " + escHtml(seccion) : ""} · ${escHtml(vista || "")}`)}
     ${htmlTablaSabana(d, false)}
-    <div style="font-size:9px;color:#555">Def.: definitiva de los 3 lapsos · M: nota modificada por el consejo · Rojo: menos de 10 · cursiva: faltan evaluaciones o lapsos (nota provisional).</div>
+    <div class="leyenda">Def.: definitiva de los 3 lapsos · M: nota modificada por el consejo · Rojo: menos de 10 · cursiva: faltan evaluaciones o lapsos (nota provisional).</div>
     ${htmlAjustesSabana(ajustesSabana(grado, seccion), false)}
+    ${ver === "anio" ? htmlRevisionSabana(revisionesSabana(grado, seccion), false) : ""}
     <div class="firmas"><div>Docente guía</div><div>Coordinación</div><div>Dirección</div></div>
+    ${AJUSTAR_ANCHO}
   </body></html>`);
   w.document.close();
 }
@@ -465,7 +595,7 @@ function imprimirDetalleEstudiante(estId) {
   if (!est) return;
   const w = abrirVentanaImpresion();
   w.document
-    .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Notas ${escHtml(est.nombre)}</title><style>${ESTILOS_SABANA.replace("letter landscape", "letter")}</style></head><body>
+    .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Notas ${escHtml(est.nombre)}</title><style>${ESTILOS_CARTA}</style></head><body>
     <button class="no-print" onclick="window.print()">🖨️ Imprimir</button>
     ${encabezadoSabana("DETALLE DE EVALUACIONES", `${escHtml(est.nombre)} · ${escHtml(est.cedula || "")} · ${escHtml(est.grado || "")}${est.seccion ? " · Sección " + escHtml(est.seccion) : ""}`)}
     ${htmlDetalleEstudiante(est, false)}

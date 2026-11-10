@@ -93,8 +93,38 @@ test("la sábana y el boletín usan esas notas; la sábana no tiene el detalle p
     t.map((r) => [...r.children].map((c) => c.textContent.trim()))
   );
   // En el boletín, enteras: 16,5 → 17 (la sábana sigue con 16,5)
-  assert.deepEqual(filas[0], ["1", "Matemáticas", "17", "—", "—", "17", "Aprobada"]);
-  assert.deepEqual(filas[2], ["3", "Inglés", "9", "—", "—", "9", "Pendiente"]);
+  assert.deepEqual(filas[0], ["1", "Matemáticas", "17", "", "—", "", "—", "", "17", "Aprobada"]);
+  assert.deepEqual(filas[2], ["3", "Inglés", "9", "", "—", "", "—", "", "9", "Pendiente"]);
   await p.close();
+  assert.deepEqual(s.errores, []);
+});
+
+test("control de estudio carga las inasistencias de cada materia y la nota de revisión en la sábana", async () => {
+  await llamar(
+    `filtros.notasVista = "estudiante"; filtros.estSelId = "est2"; filtros.lapso = "Lapso 1"; renderTabContent()`
+  );
+  const ina = (m) => `[id="ina_est2_Lapso 1_${m}_ina"]`;
+  await s.pagina.fill(ina("Inglés"), "2");
+  await s.pagina.dispatchEvent(ina("Inglés"), "change");
+  // Las inasistencias son un número entero
+  await s.pagina.fill(ina("Matemáticas"), "1.5");
+  await s.pagina.dispatchEvent(ina("Matemáticas"), "change");
+  await s.pagina.waitForSelector("text=Las inasistencias son un número entero");
+  assert.equal(await s.pagina.inputValue(ina("Matemáticas")), "");
+  await llamar(`guardarNotas("est2", "Lapso 1")`);
+  const esc = await llamar(`__ESCRITURAS__.filter((e) => e.ruta === "notas/est2_Lapso 1").at(-1)`);
+  assert.equal(esc.datos.Inglés_ina, "2");
+
+  // Inglés quedó con 9: sale en «Área a revisar» de la sábana y control de estudio pone la nota de la revisión
+  await llamar(
+    `filtros.notasVista = "sabana"; filtros.sabGrado = "1er Año"; filtros.sabVer = "anio"; renderTabContent()`
+  );
+  const fila = s.pagina.locator(".sab-revision tbody tr", { hasText: "Luis Alberto Gómez" });
+  assert.match(await fila.textContent(), /Inglés\s*9/);
+  await fila.locator("input").fill("13");
+  await fila.locator("input").dispatchEvent("change");
+  await s.pagina.waitForSelector("text=Nota de revisión guardada");
+  const rev = await llamar(`__ESCRITURAS__.filter((e) => e.ruta === "notas/est2_Revision").at(-1)`);
+  assert.equal(rev.datos.Inglés_revision, "13");
   assert.deepEqual(s.errores, []);
 });
