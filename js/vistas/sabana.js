@@ -236,6 +236,56 @@ function htmlAjustesSabana(lista, enPantalla) {
       .join("")}</tbody></table>`;
 }
 
+// Área a revisar: cada materia con definitiva por debajo de 10 (la entera del boletín) y la nota de la revisión. La
+// cargan el director o control de estudio; los demás solo la ven.
+function revisionesSabana(grado, seccion) {
+  const r = [];
+  estudiantesSabana(grado, seccion).forEach((est) =>
+    getAreas(grado).forEach((m) => {
+      const def = notaEntera(definitivaDe(est, m).nota);
+      if (def !== null && def < 10) r.push({ est, materia: m, def, rev: notaRevisionDe(est, m) });
+    })
+  );
+  return r;
+}
+function htmlRevisionSabana(lista, enPantalla) {
+  if (!lista.length) return "";
+  const editar = enPantalla && puedeCargarRevision();
+  return `<div class="section-title" style="margin-top:0.9rem">📝 Área a revisar (${lista.length})</div>
+    ${editar ? `<div class="ayuda" style="margin-bottom:0.4rem">Escribe la nota que sacó en la revisión (1 a 20) y se guarda sola. Sale en el boletín junto a la definitiva.</div>` : ""}
+    <table class="sab-tabla sab-revision"><thead><tr><th>Estudiante</th><th>Materia</th><th>Definitiva</th><th>Nota de revisión</th></tr></thead>
+    <tbody>${lista
+      .map(
+        (
+          x
+        ) => `<tr><td style="text-align:left">${escHtml(x.est.nombre)}</td><td style="text-align:left">${escHtml(x.materia)}</td>
+        <td class="sab-rep">${textoNota(x.def)}</td>
+        <td>${
+          editar
+            ? `<input class="nota-input" type="number" min="1" max="20" step="0.1" style="width:70px" value="${x.rev === null ? "" : escHtml(x.rev)}" placeholder="-" onchange="cambiarNotaRevision(this,'${x.est.id}','${escJs(x.materia)}')"/>`
+            : `<span class="${x.rev !== null && x.rev < 10 ? "sab-rep" : ""}">${textoNota(x.rev)}</span>`
+        }</td></tr>`
+      )
+      .join("")}</tbody></table>`;
+}
+async function cambiarNotaRevision(el, estId, materia) {
+  const est = estudiantes.find((e) => e.id === estId);
+  if (!est || !puedeCargarRevision()) return;
+  const txt = String(el.value).trim().replace(",", ".");
+  const nota = txt === "" ? null : notaNum(txt);
+  if (txt !== "" && (nota === null || nota < 1 || nota > 20)) {
+    const antes = notaRevisionDe(est, materia);
+    el.value = antes === null ? "" : antes;
+    return mostrarToast("⚠️ La nota de revisión debe ser de 1 a 20");
+  }
+  try {
+    await guardarNotaRevision(est, materia, nota === null ? null : unDecimal(nota));
+    mostrarToast(nota === null ? "Nota de revisión borrada" : "✅ Nota de revisión guardada");
+  } catch (e) {
+    mostrarToast("No se pudo guardar: " + e.message);
+  }
+}
+
 function renderSabana() {
   const grados = gradosSabana();
   if (!grados.length)
@@ -279,6 +329,7 @@ function renderSabana() {
   <div class="card" style="padding:0.6rem">
     ${d.filas.length ? `<div class="sabana-wrap">${htmlTablaSabana(d, true)}</div>` : `<div class="empty-state">No hay estudiantes activos en ${escHtml(grado)}.</div>`}
     ${htmlAjustesSabana(ajustes, true)}
+    ${ver === "anio" ? htmlRevisionSabana(revisionesSabana(grado, seccion), true) : ""}
   </div>`;
 }
 
@@ -456,6 +507,7 @@ function imprimirSabana() {
     ${htmlTablaSabana(d, false)}
     <div style="font-size:9px;color:#555">Def.: definitiva de los 3 lapsos · M: nota modificada por el consejo · Rojo: menos de 10 · cursiva: faltan evaluaciones o lapsos (nota provisional).</div>
     ${htmlAjustesSabana(ajustesSabana(grado, seccion), false)}
+    ${ver === "anio" ? htmlRevisionSabana(revisionesSabana(grado, seccion), false) : ""}
     <div class="firmas"><div>Docente guía</div><div>Coordinación</div><div>Dirección</div></div>
   </body></html>`);
   w.document.close();

@@ -214,6 +214,7 @@ function renderModalEstudiante(e) {
               ${ESCALERA.map((g) => `<option value="${g}" ${(gradoCanon(e.grado) || e.grado) === g ? "selected" : ""}>${g}</option>`).join("")}
               ${e.grado && !gradoCanon(e.grado) ? `<option value="${escHtml(e.grado)}" selected>${escHtml(e.grado)} (revisar)</option>` : ""}
             </select></div>
+          <div class="field"><label class="field-label">Sección</label><input class="inp" id="e-seccion" maxlength="3" placeholder="U" value="${escHtml(e.seccion || "")}"/></div>
           <div class="field"><label class="field-label">Jornada</label>
             <select class="inp" id="e-jornada"><option value="Mañana" ${e.jornada === "Mañana" ? "selected" : ""}>Mañana</option><option value="Tarde" ${e.jornada === "Tarde" ? "selected" : ""}>Tarde</option></select>
           </div>
@@ -234,6 +235,7 @@ function renderModalEstudiante(e) {
         </div>
         <div class="field"><label class="field-label">Observaciones médicas (alergias, condiciones)</label>
           <textarea class="inp" id="e-med" rows="2" placeholder="Vacío = no padece">${escHtml(e.observacionesMedicas || "")}</textarea></div>
+        ${htmlPendienteAnteriorForm(e)}
             <div class="field"><label class="field-label">Correo del acudiente (opcional)</label><input class="inp" id="e-correo-acud" type="email" placeholder="nombre@gmail.com" value="${escHtml(e.correoAcudiente) || ""}"/></div>
         <div class="field"><label class="field-label">Mensualidad ($)</label>
           <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#003366;font-weight:700">$</span>
@@ -278,6 +280,28 @@ function renderModalEstudiante(e) {
       <button class="btn btn-gray" onclick="cerrarModal()">Cancelar</button>
     </div>
   </div></div>`;
+}
+// Materia pendiente del año anterior (media general): sale en el boletín. Si aplica, la materia y su nota (la nota
+// puede quedar vacía mientras no la presente).
+function htmlPendienteAnteriorForm(e) {
+  const p = e.pendienteAnterior || {};
+  return `<div class="field"><label class="field-label">📚 Materia pendiente del año anterior</label>
+    <select class="inp" id="e-pend-aplica" onchange="document.getElementById('e-pend-datos').style.display=this.value==='si'?'flex':'none'">
+      <option value="no" ${p.aplica ? "" : "selected"}>No aplica</option><option value="si" ${p.aplica ? "selected" : ""}>Aplica</option></select>
+    <div class="form-row" id="e-pend-datos" style="display:${p.aplica ? "flex" : "none"};margin-top:0.4rem">
+      <div class="field"><label class="field-label">Materia</label><input class="inp" id="e-pend-materia" placeholder="Ej.: Matemáticas (1er Año)" value="${escHtml(p.materia || "")}"/></div>
+      <div class="field"><label class="field-label">Nota (1 a 20)</label><input class="inp" id="e-pend-nota" type="number" min="1" max="20" step="1" placeholder="Sin nota aún" value="${escHtml(p.nota ?? "")}"/></div>
+    </div></div>`;
+}
+function leerPendienteAnteriorForm() {
+  const sel = document.getElementById("e-pend-aplica");
+  if (!sel || sel.value !== "si") return { aplica: false };
+  const n = notaNum((document.getElementById("e-pend-nota") || {}).value);
+  return {
+    aplica: true,
+    materia: ((document.getElementById("e-pend-materia") || {}).value || "").trim(),
+    nota: n !== null && n >= 1 && n <= 20 ? Math.round(n) : null,
+  };
 }
 function toggleMoraFields() {
   const sel = document.getElementById("e-estado");
@@ -497,6 +521,15 @@ async function guardarEstudiante(editId) {
     mostrarError("modal-err", "⚠️ El correo del acudiente no es válido (ejemplo: nombre@gmail.com)");
     return;
   }
+  const notaPend = ((document.getElementById("e-pend-nota") || {}).value || "").trim();
+  if (
+    (document.getElementById("e-pend-aplica") || {}).value === "si" &&
+    notaPend &&
+    !(Number(notaPend) >= 1 && Number(notaPend) <= 20)
+  ) {
+    mostrarError("modal-err", "⚠️ La nota de la materia pendiente debe ser de 1 a 20");
+    return;
+  }
   const estado = document.getElementById("e-estado").value;
   const datos = {
     nombre,
@@ -510,6 +543,8 @@ async function guardarEstudiante(editId) {
     correoAcudiente: correoAcud,
     cedulaAcudiente: ((document.getElementById("e-cedacud") || {}).value || "").trim(),
     sexo: (document.getElementById("e-sexo") || {}).value || "",
+    seccion: ((document.getElementById("e-seccion") || {}).value || "").trim().toUpperCase(),
+    pendienteAnterior: leerPendienteAnteriorForm(),
     observacionesMedicas: ((document.getElementById("e-med") || {}).value || "").trim(),
     mensualidad: parseFloat(mensualidadRaw || 0),
     cuotaDesde: (document.getElementById("e-cuota-desde") || {}).value || "",
