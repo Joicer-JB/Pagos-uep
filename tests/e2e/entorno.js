@@ -2,6 +2,9 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+// Que las rutas falsas (bibliotecas sin internet) también atiendan lo que pide el service worker: Excel se carga
+// al usarlo (js/utils/bibliotecas.js), cuando la página ya está bajo el service worker.
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 const { chromium } = require("playwright");
 const semilla = require("./datos/semilla");
 
@@ -23,7 +26,6 @@ const BIBLIOTECAS = [
   [/firebase-app-compat\.js$/, () => leer("tests/e2e/falsos/firebase-falso.js")],
   [/firebase-(firestore|auth|app-check|messaging)-compat\.js$/, () => "/* incluido en firebase-falso.js */"],
   [/xlsx\.full\.min\.js$/, () => leer("node_modules/xlsx/dist/xlsx.full.min.js")],
-  [/chart\.umd(\.min)?\.js$/, () => leer("node_modules/chart.js/dist/chart.umd.js")],
 ];
 
 function iniciarServidor(raiz = RAIZ) {

@@ -12,7 +12,7 @@ module.exports = [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
-      globals: { ...globals.browser, firebase: "readonly", XLSX: "readonly", Chart: "readonly" },
+      globals: { ...globals.browser, firebase: "readonly", XLSX: "readonly" },
     },
     rules: {
       ...js.configs.recommended.rules,

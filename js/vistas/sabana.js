@@ -602,9 +602,10 @@ function imprimirDetalleEstudiante(estId) {
   w.document.close();
 }
 // Excel: las mismas filas y columnas de la pantalla (los títulos agrupados quedan combinados)
-function exportarSabanaExcel() {
+async function exportarSabanaExcel() {
   const { grado, seccion, ver } = estadoSabana();
   if (!grado) return;
+  await cargarXLSX();
   const d = datosSabana(grado, seccion, ver, filtros.sabMateria);
   const filas = [],
     merges = [],

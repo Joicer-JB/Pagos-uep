@@ -86,7 +86,7 @@ function renderPagos() {
   ${
     filtrados.length === 0
       ? `<div class="empty"><div class="empty-icon">📭</div><p>No hay pagos</p></div>`
-      : `<div class="list">${filtrados
+      : `<div class="list">${recortarLista("pagos", filtrados)
           .map(
             (p) => `
     <div class="list-item" onclick="abrirModal({tipo:'recibo',pago:pagos.find(x=>x.id==='${p.id}')})">
@@ -107,7 +107,7 @@ function renderPagos() {
       </div>
     </div>`
           )
-          .join("")}</div>`
+          .join("")}</div>${botonVerMas("pagos", filtrados.length)}`
   }
   `
   }`;

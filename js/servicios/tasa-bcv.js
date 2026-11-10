@@ -407,8 +407,9 @@ function leerArchivoTasas(input) {
   if (!archivo || !caja) return;
   caja.innerHTML = "⏳ Leyendo el archivo...";
   const lector = new FileReader();
-  lector.onload = (ev) => {
+  lector.onload = async (ev) => {
     try {
+      await cargarXLSX();
       const libro = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellDates: true });
       const hojas = libro.SheetNames.map((n) => ({
         nombre: n,
