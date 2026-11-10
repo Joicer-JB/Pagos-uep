@@ -103,6 +103,7 @@ function renderTablaNotasLapso(est, lapso) {
       <thead><tr style="background:#f0f4ff">
         <th style="text-align:left;padding:0.5rem 0.6rem;color:#003366">Materia</th>
         <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center;width:110px">Nota del lapso</th>
+        <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center;width:80px" title="Inasistencias en la materia en este lapso">Inasistencias</th>
       </tr></thead>
       <tbody>${areas
         .map((m) => {
@@ -115,6 +116,7 @@ function renderTablaNotasLapso(est, lapso) {
           return `<tr style="border-bottom:1px dashed #eef2f9"${editable ? "" : ' class="nota-ajena"'}>
           <td style="padding:0.45rem 0.6rem;font-weight:600;color:#333">${escHtml(m)}${prof ? `<div class="item-sub" style="font-weight:400">👤 ${escHtml(prof)}</div>` : ""}</td>
           <td style="padding:0.3rem;text-align:center"><input class="nota-input${info.nota !== null && info.nota < 10 ? " nota-rep" : ""}" type="number" min="0" max="20" step="0.1" id="nota_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(notasEst[k] ?? "")}" placeholder="${escHtml(guia)}" ${editable ? "" : "disabled"} onchange="cambiarNotaNumerica(this,'${est.id}','${lapso}','${escJs(k)}')"/>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo: ${textoNota(notaNum(info.ajuste.nota))}</div>` : ""}</td>
+          <td style="padding:0.3rem;text-align:center">${inputInasistencia(est, lapso, m, editable)}</td>
         </tr>`;
         })
         .join("")}</tbody>
@@ -141,6 +143,7 @@ function renderTablaNotasMedia(est, lapso) {
           <th style="text-align:left;padding:0.5rem 0.6rem;color:#003366">Materia</th>
           <th style="text-align:left;padding:0.5rem 0.4rem;color:#003366">Evaluaciones</th>
           <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center">Nota del lapso</th>
+          <th style="padding:0.5rem 0.4rem;color:#003366;text-align:center">Inasistencias</th>
         </tr></thead>
         <tbody>
           ${areas
@@ -159,6 +162,7 @@ function renderTablaNotasMedia(est, lapso) {
                 })
                 .join("")}</div></td>
               <td style="padding:0.3rem;text-align:center;vertical-align:top"><span class="promedio-badge" style="background:${prom === null ? "#f1f3f5" : prom >= 18 ? "#e6f7ef" : prom >= 14 ? "#fff8e1" : "#fef0f0"};color:${prom === null ? "#888" : colorNota(prom)}">${prom !== null ? prom : "-"}${info.ajuste ? "<sup>C</sup>" : ""}</span>${info.ajuste ? `<div style="font-size:0.62rem;color:#7a5c00;margin-top:2px">Consejo (antes ${info.ajuste.original ?? "-"})</div>` : ""}</td>
+              <td style="padding:0.3rem;text-align:center;vertical-align:top">${inputInasistencia(est, lapso, m, editable)}</td>
             </tr>`;
             })
             .join("")}
@@ -408,6 +412,23 @@ function cambiarNotaNumerica(el, estId, lapso, key) {
   }
   el.classList.remove("nota-mal");
   el.classList.toggle("nota-rep", v !== "" && Number(v) < 10);
+  updateNotaLocal(estId, lapso, key, v);
+}
+// Inasistencias de una materia en un lapso (media general): se guardan en <materia>_ina y salen en el boletín
+function inputInasistencia(est, lapso, materia, editable) {
+  const k = materia + "_ina";
+  const v = (notas[`${est.id}_${lapso}`] || {})[k] ?? "";
+  return `<input class="nota-input" type="number" min="0" step="1" id="ina_${est.id}_${lapso}_${escHtml(k)}" value="${escHtml(v)}" placeholder="0" ${editable ? "" : "disabled"} onchange="cambiarInasistencia(this,'${est.id}','${lapso}','${escJs(k)}')"/>`;
+}
+function cambiarInasistencia(el, estId, lapso, key) {
+  const v = String(el.value).trim();
+  if (v !== "" && !(Number.isInteger(Number(v)) && Number(v) >= 0 && Number(v) <= 200)) {
+    el.value = (notas[`${estId}_${lapso}`] || {})[key] ?? "";
+    el.classList.add("nota-mal");
+    mostrarToast("⚠️ Las inasistencias son un número entero (0, 1, 2…)");
+    return;
+  }
+  el.classList.remove("nota-mal");
   updateNotaLocal(estId, lapso, key, v);
 }
 function updateNotaLocal(estId, lapso, key, val) {

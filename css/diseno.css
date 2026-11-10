@@ -704,10 +704,12 @@ textarea.inp {
 .sab-pie-t {
   text-align: left !important;
 }
-.sab-ajustes {
+.sab-ajustes,
+.sab-revision {
   width: 100%;
 }
-.sab-ajustes td {
+.sab-ajustes td,
+.sab-revision td {
   white-space: normal;
 }
 .sab-detalle {

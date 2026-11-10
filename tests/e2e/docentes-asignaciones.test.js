@@ -79,7 +79,7 @@ test("la profesora ve solo sus grados y carga solo sus materias", async () => {
   assert.deepEqual(s.errores, []);
 });
 
-test("el director ve todo, con quién da cada materia, y el boletín lleva el docente y el profesor guía", async () => {
+test("el director ve todo, con quién da cada materia, y el boletín de primaria lleva el docente", async () => {
   const s = await entrar("herrerajoicer@gmail.com");
   await s.llamar(`setTab("notas"); filtros.notasVista = "sabana"; renderTabContent()`);
   await s.pagina.waitForSelector(".sab-tabla");
@@ -95,7 +95,8 @@ test("el director ve todo, con quién da cada materia, y el boletín lleva el do
   assert.deepEqual(inst.guias, { "1er Año": "Prof. Ramón Díaz" });
 
   await s.llamar(`imprimirBoletin("est2")`);
-  assert.match(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Prof\. Ramón Díaz<\/div>Docente guía/);
+  // En media general el boletín ya no lleva la firma del docente guía (lo pidió el colegio)
+  assert.doesNotMatch(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Docente guía/);
   await s.llamar(`imprimirBoletin("est6")`);
   assert.match(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Profesora Prueba<\/div>Docente</);
   assert.deepEqual(s.errores, []);
