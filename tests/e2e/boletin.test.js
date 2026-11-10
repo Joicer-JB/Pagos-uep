@@ -127,28 +127,57 @@ test("en el boletín las notas van enteras (desde ,5 sube) y el cambio del conse
   await p.close();
 });
 
-test("primaria: el literal de cada indicador en los 3 lapsos, con la leyenda", async () => {
-  await llamar(`imprimirBoletin("est6")`);
+test("primaria: un boletín por lapso con portada, la ✓ en la letra de cada indicador, la leyenda y las firmas", async () => {
+  await llamar(
+    `configIndicadores["proyecto__3er Grado__Lapso 2"] = "Somos lectores"; configInst = { ...configInst, coordinadorPrimaria: "Prof. Luz M. Herrera" }; imprimirBoletin("est6", "Lapso 2")`
+  );
   const p = await enPagina(await ultima());
-  const mate = await p.$$eval(".b-notas tbody tr", (t) =>
+  assert.equal(await p.locator(".bp-hoja").count(), 2); // portada + indicadores
+  assert.match(await p.textContent(".bp-titulo"), /SUBSISTEMA DE EDUCACIÓN PRIMARIA: 3ER GRADO/);
+  assert.match(await p.textContent(".bp-cuerpo"), /Miguel Ángel Torres[\s\S]*V-30666777[\s\S]*Laura Torres/);
+  assert.match(await p.textContent(".bp-autoridades"), /Prof. Luz M. Herrera[\s\S]*Lic. Ligia Herrera/);
+  assert.match(await p.textContent(".bp-lapso"), /Segundo lapso/);
+  assert.match(await p.textContent(".bp-proyecto"), /Somos lectores/);
+  // Lapso 2: «Suma y resta» A, «Multiplicación» B
+  const mate = await p.$$eval(".bp-tabla tbody tr", (t) =>
     t
       .map((r) => [...r.querySelectorAll("td")].map((c) => c.textContent.trim()))
       .filter((c) => /Suma y resta|Multiplicación/.test(c.join(" ")))
   );
   assert.deepEqual(mate, [
-    ["Matemáticas", "Suma y resta", "A", "A", "—"],
-    ["Multiplicación", "C", "B", "—"],
+    ["Matemáticas", "Suma y resta", "✓", "", "", "", ""],
+    ["Multiplicación", "", "✓", "", "", ""],
   ]);
-  assert.match(await p.textContent(".b-sello"), /Educación Primaria/);
-  assert.equal(await p.locator(".b-leyenda > div").count(), 5);
-  assert.match(await p.textContent(".b-firmas"), /Coordinación de Primaria/);
+  assert.match(await p.textContent(".bp-tabla"), /Inglés y Computación/);
+  assert.equal(await p.locator(".bp-leyenda > div:not(.t)").count(), 5);
+  assert.match(await p.textContent(".bp-firmas"), /Docente[\s\S]*Coordinadora[\s\S]*Directora/);
+  assert.doesNotMatch(await p.textContent(".bp-firmas"), /Representante/);
   await p.close();
-  // Inicial (Valentina, Nivel II) firma la coordinadora de Educación Inicial
-  await llamar(`configInst = { ...configInst, coordinadorInicial: "Lic. María Pérez" }; imprimirBoletin("est3")`);
+  // Inicial (Valentina, Nivel II): subsistema de Educación Inicial y firma la coordinadora de Inicial; sigue con «Inglés»
+  await llamar(
+    `configInst = { ...configInst, coordinadorInicial: "Lic. María Pérez" }; imprimirBoletin("est3", "Lapso 1")`
+  );
   const ini = await enPagina(await ultima());
-  assert.match(await ini.textContent(".b-sello"), /Educación Inicial/);
-  assert.match(await ini.textContent(".b-firmas"), /Lic. María Pérez\s*Coordinación de Educación Inicial/);
+  assert.match(await ini.textContent(".bp-titulo"), /EDUCACIÓN INICIAL/);
+  assert.match(await ini.textContent(".bp-firmas"), /Coordinadora\s*Lic. María Pérez/);
+  assert.doesNotMatch(await ini.textContent(".bp-tabla"), /Computación/);
   await ini.close();
+});
+
+test("primaria: cada lapso usa sus indicadores; sin lista propia usa los de todo el año", async () => {
+  await llamar(
+    `configIndicadores["3er Grado__Lapso 3__Matemáticas"] = ["Fracciones"]; imprimirBoletin("est6", "Lapso 3")`
+  );
+  const p3 = await enPagina(await ultima());
+  const t3 = await p3.textContent(".bp-tabla");
+  assert.match(t3, /Fracciones/);
+  assert.doesNotMatch(t3, /Suma y resta/);
+  await p3.close();
+  await llamar(`imprimirBoletin("est6", "Lapso 1")`);
+  const p1 = await enPagina(await ultima());
+  assert.match(await p1.textContent(".bp-tabla"), /Suma y resta[\s\S]*Multiplicación/);
+  await p1.close();
+  await llamar(`delete configIndicadores["3er Grado__Lapso 3__Matemáticas"]`);
 });
 
 test("los boletines de todo un grado, uno por hoja y en orden alfabético", async () => {

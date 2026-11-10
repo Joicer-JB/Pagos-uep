@@ -97,6 +97,6 @@ test("el director ve todo, con quién da cada materia, y el boletín lleva el do
   await s.llamar(`imprimirBoletin("est2")`);
   assert.match(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Prof\. Ramón Díaz<\/div>Docente guía/);
   await s.llamar(`imprimirBoletin("est6")`);
-  assert.match(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Profesora Prueba<\/div>Docente</);
+  assert.match(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Docente<small>Profesora Prueba<\/small>/);
   assert.deepEqual(s.errores, []);
 });

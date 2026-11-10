@@ -2,7 +2,7 @@
 
 let configDocentes = [];
 let configMaterias = {}; // {grado: [materias]}
-let configIndicadores = {}; // {grado_materia: [indicadores]}
+let configIndicadores = {}; // {grado__lapso__área: [indicadores], grado__área: [...] (todo el año), proyecto__grado__lapso: nombre}
 let configInst = {};
 let configLogos = {}; // {ministerio: "data:image/png;base64,…"} — logos que sube el director (config/logos)
 let configRespaldo = null; // { ultimo: "YYYY-MM-DD" } — fecha del último respaldo descargado (solo la ve el director)
@@ -196,8 +196,14 @@ function renderConfigIndicadores() {
   const esMaternal = ["Maternal", "Nivel I", "Nivel II", "Nivel III"].includes(grado);
   const areas = esMaternal ? AREAS_MATERNAL : AREAS_PRIMARIA;
   const area = filtros.areaIndConfig || areas[0];
-  const key = grado + "__" + area;
-  const inds = configIndicadores[key] || [];
+  const lapso = filtros.lapsoIndConfig || LAPSOS[0];
+  // Cada lapso tiene sus indicadores; si el lapso todavía no tiene lista propia se muestra la de todo el año y
+  // se copia al lapso apenas se cambie algo (ver getIndicadores en vistas/notas.js)
+  const key = claveIndicadores(grado, area, lapso);
+  const base = claveIndicadores(grado, area);
+  const inds = getIndicadores(grado, area, lapso);
+  const heredada = !configIndicadores[key] && inds.length > 0;
+  const proy = claveProyecto(grado, lapso);
 
   return `
   <div style="margin-bottom:1rem">
@@ -207,11 +213,18 @@ function renderConfigIndicadores() {
     </div>
     <label style="font-size:0.8rem;font-weight:700;color:#003366;display:block;margin-bottom:0.4rem">Área / Materia</label>
     <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
-      ${areas.map((a) => `<button onclick="filtros.areaIndConfig='${a}';renderTabContent()" style="padding:0.35rem 0.7rem;border-radius:20px;border:2px solid ${area === a ? "#1a9e5c" : "#dde3f0"};background:${area === a ? "#1a9e5c" : "#f8faff"};color:${area === a ? "#fff" : "#555"};font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit">${a}</button>`).join("")}
+      ${areas.map((a) => `<button onclick="filtros.areaIndConfig='${a}';renderTabContent()" style="padding:0.35rem 0.7rem;border-radius:20px;border:2px solid ${area === a ? "#1a9e5c" : "#dde3f0"};background:${area === a ? "#1a9e5c" : "#f8faff"};color:${area === a ? "#fff" : "#555"};font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit">${escHtml(nombreArea(grado, a))}</button>`).join("")}
+    </div>
+    <label style="font-size:0.8rem;font-weight:700;color:#003366;display:block;margin:0.75rem 0 0.4rem">Lapso</label>
+    <div class="stabs" style="margin-bottom:0">
+      ${LAPSOS.map((l) => `<button class="stab ${lapso === l ? "active" : ""}" onclick="filtros.lapsoIndConfig='${l}';renderTabContent()">${l}</button>`).join("")}
     </div>
   </div>
+  <div class="field" style="margin-bottom:1rem"><label class="field-label">📌 Nombre del proyecto de ${escHtml(grado)} en el ${escHtml(lapso)} <span style="font-weight:400;color:#888">(sale en la boleta; es el mismo para todas las áreas)</span></label>
+    <input class="inp" id="proyecto-lapso" value="${escHtml(configIndicadores[proy] || "")}" placeholder="Ej.: Pensamiento Lógico Matemático: la clave para tomar mejores decisiones" oninput="configIndicadores['${escJs(proy)}'] = this.value.trim()"/></div>
   <div style="background:#f8faff;border-radius:12px;padding:1rem;margin-bottom:1rem">
-    <div style="font-weight:700;color:#003366;margin-bottom:0.75rem;font-size:0.88rem">📋 Indicadores: ${area} — ${grado} <span style="font-weight:400;color:#888">(${inds.length})</span></div>
+    <div style="font-weight:700;color:#003366;margin-bottom:0.75rem;font-size:0.88rem">📋 Indicadores: ${escHtml(nombreArea(grado, area))} — ${escHtml(grado)} — ${escHtml(lapso)} <span style="font-weight:400;color:#888">(${inds.length})</span></div>
+    ${heredada ? `<div class="ayuda" style="margin-bottom:0.6rem">Este lapso todavía usa los indicadores de todo el año. Si agregas o quitas uno, el cambio queda solo para el ${escHtml(lapso)}.</div>` : ""}
     ${inds.length === 0 ? `<div style="color:#aaa;font-size:0.82rem;text-align:center;padding:1rem">Sin indicadores. Agrega el primero.</div>` : ""}
     <div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.75rem">
       ${inds
@@ -220,17 +233,17 @@ function renderConfigIndicadores() {
       <div style="display:flex;align-items:center;gap:0.5rem;background:#fff;border-radius:8px;padding:0.5rem 0.75rem;border:1px solid #e0e8f0">
         <span style="font-size:0.75rem;font-weight:700;color:#888;min-width:20px">${i + 1}.</span>
         <span style="font-size:0.82rem;color:#333;flex:1">${escHtml(ind)}</span>
-        <button onclick="eliminarIndicador('${key}',${i})" style="padding:0.15rem 0.5rem;border:none;background:#fef0f0;color:#e53e3e;border-radius:4px;cursor:pointer;font-size:0.75rem">✕</button>
+        <button onclick="eliminarIndicador('${escJs(key)}',${i},'${escJs(base)}')" style="padding:0.15rem 0.5rem;border:none;background:#fef0f0;color:#e53e3e;border-radius:4px;cursor:pointer;font-size:0.75rem">✕</button>
       </div>`
         )
         .join("")}
     </div>
     <div style="display:flex;gap:0.5rem">
-      <input class="inp" id="nuevo-indicador" placeholder="Descripción del indicador..." style="flex:1;padding:0.5rem 0.75rem;font-size:0.82rem" onkeydown="if(event.key==='Enter')agregarIndicador('${key}')"/>
-      <button class="btn btn-primary btn-sm" onclick="agregarIndicador('${key}')">+ Agregar</button>
+      <input class="inp" id="nuevo-indicador" placeholder="Descripción del indicador..." style="flex:1;padding:0.5rem 0.75rem;font-size:0.82rem" onkeydown="if(event.key==='Enter')agregarIndicador('${escJs(key)}','${escJs(base)}')"/>
+      <button class="btn btn-primary btn-sm" onclick="agregarIndicador('${escJs(key)}','${escJs(base)}')">+ Agregar</button>
     </div>
   </div>
-  <button class="btn btn-primary" onclick="guardarIndicadores('${key}')">💾 Guardar indicadores</button>`;
+  <button class="btn btn-primary" onclick="guardarIndicadores()">💾 Guardar indicadores y proyecto</button>`;
 }
 // ── INSTITUCIÓN ──
 function renderConfigInstitucion() {
@@ -315,20 +328,24 @@ async function guardarMaterias(grado) {
     alert("Error: " + e.message);
   }
 }
-function agregarIndicador(key) {
+// La lista propia del lapso arranca como copia de la de todo el año (base), para no mover las notas ya cargadas
+function listaIndicadores(key, base) {
+  if (!configIndicadores[key]) configIndicadores[key] = [...((base && configIndicadores[base]) || [])];
+  return configIndicadores[key];
+}
+function agregarIndicador(key, base) {
   const inp = document.getElementById("nuevo-indicador");
   if (!inp || !inp.value.trim()) return;
-  if (!configIndicadores[key]) configIndicadores[key] = [];
-  configIndicadores[key].push(inp.value.trim());
+  listaIndicadores(key, base).push(inp.value.trim());
   inp.value = "";
   renderTabContent();
 }
-function eliminarIndicador(key, idx) {
+function eliminarIndicador(key, idx, base) {
   if (!confirm("¿Eliminar este indicador?")) return;
-  configIndicadores[key].splice(idx, 1);
+  listaIndicadores(key, base).splice(idx, 1);
   renderTabContent();
 }
-async function guardarIndicadores(key) {
+async function guardarIndicadores() {
   try {
     await db.collection("config").doc("indicadores").set(configIndicadores, { merge: true });
     mostrarToast("✅ Indicadores guardados");

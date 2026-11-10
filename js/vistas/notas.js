@@ -7,10 +7,21 @@ function getAreas(grado) {
   if (nivel === "primaria") return [...AREAS_PRIMARIA];
   return configMaterias[grado] || MATERIAS;
 }
-function getIndicadores(grado, area) {
-  const key = grado + "__" + area;
-  return configIndicadores[key] || [];
+// Indicadores de un área en un lapso. Cada lapso tiene los suyos («grado__lapso__área»); mientras un lapso no
+// tenga lista propia usa la de antes, la misma para todo el año («grado__área»), así las notas ya cargadas siguen
+// apuntando al mismo indicador.
+const claveIndicadores = (grado, area, lapso) => (lapso ? `${grado}__${lapso}__${area}` : `${grado}__${area}`);
+function getIndicadores(grado, area, lapso) {
+  const propios = lapso && configIndicadores[claveIndicadores(grado, area, lapso)];
+  return propios || configIndicadores[claveIndicadores(grado, area)] || [];
 }
+// Nombre del proyecto de aula de un grado en un lapso (sale en la boleta de preescolar y primaria)
+const claveProyecto = (grado, lapso) => `proyecto__${grado}__${lapso}`;
+const proyectoDe = (grado, lapso) => configIndicadores[claveProyecto(grado, lapso)] || "";
+// En primaria el área de inglés se llama «Inglés y Computación». Las notas siguen guardadas como «Inglés»: solo
+// cambia el nombre que se ve.
+const nombreArea = (grado, area) =>
+  area === "Inglés" && getNivel(grado) === "primaria" ? "Inglés y Computación" : area;
 function renderNotas() {
   const estSelId = filtros.estSelId || "";
   const estSel = estudiantes.find((e) => e.id === estSelId && veEstudiante(e));
@@ -65,7 +76,7 @@ function renderNotas() {
         </select>
       </div>
     </div>
-    ${filtros.gradoNotas && rolUsuario !== "administradora" ? `<button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="imprimirBoletinesGrado('${escJs(filtros.gradoNotas)}')">🖨️ Boletines de todo ${escHtml(filtros.gradoNotas)}</button>` : ""}
+    ${filtros.gradoNotas && rolUsuario !== "administradora" ? `<button class="btn btn-gray btn-sm" style="margin-top:0.6rem" onclick="imprimirBoletinesGrado('${escJs(filtros.gradoNotas)}','${escJs(lapso)}')">🖨️ Boletines de todo ${escHtml(filtros.gradoNotas)}${getNivel(filtros.gradoNotas) === "media" ? "" : " · " + escHtml(lapso)}</button>` : ""}
   </div>
   ${
     estSel
@@ -75,7 +86,7 @@ function renderNotas() {
       <div style="width:40px;height:40px;background:linear-gradient(135deg,#003366,#00509e);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffd700;font-weight:800;font-size:1rem;flex-shrink:0">${estSel.nombre[0]}</div>
       <div><div style="font-weight:700;color:#003366">${escHtml(estSel.nombre)}</div>
       <div style="font-size:0.72rem;color:#888">${escHtml(estSel.grado) || ""} · ${getNivel(estSel.grado) === "media" ? "Media General" : getNivel(estSel.grado) === "primaria" ? "Primaria" : "Preescolar"}</div></div>
-      <button class="btn btn-gray btn-sm" style="margin-left:auto" onclick="imprimirBoletin('${estSel.id}')">🖨️ Boletín</button>
+      <button class="btn btn-gray btn-sm" style="margin-left:auto" onclick="imprimirBoletin('${estSel.id}','${escJs(lapso)}')">🖨️ Boletín${getNivel(estSel.grado) === "media" ? "" : " · " + escHtml(lapso)}</button>
     </div>
   </div>
   <div class="stabs">
@@ -282,9 +293,9 @@ function renderTablaNotasPrimaria(est, lapso) {
         <tbody>
           ${areas
             .map((area) => {
-              const inds = getIndicadores(est.grado, area);
+              const inds = getIndicadores(est.grado, area, lapso);
               if (inds.length === 0) {
-                return `<tr><td style="padding:0.4rem 0.6rem;font-weight:700;color:#003366;border:1px solid #ddd;vertical-align:top;font-size:0.72rem;writing-mode:vertical-rl;text-orientation:mixed;text-align:center" rowspan="1">${escHtml(area)}</td>
+                return `<tr><td style="padding:0.4rem 0.6rem;font-weight:700;color:#003366;border:1px solid #ddd;vertical-align:top;font-size:0.72rem;writing-mode:vertical-rl;text-orientation:mixed;text-align:center" rowspan="1">${escHtml(nombreArea(est.grado, area))}</td>
                 <td style="padding:0.4rem;color:#aaa;font-size:0.75rem;border:1px solid #ddd" colspan="6">Sin indicadores. Agrégalos en Configuración → Indicadores.</td></tr>`;
               }
               return inds
@@ -293,7 +304,7 @@ function renderTablaNotasPrimaria(est, lapso) {
                   const valActual = notasEst[fieldKey] || "";
                   const firstRow = i === 0;
                   return `<tr style="border-bottom:1px solid #eee">
-                ${firstRow ? `<td style="padding:0.4rem 0.3rem;font-weight:700;color:#003366;border:1px solid #ddd;vertical-align:middle;font-size:0.68rem;writing-mode:vertical-rl;text-orientation:mixed;text-align:center;background:#f0f4ff" rowspan="${inds.length}">${escHtml(area)}</td>` : ""}
+                ${firstRow ? `<td style="padding:0.4rem 0.3rem;font-weight:700;color:#003366;border:1px solid #ddd;vertical-align:middle;font-size:0.68rem;writing-mode:vertical-rl;text-orientation:mixed;text-align:center;background:#f0f4ff" rowspan="${inds.length}">${escHtml(nombreArea(est.grado, area))}</td>` : ""}
                 <td style="padding:0.35rem 0.5rem;font-size:0.76rem;color:#333;border:1px solid #ddd">${escHtml(ind)}</td>
                 ${LETRAS.map(
                   (letra) => `<td style="padding:0.2rem;text-align:center;border:1px solid #ddd">
@@ -351,12 +362,11 @@ function renderNotaFinal(est) {
   } else {
     // Preescolar y primaria: resumen de letras por área
     const resumen = areas.map((area) => {
-      const inds = getIndicadores(est.grado, area);
       const letrasCount = { A: 0, B: 0, C: 0, D: 0, E: 0, total: 0 };
       LAPSOS.forEach((lapso) => {
         const k = `${est.id}_${lapso}`;
         const notasEst = notas[k] || {};
-        inds.forEach((_, i) => {
+        getIndicadores(est.grado, area, lapso).forEach((_, i) => {
           const v = notasEst[area + "__" + i];
           if (v && LETRAS.includes(v)) {
             letrasCount[v]++;
@@ -380,7 +390,7 @@ function renderNotaFinal(est) {
           ${resumen
             .map(
               (r) => `<tr style="border-bottom:1px dashed #eef2f9">
-            <td style="padding:0.4rem 0.6rem;font-weight:600;color:#333;font-size:0.75rem">${escHtml(r.area)}</td>
+            <td style="padding:0.4rem 0.6rem;font-weight:600;color:#333;font-size:0.75rem">${escHtml(nombreArea(est.grado, r.area))}</td>
             ${LETRAS.map(
               (l) => `<td style="padding:0.3rem;text-align:center">
               ${r.letrasCount[l] > 0 ? `<span style="padding:0.2rem 0.45rem;border-radius:8px;font-weight:700;font-size:0.78rem;background:${l === "A" ? "#e6f7ef" : l === "B" ? "#e8f0fe" : l === "C" ? "#fff8e1" : l === "D" ? "#fff3e0" : "#fef0f0"};color:${l === "A" ? "#1a9e5c" : l === "B" ? "#003366" : l === "C" ? "#b8860b" : l === "D" ? "#e65100" : "#e53e3e"}">${r.letrasCount[l]}</span>` : "<span style='color:#ccc'>-</span>"}
