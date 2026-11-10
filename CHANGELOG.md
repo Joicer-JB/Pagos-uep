@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Noviembre 2026 — Desempate de puestos
+
+- Cuando dos o más estudiantes tienen el **mismo promedio**, la sábana (Todo el año o un lapso) muestra **⭐ Empates en el
+  puesto**. El director o control de estudio marcan **Destacar** a quien deba quedar adelante (por su conducta, por
+  ejemplo). Se decide aparte para el año y cada lapso, y cuenta en el boletín y en el cuadro de honor. Dos destacados
+  del mismo empate siguen empatados.
+
 ## Noviembre 2026 — Sábana impresa en hoja oficio
 
 - La sábana se imprime en **hoja oficio horizontal** (21,6 × 33 cm) con la letra lo más grande que quepa a lo ancho,
