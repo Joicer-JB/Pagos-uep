@@ -29,8 +29,11 @@ const ESTILOS_BOLETIN_PRIM = `
   body{font-family:Arial,"Segoe UI",sans-serif;color:#1c2333;font-size:11px;background:#fff}
   .bp-hoja{position:relative;padding:14px 18px;min-height:100%}
   .bp-hoja+.bp-hoja{break-before:page;page-break-before:always}
-  .bp-marco{border:2px solid #003366;border-radius:14px;padding:16px 18px;min-height:250mm;display:flex;flex-direction:column;position:relative;overflow:hidden}
-  .bp-marco::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,#f5c400 0 33.3%,#0b3d91 33.3% 66.6%,#c8102e 66.6%)}
+  .bp-marco{border:2px solid #003366;border-radius:14px;padding:16px 18px 32px;min-height:250mm;display:flex;flex-direction:column;position:relative;overflow:hidden}
+  .bp-bandera{position:absolute!important;left:0;right:0;bottom:0;height:22px;display:flex}
+  .bp-bandera i{flex:1}.bp-bandera i:nth-child(1){background:#f5c400}.bp-bandera i:nth-child(3){background:#c8102e}
+  .bp-bandera i:nth-child(2){background:#0b3d91;display:flex;align-items:center;justify-content:center}
+  .bp-bandera svg{height:20px}
   .bp-marca{position:absolute;left:50%;top:55%;width:60%;transform:translate(-50%,-50%);opacity:.05;pointer-events:none}
   .bp-marco>*:not(.bp-marca){position:relative}
   .bp-enc{display:grid;grid-template-columns:90px 1fr 150px;align-items:center;gap:10px}
@@ -92,6 +95,24 @@ function abrirBoletinesPrimaria(titulo, cuerpos) {
   setTimeout(() => w.print(), 600);
 }
 
+// Franja con los colores de la bandera de Venezuela y sus 8 estrellas blancas en arco sobre el azul
+const ESTRELLA = (x, y) => {
+  const p = [];
+  for (let k = 0; k < 10; k++) {
+    const r = k % 2 ? 1.1 : 2.6,
+      ang = -Math.PI / 2 + (k * Math.PI) / 5;
+    p.push((x + r * Math.cos(ang)).toFixed(2) + "," + (y + r * Math.sin(ang)).toFixed(2));
+  }
+  return `<polygon points="${p.join(" ")}" fill="#fff"/>`;
+};
+const BANDERA_BOLETIN = `<div class="bp-bandera"><i></i><i><svg viewBox="0 0 64 20" xmlns="http://www.w3.org/2000/svg">${Array.from(
+  { length: 8 },
+  (_, k) => {
+    const ang = Math.PI * (1.1 + (0.8 * k) / 7); // de izquierda a derecha por encima del centro
+    return ESTRELLA(32 + 22 * Math.cos(ang), 21 + 14 * Math.sin(ang));
+  }
+).join("")}</svg></i><i></i></div>`;
+
 function portadaBoletinPrimaria(est, esPreescolar) {
   const inst = configInst || {};
   const campo = (etq, valor) => `<div class="bp-campo"><label>${etq}</label><div>${escHtml(valor || "")}</div></div>`;
@@ -120,6 +141,7 @@ function portadaBoletinPrimaria(est, esPreescolar) {
       <span><b>Directora:</b> ${escHtml(inst.directora || "Lic. Ligia Herrera")}</span>
     </div>
     <div class="bp-anio">Año escolar ${escHtml(anioBoletin(est))}</div>
+    ${BANDERA_BOLETIN}
   </div></section>`;
 }
 
