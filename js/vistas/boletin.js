@@ -1,11 +1,13 @@
-// Boletín de calificaciones para los representantes (media general, y preescolar/primaria), con el escudo del colegio.
+// Boletín de calificaciones para los representantes de media general, con el escudo del colegio (el de preescolar y
+// primaria está en boletin-primaria.js).
 // Hoja carta vertical: encabezado con el escudo, ficha del estudiante, resumen (promedio general, materias aprobadas y
 // promedio de cada lapso), las notas y, al pie, observaciones, firmas y sello. Las notas de media general salen de
 // servicios/calificaciones.js (ya con los cambios del consejo, sin marcarlos: eso solo se ve en la sábana). En el
 // boletín las notas van en números enteros (9,5 → 10) y los promedios con un decimal, como en la sábana. También se
 // imprimen los de todo un grado de una vez.
 
-function imprimirBoletin(estId) {
+// En preescolar y primaria el boletín es de un lapso (el que está elegido en la pestaña Notas): ver boletin-primaria.js
+function imprimirBoletin(estId, lapso) {
   const est = estudiantes.find((e) => e.id === estId);
   if (!est) {
     alert("Estudiante no encontrado");
@@ -13,7 +15,7 @@ function imprimirBoletin(estId) {
   }
   const nivel = getNivel(est.grado);
   if (nivel === "primaria" || nivel === "preescolar") {
-    imprimirBoletinPrimaria(est);
+    imprimirBoletinPrimaria(est, lapso);
   } else {
     imprimirBoletinMedia(est);
   }
@@ -21,18 +23,16 @@ function imprimirBoletin(estId) {
 function imprimirBoletinMedia(est) {
   abrirBoletines("Boletín " + est.nombre, [cuerpoBoletinMedia(est)]);
 }
-function imprimirBoletinPrimaria(est) {
-  abrirBoletines("Boletín " + est.nombre, [cuerpoBoletinPrimaria(est)]);
-}
 // Los boletines de todos los estudiantes inscritos de un grado, uno por hoja y en orden alfabético
-function imprimirBoletinesGrado(grado) {
+function imprimirBoletinesGrado(grado, lapso) {
   const lista = estudiantes.filter((e) => activo(e) && e.grado === grado).sort(ordenNombre);
   if (!lista.length) return alert("No hay estudiantes inscritos en " + grado);
-  const media = getNivel(grado) === "media";
-  abrirBoletines(
-    "Boletines " + grado,
-    lista.map((e) => (media ? cuerpoBoletinMedia(e) : cuerpoBoletinPrimaria(e)))
-  );
+  if (getNivel(grado) !== "media")
+    return abrirBoletinesPrimaria(
+      `Boletines ${grado} · ${lapso || LAPSOS[0]}`,
+      lista.map((e) => cuerpoBoletinPrimaria(e, lapso))
+    );
+  abrirBoletines("Boletines " + grado, lista.map(cuerpoBoletinMedia));
 }
 
 const ESTILOS_BOLETIN = `
@@ -236,68 +236,6 @@ function cuerpoBoletinMedia(est) {
   ${pieBoletin([
     [inst.directora || "Lic. Ligia Herrera", "Directora"],
     [inst.coordinador || "Lic. Carlos Carrascal", "Coordinación de Media General"],
-  ])}
-  </section>`;
-}
-
-// ---- Preescolar y primaria: los indicadores de cada área con su literal en cada lapso ----
-const LEYENDA_LITERALES = [
-  ["A", "Alcanzó todas las competencias y en algunos casos superó lo previsto para el grado."],
-  ["B", "Alcanzó todas las competencias previstas para el grado."],
-  ["C", "Alcanzó la mayoría de las competencias previstas para el grado."],
-  ["D", "Alcanzó algunas competencias; requiere un proceso de nivelación."],
-  ["E", "No logró las competencias mínimas para ser promovido."],
-];
-function cuerpoBoletinPrimaria(est) {
-  const inst = configInst || {};
-  const esPreescolar = getNivel(est.grado) === "preescolar";
-  const areas = esPreescolar ? AREAS_MATERNAL : AREAS_PRIMARIA;
-  // Las letras se guardan como <área>__<n° del indicador> (ver vistas/notas.js)
-  const literal = (l, area, i) => (notas[`${est.id}_${l}`] || {})[area + "__" + i] || "";
-  let asist = 0,
-    inasist = 0;
-  LAPSOS.forEach((l) => {
-    const nd = notas[`${est.id}_${l}`] || {};
-    asist += parseInt(nd._asistencia || 0) || 0;
-    inasist += parseInt(nd._inasistencia || 0) || 0;
-  });
-  const filas = areas
-    .map((area) => {
-      const inds = getIndicadores(est.grado, area);
-      if (!inds.length)
-        return `<tr><td class="b-area">${escHtml(area)}</td><td class="izq" colspan="${LAPSOS.length + 1}" style="color:#9aa5b8">Sin indicadores configurados</td></tr>`;
-      return inds
-        .map(
-          (ind, i) => `<tr>${i === 0 ? `<td class="b-area" rowspan="${inds.length}">${escHtml(area)}</td>` : ""}
-          <td class="izq">${escHtml(ind)}</td>
-          ${LAPSOS.map((l) => {
-            const v = literal(l, area, i);
-            return `<td>${LETRAS.includes(v) ? `<span class="b-lit ${v}">${v}</span>` : '<span class="b-n vacia">—</span>'}</td>`;
-          }).join("")}</tr>`
-        )
-        .join("");
-    })
-    .join("");
-  return `<section class="b-hoja">
-  ${encabezadoBoletin(est, esPreescolar ? "Educación Inicial" : "Educación Primaria")}
-  <table class="b-notas" style="margin-top:10px">
-    <thead><tr><th class="izq">Área de formación</th><th class="izq">Indicadores</th>${LAPSOS.map((l, i) => `<th style="width:64px">${ORDINAL_LAPSO[i] || l} lapso</th>`).join("")}</tr></thead>
-    <tbody>${filas}</tbody>
-  </table>
-  <div class="b-leyenda">${LEYENDA_LITERALES.map(([l, d]) => `<div><span class="b-lit ${l}">${l}</span> ${escHtml(d)}</div>`).join("")}</div>
-  <div class="b-prom">
-    <span><strong>Asistencias:</strong> ${asist || "_____"}</span>
-    <span><strong>Inasistencias:</strong> ${inasist || "_____"}</span>
-    <span><span class="b-caja"></span>Promovido(a) al ____________ con el literal ____</span>
-    <span><span class="b-caja"></span>No promovido(a)</span>
-  </div>
-  ${pieBoletin([
-    [inst.directora || "Lic. Ligia Herrera", "Directora"],
-    esPreescolar
-      ? [inst.coordinadorInicial || "", "Coordinación de Educación Inicial"]
-      : [inst.coordinadorPrimaria || "", "Coordinación de Primaria"],
-    [docenteDeGrado(est.grado), "Docente"],
-    ["", "Representante (recibido)"],
   ])}
   </section>`;
 }
