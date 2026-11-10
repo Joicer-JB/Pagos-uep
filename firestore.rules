@@ -36,6 +36,9 @@ rules_version = '2';
 //  14. (Octubre 2026) Autorización del día: la administradora y control de estudio solo leen o escriben algo si el
 //      director los autorizó hoy ("autorizaciones/<uid>".hasta, que vence a medianoche). Mientras tanto solo pueden
 //      pedir la autorización.
+//  15. (Noviembre 2026) Control de estudio en Estudiantes: inscribe y edita los datos personales y del representante
+//      (camposEditaControl), sin ver nada financiero: lee "estudiantes_control", una copia sin mensualidad, beca ni
+//      deuda que mantiene el director.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -62,6 +65,17 @@ service cloud.firestore {
         && get(perfilPath()).data.get('rol', '') == 'docente'
         && get(perfilPath()).data.get('activo', true) != false
         && (get(perfilPath()).data.get('controlEstudio', false) != true || autorizadoHoy());
+    }
+
+    // Control de estudio: un docente con controlEstudio (ya autorizado hoy, ver isDocente)
+    function isControl() {
+      return isDocente() && get(perfilPath()).data.get('controlEstudio', false) == true;
+    }
+    // Lo que control de estudio escribe en "estudiantes": datos personales y del representante, nada financiero
+    function camposEditaControl() {
+      return ['nombre', 'cedula', 'fechaNac', 'grado', 'seccion', 'jornada', 'sexo', 'telefono', 'acudiente',
+        'cedulaAcudiente', 'telefonoAcudiente', 'correoAcudiente', 'observacionesMedicas', 'pendienteAnterior',
+        'anioEscolar'];
     }
 
     // ───────────── Autorización del día ─────────────
@@ -123,10 +137,18 @@ service cloud.firestore {
         && recibo.data.get('registradoPor', '') == mail()
         && math.abs(recibo.data.get('deudaCobro', 0) - (antes.get('moraMonto', 0) - despues.moraMonto)) < 0.01;
     }
+    // Control de estudio inscribe (con la mensualidad de su grado, que pone la app; sin beca ni deuda) y edita solo
+    // los campos de camposEditaControl. No lee esta colección: lee su copia, "estudiantes_control".
     match /estudiantes/{id} {
       allow read:   if isStaff();
-      allow create: if isDirector();
-      allow update: if isDirector() || (isAdmin() && cobroBajaDeuda(id));
+      allow create: if isDirector()
+        || (isControl()
+          && request.resource.data.keys().hasOnly(
+            camposEditaControl().concat(['horario', 'mensualidad', 'estado', 'inscritoPor']))
+          && request.resource.data.estado == 'alsaldo'
+          && request.resource.data.inscritoPor == mail());
+      allow update: if isDirector() || (isAdmin() && cobroBajaDeuda(id))
+        || (isControl() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(camposEditaControl()));
       allow delete: if isDirector() && conBitacora('estudiantes', id);
     }
     // Fichas para docentes: copia de cada estudiante con solo lo necesario para notas y boletín.
@@ -135,6 +157,17 @@ service cloud.firestore {
       allow read:           if isStaff() || isDocente();
       allow create, update: if isDirector() && request.resource.data.keys().hasOnly(
         ['nombre', 'cedula', 'fechaNac', 'grado', 'seccion', 'anioEscolar', 'acudiente', 'estado', 'graduado']);
+      allow delete:         if isDirector();
+    }
+
+    // Copia para control de estudio: sin nada financiero. La mantiene el director; control de estudio la escribe
+    // junto con sus cambios en "estudiantes".
+    match /estudiantes_control/{id} {
+      allow read:           if isDirector() || isControl();
+      allow create, update: if (isDirector() || isControl()) && request.resource.data.keys().hasOnly(
+        ['nombre', 'cedula', 'fechaNac', 'grado', 'seccion', 'jornada', 'sexo', 'telefono', 'acudiente',
+         'cedulaAcudiente', 'telefonoAcudiente', 'correoAcudiente', 'observacionesMedicas', 'pendienteAnterior',
+         'anioEscolar', 'horario', 'estado', 'graduado', 'graduadoEn']);
       allow delete:         if isDirector();
     }
 

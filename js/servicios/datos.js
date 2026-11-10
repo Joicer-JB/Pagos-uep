@@ -11,7 +11,14 @@ async function cargarTodo() {
   try {
     let sp, se, st, sf, sn;
     if (rolUsuario === "docente") {
-      [se, sn] = await Promise.all([leerFichasDocente(), db.collection("notas").get()]);
+      // Control de estudio: la copia de los estudiantes sin nada financiero, y el año escolar y la estructura de
+      // costos para poner sola la mensualidad de su grado a los que inscribe (no la ve)
+      const control = esControlEstudio();
+      if (control) await Promise.all([cargarAnioEsc(), cargarCobCfg()]);
+      [se, sn] = await Promise.all([
+        control ? leerEstudiantesControl() : leerFichasDocente(),
+        db.collection("notas").get(),
+      ]);
       pagos = [];
       trabajadores = [];
       finanzas = [];

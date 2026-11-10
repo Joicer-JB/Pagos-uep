@@ -188,3 +188,17 @@ const CSS_DOS_POR_HOJA = `.mitad{display:grid;grid-template-columns:1.25fr 1fr;g
 // cuerpo(etiqueta) dibuja un recibo con «ORIGINAL» o «COPIA» en la esquina
 const htmlDosPorHoja = (cuerpo) =>
   `<div class="mitad">${cuerpo("ORIGINAL")}</div><div class="corte">✂ CORTAR AQUÍ</div><div class="mitad">${cuerpo("COPIA")}</div>`;
+
+// Franja amarilla, azul y roja con las 8 estrellas blancas en arco sobre el azul, como la bandera de Venezuela. La
+// usan el boletín y la sábana impresa (margin: el espacio arriba y abajo).
+function franjaBandera(margin) {
+  // Arco: las estrellas de los extremos un poco más abajo que las del centro
+  const caida = [3, 1.6, 0.6, 0, 0, 0.6, 1.6, 3];
+  const estrellas = caida
+    .map((y) => `<span style="display:inline-block;transform:translateY(${y}px);margin:0 2.5px">★</span>`)
+    .join("");
+  return `<div style="display:flex;height:13px;margin:${margin || "8px 0 10px"};border-radius:3px;overflow:hidden">
+    <div style="flex:1;background:#f5c400"></div>
+    <div style="flex:1;background:#0b3d91;color:#fff;font-size:8px;line-height:11px;text-align:center;white-space:nowrap">${estrellas}</div>
+    <div style="flex:1;background:#c8102e"></div></div>`;
+}

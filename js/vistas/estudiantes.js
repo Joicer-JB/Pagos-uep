@@ -107,7 +107,13 @@ function htmlMatriculaGrado() {
     <div class="ayuda" style="margin-top:0.4rem">Inscritos: los de este año (sin retirados ni graduados). Es la cifra que debe coincidir con la matrícula oficial.</div>
   </details>`;
 }
+const enMoraEst = (e) => enMora(e);
+const deudaEst = (e) => deudaDe(e);
 function renderEstudiantes() {
+  // Control de estudio: sin nada financiero (ni mora, ni deuda, ni mensualidad)
+  const ctrl = esControlEstudio();
+  const enMora = ctrl ? () => false : enMoraEst;
+  const deudaDe = ctrl ? () => 0 : deudaEst;
   const mora = estudiantes.filter(enMora);
   const activos = estudiantes.filter(activo);
   let filtrados = estudiantes
@@ -134,12 +140,16 @@ function renderEstudiantes() {
   return `
   <div class="stats-grid">
     <div class="stat-card"><div class="stat-val">${activos.length}</div><div class="stat-label">🎒 Inscritos</div></div>
-    <div class="stat-card green"><div class="stat-val">${activos.length - mora.length}</div><div class="stat-label">✅ Al Saldo</div></div>
+    ${
+      ctrl
+        ? `<div class="stat-card gold"><div class="stat-val">${estudiantes.filter((e) => e.estado === "retirado").length}</div><div class="stat-label">🚪 Retirados</div></div>`
+        : `<div class="stat-card green"><div class="stat-val">${activos.length - mora.length}</div><div class="stat-label">✅ Al Saldo</div></div>
     <div class="stat-card red"><div class="stat-val">${mora.length}</div><div class="stat-label">⚠️ En Mora</div></div>
-    <div class="stat-card gold"><div class="stat-val">${fmt(mora.reduce((s, e) => s + deudaDe(e), 0))}</div><div class="stat-label">Total Mora</div></div>
+    <div class="stat-card gold"><div class="stat-val">${fmt(mora.reduce((s, e) => s + deudaDe(e), 0))}</div><div class="stat-label">Total Mora</div></div>`
+    }
   </div>
   ${htmlAvisoGrados()}
-  ${htmlAvisoDuplicados()}
+  ${ctrl ? "" : htmlAvisoDuplicados()}
   ${htmlMatriculaGrado()}
   <button class="btn btn-primary btn-full" style="margin-bottom:0.75rem" onclick="abrirModal({tipo:'nuevo-estudiante'})">➕ Agregar Estudiante</button>
   <div class="search-bar">
@@ -148,8 +158,12 @@ function renderEstudiantes() {
   <div style="display:flex;gap:0.5rem;margin-bottom:0.85rem;flex-wrap:wrap">
     <select class="inp" style="flex:1;padding:0.6rem 0.85rem;font-size:0.82rem" onchange="filtros.estado=this.value;renderTabContent()">
       <option value="">Todos los estados</option>
-      <option value="alsaldo" ${filtros.estado === "alsaldo" ? "selected" : ""}>✅ Al Saldo</option>
-      <option value="mora" ${filtros.estado === "mora" ? "selected" : ""}>⚠️ En Mora</option>
+      ${
+        ctrl
+          ? ""
+          : `<option value="alsaldo" ${filtros.estado === "alsaldo" ? "selected" : ""}>✅ Al Saldo</option>
+      <option value="mora" ${filtros.estado === "mora" ? "selected" : ""}>⚠️ En Mora</option>`
+      }
       <option value="retirado" ${filtros.estado === "retirado" ? "selected" : ""}>🚪 Retirado</option>
       <option value="graduado" ${filtros.estado === "graduado" ? "selected" : ""}>🎓 Graduado</option>
     </select>
@@ -188,8 +202,8 @@ function renderEstudiantes() {
           ${deudaDe(e) > 0 ? `<div style="font-size:0.72rem;color:#e53e3e;font-weight:700;margin-top:2px">Debe: ${fmt(deudaDe(e))}${tasaHoy() ? " · " + fmtBs(aBs(deudaDe(e))) : ""}</div>` : ""}
         </div>
         <div class="item-right">
-          <span class="badge ${enMora(e) ? "badge-red" : e.estado === "retirado" ? "badge-gray" : e.graduado ? "badge-gold" : "badge-green"}">${enMora(e) ? "⚠️ Mora" : e.estado === "retirado" ? "🚪 Retirado" : e.graduado ? "🎓 Graduado" : "✅ Al Saldo"}</span>
-          <div style="font-size:0.7rem;color:#888;margin-top:3px">${fmt(mensualidadDe(e))}/mes${becaDe(e) ? ` · 🎓 ${becaDe(e) >= 100 ? "Becado" : "Beca " + becaDe(e) + "%"}` : ""}</div>
+          <span class="badge ${enMora(e) ? "badge-red" : e.estado === "retirado" ? "badge-gray" : e.graduado ? "badge-gold" : "badge-green"}">${enMora(e) ? "⚠️ Mora" : e.estado === "retirado" ? "🚪 Retirado" : e.graduado ? "🎓 Graduado" : ctrl ? "🎒 Inscrito" : "✅ Al Saldo"}</span>
+          ${ctrl ? (e.seccion ? `<div style="font-size:0.7rem;color:#888;margin-top:3px">Sección ${escHtml(e.seccion)}</div>` : "") : `<div style="font-size:0.7rem;color:#888;margin-top:3px">${fmt(mensualidadDe(e))}/mes${becaDe(e) ? ` · 🎓 ${becaDe(e) >= 100 ? "Becado" : "Beca " + becaDe(e) + "%"}` : ""}</div>`}
         </div>
       </div>
     </div>`
@@ -199,6 +213,8 @@ function renderEstudiantes() {
 }
 function renderModalEstudiante(e) {
   const isEdit = !!e.id;
+  // Control de estudio no ve nada financiero: sin mensualidad, beca, estado de mora ni exoneraciones
+  const ctrl = esControlEstudio();
   return `<div class="modal-bg"><div class="modal">
     <div class="modal-header"><div><h3>👨‍🎓 ${isEdit ? "Editar" : "Nuevo"} Estudiante</h3></div><button class="modal-close-x" onclick="cerrarModal()">✕</button></div>
     <div class="modal-body">
@@ -220,7 +236,7 @@ function renderModalEstudiante(e) {
           </div>
         </div>
         <div class="field" id="e-horario-box" style="display:${getNivel(e.grado) === "preescolar" ? "block" : "none"}"><label class="field-label">Horario (inicial)</label>
-          <select class="inp" id="e-horario" onchange="sugerirMensualidadEst(true)"><option value="completo" ${e.horario !== "medio" ? "selected" : ""}>Tiempo completo</option><option value="medio" ${e.horario === "medio" ? "selected" : ""}>Medio tiempo</option></select></div>
+          <select class="inp" id="e-horario" onchange="sugerirMensualidadEst(true)" ${ctrl && isEdit ? "disabled" : ""}><option value="completo" ${e.horario !== "medio" ? "selected" : ""}>Tiempo completo</option><option value="medio" ${e.horario === "medio" ? "selected" : ""}>Medio tiempo</option></select></div>
         <div class="form-row">
           <div class="field"><label class="field-label">Teléfono</label><input class="inp" id="e-tel" value="${escHtml(e.telefono) || ""}"/></div>
           </div>
@@ -237,7 +253,10 @@ function renderModalEstudiante(e) {
           <textarea class="inp" id="e-med" rows="2" placeholder="Vacío = no padece">${escHtml(e.observacionesMedicas || "")}</textarea></div>
         ${htmlPendienteAnteriorForm(e)}
             <div class="field"><label class="field-label">Correo del acudiente (opcional)</label><input class="inp" id="e-correo-acud" type="email" placeholder="nombre@gmail.com" value="${escHtml(e.correoAcudiente) || ""}"/></div>
-        <div class="field"><label class="field-label">Mensualidad ($)</label>
+        ${
+          ctrl
+            ? ""
+            : `<div class="field"><label class="field-label">Mensualidad ($)</label>
           <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#003366;font-weight:700">$</span>
           <input class="inp" id="e-mens" placeholder="0,00" style="padding-left:2rem" value="${e.mensualidad ? String(e.mensualidad).replace(".", ",") : ""}" oninput="fmtInput(this)"/></div>
           <div id="e-mens-nota" style="font-size:0.68rem;color:#888;margin-top:2px">${notaMensualidadEst(e)}</div></div>
@@ -250,18 +269,26 @@ function renderModalEstudiante(e) {
             <div style="font-size:0.68rem;color:#888;margin-top:2px">100 = becado todo el año (no paga mensualidades) · 50 = media beca. Para un solo mes, usa «🎁 Exonerar este mes» en su estado de cuenta.</div></div>
           <div class="field"><label class="field-label">Motivo de la beca</label>
             <input class="inp" id="e-beca-motivo" placeholder="Ej.: hijo del personal, excelencia" value="${escHtml(e.becaMotivo || "")}"/></div>
-        </div>
+        </div>`
+        }
         <div class="form-row">
-          <div class="field"><label class="field-label">Estado</label>
+          ${
+            ctrl
+              ? ""
+              : `<div class="field"><label class="field-label">Estado</label>
             <select class="inp" id="e-estado" onchange="toggleMoraFields()">
               <option value="alsaldo" ${(e.estado || "alsaldo") === "alsaldo" ? "selected" : ""}>✅ Al Saldo</option>
               <option value="mora" ${e.estado === "mora" ? "selected" : ""}>⚠️ En Mora</option>
               <option value="retirado" ${e.estado === "retirado" ? "selected" : ""}>🚪 Retirado</option>
             </select>
-          </div>
+          </div>`
+          }
           <div class="field"><label class="field-label">Año Escolar</label><input class="inp" id="e-anio" value="${escHtml(e.anioEscolar) || (escCfg ? escHtml(escCfg.actual.nombre) : String(anioActual()))}"/></div>
         </div>
-        <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-graduado" ${e.graduado ? "checked" : ""}/> 🎓 Graduado (egresado)</label>
+        ${
+          ctrl
+            ? `<div class="ayuda">${isEdit ? "" : "La mensualidad se pone sola según el grado y la estructura de costos del año. "}Lo financiero (mensualidad, becas, deuda) lo maneja la dirección.</div>`
+            : `<label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-graduado" ${e.graduado ? "checked" : ""}/> 🎓 Graduado (egresado)</label>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinrec" ${e.sinRecargo ? "checked" : ""}/> 🤝 Exonerado de recargos por mora</label>
         <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.82rem;margin:0.4rem 0"><input type="checkbox" id="e-sinins" ${e.sinInscripcion ? "checked" : ""}/> 🎟️ No paga inscripción: solo carnet y papelería (becado, hijo del personal…)</label>
         <div id="mora-fields" style="display:${e.estado === "mora" ? "flex" : "none"};flex-direction:column;gap:0.75rem;background:#fff5f5;border-radius:10px;padding:0.85rem;border-left:4px solid #e53e3e">
@@ -270,7 +297,8 @@ function renderModalEstudiante(e) {
           <div class="field"><label class="field-label" style="color:#e53e3e">💰 Monto que debe</label>
             <div style="position:relative"><span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#e53e3e;font-weight:700">$</span>
             <input class="inp" id="e-mora-monto" placeholder="0,00" style="padding-left:2rem;border-color:#ffcccc" value="${e.moraMonto ? String(e.moraMonto).replace(".", ",") : ""}" oninput="fmtInput(this)"/></div></div>
-        </div>
+        </div>`
+        }
         <div id="modal-err"></div>
       </div>
     </div>
@@ -311,6 +339,7 @@ function toggleMoraFields() {
 function renderModalVerEstudiante(m) {
   const e = estudiantes.find((x) => x.id === m.id);
   if (!e) return "";
+  if (esControlEstudio()) return renderModalVerEstudianteControl(e);
   const suyos = new Set(pagosDeEstudiante(e));
   const pagosEst = pagos.filter((p) => suyos.has(p)); // en el mismo orden de la lista de pagos (más recientes primero)
   const totalPag = pagosEst.reduce((s, p) => s + p.total, 0);
@@ -377,6 +406,42 @@ function renderModalVerEstudiante(m) {
         <button class="btn btn-whatsapp btn-sm" title="Estado de cuenta por WhatsApp" onclick="whatsappEstadoCuenta('${e.id}')">💬</button>
         <button class="btn btn-print btn-sm" onclick="imprimirConstancia('${e.id}')">📄 Constancia</button>
         <button class="btn btn-gray btn-sm" onclick="abrirModal({tipo:'editar-estudiante',id:'${e.id}'})">✏️</button>
+        <button class="btn btn-gray" onclick="cerrarModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>`;
+}
+// Ficha para control de estudio: solo datos personales, del representante y la materia pendiente
+function renderModalVerEstudianteControl(e) {
+  const edad = calcEdad(e.fechaNac);
+  const pa = e.pendienteAnterior;
+  const filas = [
+    ["📛 Cédula", e.cedula || "N/A"],
+    ["🎂 Edad", edad ? edad + " años" : "N/A"],
+    ["🏫 Sección", e.seccion || "U"],
+    ["📞 Teléfono", e.telefono || "N/A"],
+    ["👤 Representante", e.acudiente || "N/A"],
+    ["🪪 Cédula del representante", e.cedulaAcudiente || "N/A"],
+    ["📞 Tel. del representante", e.telefonoAcudiente || "N/A"],
+    ["✉️ Correo del representante", e.correoAcudiente || "N/A"],
+    ["🩺 Observaciones médicas", e.observacionesMedicas || "No padece"],
+    [
+      "📚 Materia pendiente del año anterior",
+      !pa ? "Sin registrar" : pa.aplica ? `${pa.materia || "—"} · Nota: ${pa.nota ?? "por presentar"}` : "No aplica",
+    ],
+  ];
+  return `<div class="modal-bg" onclick="if(event.target.classList.contains('modal-bg'))cerrarModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div><h3>👨‍🎓 ${escHtml(e.nombre)}</h3><p>${escHtml(e.grado) || ""} ${e.jornada ? "· " + escHtml(e.jornada) : ""}</p></div>
+        <button class="modal-close-x" onclick="cerrarModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        ${filas.map(([l, v]) => `<div class="info-row"><span style="color:#888;font-size:0.8rem">${l}</span><span style="font-weight:600;font-size:0.82rem;color:#333;text-align:right">${escHtml(v)}</span></div>`).join("")}
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" style="flex:1" onclick="abrirModal({tipo:'editar-estudiante',id:'${e.id}'})">✏️ Editar</button>
+        <button class="btn btn-print btn-sm" onclick="imprimirConstancia('${e.id}')">📄 Constancia</button>
         <button class="btn btn-gray" onclick="cerrarModal()">Cerrar</button>
       </div>
     </div>
@@ -509,7 +574,7 @@ async function guardarEstudiante(editId) {
   const acudiente = document.getElementById("e-acud").value.trim();
   const telAcud = document.getElementById("e-telacud").value.trim();
   const correoAcud = ((document.getElementById("e-correo-acud") || {}).value || "").trim().toLowerCase();
-  const mensualidadRaw = document.getElementById("e-mens").value;
+  const mensualidadRaw = (document.getElementById("e-mens") || {}).value;
   const anioEscolar = document.getElementById("e-anio").value.trim();
   // Obligatorios: lo mínimo para identificarlo y cobrarle. Cédula, fecha, teléfonos y acudiente pueden completarse después
   // (los estudiantes importados llegan con algunos vacíos y se marcan como «datos incompletos»).
@@ -529,6 +594,31 @@ async function guardarEstudiante(editId) {
   ) {
     mostrarError("modal-err", "⚠️ La nota de la materia pendiente debe ser de 1 a 20");
     return;
+  }
+  if (esControlEstudio()) {
+    const horario =
+      getNivel(grado) === "preescolar" ? (document.getElementById("e-horario") || {}).value || "completo" : "";
+    return guardarEstudianteControl(
+      editId,
+      {
+        nombre,
+        cedula,
+        fechaNac,
+        grado,
+        seccion: ((document.getElementById("e-seccion") || {}).value || "").trim().toUpperCase(),
+        jornada: document.getElementById("e-jornada").value,
+        sexo: (document.getElementById("e-sexo") || {}).value || "",
+        telefono,
+        acudiente,
+        cedulaAcudiente: ((document.getElementById("e-cedacud") || {}).value || "").trim(),
+        telefonoAcudiente: telAcud,
+        correoAcudiente: correoAcud,
+        observacionesMedicas: ((document.getElementById("e-med") || {}).value || "").trim(),
+        pendienteAnterior: leerPendienteAnteriorForm(),
+        anioEscolar,
+      },
+      horario
+    );
   }
   const estado = document.getElementById("e-estado").value;
   const datos = {
@@ -570,6 +660,43 @@ async function guardarEstudiante(editId) {
       ponerEnLista(estudiantes, datos);
     }
     cerrarModal();
+  } catch (e) {
+    mostrarError("modal-err", e.message);
+  }
+}
+// Control de estudio guarda en «estudiantes» solo sus campos (CAMPOS_EDITA_CONTROL) y en la misma operación pone al
+// día su copia («estudiantes_control»). Al inscribir, la mensualidad es la de su grado en la estructura de costos del
+// año (los aumentos se suman solos); el director la cambia si lleva beca o es un caso especial.
+async function guardarEstudianteControl(editId, datos, horario) {
+  const lote = db.batch();
+  const ref = editId ? db.collection("estudiantes").doc(editId) : db.collection("estudiantes").doc();
+  const copia = db.collection("estudiantes_control").doc(ref.id);
+  let nuevo = null;
+  if (editId) {
+    lote.update(ref, datos);
+    const antes = estudiantes.find((e) => e.id === editId) || {};
+    nuevo = { ...antes, ...datos };
+  } else {
+    const c = costoDe({ grado: datos.grado, horario });
+    nuevo = {
+      ...datos,
+      horario,
+      mensualidad: c ? c.mensualidad : 0,
+      estado: "alsaldo",
+      inscritoPor: correoUsuario(),
+    };
+    lote.set(ref, nuevo);
+  }
+  lote.set(copia, fichaControl(nuevo));
+  try {
+    await lote.commit();
+    const { mensualidad, inscritoPor, ...visible } = nuevo; // en su lista no queda nada financiero
+    if (editId) {
+      const i = estudiantes.findIndex((e) => e.id === editId);
+      if (i >= 0) estudiantes[i] = visible;
+    } else ponerEnLista(estudiantes, { ...visible, id: ref.id });
+    cerrarModal();
+    mostrarToast(editId ? "✅ Datos guardados" : "✅ Estudiante inscrito");
   } catch (e) {
     mostrarError("modal-err", e.message);
   }

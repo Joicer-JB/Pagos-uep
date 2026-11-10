@@ -64,3 +64,21 @@ test("en las reglas, los docentes ya no leen la colección completa de estudiant
   const bloque = reglas.match(/match \/estudiantes\/\{id\}\s*\{([\s\S]*?)\}/)[1];
   assert.doesNotMatch(bloque, /isDocente/);
 });
+
+test("control de estudio: las reglas aceptan exactamente los campos de la app (su copia y lo que edita)", () => {
+  const reglas = fs.readFileSync(path.join(RAIZ, "firestore.rules"), "utf8");
+  const lista = (re) => [...reglas.match(re)[1].matchAll(/'([^']+)'/g)].map((m) => m[1]).sort();
+  assert.deepEqual(
+    lista(/match \/estudiantes_control\/\{id\}[\s\S]*?hasOnly\(\s*\[([^\]]*)\]/),
+    [...app.evaluar("CAMPOS_CONTROL")].sort()
+  );
+  assert.deepEqual(
+    lista(/function camposEditaControl\(\) \{\s*return \[([^\]]*)\]/),
+    [...app.evaluar("CAMPOS_EDITA_CONTROL")].sort()
+  );
+  const fichaControl = app.evaluar("fichaControl");
+  const f = JSON.parse(JSON.stringify(fichaControl({ ...completo, estado: "mora" })));
+  for (const k of ["mensualidad", "deuda", "moraConcepto", "moraMonto", "sinRecargo", "cuotaDesde"])
+    assert.equal(k in f, false, k);
+  assert.equal(f.estado, undefined);
+});
