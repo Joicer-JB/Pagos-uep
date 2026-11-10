@@ -6,7 +6,7 @@
 // · Lo demás (Firestore, inicio de sesión, tasa del día) no pasa por aquí: Firestore guarda su propia copia.
 // Si cambias este archivo, cambia también VERSION: así el navegador instala el nuevo y borra la copia vieja.
 
-const VERSION = "v4"; // v4: los archivos de la app se revisan siempre con el servidor (sin la copia del navegador)
+const VERSION = "v5"; // v5: Excel se carga al usarlo y ya no está Chart.js
 const CACHE = "jjs-app-" + VERSION;
 const BIBLIOTECAS_FIJAS = [
   /^https:\/\/www\.gstatic\.com\/firebasejs\/\d+\.\d+\.\d+\//,

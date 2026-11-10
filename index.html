@@ -25,15 +25,15 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+    <!-- Excel (SheetJS): pesa casi 1 MB y solo se usa al importar o exportar, así que no se ejecuta al abrir la página.
+         type="text/x-diferida" hace que el navegador no lo descargue ni lo ejecute aquí; cargarXLSX() (js/utils/formato.js)
+         lo carga con esta misma dirección y huella la primera vez que hace falta. sw.js igual guarda su copia. -->
     <script
       src="https://cdn.jsdelivr.net/npm/@e965/xlsx@0.20.3/dist/xlsx.full.min.js"
       integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT"
       crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
-      integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
-      crossorigin="anonymous"
+      type="text/x-diferida"
+      id="lib-xlsx"
     ></script>
   </head>
   <body>
@@ -51,11 +51,13 @@
     <script src="js/config.js"></script>
     <script src="js/utils/formato.js"></script>
     <script src="js/utils/texto.js"></script>
+    <script src="js/utils/bibliotecas.js"></script>
     <script src="js/utils/impresion.js"></script>
     <script src="js/utils/grados.js"></script>
     <script src="js/estado.js"></script>
     <script src="js/interfaz.js"></script>
     <script src="js/navegacion.js"></script>
+    <script src="js/modo-liviano.js"></script>
     <script src="js/animaciones.js"></script>
     <script src="js/pantalla-tactil.js"></script>
     <script src="js/servicios/auth.js"></script>

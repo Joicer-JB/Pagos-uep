@@ -189,7 +189,7 @@ function renderEstudiantes() {
   ${
     filtrados.length === 0
       ? `<div class="empty"><div class="empty-icon">👨‍🎓</div><p>No hay estudiantes</p></div>`
-      : `<div class="list">${filtrados
+      : `<div class="list">${recortarLista("estudiantes", filtrados)
           .map(
             (e) => `
     <div class="list-item ${enMora(e) ? "mora" : e.estado === "retirado" ? "" : "alsaldo"}" onclick="abrirModal({tipo:'ver-estudiante',id:'${e.id}'})">
@@ -208,7 +208,7 @@ function renderEstudiantes() {
       </div>
     </div>`
           )
-          .join("")}</div>`
+          .join("")}</div>${botonVerMas("estudiantes", filtrados.length)}`
   }`;
 }
 function renderModalEstudiante(e) {

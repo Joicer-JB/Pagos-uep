@@ -5,7 +5,10 @@
 // Usan element.animate() (no cambian el HTML) y se apagan solas si el dispositivo pide «reducir movimiento»
 // (Ajustes de accesibilidad). Los estilos están en css/animaciones.css.
 
-const sinMovimiento = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+// (también en el modo liviano de las computadoras sencillas, ver js/modo-liviano.js)
+const sinMovimiento = () =>
+  (typeof modoLiviano !== "undefined" && modoLiviano) ||
+  !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
 // Anima un elemento si se puede; si no, no hace nada
 function animar(el, cuadros, opciones) {

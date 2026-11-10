@@ -155,5 +155,8 @@ test("app instalable: el service worker guarda la app y la abre sin internet", a
   await s.pagina.reload();
   await s.pagina.waitForSelector("#l-email"); // la pantalla de entrada carga desde la copia
   assert.equal(await s.pagina.evaluate(() => typeof render), "function");
+  // Excel se carga al usarlo (js/utils/bibliotecas.js): también sale de la copia guardada
+  assert.equal(await s.pagina.evaluate(() => typeof XLSX), "undefined", "Excel no se ejecuta al abrir la página");
+  await s.pagina.evaluate(() => cargarXLSX());
   assert.equal(await s.pagina.evaluate(() => typeof XLSX), "object", "las bibliotecas también están guardadas");
 });

@@ -96,6 +96,7 @@ function setTab(t) {
   pagoPrefill = null;
   filtros = { busq: "", fecha: "", metodo: "", estado: "", lapso: LAPSOS[0], anio: String(anioActual()) };
   modalActual = null;
+  limiteLista = {};
   render();
   animarEntradaPestana();
 }
@@ -121,10 +122,27 @@ function renderTabContent() {
   const tc = document.getElementById("tab-content");
   if (tc) tc.innerHTML = renderTab();
 }
+// Listas largas (Pagos, Estudiantes): se dibujan por partes. En una PC sencilla, dibujar miles de filas de una vez
+// tarda varios segundos. Solo cambia cuántas filas se ven: el buscador, los filtros y los totales usan la lista
+// completa.
+const LISTA_PRIMERAS = 50,
+  LISTA_PASO = 100;
+let limiteLista = {}; // filas visibles de cada lista; se reinicia al cambiar de pestaña o al buscar
+const recortarLista = (clave, filas) => filas.slice(0, limiteLista[clave] || LISTA_PRIMERAS);
+function botonVerMas(clave, total) {
+  const vistas = Math.min(total, limiteLista[clave] || LISTA_PRIMERAS);
+  if (vistas >= total) return "";
+  return `<div class="ver-mas"><span>Mostrando ${vistas} de ${total}</span><button class="btn btn-primary btn-sm" onclick="verMasLista('${clave}')">Ver ${Math.min(LISTA_PASO, total - vistas)} más</button></div>`;
+}
+function verMasLista(clave) {
+  limiteLista[clave] = (limiteLista[clave] || LISTA_PRIMERAS) + LISTA_PASO;
+  renderTabContent();
+}
 let _searchTimer = null;
 // Búsqueda en vivo: espera 200 ms después de la última tecla antes de redibujar la lista
 function onBusqInput(val) {
   filtros.busq = val;
+  limiteLista = {};
   clearTimeout(_searchTimer);
   _searchTimer = setTimeout(() => {
     renderListOnly();

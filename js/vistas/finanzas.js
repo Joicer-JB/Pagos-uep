@@ -556,7 +556,8 @@ function renderLibroFinanzas(anio, mesPad) {
       }
     </table></div></div>`;
 }
-function exportarLibro(anio, mesPad) {
+async function exportarLibro(anio, mesPad) {
+  await cargarXLSX();
   const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
   const L = libroIngresosEgresos(desde, hasta);
   const filas = [
@@ -836,6 +837,7 @@ async function hojasDeArchivo(archivo) {
     return [{ nombre: archivo.name, filas: filasDeTexto(texto) }];
   }
   const datos = new Uint8Array(await archivo.arrayBuffer());
+  await cargarXLSX();
   // raw: los textos de un CSV o HTML no se convierten en fechas a la manera de EE. UU. (mes/día)
   const libro = XLSX.read(datos, { type: "array", cellDates: true, raw: true });
   const hojas = libro.SheetNames.map((n) => ({

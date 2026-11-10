@@ -88,12 +88,14 @@ test("las bibliotecas de jsDelivr tienen versión exacta y su huella coincide co
   ];
   const esperado = {
     "@e965/xlsx@0.20.3/dist/xlsx.full.min.js": "xlsx/dist/xlsx.full.min.js", // SheetJS 0.20.3 publicado en npm por e965
-    "chart.js@4.4.1/dist/chart.umd.js": "chart.js/dist/chart.umd.js",
   };
   assert.deepEqual(scripts.map((m) => m[1].split("/npm/")[1]).sort(), Object.keys(esperado).sort());
   for (const [url, sri] of scripts.map((m) => [m[1], m[2]])) {
     assert.equal(sri, huella(esperado[url.split("/npm/")[1]]), url);
   }
+  // Excel no se ejecuta al abrir la página (se carga al usarlo, ver js/utils/bibliotecas.js), y Chart.js ya no se usa
+  assert.match(html, /<script\s+src="[^"]*xlsx[^"]*"[^>]*type="text\/x-diferida"[^>]*id="lib-xlsx"/);
+  assert.doesNotMatch(html, /chart\.js|chart\.umd/i);
   // ninguna biblioteca de jsDelivr sin versión exacta ni huella
   assert.doesNotMatch(html, /cdn\.jsdelivr\.net\/npm\/[^"@]+@\d+\//);
 });

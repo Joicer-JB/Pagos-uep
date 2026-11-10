@@ -1,5 +1,15 @@
 # Historial de cambios
 
+## Noviembre 2026 — Más rápida en computadoras sencillas
+
+- **💳 Pagos** y **👨‍🎓 Estudiantes** muestran los **primeros 50** y un botón **«Ver más»**. El buscador y los filtros
+  siguen buscando en todos, y los totales siguen sumando todos. En una PC lenta, Pagos abre en 0,2 s en vez de casi 3 s.
+- La biblioteca de **Excel** se carga **la primera vez que se usa** (importar o exportar), no al abrir la página. Se
+  quitó la de gráficas, que ya no se usaba.
+- **🐢 Modo liviano**: en equipos con poca memoria (4 GB o menos) o pocos núcleos se activa solo y quita el vidrio
+  esmerilado, las animaciones y el fondo animado de la entrada. Se puede activar o quitar a mano en cada equipo desde
+  la pantalla de entrada.
+
 ## Noviembre 2026 — Franja con las estrellas de la bandera
 
 - La franja amarilla, azul y roja del boletín y de la sábana impresa lleva ahora las **8 estrellas blancas en arco

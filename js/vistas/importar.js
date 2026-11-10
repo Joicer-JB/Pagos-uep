@@ -466,7 +466,8 @@ function renderImportar() {
     <div id="imp-preview"></div>
   </div>`;
 }
-function descargarPlantillaMatricula() {
+async function descargarPlantillaMatricula() {
+  await cargarXLSX();
   const grado = importGrado && importGrado !== "todos" ? importGrado : "";
   const cols = grado ? PLANTILLA_COLS : ["Grado", ...PLANTILLA_COLS];
   const ejemplo = [
@@ -501,8 +502,9 @@ function previsualizarExcel(input) {
   reader.onerror = () => {
     mostrarError(box, "No se pudo leer el archivo");
   };
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
+      await cargarXLSX();
       const bytes = new Uint8Array(e.target.result);
       const t = /\.docx$/i.test(file.name)
         ? localizarTabla([{ nombre: file.name.replace(/\.docx$/i, ""), rows: filasDeWord(bytes) }])
