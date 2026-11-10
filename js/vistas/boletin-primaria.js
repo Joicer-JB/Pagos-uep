@@ -39,13 +39,13 @@ const ESTILOS_BOLETIN_PRIM = `
   .bp-membrete{text-align:center;font-weight:700;font-size:11.5px;line-height:1.35;text-transform:uppercase}
   .bp-lema{text-align:center;color:#00509e;font-style:italic;font-weight:700;font-size:13px;margin:16px 0 8px}
   .bp-titulo{text-align:center;color:#003366;font-weight:800;font-size:14px;line-height:1.4;border-top:2px solid #ffd700;border-bottom:2px solid #ffd700;padding:8px 0;margin:0 30px}
-  .bp-cuerpo{display:grid;grid-template-columns:1fr 170px;gap:16px;align-items:center;margin-top:26px}
-  .bp-campo{margin-bottom:15px}
-  .bp-campo label{display:block;font-weight:700;font-size:11.5px;color:#003366}
-  .bp-campo div{border-bottom:1.5px solid #1c2333;min-height:22px;padding:3px 6px 2px;font-size:14px;font-family:Georgia,"Times New Roman",serif}
-  .bp-fila{display:flex;gap:18px}.bp-fila .bp-campo{flex:1}
+  .bp-cuerpo{flex:1;display:flex;flex-direction:column;justify-content:center;width:78%;margin:18px auto 0;text-align:center}
+  .bp-campo{margin-bottom:20px}
+  .bp-campo label{display:block;font-weight:700;font-size:11.5px;color:#003366;letter-spacing:.02em}
+  .bp-campo div{border-bottom:1.5px solid #1c2333;min-height:24px;padding:3px 6px 2px;font-size:15px;font-family:Georgia,"Times New Roman",serif}
+  .bp-fila{display:flex;gap:28px}.bp-fila .bp-campo{flex:1}
   .bp-ninos{width:170px;max-height:220px;object-fit:contain}
-  .bp-autoridades{display:flex;justify-content:space-between;margin-top:auto;padding-top:24px;font-size:12px;font-style:italic}
+  .bp-autoridades{display:flex;justify-content:space-between;padding-top:24px;font-size:12px;font-style:italic}
   .bp-autoridades b{color:#003366}
   .bp-anio{text-align:center;font-weight:800;font-size:15px;color:#003366;margin:26px 0 8px}
   .bp-lapso{text-align:center;font-weight:800;font-size:15px;color:#003366}
@@ -109,14 +109,11 @@ function portadaBoletinPrimaria(est, esPreescolar) {
     <div class="bp-lema">¡Construyendo saberes, formando futuros!</div>
     <div class="bp-titulo">BOLETÍN INFORMATIVO DEL SUBSISTEMA DE ${subsistema.toUpperCase()}: ${escHtml((est.grado || "").toUpperCase())}<br/>(ART. 25 LOE, 2009)</div>
     <div class="bp-cuerpo">
-      <div>
         ${campo("Nombres y apellidos del (la) estudiante:", est.nombre)}
         ${campo("Cédula de identidad o cédula escolar:", est.cedula)}
         <div class="bp-fila">${campo(esPreescolar ? "Nivel:" : "Grado:", est.grado)}${campo("Sección:", est.seccion || "U")}</div>
         ${campo("Nombres y apellidos del representante:", est.acudiente)}
         ${campo("Nombres y apellidos del (la) docente:", docenteDeGrado(est.grado))}
-      </div>
-      <div></div>
     </div>
     <div class="bp-autoridades">
       <span><b>Coordinadora:</b> ${escHtml(coord || "______________________")}</span>
