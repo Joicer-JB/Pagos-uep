@@ -19,12 +19,15 @@ const nombrePeriodoHonor = (p) => (p === "anio" ? "año escolar completo" : p);
 const notasPeriodoHonor = (est, periodo) =>
   getAreas(est.grado).map((m) => (periodo === "anio" ? definitivaDe(est, m).nota : notaLapsoDe(est, m, periodo).nota));
 
-// Los primeros n puestos (los empatados comparten el puesto, así que pueden ser más de n estudiantes)
-function puestosHonor(lista, n) {
-  const orden = [...lista].sort((a, b) => b.promedio - a.promedio || ordenNombre(a.est, b.est));
+// Los primeros n puestos (los empatados comparten el puesto, así que pueden ser más de n estudiantes). Con el mismo
+// promedio, el destacado en el desempate (servicios/calificaciones.js) va antes.
+function puestosHonor(lista, n, periodo) {
+  const d = (x) => (periodo && estaDestacado(x.est, periodo) ? 1 : 0);
+  const orden = [...lista].sort((a, b) => b.promedio - a.promedio || d(b) - d(a) || ordenNombre(a.est, b.est));
   const r = [];
   for (let i = 0; i < orden.length; i++) {
-    const puesto = i > 0 && orden[i].promedio === orden[i - 1].promedio ? r[i - 1].puesto : i + 1;
+    const igual = i > 0 && orden[i].promedio === orden[i - 1].promedio && d(orden[i]) === d(orden[i - 1]);
+    const puesto = igual ? r[i - 1].puesto : i + 1;
     if (puesto > n) break;
     r.push({ ...orden[i], puesto });
   }
@@ -86,12 +89,13 @@ function cuadroHonor(periodo, incluirReprobadas, porSalon = 3) {
       ordenGrados(a[1].grado, b[1].grado) || String(a[1].seccion || "").localeCompare(String(b[1].seccion || ""))
   );
   return {
-    general: puestosHonor(candidatos, 10),
+    general: puestosHonor(candidatos, 10, periodo),
     porSalon: salones.map(([salon]) => ({
       salon,
       lista: puestosHonor(
         candidatos.filter((c) => nombreSalon(c.est) === salon),
-        porSalon
+        porSalon,
+        periodo
       ),
     })),
     anios: promediosPorAnio(periodo),

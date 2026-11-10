@@ -222,3 +222,39 @@ test("puesto por promedio en el salón y en media general, inasistencias, área 
   assert.match(await p2.textContent(".b-puestos"), /2° de 2/);
   await p2.close();
 });
+
+test("desempate: con el mismo promedio, el destacado (por su conducta) queda adelante en ese período", async () => {
+  // Andrea queda con el mismo promedio que Luis en el 1er lapso: 14
+  await llamar(`Object.assign(notas["est7_Lapso 1"], {
+    Matemáticas_lapso: "18", "Lengua y Literatura_lapso": "8", Inglés_lapso: "16" })`);
+  const puestos = (id) =>
+    llamar(`JSON.stringify(puestosEstudiante(estudiantes.find((e) => e.id === "${id}"), "Lapso 1").colegio)`);
+  assert.equal(await puestos("est2"), JSON.stringify({ puesto: 1, total: 2 }));
+  assert.equal(await puestos("est7"), JSON.stringify({ puesto: 1, total: 2 }));
+
+  // En la sábana (Lapso 1) sale el empate, con la casilla para destacar
+  await llamar(
+    `setTab("notas"); filtros.notasVista = "sabana"; filtros.sabGrado = "1er Año"; filtros.sabVer = "Lapso 1"; renderTabContent()`
+  );
+  const fila = s.pagina.locator(".sab-empates tbody tr", { hasText: "Andrea Blanco" });
+  assert.match(await s.pagina.textContent(".sab-empates"), /14[\s\S]*Andrea Blanco[\s\S]*Luis Alberto Gómez/);
+  await fila.locator("input[type=checkbox]").check();
+  await s.pagina.waitForSelector("text=Destacado en el desempate");
+  const esc = await llamar(`__ESCRITURAS__.filter((e) => e.ruta === "notas/est7_Desempate").at(-1)`);
+  assert.equal(esc.datos["Lapso 1"], true);
+
+  assert.equal(await puestos("est7"), JSON.stringify({ puesto: 1, total: 2 }));
+  assert.equal(await puestos("est2"), JSON.stringify({ puesto: 2, total: 2 }));
+  // Solo en ese período: en el cuadro de honor del 1er lapso también va primero
+  const honor = await llamar(
+    `JSON.stringify(cuadroHonor("Lapso 1", true).general.map((x) => [x.est.nombre, x.puesto]))`
+  );
+  assert.equal(
+    honor,
+    JSON.stringify([
+      ["Andrea Blanco", 1],
+      ["Luis Alberto Gómez", 2],
+    ])
+  );
+  assert.deepEqual(s.errores, []);
+});

@@ -286,6 +286,44 @@ async function cambiarNotaRevision(el, estId, materia) {
   }
 }
 
+// ⭐ Empates: estudiantes de media general con el mismo promedio en el período (año o lapso), con al menos uno de esta
+// sábana. El director o control de estudio destacan a quien va adelante en el puesto (por su conducta, por ejemplo).
+function htmlEmpatesSabana(grado, seccion, ver) {
+  const periodo = ver === "anio" ? "anio" : LAPSOS.includes(ver) ? ver : null;
+  if (!periodo) return "";
+  const grupos = empatesPeriodo(periodo, estudiantesSabana(grado, seccion));
+  if (!grupos.length) return "";
+  const editar = puedeDesempatar();
+  return `<div class="section-title" style="margin-top:0.9rem">⭐ Empates en el puesto (${periodo === "anio" ? "año completo" : escHtml(periodo)})</div>
+    <div class="ayuda" style="margin-bottom:0.4rem">Tienen el mismo promedio, así que comparten el puesto en el boletín y el cuadro de honor.${editar ? " Marca <strong>Destacar</strong> a quien deba quedar adelante (por su conducta, por ejemplo)." : ""} Cuentan los estudiantes de toda media general con todas sus notas del período.</div>
+    <table class="sab-tabla sab-empates"><thead><tr><th>Promedio</th><th>Estudiante</th><th>Año</th><th>Destacar</th></tr></thead>
+    <tbody>${grupos
+      .map(({ promedio, ests }) =>
+        ests
+          .map(
+            (
+              { est, destacado },
+              i
+            ) => `<tr>${i === 0 ? `<td rowspan="${ests.length}"><strong>${textoNota(promedio)}</strong></td>` : ""}
+          <td style="text-align:left">${escHtml(est.nombre)}</td><td>${escHtml(est.grado)} «${escHtml(seccionDe(est))}»</td>
+          <td>${editar ? `<label style="cursor:pointer"><input type="checkbox" ${destacado ? "checked" : ""} onchange="cambiarDesempate(this,'${est.id}','${escJs(periodo)}')"/> ⭐</label>` : destacado ? "⭐" : ""}</td></tr>`
+          )
+          .join("")
+      )
+      .join("")}</tbody></table>`;
+}
+async function cambiarDesempate(el, estId, periodo) {
+  const est = estudiantes.find((e) => e.id === estId);
+  if (!est || !puedeDesempatar()) return;
+  try {
+    await guardarDesempate(est, periodo, el.checked);
+    mostrarToast(el.checked ? "⭐ Destacado en el desempate" : "Desempate quitado");
+  } catch (e) {
+    el.checked = !el.checked;
+    mostrarToast("No se pudo guardar: " + e.message);
+  }
+}
+
 function renderSabana() {
   const grados = gradosSabana();
   if (!grados.length)
@@ -330,6 +368,7 @@ function renderSabana() {
     ${d.filas.length ? `<div class="sabana-wrap">${htmlTablaSabana(d, true)}</div>` : `<div class="empty-state">No hay estudiantes activos en ${escHtml(grado)}.</div>`}
     ${htmlAjustesSabana(ajustes, true)}
     ${ver === "anio" ? htmlRevisionSabana(revisionesSabana(grado, seccion), true) : ""}
+    ${htmlEmpatesSabana(grado, seccion, ver)}
   </div>`;
 }
 
