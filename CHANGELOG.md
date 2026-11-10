@@ -1,5 +1,16 @@
 # Historial de cambios
 
+## Noviembre 2026 — Control de estudio en Estudiantes
+
+- **Control de estudio** ahora entra a **👨‍🎓 Estudiantes**: inscribe estudiantes nuevos y edita los datos del
+  estudiante (también la sección) y del representante, y la materia pendiente del año anterior.
+- **No ve nada financiero**, ni siquiera escondido: lee una copia de los estudiantes sin mensualidad, beca, deuda
+  ni pagos, que la app del director mantiene al día sola. No puede borrar estudiantes.
+- Al inscribir, la **mensualidad se pone sola** según el grado y la estructura de costos del año (los aumentos se
+  suman solos). Si lleva beca o es un caso especial, el director la cambia.
+- ⚠️ Hay que **publicar las reglas nuevas** de Firestore (ver README → «Cómo publicarlas»). Hasta entonces, control
+  de estudio sigue como antes.
+
 ## Noviembre 2026 — Desempate de puestos
 
 - Cuando dos o más estudiantes tienen el **mismo promedio**, la sábana (Todo el año o un lapso) muestra **⭐ Empates en el

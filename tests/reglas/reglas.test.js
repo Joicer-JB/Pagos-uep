@@ -529,3 +529,46 @@ test("autorización del día: cada quien la pide, pero no se puede autorizar a s
   await assertSucceeds(setDoc(doc(dir, "autorizaciones/uid-control"), { hasta: 0 }, { merge: true }));
   await assertFails(getDocs(collection(ctl, "notas")));
 });
+
+test("control de estudio: inscribe y edita datos personales en Estudiantes, sin leer nada financiero", async () => {
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, "autorizaciones/uid-control"), { hasta: Date.now() + 3600e3 });
+    await setDoc(doc(db, "estudiantes_control/est1"), { nombre: "Ana", grado: "1er Grado" });
+  });
+  const ctl = como("control");
+  // No lee la colección con lo financiero; sí su copia
+  await assertFails(getDoc(doc(ctl, "estudiantes/est1")));
+  await assertSucceeds(getDocs(collection(ctl, "estudiantes_control")));
+  // Edita datos personales y del representante
+  await assertSucceeds(
+    updateDoc(doc(ctl, "estudiantes/est1"), { telefonoAcudiente: "0412", seccion: "A", cedulaAcudiente: "V-1" })
+  );
+  await assertSucceeds(setDoc(doc(ctl, "estudiantes_control/est1"), { nombre: "Ana", seccion: "A" }));
+  // Nada financiero
+  for (const campo of ["mensualidad", "beca", "estado", "moraMonto", "sinRecargo", "sinInscripcion", "horario"])
+    await assertFails(updateDoc(doc(ctl, "estudiantes/est1"), { [campo]: 0 }));
+  await assertFails(setDoc(doc(ctl, "estudiantes_control/est1"), { nombre: "Ana", mensualidad: 45 }));
+  // Inscribe: con la mensualidad de su grado (la pone la app), al saldo y firmado por ella
+  const nuevo = {
+    nombre: "Luis",
+    grado: "1er Año",
+    anioEscolar: "2026-2027",
+    mensualidad: 50,
+    estado: "alsaldo",
+    inscritoPor: "control@example.com",
+  };
+  await assertSucceeds(setDoc(doc(ctl, "estudiantes/nuevo1"), nuevo));
+  await assertFails(setDoc(doc(ctl, "estudiantes/nuevo2"), { ...nuevo, beca: 100 }));
+  await assertFails(setDoc(doc(ctl, "estudiantes/nuevo3"), { ...nuevo, estado: "mora", moraMonto: 10 }));
+  await assertFails(setDoc(doc(ctl, "estudiantes/nuevo4"), { ...nuevo, inscritoPor: "otra@example.com" }));
+  // No borra
+  await assertFails(borrarConBitacora(ctl, "control", "estudiantes", "est1"));
+  // Un docente sin control de estudio no hace nada de esto
+  const doc1 = como("docente");
+  await assertFails(getDocs(collection(doc1, "estudiantes_control")));
+  await assertFails(updateDoc(doc(doc1, "estudiantes/est1"), { telefonoAcudiente: "0412" }));
+  await assertFails(setDoc(doc(doc1, "estudiantes/nuevo5"), nuevo));
+  // La administradora tampoco lee la copia (ella lee la colección completa para cobrar)
+  await assertFails(getDocs(collection(como("administradora"), "estudiantes_control")));
+});

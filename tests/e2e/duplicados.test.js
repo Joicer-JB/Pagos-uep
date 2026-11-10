@@ -26,7 +26,7 @@ const llamar = (codigo) => pagina().evaluate(codigo);
 const espera = () => pagina().evaluate(() => new Promise((ok) => setTimeout(ok, 80)));
 // Las fichas de los docentes siguen a los estudiantes por su cuenta (se prueban en privacidad.test.js)
 const escrituras = () =>
-  pagina().evaluate(() => window.__ESCRITURAS__.filter((e) => !e.ruta.startsWith("estudiantes_docentes/")));
+  pagina().evaluate(() => window.__ESCRITURAS__.filter((e) => !/^estudiantes_(docentes|control)\//.test(e.ruta)));
 
 async function entrar(correo) {
   await pagina().goto(nav.base);

@@ -179,6 +179,12 @@ Las reglas están en [`firestore.rules`](firestore.rules), con comentarios. Resu
   colección `estudiantes` (teléfonos, correo, deuda, mensualidad, observaciones médicas), ni pagos, finanzas o
   nómina. Si el director lo desactiva, pierde el acceso.
 - **Fichas de docentes** (`estudiantes_docentes`): las escribe la app del director, sola, al entrar y cada vez que cambia un estudiante. Las reglas solo aceptan los campos de la ficha.
+- **Control de estudio** (un docente con «Control de estudio» marcado): además de lo de un docente, inscribe
+  estudiantes y edita sus datos personales y los del representante (solo esos campos; al inscribir, la app pone la
+  mensualidad de su grado). **No lee** la colección `estudiantes`: lee `estudiantes_control`, una copia sin nada
+  financiero (sin mensualidad, beca, deuda ni pagos) que la app del director mantiene al día, igual que las fichas.
+  Hasta que publiques las reglas nuevas, control de estudio sigue viendo solo las fichas y no puede guardar
+  estudiantes.
 - **Un pago ya registrado no se puede modificar**, ni siquiera por el director. Solo el director puede
   borrarlo. Lo mismo un **ingreso o gasto** de Finanzas.
 - **Auditoría:** cada pago e ingreso/gasto nuevo debe llevar la firma de quien lo registra (`registradoPor`, su

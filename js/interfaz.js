@@ -85,7 +85,10 @@ ${bannerTasa()}
 // Caja y Pagos) y no modifica nada más. Las reglas de Firestore lo exigen también (firestore.rules).
 const PESTANAS_ROL = { docente: ["notas"], administradora: ["dashboard", "caja", "pagos"] };
 const MODALES_ADMINISTRADORA = ["tasa", "recibo", "nuevo-pago", "buscar"];
-const pestanaPermitida = (t) => !PESTANAS_ROL[rolUsuario] || PESTANAS_ROL[rolUsuario].includes(t);
+// Control de estudio (un docente con ese perfil) también entra a Estudiantes, sin nada financiero
+const pestanasDelRol = () =>
+  typeof esControlEstudio === "function" && esControlEstudio() ? ["notas", "estudiantes"] : PESTANAS_ROL[rolUsuario];
+const pestanaPermitida = (t) => !pestanasDelRol() || pestanasDelRol().includes(t);
 // Cambia de pestaña (cada rol solo entra a las suyas) y limpia los filtros
 function setTab(t) {
   if (!pestanaPermitida(t)) return;
@@ -98,7 +101,7 @@ function setTab(t) {
 }
 // HTML de la pestaña actual
 function renderTab() {
-  if (!pestanaPermitida(tabActual)) tabActual = PESTANAS_ROL[rolUsuario][0];
+  if (!pestanaPermitida(tabActual)) tabActual = pestanasDelRol()[0];
   if (tabActual === "dashboard") return renderDashboard();
   if (tabActual === "caja") return renderCaja();
   if (tabActual === "pagos") return renderPagos();
