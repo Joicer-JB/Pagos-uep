@@ -231,7 +231,9 @@ test("se imprime en hoja horizontal y se descarga en Excel, con los cambios del 
   await s.pagina.click("text=🖨️ Imprimir");
   const html = await llamar(`window.__IMPRESIONES__.at(-1).html`);
   assert.match(html, /SÁBANA DE NOTAS/);
-  assert.match(html, /landscape/);
+  assert.match(html, /@page\{size:legal landscape/); // hoja oficio horizontal
+  assert.match(html, /class="enc-escudo" src="data:image\/png;base64,iVBOR/); // con el escudo del colegio
+  assert.match(html, /class="franja"/);
   assert.match(html, /Pedro Zambrano/);
   assert.match(html, /Cambios del consejo[\s\S]*Revisión del consejo final/);
   assert.doesNotMatch(html, /onclick="abrirAjusteConsejo/); // en papel no hay toques

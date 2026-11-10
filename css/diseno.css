@@ -705,11 +705,13 @@ textarea.inp {
   text-align: left !important;
 }
 .sab-ajustes,
-.sab-revision {
+.sab-revision,
+.sab-empates {
   width: 100%;
 }
 .sab-ajustes td,
-.sab-revision td {
+.sab-revision td,
+.sab-empates td {
   white-space: normal;
 }
 .sab-detalle {

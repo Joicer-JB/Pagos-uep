@@ -1,5 +1,19 @@
 # Historial de cambios
 
+## Noviembre 2026 — Desempate de puestos
+
+- Cuando dos o más estudiantes tienen el **mismo promedio**, la sábana (Todo el año o un lapso) muestra **⭐ Empates en el
+  puesto**. El director o control de estudio marcan **Destacar** a quien deba quedar adelante (por su conducta, por
+  ejemplo). Se decide aparte para el año y cada lapso, y cuenta en el boletín y en el cuadro de honor. Dos destacados
+  del mismo empate siguen empatados.
+
+## Noviembre 2026 — Sábana impresa en hoja oficio
+
+- La sábana se imprime en **hoja oficio horizontal** (21,6 × 33 cm) con la letra lo más grande que quepa a lo ancho,
+  y con el **mismo diseño de la plataforma**: encabezado azul, Def. y promedio resaltados, rojo debajo de 10, el
+  **escudo del colegio** y la franja amarilla, azul y roja. El detalle del estudiante y el cuadro de honor siguen en
+  carta, con el mismo encabezado.
+
 ## Noviembre 2026 — Boletín de media general corregido
 
 - El boletín muestra la **C.I. del representante** y siempre la **sección** («Sección U» si el estudiante no tiene).

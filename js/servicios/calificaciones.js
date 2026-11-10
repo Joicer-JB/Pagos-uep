@@ -192,13 +192,61 @@ function promedioCompletoPeriodo(est, periodo) {
 function puestosEstudiante(est, periodo) {
   const todos = estudiantes
     .filter((e) => activo(e) && e.grado && getNivel(e.grado) === "media")
-    .map((e) => ({ e, p: promedioCompletoPeriodo(e, periodo) }))
+    .map((e) => ({ e, p: promedioCompletoPeriodo(e, periodo), d: estaDestacado(e, periodo) }))
     .filter((x) => x.p !== null);
   const propio = todos.find((x) => x.e.id === est.id);
   const puesto = (lista) =>
-    propio ? { puesto: lista.filter((x) => x.p > propio.p).length + 1, total: lista.length } : null;
+    propio ? { puesto: lista.filter((x) => vaAntes(x, propio)).length + 1, total: lista.length } : null;
   return {
     colegio: puesto(todos),
     salon: puesto(todos.filter((x) => x.e.grado === est.grado && seccionDe(x.e) === seccionDe(est))),
   };
+}
+
+// ---- Desempate ----
+// Con el mismo promedio, el director o control de estudio pueden destacar a un estudiante (por su conducta, por
+// ejemplo) para que quede adelante. Se decide aparte para el año y cada lapso, y se guarda en
+// notas/<estId>_Desempate: {anio: true, "Lapso 1": true, ...}. Dos destacados del mismo empate siguen empatados.
+const LAPSO_DESEMPATE = "Desempate";
+const estaDestacado = (est, periodo) => !!(notas[`${est.id}_${LAPSO_DESEMPATE}`] || {})[periodo];
+// a va antes que b: mejor promedio, o el mismo y a destacado sin que b lo esté
+const vaAntes = (a, b) => a.p > b.p || (a.p === b.p && a.d && !b.d);
+const puedeDesempatar = puedeCargarRevision; // el director o control de estudio
+async function guardarDesempate(est, periodo, destacado) {
+  const id = `${est.id}_${LAPSO_DESEMPATE}`;
+  await db
+    .collection("notas")
+    .doc(id)
+    .set(
+      {
+        estId: est.id,
+        lapso: LAPSO_DESEMPATE,
+        [periodo]: !!destacado,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  const n = notas[id] || (notas[id] = { estId: est.id, lapso: LAPSO_DESEMPATE });
+  n[periodo] = !!destacado;
+}
+// Empates en un período: grupos de estudiantes de media general con el mismo promedio (todas sus notas del período)
+// en los que está al menos uno de «lista». Cada grupo: {promedio, ests: [{est, destacado}]}
+function empatesPeriodo(periodo, lista) {
+  const ids = new Set(lista.map((e) => e.id));
+  const grupos = new Map();
+  estudiantes
+    .filter((e) => activo(e) && e.grado && getNivel(e.grado) === "media")
+    .forEach((e) => {
+      const p = promedioCompletoPeriodo(e, periodo);
+      if (p === null) return;
+      if (!grupos.has(p)) grupos.set(p, []);
+      grupos.get(p).push(e);
+    });
+  return [...grupos.entries()]
+    .filter(([, ests]) => ests.length > 1 && ests.some((e) => ids.has(e.id)))
+    .sort((a, b) => b[0] - a[0])
+    .map(([promedio, ests]) => ({
+      promedio,
+      ests: ests.sort(ordenNombre).map((est) => ({ est, destacado: estaDestacado(est, periodo) })),
+    }));
 }
