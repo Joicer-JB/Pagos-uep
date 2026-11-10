@@ -1,5 +1,10 @@
 # Historial de cambios
 
+## Noviembre 2026 — Franja con las estrellas de la bandera
+
+- La franja amarilla, azul y roja del boletín y de la sábana impresa lleva ahora las **8 estrellas blancas en arco
+  sobre el azul**, como la bandera de Venezuela.
+
 ## Noviembre 2026 — Control de estudio en Estudiantes
 
 - **Control de estudio** ahora entra a **👨‍🎓 Estudiantes**: inscribe estudiantes nuevos y edita los datos del

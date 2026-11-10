@@ -524,7 +524,6 @@ const ESTILOS_SABANA_BASE = `*{box-sizing:border-box}html{-webkit-print-color-ad
   .enc-sello{flex-shrink:0;text-align:center;border-radius:10px;padding:6px 14px;background:linear-gradient(180deg,#003366,#00509e);color:#fff}
   .enc-sello strong{display:block;font-family:Georgia,serif;font-size:14px;color:#ffd700;letter-spacing:.04em}
   .enc-sello span{display:block;font-size:10px;margin-top:2px}.enc-sello em{display:block;font-style:normal;font-size:9px;opacity:.85}
-  .franja{height:5px;margin:8px 0 10px;border-radius:3px;background:linear-gradient(90deg,#f5c400 0 33.3%,#0b3d91 33.3% 66.6%,#c8102e 66.6%)}
   table{border-collapse:collapse;width:100%;margin-bottom:8px}
   th,td{border:1px solid #c9d3e3;padding:5px 3px;text-align:center;white-space:nowrap}
   th{background:#003366;color:#fff;font-weight:700}
@@ -566,7 +565,7 @@ function encabezadoSabana(titulo, detalle) {
     </div>
     <div class="enc-sello"><strong>${escHtml(titulo)}</strong><span>${detalle}</span><em>Año escolar ${escHtml(inst.anioEscolar || "")} · Impresa el ${fechaCorta(todayStr())}</em></div>
   </header>
-  <div class="franja"></div>`;
+  ${franjaBandera("8px 0 10px")}`;
 }
 function imprimirSabana() {
   const { grado, seccion, ver } = estadoSabana();
