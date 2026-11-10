@@ -98,6 +98,6 @@ test("el director ve todo, con quién da cada materia, y el boletín de primaria
   // En media general el boletín ya no lleva la firma del docente guía (lo pidió el colegio)
   assert.doesNotMatch(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Docente guía/);
   await s.llamar(`imprimirBoletin("est6")`);
-  assert.match(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Profesora Prueba<\/div>Docente</);
+  assert.match(await s.llamar(`window.__IMPRESIONES__.at(-1).html`), /Docente<small>Profesora Prueba<\/small>/);
   assert.deepEqual(s.errores, []);
 });
