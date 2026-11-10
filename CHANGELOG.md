@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## Noviembre 2026 — Sábana impresa en hoja oficio
+
+- La sábana se imprime en **hoja oficio horizontal** (21,6 × 33 cm) con la letra lo más grande que quepa a lo ancho,
+  y con el **mismo diseño de la plataforma**: encabezado azul, Def. y promedio resaltados, rojo debajo de 10, el
+  **escudo del colegio** y la franja amarilla, azul y roja. El detalle del estudiante y el cuadro de honor siguen en
+  carta, con el mismo encabezado.
+
 ## Noviembre 2026 — Boletín de media general corregido
 
 - El boletín muestra la **C.I. del representante** y siempre la **sección** («Sección U» si el estudiante no tiene).

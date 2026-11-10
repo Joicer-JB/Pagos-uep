@@ -177,7 +177,7 @@ function imprimirCuadroHonor() {
   const c = cuadroHonor(periodo, conReprobadasHonor(), porSalonHonor());
   const w = abrirVentanaImpresion();
   w.document
-    .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cuadro de honor</title><style>${ESTILOS_SABANA.replace("letter landscape", "letter")}
+    .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cuadro de honor</title><style>${ESTILOS_CARTA}
     .honor-tabla{margin-bottom:10px}.honor-puesto{font-size:15px;width:60px}.honor-prom{font-weight:800;font-size:13px;color:#003366;width:80px}
     .honor-anios{display:grid;grid-template-columns:1fr 1fr;gap:10px}.honor-anio{break-inside:avoid}
     h2.titulo{text-align:center;color:#003366;font-size:20px;margin:10px 0 2px}p.sub{text-align:center;margin:0 0 12px;color:#555}</style></head><body>
