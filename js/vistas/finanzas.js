@@ -272,6 +272,21 @@ function renderModalVerFinanza(m) {
     </div>
   </div>`;
 }
+// Representante de un pago (para el flujo de caja que pide el contador): de la ficha del estudiante; los pagos viejos
+// sin estId se buscan por la cédula o el nombre del estudiante, solo si hay uno que coincida
+function representanteDePago(p) {
+  let e = p.estId ? estudiantes.find((x) => x.id === p.estId) : null;
+  if (!e && p.cedula) {
+    const c = estudiantes.filter((x) => x.cedula && x.cedula === p.cedula);
+    if (c.length === 1) e = c[0];
+  }
+  if (!e && p.nombre) {
+    const c = estudiantes.filter((x) => x.nombre === p.nombre);
+    if (c.length === 1) e = c[0];
+  }
+  if (!e || !e.acudiente) return "";
+  return e.acudiente + (e.cedulaAcudiente ? " · " + e.cedulaAcudiente : "");
+}
 function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
   const un = mesIdx !== null && mesIdx !== undefined;
   const meses = Array.from({ length: 12 }, (_, i) => {
@@ -283,6 +298,7 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
           usd: p.total,
           rec: p,
           desc: (p.nombre || "") + " - " + (p.concepto || "Pago"),
+          rep: representanteDePago(p) || "Sin representante",
           fecha: p.fecha,
           grupo: p.concepto || "Pagos",
         })),
@@ -320,6 +336,8 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
     }),
     { ib: 0, iu: 0, gb: 0, gu: 0, sin: 0, est: 0 }
   );
+  // En el detallado va una columna «Representante» (quién pagó); en el resumen no hay nombres
+  const colRep = (txt) => (detallado ? `<td class="rep">${txt || ""}</td>` : "");
   const celdas = (d, esIng, bsTxt) =>
     esIng
       ? `<td class="r">${bsTxt}</td><td class="r">${fmt(d)}</td><td></td><td></td><td></td><td></td>`
@@ -327,11 +345,11 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
   const filaDet = (d, esIng) => {
     const b = bsDe(d.rec, d.usd);
     const t = b.bs != null ? fmtBs(b.bs) + (b.estimada ? " *" : "") : "—";
-    return `<tr class="${esIng ? "di" : "dg"}"><td class="sub">↳ ${escHtml(d.desc)} <span class="f">${fechaCorta(d.fecha)}${b.tasa ? " · tasa " + fmtTasa(b.tasa) : ""}</span></td>${celdas(d.usd, esIng, t)}</tr>`;
+    return `<tr class="${esIng ? "di" : "dg"}"><td class="sub">↳ ${escHtml(d.desc)} <span class="f">${fechaCorta(d.fecha)}${b.tasa ? " · tasa " + fmtTasa(b.tasa) : ""}</span></td>${colRep(d.rep ? escHtml(d.rep) : "")}${celdas(d.usd, esIng, t)}</tr>`;
   };
   const filaGrp = (nombre, items, esIng) => {
     const t = totalesDual(items);
-    return `<tr class="${esIng ? "di" : "dg"}"><td class="sub">↳ ${escHtml(nombre)}</td>${celdas(t.usd, esIng, fmtBs(t.bs))}</tr>`;
+    return `<tr class="${esIng ? "di" : "dg"}"><td class="sub">↳ ${escHtml(nombre)}</td>${colRep("")}${celdas(t.usd, esIng, fmtBs(t.bs))}</tr>`;
   };
   const grupos = (arr) => {
     const g = {};
@@ -356,7 +374,7 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
             .map(([k, a]) => filaGrp(k, a, false))
             .join("");
       }
-      return `<tr class="m"><td>${escHtml(m.mes)}</td><td class="r in">${fmtBs(m.di.bs)}</td><td class="r in">${fmt(m.di.usd)}</td><td class="r out">${fmtBs(m.dg.bs)}</td><td class="r out">${fmt(m.dg.usd)}</td><td class="r b">${fmtBs(r2(m.di.bs - m.dg.bs))}</td><td class="r b">${fmt(r2(m.di.usd - m.dg.usd))}</td></tr>${det}`;
+      return `<tr class="m"><td>${escHtml(m.mes)}</td>${colRep("")}<td class="r in">${fmtBs(m.di.bs)}</td><td class="r in">${fmt(m.di.usd)}</td><td class="r out">${fmtBs(m.dg.bs)}</td><td class="r out">${fmt(m.dg.usd)}</td><td class="r b">${fmtBs(r2(m.di.bs - m.dg.bs))}</td><td class="r b">${fmt(r2(m.di.usd - m.dg.usd))}</td></tr>${det}`;
     })
     .join("");
   const w = abrirVentanaImpresion();
@@ -373,7 +391,7 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
     td{padding:6px 8px;border-bottom:1px solid #eee}.r{text-align:right;white-space:nowrap}
     tr.m td{font-weight:600;color:#003366;background:#f4f7ff}tr.m td.in{color:#1a9e5c}tr.m td.out{color:#e53e3e}tr.m td.b{font-weight:800}
     tr.di td{background:#f0fff4;font-size:0.76rem;color:#555;padding:3px 8px}tr.dg td{background:#fff5f5;font-size:0.76rem;color:#555;padding:3px 8px}
-    td.sub{padding-left:20px}.f{color:#aaa;font-size:0.7rem}
+    td.sub{padding-left:20px}.f{color:#aaa;font-size:0.7rem}td.rep{color:#003366;font-weight:600;white-space:nowrap}
     tfoot td{background:#003366;color:#fff;font-weight:700;padding:9px 8px}tfoot td.r{text-align:right}
     .nota{font-size:0.72rem;color:#666;margin-top:10px;line-height:1.5}
     .footer{margin-top:28px;display:flex;justify-content:space-between;padding-top:18px;border-top:2px solid #003366}
@@ -387,10 +405,10 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
     <p>Generado el ${new Date().toLocaleDateString("es-VE", { day: "2-digit", month: "long", year: "numeric" })}</p>
   </div>
   <table>
-    <thead><tr class="g"><th></th><th colspan="2">Ingresos</th><th colspan="2">Gastos</th><th colspan="2">Balance</th></tr>
-    <tr><th>Mes</th><th>Bs.</th><th>$ ref.</th><th>Bs.</th><th>$ ref.</th><th>Bs.</th><th>$ ref.</th></tr></thead>
+    <thead><tr class="g"><th${detallado ? ' colspan="2"' : ""}></th><th colspan="2">Ingresos</th><th colspan="2">Gastos</th><th colspan="2">Balance</th></tr>
+    <tr><th>Mes</th>${detallado ? '<th style="text-align:left">Representante</th>' : ""}<th>Bs.</th><th>$ ref.</th><th>Bs.</th><th>$ ref.</th><th>Bs.</th><th>$ ref.</th></tr></thead>
     <tbody>${filas}</tbody>
-    <tfoot><tr><td>${un ? "TOTAL DEL MES" : "TOTAL ANUAL"}</td><td class="r">${fmtBs(r2(T.ib))}</td><td class="r">${fmt(r2(T.iu))}</td><td class="r">${fmtBs(r2(T.gb))}</td><td class="r">${fmt(r2(T.gu))}</td><td class="r">${fmtBs(r2(T.ib - T.gb))}</td><td class="r">${fmt(r2(T.iu - T.gu))}</td></tr></tfoot>
+    <tfoot><tr><td${detallado ? ' colspan="2"' : ""}>${un ? "TOTAL DEL MES" : "TOTAL ANUAL"}</td><td class="r">${fmtBs(r2(T.ib))}</td><td class="r">${fmt(r2(T.iu))}</td><td class="r">${fmtBs(r2(T.gb))}</td><td class="r">${fmt(r2(T.gu))}</td><td class="r">${fmtBs(r2(T.ib - T.gb))}</td><td class="r">${fmt(r2(T.iu - T.gu))}</td></tr></tfoot>
   </table>
   <p class="nota">Los montos en bolívares están calculados a la tasa BCV vigente en la fecha de cada operación; la columna «$ ref.» es el valor de referencia en dólares.
   ${T.est ? `<br/>* ${T.est} registro(s) anteriores no tenían tasa guardada y se convirtieron con la tasa BCV de su fecha.` : ""}

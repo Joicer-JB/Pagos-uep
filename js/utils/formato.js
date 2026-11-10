@@ -77,6 +77,24 @@ const fmtTasa = (v) =>
     maximumFractionDigits: 2,
   });
 const fmtUSD = fmt;
+// Pasa a bolívares los montos en $ de un texto («Mensualidad Octubre — $ 45,00» → «… — Bs. 8.302,50»), con
+// `factor` Bs. por cada $. Entiende «$ 1.234,56» (como lo escribe fmt), «$45», «$ 45,5» y «$45.50». Sin factor
+// válido deja el texto como está.
+function textoEnBs(texto, factor) {
+  const s = String(texto == null ? "" : texto);
+  if (!(factor > 0)) return s;
+  return s.replace(
+    /\$\s?(-?)(\d+\.\d{1,2}(?![\d.,])|\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?(?!\d)|\d+(?:,\d{1,2})?(?!\d))/g,
+    (_, signo, n) => {
+      const v = n.includes(",")
+        ? Number(n.replace(/\./g, "").replace(",", "."))
+        : /^\d+\.\d{1,2}$/.test(n)
+          ? Number(n)
+          : Number(n.replace(/\./g, ""));
+      return fmtBs(r2((signo ? -v : v) * factor));
+    }
+  );
+}
 // "2026-10-07" → "07/10/2026"
 const fechaCorta = (s) => {
   if (!s) return "";

@@ -764,27 +764,43 @@ function enviarWhatsApp() {
 }
 // Recibo impreso en «ahorro de tinta»: fondo blanco, letras oscuras y líneas finas (sin bloques de color, que gastan
 // mucha tinta). En pantalla el recibo sigue a color.
+// Lo que se imprime para el representante va solo en bolívares (pedido del contador): ni $ ni tasa. En pantalla se
+// siguen viendo los dos. Bs. por cada $ de este recibo: lo que se cobró en Bs. entre su total en $ (así las líneas
+// y el pago mixto cuadran con el total en Bs.).
+function factorBsRecibo(p) {
+  const b = bsDe(p, p.total);
+  return b.bs != null && p.total > 0 ? b.bs / p.total : null;
+}
 function totalesReciboImpreso(p) {
   const b = bsDe(p, p.total);
   return `<div class="tot">
-    <div class="fila grande"><span>Total referencia (USD)</span><span>${fmt(p.total)}</span></div>
     ${
       b.bs != null
-        ? `<div class="fila"><span>Tasa BCV${b.fecha ? " " + fechaCorta(b.fecha) : ""}${b.estimada ? " (est.)" : ""}</span><span>Bs. ${fmtTasa(b.tasa)}</span></div>
-    <div class="fila grande"><span>Total en bolívares</span><span>${fmtBs(b.bs)}</span></div>`
-        : `<div class="fila"><span>Sin tasa BCV registrada para esta fecha</span></div>`
+        ? `<div class="fila grande"><span>Total pagado</span><span>${fmtBs(b.bs)}</span></div>`
+        : `<div class="fila"><span>Falta la tasa BCV de esta fecha: no se puede mostrar el monto en bolívares</span></div>`
     }</div>`;
 }
+// Cada forma del pago mixto en Bs.: la que se pagó en Bs. con lo que se cobró; la de $ convertida al recibo
+// Nombre del método en el papel, sin «$» ni «Dólares»
+const metodoImpreso = (m) =>
+  m === "Dólares Efectivo" ? "Efectivo (divisas)" : (ETIQ_METODO[m] || m || "").replace(/^[^\p{L}\p{N}]+\s/u, "");
+const montoFormaBs = (f, factor) =>
+  f.montoBs != null ? fmtBs(f.montoBs) : factor ? fmtBs(r2((f.monto || 0) * factor)) : "—";
 function formasPagoImpreso(p) {
   const fs = formasDe(p);
   if (!fs.length) return "";
+  const k = factorBsRecibo(p);
   return `<div class="formas-pago" style="margin-top:0.6rem;border:1px solid #bbb;border-radius:6px;padding:0.4rem 0.7rem;font-size:0.78rem">
     <div class="lbl">Pago mixto</div>
-    ${fs.map((f) => `<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:2px 0"><span>${escHtml(ETIQ_METODO[f.metodo] || f.metodo)}${f.referencia ? ` · Ref. ${escHtml(f.referencia)}` : ""}</span><strong style="white-space:nowrap">${montoForma(f)}</strong></div>`).join("")}
+    ${fs.map((f) => `<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:2px 0"><span>${escHtml(metodoImpreso(f.metodo))}${f.referencia ? ` · Ref. ${escHtml(f.referencia)}` : ""}</span><strong style="white-space:nowrap">${montoFormaBs(f, k)}</strong></div>`).join("")}
   </div>`;
 }
 function cuerpoReciboImpreso(p, copia) {
-  const lines = (p.descripcion || "").split("\n").filter(Boolean);
+  const k = factorBsRecibo(p);
+  const lines = (p.descripcion || "")
+    .split("\n")
+    .filter(Boolean)
+    .map((l) => textoEnBs(l, k));
   return `<div class="izq">
   <div class="hdr"><img src="data:image/png;base64,${LOGO}" alt="Logo"/>
     <div><div class="tit">Recibo de Pago</div><div class="emp">${EMPRESA}</div><div class="sub">${EMPRESA_SUB}</div></div>
@@ -792,7 +808,7 @@ function cuerpoReciboImpreso(p, copia) {
   </div>
   <div class="nums">
     <div><div class="lbl">Recibo${p.pendiente ? " provisional" : ""}</div><div class="val">${escHtml(p.factura)}</div></div>
-    <div class="c"><div class="lbl">Método</div><div class="val">${escHtml(p.metodo) || "Efectivo"}</div></div>
+    <div class="c"><div class="lbl">Método</div><div class="val">${escHtml(p.metodo === "Dólares Efectivo" ? metodoImpreso(p.metodo) : p.metodo) || "Efectivo"}</div></div>
     <div class="d"><div class="lbl">Fecha</div><div class="val">${escHtml(fechaCorta(p.fecha || ""))}</div></div>
   </div>
   <div class="cbox"><div class="lbl">Estudiante</div>
