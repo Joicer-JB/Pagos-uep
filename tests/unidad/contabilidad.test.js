@@ -163,3 +163,75 @@ test("resumen: pendientes por vencimiento y totales en $ (las de Bs. a la tasa d
   );
   assert.deepEqual([r.totalVencidas, r.totalSemana, r.total], [300, 100, 410]);
 });
+
+test("libro de ventas: un renglón por recibo, con el representante como cliente y el monto en Bs.", () => {
+  poner("estudiantes", [
+    { id: "e1", nombre: "Ana", cedula: "V-1", acudiente: "Carmen", cedulaAcudiente: "V-9" },
+    { id: "e2", nombre: "Luis", cedula: "V-2" },
+  ]);
+  poner("pagos", [
+    {
+      id: "a",
+      factura: "R-2",
+      estId: "e2",
+      nombre: "Luis",
+      fecha: "2026-10-10",
+      concepto: "Mensualidad",
+      mes: "Octubre",
+      metodo: "Punto",
+      total: 45,
+      tasa: 185,
+      totalBs: 8325,
+    },
+    {
+      id: "b",
+      factura: "R-1",
+      estId: "e1",
+      nombre: "Ana",
+      fecha: "2026-10-03",
+      concepto: "Inscripción",
+      metodo: "Dólares Efectivo",
+      total: 61,
+      tasa: 180,
+      totalBs: 10980,
+    },
+    {
+      id: "c",
+      factura: "R-1",
+      estId: "e1",
+      nombre: "Ana",
+      fecha: "2026-10-03",
+      concepto: "Mensualidad",
+      mes: "Septiembre",
+      metodo: "Dólares Efectivo",
+      total: 45,
+      tasa: 180,
+      totalBs: 8100,
+    },
+    // sin estId: se encuentra por la cédula del estudiante
+    { id: "d", factura: "R-3", nombre: "Ana B", cedula: "V-1", fecha: "2026-10-20", concepto: "Recargo", total: 5 },
+    {
+      id: "e",
+      factura: "R-0",
+      nombre: "Ana",
+      fecha: "2026-09-30",
+      concepto: "Mensualidad",
+      total: 45,
+      tasa: 180,
+      totalBs: 8100,
+    },
+  ]);
+  poner("tasas", {});
+  const V = f(`libroVentas("2026-10-01", "2026-10-31")`);
+  assert.deepEqual(
+    V.filas.map((r) => [r.recibo, r.representante, r.cedula, r.conceptos.join(" + "), r.bs, r.sinTasa]),
+    [
+      ["R-1", "Carmen", "V-9", "Inscripción + Mensualidad Septiembre", 19080, false],
+      ["R-2", "", "", "Mensualidad Octubre", 8325, false],
+      ["R-3", "Carmen", "V-9", "Recargo", 0, true],
+    ]
+  );
+  assert.equal(V.totalBs, 27405);
+  assert.equal(V.sinTasa, 1);
+  assert.equal(V.sinRepresentante, 1);
+});

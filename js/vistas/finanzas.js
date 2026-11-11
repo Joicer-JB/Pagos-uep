@@ -272,21 +272,6 @@ function renderModalVerFinanza(m) {
     </div>
   </div>`;
 }
-// Representante de un pago (para el flujo de caja que pide el contador): de la ficha del estudiante; los pagos viejos
-// sin estId se buscan por la cédula o el nombre del estudiante, solo si hay uno que coincida
-function representanteDePago(p) {
-  let e = p.estId ? estudiantes.find((x) => x.id === p.estId) : null;
-  if (!e && p.cedula) {
-    const c = estudiantes.filter((x) => x.cedula && x.cedula === p.cedula);
-    if (c.length === 1) e = c[0];
-  }
-  if (!e && p.nombre) {
-    const c = estudiantes.filter((x) => x.nombre === p.nombre);
-    if (c.length === 1) e = c[0];
-  }
-  if (!e || !e.acudiente) return "";
-  return e.acudiente + (e.cedulaAcudiente ? " · " + e.cedulaAcudiente : "");
-}
 function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
   const un = mesIdx !== null && mesIdx !== undefined;
   const meses = Array.from({ length: 12 }, (_, i) => {
@@ -377,6 +362,33 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
       return `<tr class="m"><td>${escHtml(m.mes)}</td>${colRep("")}<td class="r in">${fmtBs(m.di.bs)}</td><td class="r in">${fmt(m.di.usd)}</td><td class="r out">${fmtBs(m.dg.bs)}</td><td class="r out">${fmt(m.dg.usd)}</td><td class="r b">${fmtBs(r2(m.di.bs - m.dg.bs))}</td><td class="r b">${fmt(r2(m.di.usd - m.dg.usd))}</td></tr>${det}`;
     })
     .join("");
+  // En el resumen: cuánto pagó cada representante en el período (en el detallado ya va en cada renglón)
+  const porRep = new Map();
+  if (!detallado)
+    sel.forEach((m) =>
+      m.ing
+        .filter((d) => d.rep)
+        .forEach((d) => {
+          const x = porRep.get(d.rep) || { rep: d.rep, n: 0, items: [] };
+          x.n++;
+          x.items.push(d);
+          porRep.set(d.rep, x);
+        })
+    );
+  const tablaRep = porRep.size
+    ? `<h3 style="color:#003366;font-size:0.95rem;margin:18px 0 6px">Ingresos por representante</h3>
+  <table><thead><tr><th>Representante</th><th>Pagos</th><th>Bs.</th><th>$ ref.</th></tr></thead><tbody>${[
+    ...porRep.values(),
+  ]
+    .sort((a, b) =>
+      a.rep === "Sin representante" ? 1 : b.rep === "Sin representante" ? -1 : a.rep.localeCompare(b.rep, "es")
+    )
+    .map((x) => {
+      const t = totalesDual(x.items);
+      return `<tr><td>${escHtml(x.rep)}</td><td class="r">${x.n}</td><td class="r">${fmtBs(t.bs)}</td><td class="r">${fmt(t.usd)}</td></tr>`;
+    })
+    .join("")}</tbody></table>`
+    : "";
   const w = abrirVentanaImpresion();
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Flujo de Caja ${anio}</title>
@@ -410,6 +422,7 @@ function imprimirFlujoCaja(anio, mesIdx, detallado = false) {
     <tbody>${filas}</tbody>
     <tfoot><tr><td${detallado ? ' colspan="2"' : ""}>${un ? "TOTAL DEL MES" : "TOTAL ANUAL"}</td><td class="r">${fmtBs(r2(T.ib))}</td><td class="r">${fmt(r2(T.iu))}</td><td class="r">${fmtBs(r2(T.gb))}</td><td class="r">${fmt(r2(T.gu))}</td><td class="r">${fmtBs(r2(T.ib - T.gb))}</td><td class="r">${fmt(r2(T.iu - T.gu))}</td></tr></tfoot>
   </table>
+  ${tablaRep}
   <p class="nota">Los montos en bolívares están calculados a la tasa BCV vigente en la fecha de cada operación; la columna «$ ref.» es el valor de referencia en dólares.
   ${T.est ? `<br/>* ${T.est} registro(s) anteriores no tenían tasa guardada y se convirtieron con la tasa BCV de su fecha.` : ""}
   ${T.sin ? `<br/><strong>⚠️ ${T.sin} registro(s) no tienen tasa BCV: están en la columna $ ref. pero no se incluyen en las columnas en Bs.</strong>` : ""}</p>
@@ -546,6 +559,7 @@ function renderLibroFinanzas(anio, mesPad) {
       <label style="display:flex;gap:0.4rem;align-items:center;font-size:0.8rem;flex:1"><input type="checkbox" id="libro-anual" ${libroAnual ? "checked" : ""} onchange="libroAnual=this.checked;renderTabContent()"/> Todo el año ${escHtml(anio)}</label>
       <button class="btn btn-success btn-sm" onclick="exportarLibro('${anio}','${mesPad}')">📥 Excel</button>
       <button class="btn btn-print btn-sm" onclick="imprimirLibro('${anio}','${mesPad}')">🖨️ Imprimir</button>
+      <button class="btn btn-success btn-sm" style="background:#00509e" onclick="exportarLibroVentas('${anio}','${mesPad}')" title="Un renglón por recibo, con el representante y el monto en Bs., para el contador">📥 Libro de ventas</button>
     </div>
     <div style="font-size:0.72rem;color:#888;margin-top:0.3rem">Cada cobro (un renglón por recibo), ingreso y gasto de ${escHtml(nombre)} en orden de fecha, con el saldo. En bolívares a la tasa de cada operación.</div>
   </div>
@@ -633,6 +647,52 @@ async function exportarLibro(anio, mesPad) {
   XLSX.utils.book_append_sheet(wb, hoja, "Libro");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), "Resumen");
   XLSX.writeFile(wb, "libro_ingresos_egresos_" + (libroAnual ? anio : anio + "-" + mesPad) + ".xlsx");
+}
+// Libro de ventas en Excel para el contador (ver libroVentas): solo bolívares
+async function exportarLibroVentas(anio, mesPad) {
+  await cargarXLSX();
+  const [desde, hasta, nombre] = rangoLibro(anio, mesPad);
+  const V = libroVentas(desde, hasta);
+  const filas = [
+    [EMPRESA + " · Libro de ventas · " + nombre],
+    [
+      "Todos los cobros se marcan exentos de IVA (E): servicio educativo, Ley de IVA art. 19, num. 2. El contador debe confirmar los conceptos que no sean de enseñanza.",
+    ],
+    [],
+    [
+      "Fecha",
+      "N° de recibo",
+      "Representante (cliente)",
+      "Cédula / RIF",
+      "Estudiante(s)",
+      "Concepto",
+      "Forma de pago",
+      "Exento",
+      "Monto Bs.",
+      "Observación",
+    ],
+    ...V.filas.map((r) => [
+      fechaCorta(r.fecha),
+      r.recibo,
+      r.representante || "SIN REPRESENTANTE",
+      r.cedula,
+      r.estudiantes.join(", "),
+      r.conceptos.join(" + "),
+      r.metodos.map(metodoImpreso).join(" + "),
+      "E",
+      r.sinTasa ? "" : r.bs,
+      [r.sinTasa ? "SIN TASA BCV: no se sumó" : "", r.provisional ? "Recibo provisional (sin número definitivo)" : ""]
+        .filter(Boolean)
+        .join(" · "),
+    ]),
+    [],
+    ["", "", "", "", "", "", "", "TOTAL", V.totalBs, V.sinTasa ? V.sinTasa + " recibo(s) sin tasa no sumados" : ""],
+  ];
+  const wb = XLSX.utils.book_new();
+  const hoja = XLSX.utils.aoa_to_sheet(filas);
+  hoja["!cols"] = [10, 13, 28, 14, 30, 30, 22, 7, 14, 30].map((wch) => ({ wch }));
+  XLSX.utils.book_append_sheet(wb, hoja, "Libro de ventas");
+  XLSX.writeFile(wb, "libro_ventas_" + (libroAnual ? anio : anio + "-" + mesPad) + ".xlsx");
 }
 function imprimirLibro(anio, mesPad) {
   const [desde, hasta, nombre] = rangoLibro(anio, mesPad);

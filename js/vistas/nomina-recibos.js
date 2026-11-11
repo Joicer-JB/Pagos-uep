@@ -108,14 +108,18 @@ function imprimirReciboNomina(trabId, movId) {
 }
 // Un recibo de nómina: a la izquierda (en «2 por hoja») los datos y las asignaciones; a la derecha deducciones,
 // neto y firmas
+// En el papel todo va en bolívares (pedido del contador): ni $ ni tasa. Bs. por cada $ = lo que se pagó en Bs.
+// entre el neto, para que las líneas cuadren con el neto en Bs.
 function cuerpoReciboNomina(r, titulo, copia) {
   const { mov, t, tipo } = r;
+  const k = r.netoBs != null && r.neto > 0 ? r.netoBs / r.neto : r.tasa > 0 ? r.tasa : null;
+  const bs = (usd) => (k ? fmtBs(r2((usd || 0) * k)) : "—");
   const fecha = mov ? mov.fecha : todayStr();
   const filas = (l, clase) =>
     l
       .map(
         (x) =>
-          `<div class="concept-row ${clase}"><span>${escHtml(x.concepto)}${x.horas ? ` <small>(${escHtml(detalleHoras(x.horas, x.tarifa))})</small>` : ""}</span><strong>${clase === "dedu" ? "- " : ""}${lineaMonto(x.monto, r.tasa)}</strong></div>`
+          `<div class="concept-row ${clase}"><span>${escHtml(x.concepto)}${x.horas ? ` <small>(${escHtml(textoEnBs(detalleHoras(x.horas, x.tarifa), k))})</small>` : ""}</span><strong>${clase === "dedu" ? "- " : ""}${bs(x.monto)}</strong></div>`
       )
       .join("");
   // En el préstamo: cuánto se descuenta en cada pago y cuánto queda
@@ -134,7 +138,7 @@ function cuerpoReciboNomina(r, titulo, copia) {
     </div>
     <div class="hdr-nums">
       <div><div class="hl">N° Recibo</div><div style="font-weight:800;font-size:0.85rem">${numReciboNomina(mov)}</div></div>
-      <div style="text-align:center"><div class="hl">${tipo === "prestamo" ? "Cuota por pago" : "Período"}</div><div style="font-weight:700;font-size:0.78rem">${escHtml(tipo === "prestamo" ? (prestamo ? fmt(prestamo.cuota) : "—") : r.periodo || "—")}</div></div>
+      <div style="text-align:center"><div class="hl">${tipo === "prestamo" ? "Cuota por pago" : "Período"}</div><div style="font-weight:700;font-size:0.78rem">${escHtml(tipo === "prestamo" ? (prestamo ? bs(prestamo.cuota) : "—") : r.periodo || "—")}</div></div>
       <div style="text-align:right"><div class="hl">Fecha de pago</div><div style="font-weight:700;font-size:0.78rem">${escHtml(fechaCorta(fecha))}</div></div>
     </div>
   </div>
@@ -146,27 +150,27 @@ function cuerpoReciboNomina(r, titulo, copia) {
     </div>
     <div class="tit" style="color:#1a9e5c">${tipo === "pago" ? "➕ Asignaciones" : "➕ Monto entregado"}</div>
     ${filas(r.asignaciones, "earn")}
-    ${r.deducciones.length ? `<div class="subtotal"><span>Total asignaciones</span><span>${fmt(r.totalAsig)}</span></div>` : ""}
+    ${r.deducciones.length ? `<div class="subtotal"><span>Total asignaciones</span><span>${bs(r.totalAsig)}</span></div>` : ""}
   </div>
   </div><div class="der"><div class="sec">
     ${
       r.deducciones.length
         ? `<div class="tit" style="color:#c0392b">➖ Deducciones</div>
     ${filas(r.deducciones, "dedu")}
-    <div class="subtotal"><span>Total deducciones</span><span>- ${fmt(r.totalDed)}</span></div>`
+    <div class="subtotal"><span>Total deducciones</span><span>- ${bs(r.totalDed)}</span></div>`
         : ""
     }
     <div class="total-box">
       <div><div style="font-size:0.62rem;color:#003366;font-weight:700;text-transform:uppercase;letter-spacing:1px">${tipo === "pago" ? "Neto a recibir" : "Total entregado"}</div>
-        <div style="font-size:0.7rem;color:#555;margin-top:2px">${mov && mov.moneda === "USD" ? "Pagado en dólares en efectivo" : "Pagado en bolívares"}</div>
+        <div style="font-size:0.7rem;color:#555;margin-top:2px">${mov && mov.moneda === "USD" ? "Pagado en efectivo (divisas)" : "Pagado en bolívares"}</div>
         ${cuenta ? `<div class="cuenta-pago" style="font-size:0.68rem;color:#555;margin-top:2px">🏦 ${escHtml(cuenta)}</div>` : ""}</div>
       <div style="text-align:right">
-        <div style="font-size:1.4rem;font-weight:800;font-family:Georgia,serif;color:#000">${fmt(r.neto)}</div>
-        ${r.netoBs != null ? `<div style="font-size:0.95rem;font-weight:700;color:#222;margin-top:2px">${fmtBs(r.netoBs)}</div><div style="font-size:0.6rem;color:#666">Tasa BCV: Bs. ${fmtTasa(r.tasa)} por $</div>` : ""}
+        <div style="font-size:1.4rem;font-weight:800;font-family:Georgia,serif;color:#000">${r.netoBs != null ? fmtBs(r.netoBs) : bs(r.neto)}</div>
+        ${k ? "" : `<div style="font-size:0.6rem;color:#c0392b">Falta la tasa BCV de esta fecha</div>`}
       </div>
     </div>
     ${tipo === "adelanto" ? `<div class="nota">Este adelanto se descontará en el pago de ${escHtml(r.periodo || "su próxima quincena")}.</div>` : ""}
-    ${prestamo ? `<div class="nota">Se descontará <strong>${fmt(prestamo.cuota)}</strong> en cada pago de nómina hasta completar ${fmt(prestamo.monto)} (${Math.ceil(prestamo.monto / (prestamo.cuota || prestamo.monto))} ${Math.ceil(prestamo.monto / (prestamo.cuota || prestamo.monto)) === 1 ? "pago" : "pagos"}). Pagado: ${fmt(prestamo.pagado)} · Saldo: <strong>${fmt(prestamo.saldo)}</strong>.</div>` : ""}
+    ${prestamo ? `<div class="nota">Se descontará <strong>${bs(prestamo.cuota)}</strong> en cada pago de nómina hasta completar ${bs(prestamo.monto)} (${Math.ceil(prestamo.monto / (prestamo.cuota || prestamo.monto))} ${Math.ceil(prestamo.monto / (prestamo.cuota || prestamo.monto)) === 1 ? "pago" : "pagos"}). Pagado: ${bs(prestamo.pagado)} · Saldo: <strong>${bs(prestamo.saldo)}</strong>.</div>` : ""}
     ${!mov ? `<div class="nota">Borrador: lo que le corresponde en ${escHtml(r.periodo)}. Registra el pago para que quede en el historial.</div>` : ""}
     <div class="firmas">
       <div class="fbox"><div class="fline"></div><div class="flabel">Director(a)</div></div>

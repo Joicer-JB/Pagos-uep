@@ -150,3 +150,71 @@ function resumenCuentasPagar(lista, hoy) {
     totalSemana: suma(semana),
   };
 }
+
+// Representante de un pago (para el flujo de caja que pide el contador): de la ficha del estudiante; los pagos viejos
+// sin estId se buscan por la cédula o el nombre del estudiante, solo si hay uno que coincida
+function representanteDePago(p) {
+  return datosRepresentante(p).texto;
+}
+// { nombre, cedula, texto } del representante de un pago; texto vacío si no se encuentra
+function datosRepresentante(p) {
+  let e = p.estId ? estudiantes.find((x) => x.id === p.estId) : null;
+  if (!e && p.cedula) {
+    const c = estudiantes.filter((x) => x.cedula && x.cedula === p.cedula);
+    if (c.length === 1) e = c[0];
+  }
+  if (!e && p.nombre) {
+    const c = estudiantes.filter((x) => x.nombre === p.nombre);
+    if (c.length === 1) e = c[0];
+  }
+  if (!e || !e.acudiente) return { nombre: "", cedula: "", texto: "" };
+  const cedula = e.cedulaAcudiente || "";
+  return { nombre: e.acudiente, cedula, texto: e.acudiente + (cedula ? " · " + cedula : "") };
+}
+
+// Libro de ventas para el contador: un renglón por recibo (los cobros a representantes), con el representante como
+// cliente y el monto en Bs. Todo se marca exento de IVA (servicio educativo, Ley de IVA art. 19, num. 2); el contador
+// confirma los conceptos dudosos. Los recibos sin tasa BCV quedan marcados para que no se sumen a ciegas.
+function libroVentas(desde, hasta) {
+  const recibos = new Map();
+  const filas = [];
+  pagos
+    .filter((p) => p.fecha && p.fecha >= desde && p.fecha <= hasta)
+    .sort((a, b) =>
+      a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : String(a.factura || "").localeCompare(String(b.factura || ""))
+    )
+    .forEach((p) => {
+      const k = p.factura || p.id;
+      let r = recibos.get(k);
+      if (!r) {
+        const rep = datosRepresentante(p);
+        r = {
+          fecha: p.fecha,
+          recibo: p.factura || "",
+          provisional: p.pendiente === true,
+          representante: rep.nombre,
+          cedula: rep.cedula,
+          estudiantes: [],
+          conceptos: [],
+          metodos: [],
+          bs: 0,
+          sinTasa: false,
+        };
+        recibos.set(k, r);
+        filas.push(r);
+      }
+      if (p.nombre && !r.estudiantes.includes(p.nombre)) r.estudiantes.push(p.nombre);
+      const c = p.concepto + (p.mes && p.concepto === "Mensualidad" ? " " + p.mes : "");
+      if (!r.conceptos.includes(c)) r.conceptos.push(c);
+      if (p.metodo && !r.metodos.includes(p.metodo)) r.metodos.push(p.metodo);
+      const b = bsDe(p, p.total);
+      if (b.bs != null) r.bs = r2(r.bs + b.bs);
+      else r.sinTasa = true;
+    });
+  return {
+    filas,
+    totalBs: r2(filas.reduce((s, r) => s + (r.sinTasa ? 0 : r.bs), 0)),
+    sinTasa: filas.filter((r) => r.sinTasa).length,
+    sinRepresentante: filas.filter((r) => !r.representante).length,
+  };
+}

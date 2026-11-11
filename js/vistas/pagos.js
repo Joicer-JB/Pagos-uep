@@ -730,31 +730,37 @@ async function eliminarRecibo(id) {
     alert("Error: " + e.message);
   }
 }
+// El recibo por WhatsApp va igual que el impreso: solo en bolívares, sin $ ni tasa
 function enviarWhatsApp() {
   const p = modalActual.pago;
   if (!p) return;
-  const lines = (p.descripcion || "").split("\n").filter(Boolean);
+  const k = factorBsRecibo(p);
+  const lines = (p.descripcion || "")
+    .split("\n")
+    .filter(Boolean)
+    .map((l) => textoEnBs(l, k));
   const bb = bsDe(p, p.total);
-  const bsTxt =
+  const totalTxt =
     bb.bs != null
-      ? `\n💱 Tasa BCV ${fechaCorta(bb.fecha)}: Bs. ${fmtTasa(bb.tasa)}\n🇻🇪 *TOTAL EN Bs: ${fmtBs(bb.bs)}*`
-      : "";
-  const msg = `🏫 *${EMPRESA}*\n📍 ${EMPRESA_SUB}\n━━━━━━━━━━━━━━━━━━\n🧾 *RECIBO: ${p.factura}*\n📅 *Fecha:* ${p.fecha}\n💳 *Método:* ${p.metodo || "Efectivo"}\n${p.mes ? "📅 *Mes:* " + p.mes + "\n" : ""}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n👤 *Estudiante:* ${p.nombre}\n🪪 *Cédula:* ${p.cedula || "N/A"}\n📞 *Teléfono:* ${p.telefono || "N/A"}\n━━━━━━━━━━━━━━━━━━\n${lines.map((l) => "• " + l).join("\n")}\n━━━━━━━━━━━━━━━━━━\n${
+      ? `💰 *TOTAL PAGADO: ${fmtBs(bb.bs)}*`
+      : "⚠️ Falta la tasa BCV de esta fecha: no se puede mostrar el monto en bolívares";
+  const metodo = p.metodo === "Dólares Efectivo" ? metodoImpreso(p.metodo) : p.metodo || "Efectivo";
+  const msg = `🏫 *${EMPRESA}*\n📍 ${EMPRESA_SUB}\n━━━━━━━━━━━━━━━━━━\n🧾 *RECIBO: ${p.factura}*\n📅 *Fecha:* ${p.fecha}\n💳 *Método:* ${metodo}\n${p.mes ? "📅 *Mes:* " + p.mes + "\n" : ""}━━━━━━━━━━━━━━━━━━\n👤 *Estudiante:* ${p.nombre}\n🪪 *Cédula:* ${p.cedula || "N/A"}\n📞 *Teléfono:* ${p.telefono || "N/A"}\n━━━━━━━━━━━━━━━━━━\n${lines.map((l) => "• " + l).join("\n")}\n━━━━━━━━━━━━━━━━━━\n${
     formasDe(p).length
       ? "💳 *Pago mixto:*\n" +
         formasDe(p)
           .map(
             (f) =>
               "• " +
-              (ETIQ_METODO[f.metodo] || f.metodo) +
+              metodoImpreso(f.metodo) +
               ": " +
-              montoForma(f) +
+              montoFormaBs(f, k) +
               (f.referencia ? " · ref " + f.referencia : "")
           )
           .join("\n") +
         "\n━━━━━━━━━━━━━━━━━━\n"
       : ""
-  }💰 *TOTAL REF: ${fmt(p.total)}*${bsTxt}\n━━━━━━━━━━━━━━━━━━\n✅ Pago registrado. ¡Gracias!`;
+  }${totalTxt}\n━━━━━━━━━━━━━━━━━━\n✅ Pago registrado. ¡Gracias!`;
   const telWa = normalizarTelVE(p.telefono);
   if (!telWa) {
     alert("Este pago no tiene teléfono registrado");

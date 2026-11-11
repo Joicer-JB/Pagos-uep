@@ -58,7 +58,7 @@ test("préstamo: se registra aparte de la nómina, con su cuota por pago", async
   assert.equal(p.nomina.cuota, 25);
   assert.match(
     await ultimaImpresion(),
-    /Comprobante de préstamo[\s\S]*Se descontará <strong>\$ 25,00<\/strong> en cada pago/
+    /Comprobante de préstamo[\s\S]*Se descontará <strong>Bs\. 4\.612,50<\/strong> en cada pago/
   );
 });
 
@@ -104,6 +104,9 @@ test("pagar la quincena: trae la mitad del sueldo y descuenta solo el adelanto, 
     recibo,
     /➕ Asignaciones[\s\S]*Salario base[\s\S]*➖ Deducciones[\s\S]*Cuota de préstamo[\s\S]*Neto a recibir/
   );
+  // en el papel, solo bolívares (ni $ ni tasa)
+  assert.doesNotMatch(recibo.replace(/<style[\s\S]*?<\/style>/g, ""), /\$ ?\d|Tasa BCV/);
+  assert.match(recibo, /Neto a recibir[\s\S]*Bs\. \d/);
   const num = /NOM-[0-9A-Z]{4,}/.exec(recibo)[0];
   await llamar(`imprimirReciboNomina(null, ${JSON.stringify(p.id)})`);
   assert.equal(/NOM-[0-9A-Z]{4,}/.exec(await ultimaImpresion())[0], num);
