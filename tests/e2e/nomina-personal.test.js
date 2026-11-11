@@ -140,7 +140,7 @@ test("pagar la quincena: el sueldo fijo y las horas que trabajó, a la cuenta el
   );
   assert.deepEqual(p.cuentaPago, { banco: "Banesco", tipo: "Corriente", numero: "01340001121234567890" });
   const recibo = await ultimaImpresion();
-  assert.match(recibo, /Horas de Media general <small>\(18 h × \$ 2,50\)<\/small>/);
+  assert.match(recibo, /Horas de Media general <small>\(18 h × Bs\. 461,25\)<\/small>/);
   assert.match(recibo, /🏦 Banesco · Corriente · \*\*\*\*7890/);
   assert.doesNotMatch(recibo, /ORIGINAL/);
   // en la nómina del mes falta la 2da quincena: la mitad de lo que gana (aunque la 1ra llevó menos horas)

@@ -63,16 +63,27 @@ test("el pago en dólares en efectivo también sale solo en Bs.", async () => {
   await llamar(`cerrarModal()`);
 });
 
-test("el flujo de caja detallado trae el representante de cada pago; el resumen no", async () => {
+test("el recibo por WhatsApp también va solo en bolívares", async () => {
+  await llamar(
+    `window.__APERTURAS__ = []; abrirModal({ tipo: "recibo", pago: pagos.find((p) => p.factura === "FAC-0000002") }); enviarWhatsApp()`
+  );
+  const msg = decodeURIComponent(await llamar(`window.__APERTURAS__[0]`));
+  assert.match(msg, /TOTAL PAGADO: Bs\. 8\.156,25/);
+  assert.doesNotMatch(msg, /\$|Tasa BCV|TOTAL REF/);
+  await llamar(`cerrarModal()`);
+});
+
+test("el flujo de caja trae el representante: en cada renglón del detallado y en una tabla del resumen", async () => {
   await llamar(`imprimirFlujoCaja(2026, 9, true)`);
   await s.pagina.waitForSelector(".impresion-capa");
   let t = await textoHoja();
   assert.match(t, /Representante/);
   assert.match(t, /Ana María Pérez - Mensualidad.*Carmen Pérez · V-12345678/s);
+  assert.doesNotMatch(t, /Ingresos por representante/);
   await volver();
   await llamar(`imprimirFlujoCaja(2026, 9, false)`);
   t = await textoHoja();
-  assert.doesNotMatch(t, /Representante|Carmen Pérez/);
+  assert.match(t, /Ingresos por representante.*Carmen Pérez · V-12345678\s*1\s*Bs\. 8\.156,25\s*\$ 45,00/s);
   await volver();
   assert.deepEqual(s.errores, []);
 });
