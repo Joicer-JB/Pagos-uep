@@ -85,3 +85,12 @@ test("promedio y colorNota", () => {
   assert.equal(f("colorNota(9)"), "#e53e3e");
   assert.equal(f("colorNota(null)"), "#888");
 });
+
+test("textoEnBs: pasa a Bs. los montos en $ de un texto", () => {
+  assert.equal(f(`textoEnBs("Mensualidad Octubre — $ 45,00", 181.25)`), "Mensualidad Octubre — Bs. 8.156,25");
+  assert.equal(f(`textoEnBs("Abono $ 40,00 de $ 1.126,00", 2)`), "Abono Bs. 80,00 de Bs. 2.252,00");
+  assert.equal(f(`textoEnBs("pagó $45 y $45.50", 10)`), "pagó Bs. 450,00 y Bs. 455,00");
+  assert.equal(f(`textoEnBs("Ajuste $ -80,00", 10)`), "Ajuste Bs. -800,00");
+  assert.equal(f(`textoEnBs("Ref. pago: 123456", 10)`), "Ref. pago: 123456");
+  assert.equal(f(`textoEnBs("Mensualidad — $ 45,00", null)`), "Mensualidad — $ 45,00");
+});
