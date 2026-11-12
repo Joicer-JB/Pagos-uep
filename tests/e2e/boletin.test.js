@@ -100,6 +100,10 @@ test("media general: escudo, ficha, resumen y notas de cada lapso con la definit
   ]);
   // Sección: sin sección es la «U»
   assert.match(await p.textContent(".b-nombre span"), /1er Año · Sección U/);
+  // La ficha muestra al representante, pero no su cédula
+  const ficha = await p.textContent(".b-est");
+  assert.match(ficha, /Representante/);
+  assert.doesNotMatch(ficha, /C\.I\. del representante/);
   // Área a revisar: la materia por debajo de 10, sin nota de revisión todavía
   assert.match(
     await p.textContent(".b-caja-info"),

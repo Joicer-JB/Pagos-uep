@@ -1,5 +1,9 @@
 # Historial de cambios
 
+## Noviembre 2026 — Boleta sin la cédula del representante
+
+- La boleta de **media general** ya no muestra la **C.I. del representante**. Se sigue mostrando su nombre.
+
 ## Noviembre 2026 — Más rápida en computadoras sencillas
 
 - **💳 Pagos** y **👨‍🎓 Estudiantes** muestran los **primeros 50** y un botón **«Ver más»**. El buscador y los filtros

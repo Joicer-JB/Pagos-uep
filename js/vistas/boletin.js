@@ -53,7 +53,7 @@ const ESTILOS_BOLETIN = `
   .b-sello span{display:block;font-size:8px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
   .b-sello strong{display:block;font-family:Georgia,serif;font-size:13px;color:#ffd700;margin:1px 0 3px}
   .b-sello em{display:block;font-style:normal;font-size:10px;font-weight:700;background:#ffd700;color:#003366;border-radius:5px;padding:1px 0}
-  .b-est{display:grid;grid-template-columns:1.1fr 1fr .9fr 1.4fr 1fr;gap:6px 12px;border:1px solid #d9e2f1;border-radius:10px;padding:9px 12px;background:rgba(240,244,255,.55)}
+  .b-est{display:grid;grid-template-columns:1fr 1fr 1fr 1.6fr;gap:6px 12px;border:1px solid #d9e2f1;border-radius:10px;padding:9px 12px;background:rgba(240,244,255,.55)}
   .b-est .b-nombre{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px dashed #c8d3e8;padding-bottom:5px;margin-bottom:2px}
   .b-nombre strong{font-family:Georgia,serif;font-size:16px;color:#003366}
   .b-nombre span{font-size:10px;color:#5b6577}
@@ -151,7 +151,6 @@ function encabezadoBoletin(est, nivelTexto) {
     <div class="b-dato"><label>Fecha de nacimiento</label><div>${escHtml(est.fechaNac ? fechaCorta(est.fechaNac) : "—")}</div></div>
     <div class="b-dato"><label>Año escolar</label><div>${escHtml(anioBoletin(est) || "—")}</div></div>
     <div class="b-dato"><label>Representante</label><div>${escHtml(est.acudiente || "—")}</div></div>
-    <div class="b-dato"><label>C.I. del representante</label><div>${escHtml(est.cedulaAcudiente || "—")}</div></div>
   </section>`;
 }
 function pieBoletin(firmas) {
