@@ -216,6 +216,21 @@ pestaña 👨‍🎓 Estudiantes aparece el aviso **👥 estudiantes repetidos**
   cédula, fecha de nacimiento, grado, sección, año escolar y representante (lo que sale en el boletín). La app
   prepara y actualiza esas fichas sola cuando entras tú.
 
+## 🗓️ Horarios de clase
+
+**👷 Nómina → 🗓️ Horarios**:
+
+- Arriba eliges el grado y ves su horario de lunes a viernes. **✏️ Corregir** cambia una materia o una hora (marca
+  **Receso** en la fila del receso); **🖨️ Imprimir** saca ese grado, e **Imprimir todos** una hoja por grado.
+- **📥 Cargar horarios de las fotos** (noviembre 2026) guarda de una vez el horario de 1er a 6to Grado y pone las
+  clases de Media general y de los especialistas en la ficha de cada profesor. Antes de guardar muestra cada hoja con
+  sus clases: el profesor se busca por su primer nombre; si hay dos con ese nombre, o no está en Nómina, lo eliges tú
+  (o lo agregas primero en ➕ Nuevo). Los especialistas (Inglés de la mañana, Computación, Portugués y Educación
+  Física) se eligen a mano porque la hoja no trae nombres. Puedes cargar otra vez sin miedo: no repite clases.
+- Si una materia sale con **⚠️ No está en ⚙️ Config → Materias**, agrégala allí con ese nombre (o corrige el nombre
+  en la ficha del profesor) para que las notas y el boletín encuentren al profesor.
+- Lo cargado se ve en **📚 Clases**, que también avisa si hay choques de horario.
+
 ## Tasas de días pasados: el Excel del BCV
 
 Para que los pagos viejos salgan en bolívares hacen falta las tasas de esos días. El BCV las publica en Excel:
