@@ -160,6 +160,7 @@ test("primaria: un boletín por lapso con portada, la ✓ en la letra de cada in
   ]);
   assert.match(await p.textContent(".bp-tabla"), /Inglés y Computación/);
   assert.equal(await p.locator(".bp-leyenda > div:not(.t)").count(), 5);
+  assert.doesNotMatch(await p.textContent("body"), /asistencia/i); // sin asistencias ni inasistencias
   assert.match(await p.textContent(".bp-firmas"), /Docente[\s\S]*Coordinadora[\s\S]*Directora/);
   assert.doesNotMatch(await p.textContent(".bp-firmas"), /Representante/);
   await p.close();
