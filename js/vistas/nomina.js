@@ -30,6 +30,7 @@ function renderNomina() {
       ["lista", "👷 Personal"],
       ["mes", "📅 Nómina del mes"],
       ["clases", "📚 Clases"],
+      ["horarios", "🗓️ Horarios"],
       ["asistencia", "🗓️ Asistencia"],
       ["nuevo", "➕ Nuevo"],
       ["historial", "📋 Historial"],
@@ -59,6 +60,7 @@ function renderNomina() {
   }
   ${st === "mes" ? botones + renderNominaMes() : ""}
   ${st === "clases" ? renderClasesNomina() : ""}
+  ${st === "horarios" ? renderHorariosNomina() : ""}
   ${st === "asistencia" ? renderAsistenciaNomina() : ""}
   ${st === "historial" ? botones + renderHistorialNomina() : ""}`;
 }
