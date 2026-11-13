@@ -94,9 +94,9 @@ test("media general: escudo, ficha, resumen y notas de cada lapso con la definit
     t.map((r) => [...r.children].map((c) => c.textContent.trim()))
   );
   assert.deepEqual(filas, [
-    ["1", "Matemáticas", "18", "", "20", "", "—", "", "19", "Aprobada"],
-    ["2", "Lengua y Literatura", "8", "", "—", "", "—", "", "8", "Pendiente"],
-    ["3", "Inglés", "16", "", "18", "", "—", "", "17", "Aprobada"],
+    ["1", "Matemáticas", "18", "20", "—", "19", "Aprobada"],
+    ["2", "Lengua y Literatura", "8", "—", "—", "8", "Pendiente"],
+    ["3", "Inglés", "16", "18", "—", "17", "Aprobada"],
   ]);
   // Sección: sin sección es la «U»
   assert.match(await p.textContent(".b-nombre span"), /1er Año · Sección U/);
@@ -125,9 +125,9 @@ test("en el boletín las notas van enteras (desde ,5 sube) y el cambio del conse
   );
   // Matemáticas 9,5 · 9,4 · 9,6 → definitiva 9,5 en la sábana → 10 (aprobada). Lengua: el consejo la dejó en 12.
   assert.deepEqual(filas, [
-    ["1", "Matemáticas", "10", "", "9", "", "10", "", "10", "Aprobada"],
-    ["2", "Lengua y Literatura", "16", "", "—", "", "—", "", "12", "Aprobada"],
-    ["3", "Inglés", "12", "", "—", "", "—", "", "12", "Aprobada"],
+    ["1", "Matemáticas", "10", "9", "10", "10", "Aprobada"],
+    ["2", "Lengua y Literatura", "16", "—", "—", "12", "Aprobada"],
+    ["3", "Inglés", "12", "—", "—", "12", "Aprobada"],
   ]);
   assert.doesNotMatch(html, /consejo|Acta del consejo|ajustad|modificad/i);
   // Promedio general de las definitivas de la sábana: (9,5 + 12 + 12,4) / 3 = 11,3; el del 1er lapso, 12,5
@@ -221,7 +221,7 @@ test("al imprimir no sale la dirección de la página: la hoja no deja margen al
   assert.match(html, /@media print\{[^}]*\}\.b-hoja\{padding:9mm/);
 });
 
-test("puesto por promedio en el salón y en media general, inasistencias, área a revisar y materia pendiente", async () => {
+test("puesto por promedio en el salón y en media general, sin inasistencias, área a revisar y materia pendiente", async () => {
   // Lapso 1: Luis (18 + 8 + 16) / 3 = 14 y Andrea (9,5 + 15,6 + 12,4) / 3 = 12,5. En los otros lapsos les faltan notas.
   await llamar(`(() => {
     const luis = estudiantes.find((e) => e.id === "est2");
@@ -242,7 +242,9 @@ test("puesto por promedio en el salón y en media general, inasistencias, área 
     ["En el colegio (media general)", "—", "1° de 2", "—", "—"],
   ]);
   const lengua = await p.$$eval(".b-notas tbody tr:nth-child(2) td", (t) => t.map((c) => c.textContent.trim()));
-  assert.deepEqual(lengua.slice(2, 4), ["8", "3"]); // nota e inasistencias del 1er lapso
+  // La boleta ya no muestra inasistencias (siguen cargándose en Notas): solo las notas de cada lapso
+  assert.deepEqual(lengua.slice(2, 5), ["8", "—", "—"]);
+  assert.doesNotMatch(await p.textContent(".b-notas thead"), /Inas/);
   const cajas = await p.$$eval(".b-caja-info", (c) => c.map((x) => x.textContent.replace(/\s+/g, " ").trim()));
   assert.match(cajas[0], /Lengua y Literatura\s*Definitiva: 8\s*Nota de revisión: 12\s*Aprobada en revisión/);
   assert.match(cajas[1], /Materia pendiente del año anterior\s*Aplica · Matemáticas \(6to Grado\) · Nota: 14/);

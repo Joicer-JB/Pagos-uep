@@ -74,7 +74,6 @@ const ESTILOS_BOLETIN = `
   .b-notas td.mat{font-weight:600}
   .b-num{color:#9aa5b8;font-size:9px;width:18px}
   .b-n{font-weight:700}.b-n.rep{color:#c0392b}.b-n.vacia{color:#b6bfcd;font-weight:400}
-  .b-ina{color:#7a8599;font-size:9px}
   .b-def{display:flex;align-items:center;gap:6px;justify-content:center}
   .b-def strong{min-width:26px;font-size:12px;color:#003366}.b-def strong.rep{color:#c0392b}
   .b-barra{width:58px;height:6px;border-radius:3px;background:#e3e9f4;overflow:hidden}
@@ -172,8 +171,6 @@ function cuerpoBoletinMedia(est) {
     const d = definitivaDe(est, m);
     return { m, d, nota: notaEntera(d.nota), lapsos: d.lapsos.map((x) => notaEntera(x.nota)) };
   });
-  // Inasistencias de cada materia en cada lapso (se cargan en Notas); la columna sale siempre, en blanco si no hay
-  const ina = (l, m) => Number((notas[`${est.id}_${l}`] || {})[m + "_ina"]) || 0;
   const conNota = defs.filter(({ nota }) => nota !== null);
   const aprobadas = conNota.filter(({ nota }) => nota >= 10);
   const pendientes = conNota.filter(({ nota }) => nota < 10);
@@ -184,7 +181,7 @@ function cuerpoBoletinMedia(est) {
   const filas = defs
     .map(({ m, nota: nf, lapsos }, i) => {
       return `<tr><td class="b-num">${i + 1}</td><td class="izq mat">${escHtml(m)}</td>
-      ${lapsos.map((x, li) => `<td>${n(x)}</td><td class="b-ina">${ina(LAPSOS[li], m) || ""}</td>`).join("")}
+      ${lapsos.map((x) => `<td>${n(x)}</td>`).join("")}
       <td><div class="b-def"><strong class="${nf !== null && nf < 10 ? "rep" : ""}">${nf === null ? "—" : textoNota(nf)}</strong><span class="b-barra"><i class="${nf !== null && nf < 10 ? "rep" : ""}" style="width:${nf === null ? 0 : Math.max(0, Math.min(100, (nf / 20) * 100))}%"></i></span></div></td>
       <td>${nf === null ? "" : nf >= 10 ? '<span class="b-sit ok">Aprobada</span>' : '<span class="b-sit pend">Pendiente</span>'}</td></tr>`;
     })
@@ -226,7 +223,7 @@ function cuerpoBoletinMedia(est) {
     </tbody>
   </table>
   <table class="b-notas">
-    <thead><tr><th>#</th><th class="izq">Área de formación</th>${LAPSOS.map((l, i) => `<th>${ORDINAL_LAPSO[i] || l} lapso</th><th>Inas.</th>`).join("")}<th>Definitiva</th><th>Situación</th></tr></thead>
+    <thead><tr><th>#</th><th class="izq">Área de formación</th>${LAPSOS.map((l, i) => `<th>${ORDINAL_LAPSO[i] || l} lapso</th>`).join("")}<th>Definitiva</th><th>Situación</th></tr></thead>
     <tbody>${filas}</tbody>
   </table>
   ${revision}

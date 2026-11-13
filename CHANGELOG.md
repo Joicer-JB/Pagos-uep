@@ -1,5 +1,10 @@
 # Historial de cambios
 
+## Noviembre 2026 — Boleta sin inasistencias
+
+- La boleta de **media general** ya no muestra la columna de **inasistencias** de cada lapso. Las inasistencias se
+  siguen cargando en **Notas**.
+
 ## Noviembre 2026 — Boleta sin la cédula del representante
 
 - La boleta de **media general** ya no muestra la **C.I. del representante**. Se sigue mostrando su nombre.

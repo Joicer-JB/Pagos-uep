@@ -93,8 +93,8 @@ test("la sábana y el boletín usan esas notas; la sábana no tiene el detalle p
     t.map((r) => [...r.children].map((c) => c.textContent.trim()))
   );
   // En el boletín, enteras: 16,5 → 17 (la sábana sigue con 16,5)
-  assert.deepEqual(filas[0], ["1", "Matemáticas", "17", "", "—", "", "—", "", "17", "Aprobada"]);
-  assert.deepEqual(filas[2], ["3", "Inglés", "9", "", "—", "", "—", "", "9", "Pendiente"]);
+  assert.deepEqual(filas[0], ["1", "Matemáticas", "17", "—", "—", "17", "Aprobada"]);
+  assert.deepEqual(filas[2], ["3", "Inglés", "9", "—", "—", "9", "Pendiente"]);
   await p.close();
   assert.deepEqual(s.errores, []);
 });
