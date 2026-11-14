@@ -196,6 +196,7 @@ const ACCIONES_BUSQ = [
   ["📅", "Nómina del mes (pagar)", "nomina", "pagar nomina quincena sueldos salarios", ir("nomina", "mes")],
   ["🗓️", "Asistencia del personal", "nomina", "asistencia faltas retardos personal", ir("nomina", "asistencia")],
   ["📚", "Clases y horarios", "nomina", "clases horarios materias profesores choques", ir("nomina", "clases")],
+  ["🗓️", "Horario de cada grado", "nomina", "horario grado primaria imprimir fotos cargar", ir("nomina", "horarios")],
   ["📊", "Tablero financiero", "reportes", "reportes tablero indicadores cobranza morosidad"],
   [
     "🔮",

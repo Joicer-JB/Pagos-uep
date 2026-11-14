@@ -1,6 +1,6 @@
 // Boletín informativo de preescolar y primaria, como el modelo del colegio: uno por lapso, con portada (membrete,
 // datos del estudiante, coordinadora y directora) y luego el proyecto del lapso y la tabla de áreas e indicadores
-// con la escala A-E marcada con ✓. Al final, observaciones y asistencias (se llenan a mano), la leyenda y las
+// con la escala A-E marcada con ✓. Al final, observaciones (se llenan a mano), la leyenda y las
 // firmas de docente, coordinadora y directora con el sello.
 // Los indicadores de cada lapso y el nombre del proyecto se configuran en Configuración → Indicadores.
 
@@ -70,8 +70,6 @@ const ESTILOS_BOLETIN_PRIM = `
   .bp-pie{break-inside:avoid;page-break-inside:avoid;margin-top:12px}
   .bp-obs{font-weight:700}
   .bp-obs .ln{border-bottom:1px solid #1c2333;height:20px}
-  .bp-asist{display:flex;justify-content:space-between;font-weight:700;margin:14px 0 8px}
-  .bp-asist span span{display:inline-block;border-bottom:1px solid #1c2333;min-width:70px}
   .bp-leyenda{font-size:9px;line-height:1.4;font-weight:700;color:#1c2333}
   .bp-leyenda b{color:#003366}
   .bp-leyenda .t{font-size:8.5px;color:#5b6577;margin-bottom:3px}
@@ -184,7 +182,6 @@ function cuerpoBoletinPrimaria(est, lapso) {
     </table>
     <div class="bp-pie">
       <div class="bp-obs">Observaciones generales:<div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
-      <div class="bp-asist"><span>Cantidad de asistencia: <span></span></span><span>Cantidad de inasistencia: <span></span></span></div>
       <div class="bp-leyenda"><div class="t">Leyenda</div>${LEYENDA_LITERALES.map(([l, d]) => `<div><b>${l}:</b> ${escHtml(d)}</div>`).join("")}</div>
       <div class="bp-firmas">
         <div>Docente<small>${escHtml(docenteDeGrado(est.grado))}</small></div>

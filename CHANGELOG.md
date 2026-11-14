@@ -5,6 +5,15 @@
 - La boleta de **media general** ya no muestra la columna de **inasistencias** de cada lapso. Las inasistencias se
   siguen cargando en **Notas**.
 
+## Noviembre 2026 — Horarios de clase
+
+- Nueva pestaña **👷 Nómina → 🗓️ Horarios**: el horario de cada grado de Primaria (e Inicial) por materia, para
+  verlo, **corregirlo** (✏️) e **imprimirlo** (uno o todos, una hoja por grado).
+- Botón **📥 Cargar horarios de las fotos** (noviembre 2026): guarda el horario de 1er a 6to Grado y pone las clases de
+  Media general y de los especialistas (Inglés de la mañana, Computación, Portugués y Educación Física) en la ficha de
+  cada profesor. Muestra todo antes de guardar; el profesor de cada hoja se elige de la lista de Nómina. Cargar dos
+  veces no repite clases.
+
 ## Noviembre 2026 — Boleta sin la cédula del representante
 
 - La boleta de **media general** ya no muestra la **C.I. del representante**. Se sigue mostrando su nombre.
