@@ -143,6 +143,7 @@ test("primaria: un boletín por lapso con portada, la ✓ en la letra de cada in
   );
   const p = await enPagina(await ultima());
   assert.equal(await p.locator(".bp-hoja").count(), 2); // portada + indicadores
+  assert.match(await p.getAttribute(".bp-ninos", "src"), /^data:image\/jpeg;base64,\/9j\//); // la ilustración de la portada
   assert.match(await p.textContent(".bp-titulo"), /SUBSISTEMA DE EDUCACIÓN PRIMARIA: 3ER GRADO/);
   assert.match(await p.textContent(".bp-cuerpo"), /Miguel Ángel Torres[\s\S]*V-30666777[\s\S]*Laura Torres/);
   assert.match(await p.textContent(".bp-autoridades"), /Prof. Luz M. Herrera[\s\S]*Lic. Ligia Herrera/);

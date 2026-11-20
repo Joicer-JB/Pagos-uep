@@ -6,7 +6,7 @@ const js = require("@eslint/js");
 const globals = require("globals");
 
 module.exports = [
-  { ignores: ["**/node_modules/**", "js/logo.js"] },
+  { ignores: ["**/node_modules/**", "js/logo.js", "js/boleta-ninos.js"] },
   {
     files: ["js/**/*.js"],
     languageOptions: {
