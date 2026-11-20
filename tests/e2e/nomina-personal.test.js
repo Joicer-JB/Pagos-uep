@@ -79,7 +79,7 @@ test("coordinadora con sueldo fijo y horas en Media general: sus datos y cuentas
   const fila = await s.pagina.textContent(".fila-trabajador:has-text('Coordinadora Tres')");
   assert.match(fila, /Fijo \+ ⏱️ horas/);
   assert.match(fila, /Media general: 40 h\/mes · \$ 2,50\/h/);
-  assert.match(fila, /🩺 Sin certificado/);
+  assert.match(fila, /Sin certificado/);
   // no se repite la cédula
   await llamar(`subTab.nomina = "nuevo"; trabEditId = null; renderTabContent()`);
   await s.pagina.fill("#t-nombre", "Otra");
@@ -163,7 +163,7 @@ test("certificado de salud: se adjunta con su vencimiento, avisa si venció y se
   assert.equal(await s.pagina.inputValue("#doc-clase"), "salud");
   await s.pagina.fill("#doc-vence", "2026-10-01"); // ya venció (hoy es 07/10/2026)
   await s.pagina.setInputFiles("#doc-archivo", { name: "certificado.png", mimeType: "image/png", buffer: PNG_1x1 });
-  await s.pagina.click("text=📎 Adjuntar");
+  await s.pagina.click("button:has-text('Adjuntar')");
   await s.pagina.waitForSelector(".doc-trabajador");
   assert.match(await s.pagina.textContent(".modal"), /El certificado de salud venció el 01\/10\/2026/);
   const adj = (await trabajador("Coordinadora Tres")).adjuntos;
@@ -181,7 +181,7 @@ test("certificado de salud: se adjunta con su vencimiento, avisa si venció y se
   await sinOverlay();
   await llamar(`cerrarModal(); subTab.nomina = "lista"; renderTabContent()`);
   assert.match(await s.pagina.textContent(".aviso-certificados"), /Coordinadora Tres \(venció el 01\/10\/2026\)/);
-  assert.match(await s.pagina.textContent(".fila-trabajador:has-text('Coordinadora Tres')"), /🩺 Certificado vencido/);
+  assert.match(await s.pagina.textContent(".fila-trabajador:has-text('Coordinadora Tres')"), /Certificado vencido/);
 });
 
 test("un PDF grande se guarda en partes y se abre completo; uno de más de 4 MB no se acepta", async () => {
@@ -193,7 +193,7 @@ test("un PDF grande se guarda en partes y se abre completo; uno de más de 4 MB 
     mimeType: "application/pdf",
     buffer: pdfDe(5 * 1024 * 1024),
   });
-  await s.pagina.click("text=📎 Adjuntar");
+  await s.pagina.click("button:has-text('Adjuntar')");
   await s.pagina.waitForSelector("#doc-msg .error-msg");
   assert.match(await s.pagina.textContent("#doc-msg"), /pesa 5,0 MB y el máximo es 4 MB/);
   await s.pagina.setInputFiles("#doc-archivo", {
@@ -201,7 +201,7 @@ test("un PDF grande se guarda en partes y se abre completo; uno de más de 4 MB 
     mimeType: "application/pdf",
     buffer: pdfDe(1200000),
   });
-  await s.pagina.click("text=📎 Adjuntar");
+  await s.pagina.click("button:has-text('Adjuntar')");
   await s.pagina.waitForFunction(() => document.querySelectorAll(".doc-trabajador").length === 2);
   const titulo = (await trabajador("Coordinadora Tres")).adjuntos.find((a) => a.clase === "titulo");
   assert.equal(titulo.partes, 3); // 1,2 MB → 1,6 millones de caracteres en base64 → 3 partes de 700 mil
@@ -285,8 +285,8 @@ test("clases que da: grados, materia, días y horario; la vista por grado avisa 
     { materia: "Matemáticas", grados: ["1er Año", "2do Año"], dias: ["Lun", "Mié"], desde: "13:00", hasta: "14:30" },
   ]);
   const fila = await s.pagina.textContent(".fila-trabajador:has-text('Coordinadora Tres')");
-  assert.match(fila, /📚 3er Grado/);
-  assert.match(fila, /📚 Matemáticas · 1er Año, 2do Año/);
+  assert.match(fila, /3er Grado/);
+  assert.match(fila, /Matemáticas · 1er Año, 2do Año/);
   // el profesor de deporte: a todo el colegio, los lunes en la tarde (choca con la clase de Matemáticas)
   const d = await trabajador("Profesor Deporte");
   await llamar(`editarTrabajador(${JSON.stringify(d.id)})`);
@@ -301,20 +301,20 @@ test("clases que da: grados, materia, días y horario; la vista por grado avisa 
   await s.pagina.waitForSelector(".fila-trabajador:has-text('Profesor Deporte')");
   assert.match(
     await s.pagina.textContent(".fila-trabajador:has-text('Profesor Deporte')"),
-    /📚 Educación Física · Toda la Primaria, Toda la Media general/
+    /Educación Física · Toda la Primaria, Toda la Media general/
   );
   // la vista por grado
   await llamar(`subTab.nomina = "clases"; renderTabContent()`);
   const g = (grado) => s.pagina.textContent(`.clases-grado[data-grado="${grado}"]`);
   assert.match(await g("3er Grado"), /Docente de aula · Coordinadora Tres/);
   assert.match(await g("3er Grado"), /Educación Física · Profesor Deporte/);
-  assert.match(await g("1er Año"), /Matemáticas · Coordinadora Tres🕐 Lun, Mié · 1:00 p\. m\. a 2:30 p\. m\./);
+  assert.match(await g("1er Año"), /Matemáticas · Coordinadora Tres\s*Lun, Mié · 1:00 p\. m\. a 2:30 p\. m\./);
   assert.match(await g("Maternal"), /Sin docente asignado/);
   const choques = await s.pagina.textContent(".choques-horario");
   assert.match(choques, /1er Año tiene dos clases a la vez el lunes: Matemáticas con Coordinadora Tres/);
   assert.match(choques, /2do Año tiene dos clases a la vez el lunes/);
   // se imprime
-  await s.pagina.click("text=🖨️ Imprimir");
+  await s.pagina.click("text=Imprimir");
   const html = await ultimaImpresion();
   assert.match(html, /Clases por grado y año/);
   assert.match(html, /Matemáticas<\/td><td>Coordinadora Tres<\/td><td>Lun, Mié · 1:00 p\. m\. a 2:30 p\. m\./);
@@ -328,7 +328,7 @@ test("clases que da: grados, materia, días y horario; la vista por grado avisa 
 test("constancia de trabajo: la firma la directora, con el cargo, la fecha de ingreso y el salario en letras", async () => {
   const t = await trabajador("Coordinadora Tres");
   await llamar(`configInst = {}; abrirModal({ tipo: "ver-trabajador", id: ${JSON.stringify(t.id)} })`);
-  await s.pagina.click("text=📜 Constancia");
+  await s.pagina.click("text=Constancia");
   assert.match(
     await s.pagina.textContent(".modal"),
     /Falta el nombre de la directora, la cédula de la directora, el RIF del plantel/
@@ -338,7 +338,7 @@ test("constancia de trabajo: la firma la directora, con el cargo, la fecha de in
     abrirModal({ tipo: "constancia-trabajo", id: ${JSON.stringify(t.id)} })`);
   assert.doesNotMatch(await s.pagina.textContent(".modal"), /Falta/);
   await s.pagina.selectOption("#ct-trato", "la");
-  await s.pagina.click("text=🖨️ Imprimir constancia");
+  await s.pagina.click("text=Imprimir constancia");
   const texto = (await ultimaImpresion()).replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
   for (const parte of [
     "Constancia de trabajo",
@@ -358,7 +358,7 @@ test("constancia de trabajo: la firma la directora, con el cargo, la fecha de in
   // sin salario
   await llamar(`abrirModal({ tipo: "constancia-trabajo", id: ${JSON.stringify(t.id)} })`);
   await s.pagina.selectOption("#ct-sueldo", "no");
-  await s.pagina.click("text=🖨️ Imprimir constancia");
+  await s.pagina.click("text=Imprimir constancia");
   assert.doesNotMatch(await ultimaImpresion(), /devengando/);
   await llamar(`cerrarModal()`);
   assert.deepEqual(s.errores, []);

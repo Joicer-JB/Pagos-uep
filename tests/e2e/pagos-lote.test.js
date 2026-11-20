@@ -128,7 +128,7 @@ test("sin tasa de ese día, o con más de lo que debe, avisa y no registra nada"
 });
 
 test("mensualidades: quién debe la de un mes, y se registra a ese mes", async () => {
-  await s.pagina.click(".lote-cabecera >> text=📅 Mensualidad");
+  await s.pagina.click(".lote-cabecera >> text=Mensualidad");
   await s.pagina.selectOption("#lote-ym", "2026-10");
   const t = await s.pagina.textContent("#lote-lista");
   assert.match(t, /Mensualidad Octubre 2026/);

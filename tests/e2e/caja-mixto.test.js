@@ -71,7 +71,7 @@ test("al cobrar: un recibo, un pago por concepto y forma, y los Bs. de la transf
   const recibo = await s.pagina.textContent(".modal");
   assert.match(recibo, /MétodoMixto/);
   assert.match(recibo, /Pago mixto/);
-  assert.match(recibo, /💵 \$ Efectivo\s*\$ 50,00/);
+  assert.match(recibo, /\$ Efectivo\s*\$ 50,00/);
   assert.match(recibo, /Transferencia \/ Pago móvil\s*Ref\. 778899\s*Bs\. 18\.634,50 \(\$ 101,00\)/);
   assert.match(recibo, /Total referencia \(USD\)\s*\$ 151,00/);
   // y lo que debía quedó pagado

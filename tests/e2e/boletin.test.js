@@ -195,7 +195,7 @@ test("los boletines de todo un grado, uno por hoja y en orden alfabético", asyn
   await llamar(
     `setTab("notas"); filtros.notasVista = "estudiante"; filtros.gradoNotas = "1er Año"; renderTabContent()`
   );
-  await s.pagina.click("text=🖨️ Boletines de todo 1er Año");
+  await s.pagina.click("text=Boletines de todo 1er Año");
   const p = await enPagina(await ultima());
   assert.deepEqual(await p.$$eval(".b-hoja .b-nombre strong", (n) => n.map((x) => x.textContent)), [
     "Andrea Blanco",

@@ -1,0 +1,756 @@
+/* Diseño sobrio (noviembre 2026): azul del colegio, sin degradados, sin sombras grandes ni efectos de vidrio, tarjetas
+   planas con borde fino, menú lateral azul marino con secciones que se recogen e íconos de línea (js/navegacion.js →
+   ICONOS). Claro por defecto; con el tema oscuro (clase «tema-oscuro» en <html>) usa la misma estructura en azul noche.
+   Va al final: todas las reglas llevan «:root» delante para ganarle a las capas anteriores (también a css/oscuro.css).
+   Lo que se imprime (boletas, sábanas, recibos, constancias) tiene su propio diseño y no cambia con este archivo. */
+
+:root {
+  --t-fondo: #eef2f7;
+  --t-sup: #ffffff;
+  --t-sup-2: #f5f7fa;
+  --t-borde: #dbe2ec;
+  --t-borde-2: #e8edf3;
+  --t-texto: #16233a;
+  --t-suave: #5d6b80;
+  --t-azul: #0b4f9c;
+  --t-azul-suave: #e8f0fa;
+  --t-marino: #0f2a4d;
+  --t-marino-2: #163862;
+  --t-oro: #d4af37;
+  --t-menu-texto: #c9d6ea;
+  --t-menu-suave: #9fb3cf;
+  --t-rojo: #b42318;
+  --t-verde: #157f4c;
+  --t-radio: 10px;
+  --t-letra: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+:root.tema-oscuro {
+  --t-fondo: #121a26;
+  --t-sup: #1b2738;
+  --t-sup-2: #213048;
+  --t-borde: #2a3a52;
+  --t-borde-2: #24344b;
+  --t-texto: #e6ecf5;
+  --t-suave: #93a3ba;
+  --t-azul: #4a8fe7;
+  --t-azul-suave: rgba(74, 143, 231, 0.14);
+  --t-marino: #172233;
+  --t-marino-2: #1f2d44;
+  --t-menu-texto: #c4cfdf;
+  --t-menu-suave: #93a3ba;
+  --t-rojo: #ff8a8a;
+  --t-verde: #4ed49a;
+}
+
+:root body,
+:root .app {
+  background: var(--t-fondo);
+  color: var(--t-texto);
+  font-family: var(--t-letra);
+}
+
+/* ---------- Menú lateral ---------- */
+:root .sidebar {
+  background: var(--t-marino);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+}
+:root .sb-marca {
+  background: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+:root .sb-logo {
+  border: 0;
+  box-shadow: none;
+  background: none;
+  border-radius: 0;
+}
+:root .sb-marca-txt strong {
+  font-family: var(--t-letra);
+  font-weight: 600;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+:root .sb-marca-txt small {
+  color: var(--t-menu-suave);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.74rem;
+}
+:root .sb-grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  margin: 0.15rem 0;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  cursor: pointer;
+}
+:root .sb-grupo-titulo:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+:root .sb-grupo-titulo span {
+  flex: 1;
+}
+:root .sb-flecha {
+  color: var(--t-menu-suave);
+  transition: transform 0.15s ease;
+  transform: rotate(180deg);
+}
+:root .sb-grupo.recogido .sb-flecha {
+  transform: none;
+}
+:root .sb-grupo.recogido .tab {
+  display: none;
+}
+:root .sb-grupo:has(.tab.active) .sb-grupo-titulo {
+  background: rgba(255, 255, 255, 0.07);
+}
+:root .sb-grupo:has(.tab.active) .sb-flecha {
+  color: var(--t-oro);
+}
+:root .sb-grupo:last-child:not(:first-child) {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+:root .sb-grupo .sb-grupo-titulo ~ .tab {
+  width: calc(100% - 1rem);
+  margin-left: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0 6px 6px 0;
+}
+:root .sidebar .tab {
+  min-height: 38px;
+  margin: 1px 0;
+  padding: 0.45rem 0.75rem;
+  color: var(--t-menu-texto);
+  font-weight: 400;
+  font-size: 0.85rem;
+  background: none;
+  box-shadow: none;
+}
+:root .sidebar .tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+:root .sidebar .tab.active,
+:root .sidebar .sb-grupo .sb-grupo-titulo ~ .tab.active {
+  color: #fff;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--t-oro);
+  box-shadow: none;
+}
+:root .sidebar .tab.active .tab-txt {
+  color: #fff;
+}
+:root .tab-ico {
+  font-size: 0;
+  width: auto;
+  align-items: center;
+}
+:root .insignia {
+  box-shadow: none;
+  background: #e5484d;
+  top: -6px;
+  right: -9px;
+}
+:root .sb-pie {
+  background: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+:root .sb-usuario {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.5rem;
+}
+:root .sb-avatar {
+  background: var(--t-azul);
+  color: #fff;
+  box-shadow: none;
+}
+:root.tema-oscuro .sb-avatar {
+  background: #1f5fae;
+}
+:root .sb-usuario-txt strong {
+  color: #fff;
+}
+:root .sb-usuario-txt small {
+  color: var(--t-menu-suave);
+}
+:root .sb-salir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--t-menu-texto);
+  box-shadow: none;
+}
+:root .sb-salir:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+/* Tablet acostada (menú angosto): todas las pestañas a la vista, sin títulos de sección */
+@media (min-width: 900px) and (max-width: 1179px) {
+  :root .sb-grupo-titulo {
+    display: none;
+  }
+  :root .sb-grupo.recogido .tab {
+    display: flex;
+  }
+  :root .sidebar .sb-grupo .sb-grupo-titulo ~ .tab {
+    width: 100%;
+    margin-left: 0;
+    border-left: 0;
+    border-radius: 8px;
+  }
+  :root .sidebar .tab.active,
+  :root .sidebar .sb-grupo .sb-grupo-titulo ~ .tab.active {
+    border-left: 0;
+    box-shadow: inset 0 -3px 0 var(--t-oro);
+  }
+}
+
+/* ---------- Barra de arriba ---------- */
+:root .header {
+  background: var(--t-sup);
+  color: var(--t-texto);
+  border-bottom: 1px solid var(--t-borde);
+  box-shadow: none;
+}
+:root .header-label {
+  display: none;
+}
+:root .header-name {
+  font-family: var(--t-letra);
+  font-weight: 600;
+  color: var(--t-texto);
+}
+:root .header .logout-btn,
+:root .header .hb-anio {
+  background: var(--t-sup);
+  color: var(--t-texto);
+  border: 1px solid var(--t-borde);
+  border-radius: 8px;
+  box-shadow: none;
+  font-weight: 500;
+}
+:root .header .logout-btn:hover {
+  background: var(--t-sup-2);
+}
+:root .header .hb-tasa.sin-tasa {
+  background: var(--t-sup) !important;
+  color: var(--t-rojo) !important;
+  border-color: color-mix(in srgb, var(--t-rojo) 40%, transparent);
+}
+:root .hb-menu {
+  color: var(--t-texto);
+  background: none;
+  border-color: var(--t-borde);
+}
+:root .aviso-tasa {
+  margin: 0.9rem 1rem 0;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #f0dc9c;
+  border-radius: 8px;
+  background: #fff8e1;
+  color: #6b4e00;
+  font-size: 0.8rem;
+}
+:root .aviso-tasa a {
+  color: var(--t-azul);
+  font-weight: 700;
+}
+:root.tema-oscuro .aviso-tasa {
+  border-color: #5a4a1c;
+  background: #2a2516;
+  color: #e9cf7a;
+}
+:root.tema-oscuro .aviso-tasa a {
+  color: #ffd76a;
+}
+/* Barra de abajo (teléfono) */
+:root .barra-inferior {
+  background: var(--t-sup);
+  border-top: 1px solid var(--t-borde);
+  box-shadow: none;
+}
+:root .bi-tab {
+  color: var(--t-suave);
+}
+:root .bi-tab.active {
+  color: var(--t-azul);
+}
+:root .bi-tab .tab-ico {
+  font-size: 0;
+}
+
+/* ---------- Contenido ---------- */
+:root .content {
+  background: transparent;
+}
+:root .card,
+:root .stat-card,
+:root .list-item,
+:root .empty-icon,
+:root .barra-buscar {
+  box-shadow: none;
+}
+:root .card {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: var(--t-radio);
+}
+:root .card-title {
+  border-bottom-color: var(--t-borde-2);
+}
+:root .card-bar {
+  display: none;
+}
+:root .card-title h2,
+:root .card-title h3 {
+  font-family: var(--t-letra);
+  color: var(--t-texto);
+}
+:root .section-title {
+  color: var(--t-suave);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+:root .stat-card {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-top: 1px solid var(--t-borde);
+  border-radius: var(--t-radio);
+  text-align: left;
+}
+:root .stat-val {
+  font-family: var(--t-letra);
+  font-weight: 700;
+}
+:root .stat-label {
+  color: var(--t-suave);
+  font-weight: 500;
+}
+@media (hover: hover) {
+  :root .stat-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+/* Subpestañas: una línea con la activa subrayada */
+:root .stabs {
+  gap: 0.4rem;
+}
+:root .stab {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: 8px;
+  color: var(--t-suave);
+  font-weight: 500;
+  box-shadow: none;
+}
+:root .stab:hover {
+  color: var(--t-texto);
+}
+:root .stab.active {
+  background: var(--t-azul);
+  border-color: var(--t-azul);
+  color: #fff;
+  box-shadow: none;
+}
+:root.tema-oscuro .stab.active {
+  background: #1f5fae;
+  border-color: #1f5fae;
+}
+
+/* Botones: planos, un color cada uno */
+:root .btn {
+  border-radius: 8px;
+  box-shadow: none;
+  font-weight: 600;
+}
+:root .btn-primary,
+:root .btn-print {
+  background: var(--t-azul);
+  color: #fff;
+  box-shadow: none;
+}
+:root.tema-oscuro .btn-primary,
+:root.tema-oscuro .btn-print {
+  background: #1f5fae;
+  color: #fff;
+}
+:root .btn-primary:hover:not(:disabled),
+:root .btn-print:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: none;
+}
+:root .btn-primary:disabled {
+  background: #a9b6c8;
+  color: #fff;
+}
+:root .btn-success {
+  background: var(--t-verde);
+  color: #fff;
+  box-shadow: none;
+}
+:root.tema-oscuro .btn-success {
+  background: #1a7f4e;
+}
+:root .btn-danger {
+  background: #c0392b;
+  box-shadow: none;
+}
+:root .btn-gray {
+  background: var(--t-sup);
+  color: var(--t-texto);
+  border: 1px solid var(--t-borde);
+}
+:root .btn-whatsapp {
+  box-shadow: none;
+}
+:root .metodo-btn {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: 8px;
+  color: var(--t-texto);
+  box-shadow: none;
+}
+:root .metodo-btn.active,
+:root .metodo-btn[class*="sel"] {
+  border-color: var(--t-azul);
+  background: var(--t-azul-suave);
+  color: var(--t-azul);
+}
+
+/* Campos */
+:root .inp {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: 8px;
+  color: var(--t-texto);
+  box-shadow: none;
+}
+:root .inp:focus {
+  border-color: var(--t-azul);
+  box-shadow: 0 0 0 3px var(--t-azul-suave);
+  background: var(--t-sup);
+}
+:root .inp[readonly]:not([data-pad]) {
+  background: var(--t-sup-2);
+}
+:root .field-label {
+  color: var(--t-suave);
+  font-weight: 600;
+}
+:root .barra-buscar {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: var(--t-radio);
+}
+
+/* Etiquetas: rectángulos pequeños en vez de pastillas */
+:root .badge {
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* Listas: filas con borde fino, sin raya de color al costado */
+:root .list-item {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: var(--t-radio);
+}
+@media (hover: hover) {
+  :root .list-item:hover {
+    transform: none;
+    box-shadow: none;
+    background: var(--t-sup-2);
+  }
+}
+:root .item-name {
+  color: var(--t-texto);
+}
+:root .item-sub {
+  color: var(--t-suave);
+}
+:root .item-amount {
+  color: var(--t-texto);
+}
+:root .item-hint {
+  color: var(--t-azul);
+}
+
+/* Recuadros que antes eran degradados azules: azul marino liso */
+:root .recaudo-box,
+:root .total-box,
+:root .modal-header,
+:root .recibo-header {
+  background: var(--t-marino);
+  box-shadow: none;
+}
+:root [style*="linear-gradient(135deg,#003366"],
+:root [style*="linear-gradient(180deg,#003366"],
+:root [style*="linear-gradient(180deg,#00509e"],
+:root [style*="linear-gradient(90deg,#003366"] {
+  background: var(--t-marino) !important;
+  box-shadow: none !important;
+}
+:root.tema-oscuro .modal-header,
+:root.tema-oscuro .recibo-header {
+  background: var(--t-sup-2);
+}
+
+/* Avisos */
+:root .alert-item {
+  border-radius: 8px;
+}
+:root .empty-icon {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+}
+
+/* Ventanas */
+:root .modal {
+  border-radius: 12px;
+  background: var(--t-sup);
+}
+:root .modal-bg {
+  background: rgba(10, 20, 35, 0.55);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Entrada: fondo azul marino liso, tarjeta blanca, sin vidrio ni inclinación */
+:root .login-wrap {
+  background: var(--t-marino);
+}
+:root.tema-oscuro .login-wrap {
+  background: #0d1520;
+}
+:root .login-card {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transform: none;
+}
+:root .login-wrap .entrada-fondo {
+  display: none;
+}
+:root .login-card::after {
+  display: none;
+}
+:root .login-logo {
+  border-bottom: 1px solid var(--t-borde);
+}
+:root .login-logo h1 {
+  font-family: var(--t-letra);
+  color: var(--t-texto);
+}
+
+/* Avisos flotantes */
+:root #toast-msg {
+  background: var(--t-marino) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* ---------- Pagos: cifras arriba y la lista como tabla ---------- */
+:root .pg-cifras {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(4, 1fr);
+  margin-bottom: 0.9rem;
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: var(--t-radio);
+  font-variant-numeric: tabular-nums;
+}
+:root .pg-cifra {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border-left: 1px solid var(--t-borde-2);
+  min-width: 0;
+}
+:root .pg-cifra:first-child {
+  border-left: 0;
+}
+:root .pg-cifra-l {
+  font-size: 0.78rem;
+  color: var(--t-suave);
+  font-weight: 500;
+}
+:root .pg-cifra-v {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--t-texto);
+}
+:root .pg-cifra:first-child .pg-cifra-v {
+  font-size: 1.6rem;
+}
+:root .pg-cifra-s {
+  font-size: 0.74rem;
+  color: var(--t-suave);
+}
+@media (max-width: 700px) {
+  :root .pg-cifras {
+    grid-template-columns: 1fr 1fr;
+  }
+  :root .pg-cifra:first-child {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--t-borde-2);
+  }
+  :root .pg-cifra:nth-child(2n) {
+    border-left: 0;
+  }
+  :root .pg-cifra:nth-child(n + 4) {
+    border-top: 1px solid var(--t-borde-2);
+  }
+}
+:root .list.pg-tabla {
+  background: var(--t-sup);
+  border: 1px solid var(--t-borde);
+  border-radius: var(--t-radio);
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+:root .pg-tabla .pg-fila {
+  display: grid;
+  grid-template-columns: 1.7fr 1.7fr 1.9fr 0.9fr 1.1fr 40px;
+  gap: 0.75rem;
+  align-items: center;
+}
+:root .pg-tabla .pg-enc {
+  padding: 0.6rem 1rem;
+  background: var(--t-sup-2);
+  border-bottom: 1px solid var(--t-borde);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--t-suave);
+}
+:root .pg-tabla .list-item {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--t-borde-2);
+  border-radius: 0;
+}
+:root .pg-tabla .list-item:last-child {
+  border-bottom: 0;
+}
+:root .pg-tabla .item-name {
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:root .pg-tabla .item-sub,
+:root .pg-tabla .pg-forma {
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root .pg-tabla .pg-forma {
+  color: var(--t-texto);
+}
+:root .pg-tabla .d {
+  text-align: right;
+}
+:root .pg-tabla .item-amount {
+  font-size: 0.9rem;
+}
+:root .pg-tabla .pg-bs {
+  font-size: 0.82rem;
+  color: var(--t-suave);
+}
+:root .pg-tabla .item-hint {
+  font-size: 0.78rem;
+  text-align: right;
+}
+/* En el teléfono cada pago vuelve a ser una fila de dos líneas */
+@media (max-width: 700px) {
+  :root .pg-tabla .pg-enc {
+    display: none;
+  }
+  :root .pg-tabla .pg-fila {
+    grid-template-columns: 1fr auto;
+    gap: 0.1rem 0.75rem;
+  }
+  :root .pg-tabla .list-item .item-name {
+    grid-column: 1;
+  }
+  :root .pg-tabla .list-item .item-amount {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  :root .pg-tabla .list-item .item-sub {
+    grid-column: 1;
+  }
+  :root .pg-tabla .list-item .pg-bs {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  :root .pg-tabla .list-item .pg-forma {
+    grid-column: 1;
+  }
+  :root .pg-tabla .list-item .item-hint {
+    display: none;
+  }
+}
+:root .pg-cifras.recaudo-box {
+  display: grid;
+  padding: 0;
+  gap: 0;
+  color: var(--t-texto);
+  background: var(--t-sup);
+}
+
+/* Otros degradados escritos en las pantallas: su color liso */
+:root [style*="linear-gradient(135deg,#c0392b"] {
+  background: #c0392b !important;
+}
+:root [style*="linear-gradient(135deg,#1a9e5c"] {
+  background: var(--t-verde) !important;
+}
+:root [style*="linear-gradient(90deg,#00509e,#1a9e5c"] {
+  background: var(--t-azul) !important;
+}
+/* En oscuro, las barras de las gráficas en azul claro para que se vean */
+:root.tema-oscuro [style*="linear-gradient(180deg,#003366"],
+:root.tema-oscuro [style*="linear-gradient(180deg,#00509e"],
+:root.tema-oscuro [style*="linear-gradient(90deg,#003366"] {
+  background: var(--t-azul) !important;
+}
+
+:root .header .logout-btn svg {
+  vertical-align: -3px;
+}
+:root .busq-btn {
+  gap: 0.35rem;
+}
+:root .hb-menu svg {
+  vertical-align: middle;
+}

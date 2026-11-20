@@ -6,16 +6,27 @@ function htmlRecaudo(titulo, lista) {
   const tm = totalesMetodo(lista),
     sin = METODOS.reduce((x, [m]) => x + tm[m].sinTasa, 0),
     recibos = new Set(lista.map((p) => p.factura || p.id)).size;
-  return `<div class="recaudo-box">
-    <div>
-      <div style="font-size:0.65rem;color:#adc8ff">${titulo}</div>
-      <div style="font-size:1.3rem;font-weight:800;font-family:Georgia,serif;color:#ffd700">${fmt(lista.reduce((s, p) => s + (p.total || 0), 0))}</div>
-      <div style="font-size:0.68rem;color:#adc8ff">${recibos} recibo${recibos !== 1 ? "s" : ""}</div>
-    </div>
-    <div style="text-align:right;font-size:0.72rem;color:#adc8ff">
-      ${METODOS.map(([m, etq], i) => `<div style="margin-top:${i ? 2 : 0}px">${etq}: ${txtMetodo(tm[m])}</div>`).join("")}
-      ${sin ? `<div style="margin-top:4px;color:#ffd700;font-size:0.62rem">⚠️ ${sin} pago(s) sin tasa BCV no suman en Bs.</div>` : ""}
-    </div>
+  const NOMBRES = {
+    "Dólares Efectivo": "Dólares efectivo",
+    "Transferencia Bs": "Transferencias",
+    "Bs Efectivo": "Bolívares efectivo",
+    Punto: "Punto",
+  };
+  const cifra = (l, v, sub) =>
+    `<div class="pg-cifra"><span class="pg-cifra-l">${l}</span><span class="pg-cifra-v">${v}</span><span class="pg-cifra-s">${sub || "&nbsp;"}</span></div>`;
+  return `<div class="recaudo-box pg-cifras">
+    ${cifra(
+      titulo,
+      fmt(lista.reduce((s, p) => s + (p.total || 0), 0)),
+      `${recibos} recibo${recibos !== 1 ? "s" : ""}${sin ? ` · ${sin} sin tasa BCV (no suman en Bs.)` : ""}`
+    )}
+    ${METODOS.map(([m]) =>
+      cifra(
+        NOMBRES[m] || m,
+        fmt(tm[m].usd),
+        tm[m].bs != null ? fmtBs(tm[m].bs) + (tm[m].sinTasa ? " · falta tasa" : "") : ""
+      )
+    ).join("")}
   </div>`;
 }
 function renderPagos() {
@@ -86,25 +97,22 @@ function renderPagos() {
   ${
     filtrados.length === 0
       ? `<div class="empty"><div class="empty-icon">📭</div><p>No hay pagos</p></div>`
-      : `<div class="list">${recortarLista("pagos", filtrados)
+      : `<div class="list pg-tabla"><div class="pg-fila pg-enc" aria-hidden="true"><span>Estudiante</span><span>Recibo · Fecha</span><span>Forma de pago · Concepto</span><span class="d">Monto $</span><span class="d">Monto Bs</span><span></span></div>${recortarLista(
+          "pagos",
+          filtrados
+        )
           .map(
             (p) => `
-    <div class="list-item" onclick="abrirModal({tipo:'recibo',pago:pagos.find(x=>x.id==='${p.id}')})">
-      <div class="item-row">
-        <div style="flex:1;min-width:0">
-          <div class="item-name">${escHtml(p.nombre)}</div>
-          <div class="item-sub">${escHtml(p.factura) || ""} · ${escHtml(p.fecha)}${p.registradoPor ? ` · 👤 ${escHtml(nombreUsuario(p.registradoPor))}` : ""}</div>
-          ${p.pendiente ? `<div class="item-sub" style="color:#b8860b">⏳ Cobrado sin internet: recibirá su número al volver la conexión</div>` : ""}
-          <div style="margin-top:3px;display:flex;gap:0.35rem;flex-wrap:wrap">
-            <span class="badge ${p.metodo === "Dólares Efectivo" ? "badge-gold" : p.metodo === "Transferencia Bs" ? "badge-blue" : p.metodo === "Bs Efectivo" ? "badge-green" : "badge-blue"}">${escHtml(p.metodo) || "Dólares Efectivo"}</span>
-            ${p.concepto ? `<span class="badge badge-gray">${escHtml(p.concepto)}</span>` : ""}
-          </div>
-        </div>
-        <div class="item-right"><div class="item-amount">${fmt(p.total)}</div>${(() => {
-          const b = bsDe(p, p.total);
-          return b.bs != null ? `<div style="font-size:0.68rem;color:#888">${fmtBs(b.bs)}</div>` : "";
-        })()}<div class="item-hint">Ver →</div></div>
-      </div>
+    <div class="list-item pg-fila" onclick="abrirModal({tipo:'recibo',pago:pagos.find(x=>x.id==='${p.id}')})">
+      <div class="item-name">${escHtml(p.nombre)}</div>
+      <div class="item-sub">${escHtml(p.factura) || ""} · ${escHtml(p.fecha)}${p.registradoPor ? ` · ${escHtml(nombreUsuario(p.registradoPor))}` : ""}${p.pendiente ? `<div style="color:#b8860b">Cobrado sin internet: recibirá su número al volver la conexión</div>` : ""}</div>
+      <div class="pg-forma">${escHtml(p.metodo) || "Dólares Efectivo"}${p.concepto ? ` · ${escHtml(p.concepto)}` : ""}</div>
+      <div class="item-amount d">${fmt(p.total)}</div>
+      <div class="pg-bs d">${(() => {
+        const b = bsDe(p, p.total);
+        return b.bs != null ? fmtBs(b.bs) : "";
+      })()}</div>
+      <div class="item-hint">Ver →</div>
     </div>`
           )
           .join("")}</div>${botonVerMas("pagos", filtrados.length)}`

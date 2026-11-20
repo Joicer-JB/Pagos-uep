@@ -37,7 +37,7 @@ test("se marca el día y se guarda: estado de cada uno, horas y motivo", async (
   await s.pagina.click(`${fila("trabH")} .asist-presente`);
   await s.pagina.fill("#asist-h-trabH", "4");
   assert.match(await s.pagina.textContent("#asist-guardado"), /Sin guardar/);
-  await s.pagina.click("text=💾 Guardar el día");
+  await s.pagina.click("text=Guardar el día");
   await s.pagina.waitForFunction(() => /Guardado/.test(document.getElementById("asist-guardado").textContent));
   const d = await dia("2026-10-07");
   assert.deepEqual(d.registros, {
@@ -54,12 +54,12 @@ test("otro día: «los demás, presentes», las horas y el resumen del mes", asy
   await s.pagina.click(`${fila("trab2")} .asist-retardo`);
   await s.pagina.click("text=✓ Los demás, presentes");
   await s.pagina.fill("#asist-h-trabH", "3");
-  await s.pagina.click("text=💾 Guardar el día");
+  await s.pagina.click("text=Guardar el día");
   await s.pagina.waitForFunction(() => /Guardado/.test(document.getElementById("asist-guardado").textContent));
   assert.equal((await dia("2026-10-06")).registros.trab2.estado, "retardo");
   assert.match(await s.pagina.textContent('.asist-res[data-trab="trab2"]'), /0 P · 1 R · 1 F · 0 J · 0 Pm/);
   assert.match(await s.pagina.textContent('.asist-res[data-trab="trabH"]'), /2 P .*⏱️ 7 h/);
-  await s.pagina.click("text=🖨️ Imprimir el mes");
+  await s.pagina.click("text=Imprimir el mes");
   assert.match(
     await llamar(`window.__IMPRESIONES__.at(-1).html`),
     /Asistencia del personal · Octubre 2026[\s\S]*Profe Horas/

@@ -28,7 +28,7 @@ test("el tablero muestra los indicadores del año arriba de los reportes", async
   const t = await llamar(`JSON.parse(JSON.stringify(indicadoresFinancieros()))`);
   const tab = await texto(".tablero-financiero");
   assert.match(tab, /Tablero financiero · 2026-2027/);
-  assert.match(tab, new RegExp(Math.round(t.indice * 100) + " %\\s*📈 Índice de cobranza"));
+  assert.match(tab, new RegExp(Math.round(t.indice * 100) + " %\\s*Índice de cobranza"));
   assert.match(tab, /Vencido sin cobrar/);
   // cada mes con lo cobrado de lo esperado
   const meses = await texto(".tablero-mes");

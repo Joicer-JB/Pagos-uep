@@ -46,9 +46,52 @@ test("PC: menú fijo con grupos, el numerito de Cobranza y el título de la pest
   await s.pagina.click(".sidebar .tab:has-text('Finanzas')");
   assert.equal(await s.llamar(`tabActual`), "finanzas");
   assert.match(await s.pagina.textContent(".header-name"), /Finanzas/);
-  assert.match(await s.pagina.textContent(".header-label"), /Administración/);
   assert.match(await s.pagina.textContent("#rol-lbl"), /Director/);
   assert.equal(await visible(s, ".sb-salir"), true);
+  assert.deepEqual(s.errores, []);
+});
+
+// El correo del director, tal como está en js/config.js
+const DIRECTOR = require("fs")
+  .readFileSync(require("path").join(__dirname, "../../js/config.js"), "utf8")
+  .match(/"([^"]+)":\s*"director"/)[1];
+
+test("PC: las secciones del menú se recogen y quedan así; la de la pantalla abierta siempre se ve", async () => {
+  const s = await entrar(DIRECTOR);
+  // íconos de línea, no emojis
+  assert.equal(
+    await s.pagina.locator(".sidebar .tab .tab-ico svg").count(),
+    await s.pagina.locator(".sidebar .tab").count()
+  );
+  const nomina = ".sidebar .tab:has-text('Nómina')",
+    admin = ".sb-grupo-titulo:has-text('Administración')";
+  assert.equal(await visible(s, nomina), true);
+  await s.pagina.click(admin);
+  assert.equal(await visible(s, nomina), false);
+  assert.equal(await s.pagina.getAttribute(admin, "aria-expanded"), "false");
+  assert.equal(await s.llamar(`localStorage.getItem("menuRecogido")`), '["Administración"]');
+  // al volver a dibujar sigue recogida; si se abre una pantalla de esa sección, se muestra
+  await s.llamar(`setTab("pagos")`);
+  assert.equal(await visible(s, nomina), false);
+  await s.llamar(`setTab("nomina")`);
+  assert.equal(await visible(s, nomina), true);
+  await s.llamar(`setTab("pagos")`);
+  await s.pagina.click(admin);
+  assert.equal(await visible(s, nomina), true);
+  assert.equal(await s.llamar(`localStorage.getItem("menuRecogido")`), "[]");
+  assert.deepEqual(s.errores, []);
+});
+
+test("los rótulos de la pantalla no llevan el emoji del comienzo; los estados y los íconos solos se quedan", async () => {
+  const s = await entrar(DIRECTOR);
+  await s.llamar(`setTab("pagos")`);
+  assert.deepEqual(await textos(s, "#tab-content .stab"), ["Lista", "Nuevo Pago", "Pagos viejos"]);
+  assert.equal(await s.pagina.getAttribute("#search-input", "placeholder"), "Nombre, cédula, recibo...");
+  assert.equal(await s.llamar(`sinEmojiInicial("💾 Guardar")`), "Guardar");
+  assert.equal(await s.llamar(`sinEmojiInicial("👨‍🎓 Estudiantes")`), "Estudiantes");
+  assert.equal(await s.llamar(`sinEmojiInicial("🗑️")`), "🗑️");
+  assert.equal(await s.llamar(`sinEmojiInicial("Septiembre ✅")`), "Septiembre ✅");
+  assert.equal(await s.llamar(`sinEmojiInicial("⭐ Destacado")`), "⭐ Destacado");
   assert.deepEqual(s.errores, []);
 });
 
@@ -66,7 +109,7 @@ test("teléfono: ☰ abre el menú encima, tocar fuera lo cierra; la barra de ab
   assert.equal(await visible(s, ".hb-menu"), true);
   assert.equal(await s.llamar(`document.getElementById("sidebar").inert`), true); // cerrado: fuera de alcance
   // La tasa, solo el número; el año escolar está dentro del menú
-  assert.match(await s.pagina.textContent(".hb-tasa .hb-tasa-corta"), /^⚠️ 183,40$/);
+  assert.match(await s.pagina.textContent(".hb-tasa .hb-tasa-corta"), /^183,40$/);
   assert.equal(await visible(s, ".header .hb-anio"), false);
   await s.pagina.click(".hb-menu");
   await s.pagina.waitForFunction(() => document.querySelector(".shell").classList.contains("menu-abierto"));

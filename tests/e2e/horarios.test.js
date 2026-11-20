@@ -126,7 +126,7 @@ test("corregir un grado y imprimirlo", async () => {
   const h = await llamar(`JSON.parse(JSON.stringify(__DATOS_FALSOS__.config.get("horarios")["6to Grado"]))`);
   assert.equal(h.filas.at(-1).celdas[4], "Salida 11:00");
   assert.equal(h.filas.length, 7);
-  await s.pagina.click("text=🖨️ Imprimir");
+  await s.pagina.click("text=Imprimir");
   const html = await llamar(`window.__IMPRESIONES__.at(-1).html`);
   assert.match(html, /Horario de clases/);
   assert.match(html, /6to Grado/);

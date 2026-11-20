@@ -25,33 +25,34 @@ function render() {
     </div>
     <nav class="tabs sb-nav">
       ${grupos
-        .map(
-          (g) =>
-            `<div class="sb-grupo">${conMenu && g ? `<div class="sb-grupo-titulo">${g}</div>` : ""}${menu
-              .filter((t) => t.grupo === g)
-              .map((t) => boton(t, "tab"))
-              .join("")}</div>`
-        )
+        .map((g) => {
+          const tabs = menu.filter((t) => t.grupo === g),
+            recogido = conMenu && g && grupoRecogido(g, tabs);
+          return `<div class="sb-grupo${recogido ? " recogido" : ""}" data-grupo="${g}">${
+            conMenu && g
+              ? `<button class="sb-grupo-titulo" onclick="alternarGrupo('${g}')" aria-expanded="${!recogido}">${icono(g)}<span>${g}</span>${icono("flecha", 14).replace('class="ico"', 'class="ico sb-flecha"')}</button>`
+              : ""
+          }${tabs.map((t) => boton(t, "tab")).join("")}</div>`;
+        })
         .join("")}
     </nav>
     <div class="sb-pie">
       ${conMenu ? selectorAnio("hb-anio sb-anio") : ""}
       <div class="sb-usuario"><span class="sb-avatar" aria-hidden="true">${escHtml((correoUsuario() || "?")[0].toUpperCase())}</span><div class="sb-usuario-txt"><strong id="rol-lbl"></strong><small>${escHtml(correoUsuario() || "")}</small></div></div>
-      <button class="sb-salir" onclick="logout()" title="Cerrar sesión (${escHtml(correoUsuario() || "")})"><span aria-hidden="true">⏻</span><span class="sb-salir-txt">Cerrar sesión</span></button>
+      <button class="sb-salir" onclick="logout()" title="Cerrar sesión (${escHtml(correoUsuario() || "")})">${icono("salir", 16)}<span class="sb-salir-txt">Cerrar sesión</span></button>
     </div>
   </aside>
   <div class="sb-velo" onclick="cerrarMenu()"></div>
   <div class="principal">
   <div class="header">
     <div class="header-top">
-      ${conMenu ? `<button class="hb-menu" onclick="abrirMenu()" aria-label="Abrir el menú" title="Menú">☰</button>` : ""}
+      ${conMenu ? `<button class="hb-menu" onclick="abrirMenu()" aria-label="Abrir el menú" title="Menú">${icono("menu", 20)}</button>` : ""}
       <img src="data:image/png;base64,${LOGO}" class="header-logo" alt="Logo"/>
       <div class="hb-titulo">
-        <div class="header-label">${conMenu ? actual.grupo || "Sistema de Gestión" : "Sistema de Gestión"}</div>
-        <div class="header-name"><span aria-hidden="true">${actual.ico}</span> ${actual.nombre}</div>
+        <div class="header-name">${actual.nombre}</div>
       </div>
       <div class="hb-acciones">
-      ${rolUsuario !== "docente" ? `<button class="logout-btn busq-btn" onclick="abrirBuscador()" title="Buscar o preguntar (Ctrl+K)">🔍 <span class="busq-btn-txt">Buscar</span></button><button class="logout-btn hb-tasa${tasaHoy() ? "" : " sin-tasa"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día"><span class="hb-tasa-larga">${chipTasaTxt()}</span><span class="hb-tasa-corta">${chipTasaCorta()}</span></button>` : ""}
+      ${rolUsuario !== "docente" ? `<button class="logout-btn busq-btn" onclick="abrirBuscador()" title="Buscar o preguntar (Ctrl+K)">${icono("buscar", 16)}<span class="busq-btn-txt">Buscar</span></button><button class="logout-btn hb-tasa${tasaHoy() ? "" : " sin-tasa"}" onclick="abrirModal({tipo:'tasa'})" title="Tasa BCV del día"><span class="hb-tasa-larga">${chipTasaTxt()}</span><span class="hb-tasa-corta">${chipTasaCorta()}</span></button>` : ""}
       ${selectorAnio("hb-anio")}
       ${botonTema()}${botonInstalar()}<button class="logout-btn hb-salir" onclick="logout()" title="Cerrar sesión">Salir</button>
       </div>
@@ -65,7 +66,7 @@ ${bannerTasa()}
     rapidos.length > 1
       ? `<nav class="barra-inferior" aria-label="Accesos rápidos">${rapidos.map((t) => boton(t, "bi-tab")).join("")}${
           conMenu
-            ? `<button class="bi-tab bi-mas${rapidos.some((t) => t.k === tabActual) ? "" : " active"}" onclick="abrirMenu()" aria-label="Más opciones"><span class="tab-ico" aria-hidden="true">☰<span class="insignia" data-insignia="mas" hidden></span></span><span class="tab-txt">Más</span></button>`
+            ? `<button class="bi-tab bi-mas${rapidos.some((t) => t.k === tabActual) ? "" : " active"}" onclick="abrirMenu()" aria-label="Más opciones"><span class="tab-ico" aria-hidden="true">${icono("mas")}<span class="insignia" data-insignia="mas" hidden></span></span><span class="tab-txt">Más</span></button>`
             : ""
         }</nav>`
       : ""
@@ -74,8 +75,7 @@ ${bannerTasa()}
   ${modalActual ? renderModal() : ""}`;
   const rl = document.getElementById("rol-lbl");
   if (rl)
-    rl.textContent =
-      rolUsuario === "director" ? "👑 Director" : rolUsuario === "docente" ? "📝 Docente" : "✏️ Administradora";
+    rl.textContent = rolUsuario === "director" ? "Director" : rolUsuario === "docente" ? "Docente" : "Administradora";
   menuAbierto = false;
   sincronizarMenu();
   pintarInsignias();
@@ -224,7 +224,7 @@ function mostrarToast(msg) {
       "position:fixed;bottom:calc(var(--alto-barra, 0px) + 1.5rem);left:50%;transform:translateX(-50%);background:#003366;color:#fff;padding:0.65rem 1.2rem;border-radius:24px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,51,102,0.3);transition:opacity 0.3s";
     document.body.appendChild(t);
   }
-  t.textContent = msg;
+  t.textContent = sinEmojiInicial(msg);
   t.style.opacity = "1";
   setTimeout(() => {
     t.style.opacity = "0";

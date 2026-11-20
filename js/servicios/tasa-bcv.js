@@ -215,17 +215,17 @@ function recordarTasa(fecha, valor) {
 function chipTasaTxt() {
   const t = tasaDe(todayStr());
   return t && t.exacta
-    ? "💱 Bs " + fmtTasa(t.valor)
+    ? "Bs " + fmtTasa(t.valor)
     : t
-      ? "⚠️ Bs " + fmtTasa(t.valor) + " (" + fechaCorta(t.fecha).slice(0, 5) + ")"
-      : "⚠️ Sin tasa hoy";
+      ? "Bs " + fmtTasa(t.valor) + " (" + fechaCorta(t.fecha).slice(0, 5) + ")"
+      : "Sin tasa hoy";
 }
 // Aviso amarillo bajo la cabecera cuando falta la tasa de hoy
 function bannerTasa() {
   if (rolUsuario === "docente" || soloLectura()) return "";
   const t = tasaDe(todayStr());
   if (t && t.exacta) return "";
-  return `<div style="background:#fff3cd;border-bottom:2px solid #b8860b;color:#7a5c00;padding:0.5rem 1rem;font-size:0.8rem;text-align:center">💱 Falta la tasa BCV de hoy. <a href="#" onclick="abrirModal({tipo:'tasa'});return false" style="color:#003366;font-weight:700">Cargarla</a> para que los pagos y recibos salgan con su valor en Bs.</div>`;
+  return `<div class="aviso-tasa">Falta la tasa BCV de hoy. <a href="#" onclick="abrirModal({tipo:'tasa'});return false">Cargarla</a> para que los pagos y recibos salgan con su valor en Bs.</div>`;
 }
 // Ventana para cargar o corregir la tasa BCV de un día
 function renderModalTasa() {

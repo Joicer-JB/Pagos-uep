@@ -49,7 +49,7 @@ test("control de estudio ve todos los grados y carga la nota de cada lapso, sin 
   // Una casilla por materia, todas habilitadas, y nada de evaluaciones ni plan
   for (const m of ["Matemáticas", "Lengua y Literatura", "Inglés"])
     assert.equal(await s.pagina.isDisabled(campo(m)), false);
-  assert.equal(await s.pagina.locator("text=⚙️ Plan").count(), 0);
+  assert.equal(await s.pagina.locator("text=Plan").count(), 0);
   assert.equal(await s.pagina.locator(".eval-celda").count(), 0);
 
   await s.pagina.fill(campo("Matemáticas"), "16.5");

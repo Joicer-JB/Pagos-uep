@@ -65,7 +65,7 @@ before(async () => {
   await s.pagina.click("#login-btn");
   await s.pagina.waitForSelector(".tabs .tab");
   await llamar(`setTab("notas")`);
-  await s.pagina.click("text=🏆 Cuadro de honor");
+  await s.pagina.click("text=Cuadro de honor");
   await s.pagina.waitForSelector(".cuadro-honor");
 });
 after(async () => nav && nav.cerrar());
@@ -139,7 +139,7 @@ test("por lapso, e impreso para la cartelera", async () => {
   assert.match(await s.pagina.textContent(".cuadro-honor"), /Todavía no hay estudiantes .* en el Lapso 2/);
   await s.pagina.selectOption("#honor-periodo", "Lapso 1");
   await s.pagina.waitForSelector(".honor-anios-tabla");
-  await s.pagina.click("text=🖨️ Imprimir");
+  await s.pagina.click("text=Imprimir");
   const html = await llamar(`window.__IMPRESIONES__.at(-1).html`);
   assert.match(html, /CUADRO DE HONOR/);
   assert.match(html, /Años con mejor promedio[\s\S]*1er Año[\s\S]*17,3/);

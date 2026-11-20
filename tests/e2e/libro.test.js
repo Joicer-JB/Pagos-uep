@@ -40,7 +40,7 @@ test("el libro del mes muestra los totales y cada movimiento con su documento y 
 });
 
 test("se descarga en Excel con el libro y el resumen", async () => {
-  const [descarga] = await Promise.all([s.pagina.waitForEvent("download"), s.pagina.click("text=📥 Excel")]);
+  const [descarga] = await Promise.all([s.pagina.waitForEvent("download"), s.pagina.click("text=Excel")]);
   assert.equal(descarga.suggestedFilename(), "libro_ingresos_egresos_2026-10.xlsx");
   const wb = XLSX.readFile(await descarga.path());
   assert.deepEqual(wb.SheetNames, ["Libro", "Resumen"]);
@@ -53,9 +53,9 @@ test("se descarga en Excel con el libro y el resumen", async () => {
   assert.deepEqual([tot[7], tot[8], tot[12]], [L.ingresos, L.egresos, L.neto]);
   // y del año completo
   await s.pagina.check("#libro-anual");
-  const [d2] = await Promise.all([s.pagina.waitForEvent("download"), s.pagina.click("text=📥 Excel")]);
+  const [d2] = await Promise.all([s.pagina.waitForEvent("download"), s.pagina.click("text=Excel")]);
   assert.equal(d2.suggestedFilename(), "libro_ingresos_egresos_2026.xlsx");
-  await s.pagina.click("text=🖨️ Imprimir");
+  await s.pagina.click("text=Imprimir");
   assert.match(await llamar(`window.__IMPRESIONES__.at(-1).html`), /Libro de ingresos y egresos · Año 2026/);
   assert.deepEqual(s.errores, []);
 });

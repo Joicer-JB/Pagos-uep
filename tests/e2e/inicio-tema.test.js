@@ -85,24 +85,24 @@ test("meta de cobranza del mes: avance, la meta se cambia y al cumplirla sale co
   assert.equal(await s.pagina.$("#confeti"), null);
 });
 
-test("tema: 🌓 automático → 🌙 oscuro → ☀️ claro, y queda guardado en el equipo", async () => {
+test("tema: automático → oscuro → claro, y queda guardado en el equipo", async () => {
   const s = await entrar("herrerajoicer@gmail.com");
   const oscuro = () => s.llamar(`document.documentElement.classList.contains("tema-oscuro")`);
-  assert.equal(await s.pagina.textContent("#btn-tema"), "🌓");
+  assert.equal(await s.pagina.getAttribute("#btn-tema", "aria-label"), "Tema: Automático");
   await s.pagina.click("#btn-tema");
   assert.equal(await oscuro(), true);
-  assert.equal(await s.pagina.textContent("#btn-tema"), "🌙");
+  assert.equal(await s.pagina.getAttribute("#btn-tema", "aria-label"), "Tema: Oscuro");
   assert.equal(await s.llamar(`localStorage.getItem("tema")`), "oscuro");
   // Colores oscuros, también en lo que trae color escrito en el HTML
-  assert.equal(await s.llamar(`getComputedStyle(document.body).backgroundColor`), "rgb(11, 21, 38)");
+  assert.equal(await s.llamar(`getComputedStyle(document.body).backgroundColor`), "rgb(18, 26, 38)");
   assert.notEqual(
     await s.llamar(`getComputedStyle(document.querySelector(".card")).backgroundColor`),
     "rgb(255, 255, 255)"
   );
-  assert.equal(await s.llamar(`document.querySelector('meta[name="theme-color"]').content`), "#0b1526");
+  assert.equal(await s.llamar(`document.querySelector('meta[name="theme-color"]').content`), "#121a26");
   await s.pagina.click("#btn-tema");
   assert.equal(await oscuro(), false);
-  assert.equal(await s.pagina.textContent("#btn-tema"), "☀️");
+  assert.equal(await s.pagina.getAttribute("#btn-tema", "aria-label"), "Tema: Claro");
   await s.pagina.click("#btn-tema");
   assert.equal(await s.llamar(`localStorage.getItem("tema")`), null); // automático
   // Automático sigue al equipo
