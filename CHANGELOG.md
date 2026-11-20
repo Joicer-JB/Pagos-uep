@@ -1,5 +1,21 @@
 # Historial de cambios
 
+## Noviembre 2026 — Diseño más serio, con el azul del colegio
+
+- **Nueva apariencia** en todas las pantallas: menú lateral azul marino con detalles dorados, fondo claro, tarjetas
+  planas con borde fino, sin degradados ni sombras grandes. Con el **tema oscuro** (botón de tema arriba) se ve la
+  misma estructura en azul noche.
+- El menú tiene **íconos de línea** en vez de emojis, y sus secciones (**Cobros**, **Colegio**, **Administración**)
+  se **recogen y se abren** tocando su título. Quedan como se dejaron en cada equipo; la sección de la pantalla
+  abierta siempre se ve.
+- Los rótulos y botones de la pantalla ya no llevan el **emoji del comienzo** («Guardar» en vez de «💾 Guardar»).
+  Los estados y los íconos que van solos se quedan.
+- **Pagos**: arriba, lo recaudado y cuánto entró por cada forma de pago en fichas; debajo, los pagos en una **tabla**
+  (estudiante, recibo y fecha, forma de pago y concepto, monto en $ y en Bs.). En el teléfono cada pago sigue en dos
+  líneas.
+- **No cambian** las boletas, sábanas, recibos, constancias ni los mensajes de WhatsApp: salen exactamente igual.
+- Más liviano para las PC sencillas: sin efectos de vidrio ni degradados, y con las letras que ya trae la computadora.
+
 ## Noviembre 2026 — Boleta sin inasistencias
 
 - La boleta de **media general** ya no muestra la columna de **inasistencias** de cada lapso. Las inasistencias se

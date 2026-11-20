@@ -69,12 +69,12 @@ test("al subir el estado de cuenta detecta las columnas y compara con los cobros
   assert.match(noBanco, /FAC-0000090 · Luis Alberto Gómez/);
   assert.match(noBanco, /FAC-0000091 · Valentina Rojas/);
   assert.equal(await s.pagina.$(".conc-monto-distinto"), null);
-  await s.pagina.click("text=🖨️ Imprimir");
+  await s.pagina.click("text=Imprimir");
   assert.match(await llamar(`window.__IMPRESIONES__.at(-1).html`), /Entró al banco y no está registrado[\s\S]*445566/);
 });
 
 test("lo que entró y nadie registró se registra desde ahí, con la fecha, la referencia y el monto en $", async () => {
-  await s.pagina.click(".conc-sin-registrar >> text=➕ Registrar");
+  await s.pagina.click(".conc-sin-registrar >> text=Registrar");
   await s.pagina.waitForSelector("#p-ref");
   assert.equal(await llamar(`tabActual + "/" + subTab.pagos`), "pagos/nuevo");
   assert.equal(await s.pagina.inputValue("#p-fecha"), "2026-10-03");

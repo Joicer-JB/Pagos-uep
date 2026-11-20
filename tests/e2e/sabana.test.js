@@ -85,7 +85,7 @@ async function entrar(correo) {
 }
 async function abrirSabana() {
   await llamar(`setTab("notas")`);
-  await s.pagina.click("text=📋 Sábana de notas");
+  await s.pagina.click("text=Sábana de notas");
   await s.pagina.waitForSelector(".sab-tabla");
 }
 
@@ -155,7 +155,7 @@ test("un lapso y el detalle por materia, con cada evaluación y su porcentaje", 
   const det = await s.pagina.textContent(".modal-body");
   assert.match(det, /Prueba escrita 40%: 18/);
   assert.match(det, /Promedio: 15,6/);
-  await s.pagina.click(".modal >> text=🖨️ Imprimir");
+  await s.pagina.click(".modal >> text=Imprimir");
   assert.match(await llamar(`window.__IMPRESIONES__.at(-1).html`), /DETALLE DE EVALUACIONES[\s\S]*Taller 30%/);
   await llamar(`cerrarModal()`);
   assert.deepEqual(s.errores, []);
@@ -171,11 +171,11 @@ test("al final de los 3 lapsos el director cambia la nota por decisión del cons
   await s.pagina.waitForSelector("#aj-nota");
   assert.match(await s.pagina.textContent(".modal-body"), /Nota que dan las evaluaciones\s*9/);
   await s.pagina.fill("#aj-nota", "10");
-  await s.pagina.click("text=💾 Guardar");
+  await s.pagina.click("text=Guardar");
   assert.match(await s.pagina.textContent("#aj-res"), /motivo/); // sin motivo no se guarda
   await s.pagina.fill("#aj-motivo", "Consejo de sección: buen desempeño en el lapso");
   await s.pagina.fill("#aj-acta", "Acta N° 1");
-  await s.pagina.click("text=💾 Guardar");
+  await s.pagina.click("text=Guardar");
   await s.pagina.waitForSelector(".sab-ajustes >> text=Andrea Blanco");
 
   const doc = await notaDoc("est7_Definitiva");
@@ -201,7 +201,7 @@ test("al final de los 3 lapsos el director cambia la nota por decisión del cons
   await fila("Luis Alberto Gómez").locator("td").nth(7).click();
   await s.pagina.fill("#aj-nota", "16");
   await s.pagina.fill("#aj-motivo", "Revisión del consejo final");
-  await s.pagina.click("text=💾 Guardar");
+  await s.pagina.click("text=Guardar");
   await s.pagina.waitForSelector(".sab-ajustes >> text=Revisión del consejo final");
   assert.equal((await notaDoc("est2_Definitiva")).consejo.Matemáticas.original, 15.2);
   assert.equal(await fila("Luis Alberto Gómez").locator("td").last().textContent(), "16"); // el promedio cuenta la M: (16 + 16) / 2
@@ -228,7 +228,7 @@ test("al final de los 3 lapsos el director cambia la nota por decisión del cons
 });
 
 test("se imprime en hoja horizontal y se descarga en Excel, con los cambios del consejo", async () => {
-  await s.pagina.click("text=🖨️ Imprimir");
+  await s.pagina.click("text=Imprimir");
   const html = await llamar(`window.__IMPRESIONES__.at(-1).html`);
   assert.match(html, /SÁBANA DE NOTAS/);
   assert.match(html, /@page\{size:legal landscape/); // hoja oficio horizontal
@@ -238,7 +238,7 @@ test("se imprime en hoja horizontal y se descarga en Excel, con los cambios del 
   assert.match(html, /Cambios del consejo[\s\S]*Revisión del consejo final/);
   assert.doesNotMatch(html, /onclick="abrirAjusteConsejo/); // en papel no hay toques
 
-  const [descarga] = await Promise.all([s.pagina.waitForEvent("download"), s.pagina.click("text=📥 Excel")]);
+  const [descarga] = await Promise.all([s.pagina.waitForEvent("download"), s.pagina.click("text=Excel")]);
   assert.equal(descarga.suggestedFilename(), "sabana_1er_Ano_anio.xlsx");
   const wb = XLSX.readFile(await descarga.path());
   assert.deepEqual(wb.SheetNames, ["Sábana", "Cambios del consejo"]);
@@ -264,12 +264,12 @@ test("plan de evaluación: nombres y porcentajes que deben sumar 100%, en uno o 
   await s.pagina.dispatchEvent("#plan-nombre-0", "change");
   await s.pagina.fill("#plan-peso-0", "50");
   await s.pagina.fill("#plan-peso-1", "30");
-  await s.pagina.click("text=💾 Guardar plan");
+  await s.pagina.click("text=Guardar plan");
   assert.match(await s.pagina.textContent("#plan-res"), /suman 80%/);
   await s.pagina.fill("#plan-peso-2", "20");
   assert.match(await s.pagina.textContent("#plan-suma"), /suman 100%/);
   await s.pagina.check("#plan-todos");
-  await s.pagina.click("text=💾 Guardar plan");
+  await s.pagina.click("text=Guardar plan");
   await s.pagina.waitForFunction(() => !document.querySelector(".modal"));
   const plan = await notaDoc("plan__1er Año");
   for (const l of ["Lapso 1", "Lapso 2", "Lapso 3"])
@@ -303,6 +303,6 @@ test("los docentes ven la sábana pero no pueden cambiar notas por consejo", asy
   );
   // El plan de evaluación sí lo pueden armar
   await llamar(`filtros.notasVista = "estudiante"; filtros.estSelId = "est2"; renderTabContent()`);
-  assert.ok((await s.pagina.locator("text=⚙️ Plan").count()) > 0);
+  assert.ok((await s.pagina.locator("text=Plan").count()) > 0);
   assert.deepEqual(s.errores, []);
 });

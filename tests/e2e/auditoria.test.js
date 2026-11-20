@@ -42,7 +42,7 @@ test("cada cobro guarda quién lo registró, y se ve en la lista de pagos y en e
   assert.equal(w.length, 1);
   assert.equal(w[0].datos.registradoPor, ADMIN);
   await s.llamar(`setTab("pagos"); subTab.pagos = "historial"; renderTabContent()`);
-  assert.match(await s.pagina.textContent("#tab-content"), new RegExp(r.factura + " · .* · 👤 Administradora"));
+  assert.match(await s.pagina.textContent("#tab-content"), new RegExp(r.factura + " · .* · Administradora"));
   await s.llamar(`abrirModal({ tipo: "recibo", pago: pagos.find((p) => p.factura === ${JSON.stringify(r.factura)}) })`);
   assert.match(await s.pagina.textContent(".recibo-quien"), /Registrado por Administradora/);
   assert.deepEqual(s.errores, []);

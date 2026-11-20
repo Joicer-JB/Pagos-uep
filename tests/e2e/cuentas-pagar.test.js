@@ -24,7 +24,7 @@ before(async () => {
 after(async () => nav && nav.cerrar());
 
 async function nueva(desc, monto, moneda, vence, rec) {
-  await s.pagina.click("text=➕ Nueva cuenta por pagar");
+  await s.pagina.click("text=Nueva cuenta por pagar");
   await s.pagina.fill("#cp-desc", desc);
   await s.pagina.fill("#cp-prov", "Proveedor " + desc);
   await s.pagina.fill("#cp-monto", monto);
@@ -42,10 +42,10 @@ test("se anotan con su vencimiento y se ven por fecha, con lo vencido y lo de la
   assert.ok(
     lista.indexOf("Impuesto municipal") < lista.indexOf("Luz") && lista.indexOf("Luz") < lista.indexOf("Alquiler")
   );
-  assert.match(await s.pagina.textContent(".cuenta-pagar:has-text('Impuesto')"), /⚠️ Vencida/);
+  assert.match(await s.pagina.textContent(".cuenta-pagar:has-text('Impuesto')"), /Vencida/);
   assert.match(
     await s.pagina.textContent(".cuenta-pagar:has-text('Luz')"),
-    /⏰ Vence pronto[\s\S]*Bs\. 18\.450,00[\s\S]*≈ \$ 100,00/
+    /Vence pronto[\s\S]*Bs\. 18\.450,00[\s\S]*≈ \$ 100,00/
   );
   assert.match(await s.pagina.textContent(".cuenta-pagar:has-text('Alquiler')"), /🔁 cada mes/);
   assert.match(

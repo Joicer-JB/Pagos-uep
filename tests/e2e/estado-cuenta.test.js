@@ -24,7 +24,7 @@ before(async () => {
 after(async () => nav && nav.cerrar());
 
 test("se imprime desde la ficha: cuotas del año, recibos y total a pagar hoy", async () => {
-  await s.pagina.click("text=🧾 Estado de cuenta");
+  await s.pagina.click("button:has-text('Estado de cuenta')");
   const t = texto(await llamar(`window.__IMPRESIONES__.at(-1).html`));
   for (const parte of [
     "Estado de cuenta",

@@ -37,7 +37,7 @@ test("becado todo el año: en su ficha, beca 100%; no debe mensualidades", async
   await llamar(`abrirModal({ tipo: "ver-estudiante", id: "est6" })`);
   const t = await s.pagina.textContent(".modal");
   assert.match(t, /Becado todo el año: no paga mensualidades · Hijo del personal/);
-  assert.match(t, /🎓 Becado/);
+  assert.match(t, /Becado/);
   await llamar(`cerrarModal()`);
   // En la lista de estudiantes
   await llamar(`setTab("estudiantes")`);

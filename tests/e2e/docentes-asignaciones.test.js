@@ -55,7 +55,7 @@ test("la profesora ve solo sus grados y carga solo sus materias", async () => {
   assert.equal(await s.pagina.isDisabled("[id='nota_est2_Lapso 1_Inglés_1']"), false);
   assert.equal(await s.pagina.isDisabled("[id='nota_est2_Lapso 1_Matemáticas_1']"), true);
   assert.equal(await s.pagina.isDisabled("[id='nota_est2_Lapso 1_Lengua y Literatura_1']"), true);
-  assert.equal(await s.pagina.locator("text=⚙️ Plan").count(), 1);
+  assert.equal(await s.pagina.locator("text=Plan").count(), 1);
   await s.llamar(`abrirPlanEvaluacion("1er Año", "Matemáticas", "Lapso 1")`);
   assert.equal(await s.pagina.locator("#plan-nombre-0").count(), 0);
   assert.match(s.dialogos.at(-1), /lo arma su profesor/);
@@ -89,7 +89,7 @@ test("el director ve todo, con quién da cada materia, y el boletín de primaria
   // ⚙️ Config → 🏫 Institución: el profesor guía de 1er Año
   await s.llamar(`setTab("config"); subTab.config = "institucion"; renderTabContent()`);
   await s.pagina.fill(".inst-guia[data-grado='1er Año']", "Prof. Ramón Díaz");
-  await s.pagina.click("text=💾 Guardar datos institucionales");
+  await s.pagina.click("text=Guardar datos institucionales");
   await s.pagina.waitForFunction(() => configInst.guias && configInst.guias["1er Año"]);
   const inst = await s.llamar(`JSON.parse(JSON.stringify(__DATOS_FALSOS__.config.get("institucion")))`);
   assert.deepEqual(inst.guias, { "1er Año": "Prof. Ramón Díaz" });

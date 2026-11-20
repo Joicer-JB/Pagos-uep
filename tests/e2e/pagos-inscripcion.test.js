@@ -185,13 +185,13 @@ test("no deja registrar de nuevo la inscripción o un mes que ya están cancelad
   await llamar(`guardarPago()`);
   assert.match(
     await s.pagina.textContent("#p-err"),
-    /⛔ Ya canceló el carnet y la papelería de este año\. Está en: .+\. No se puede registrar de nuevo/
+    /Ya canceló el carnet y la papelería de este año\. Está en: .+\. No se puede registrar de nuevo/
   );
   await s.pagina.selectOption("#p-concepto", "Mensualidad");
   await s.pagina.selectOption("#p-mes", "Septiembre");
   await s.pagina.fill("#p-total", "45");
   await llamar(`guardarPago()`);
-  assert.match(await s.pagina.textContent("#p-err"), /⛔ Ya canceló la mensualidad de Septiembre 2026/);
+  assert.match(await s.pagina.textContent("#p-err"), /Ya canceló la mensualidad de Septiembre 2026/);
   assert.equal(await llamar(`window.__ESCRITURAS__.length`), antes); // no se guardó nada
   assert.deepEqual(s.errores, []);
 });

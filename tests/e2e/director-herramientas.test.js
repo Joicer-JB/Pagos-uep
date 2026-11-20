@@ -43,14 +43,14 @@ test("Inicio: el resumen de la quincena que terminó, hasta marcarlo como visto"
   assert.equal(r.conDeuda + r.alDia, r.activos);
   assert.equal(r.q.desde, "2026-09-16");
   assert.ok(r.entradas >= r.cobros.usd);
-  assert.match(t, new RegExp(String(r.conDeuda) + "\\s*⚠️ Deben o tienen mora"));
+  assert.match(t, new RegExp(String(r.conDeuda) + "\\s*Deben o tienen mora"));
   // por WhatsApp va el texto (a quien él elija: él mismo)
   await llamar(`whatsappResumenQuincenal("2026-09-16")`);
   assert.match(
     decodeURIComponent(await llamar(`window.__APERTURAS__.at(-1)`)),
     /RESUMEN DE LA 2ª QUINCENA DE SEPTIEMBRE/
   );
-  await s.pagina.click(".aviso-quincenal >> text=✅ Visto");
+  await s.pagina.click(".aviso-quincenal >> text=Visto");
   assert.equal(await s.pagina.locator(".aviso-quincenal").count(), 0);
   assert.equal(await llamar(`__DATOS_FALSOS__.config.get("resumenQuincenal").visto`), "2026-09-Q2");
 });
@@ -125,7 +125,7 @@ test("Estudiantes: inscritos (sin retirados ni graduados) y matrícula por grado
   await llamar(`setTab("estudiantes")`);
   await s.pagina.waitForSelector(".matricula-grado");
   // Semilla: 6 fichas, una retirada (Sofía, 3er Grado)
-  assert.match(await texto(".stats-grid"), /5\s*🎒 Inscritos/);
+  assert.match(await texto(".stats-grid"), /5\s*Inscritos/);
   assert.match(await texto(".matricula-grado summary"), /5 inscritos · 1 retirados/);
   const m = await llamar(`JSON.parse(JSON.stringify(matriculaPorGrado(estudiantes)))`);
   const tercero = m.filas.find((f) => f.grado === "3er Grado");
