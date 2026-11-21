@@ -220,7 +220,7 @@ function renderConfigMaterias() {
         .join("")}
     </div>
     <div style="display:flex;gap:0.5rem">
-      <input class="inp" id="nueva-materia" placeholder="Nombre de ${nivel ? "el área" : "la materia"}..." style="flex:1;padding:0.5rem 0.75rem;font-size:0.82rem" onkeydown="if(event.key==='Enter')agregarMateria('${grado}')"/>
+      <input class="inp" id="nueva-materia" placeholder="Nombre ${nivel ? "del área" : "de la materia"}..." style="flex:1;padding:0.5rem 0.75rem;font-size:0.82rem" onkeydown="if(event.key==='Enter')agregarMateria('${grado}')"/>
       <button class="btn btn-primary btn-sm" onclick="agregarMateria('${grado}')">+ Agregar</button>
     </div>
   </div>
