@@ -1,10 +1,16 @@
 // Pestaña Notas: carga de notas por lapso (literales en preescolar/primaria, numéricas en media) y nota final.
 
-// Áreas o materias que se evalúan en un grado. En media general salen de Configuración → Materias.
+// Áreas o materias que se evalúan en un grado. Todas salen de Configuración → Materias: en media general una lista
+// por año; en primaria una para todos los grados y en preescolar otra (config/areas). Mientras el director no
+// guarde la lista de primaria o preescolar, se usa la de siempre (AREAS_PRIMARIA / AREAS_MATERNAL).
+function areasDeNivel(nivel) {
+  const propias = (configAreas || {})[nivel];
+  if (Array.isArray(propias) && propias.length) return [...propias];
+  return [...(nivel === "preescolar" ? AREAS_MATERNAL : AREAS_PRIMARIA)];
+}
 function getAreas(grado) {
   const nivel = getNivel(grado);
-  if (nivel === "preescolar") return [...AREAS_MATERNAL];
-  if (nivel === "primaria") return [...AREAS_PRIMARIA];
+  if (nivel === "preescolar" || nivel === "primaria") return areasDeNivel(nivel);
   return configMaterias[grado] || MATERIAS;
 }
 // Indicadores de un área en un lapso. Cada lapso tiene los suyos («grado__lapso__área»); mientras un lapso no

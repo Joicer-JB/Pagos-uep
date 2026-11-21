@@ -45,6 +45,7 @@ const ESTILOS_BOLETIN = `
   .b-hoja>*:not(.b-marca){position:relative;z-index:1}
   .b-enc{display:flex;align-items:center;gap:14px}
   .b-escudo{width:78px;height:78px;object-fit:contain;flex-shrink:0}
+  .b-min{width:118px;max-height:64px;object-fit:contain;flex-shrink:0}
   .b-inst{flex:1;text-align:center}
   .b-rep{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#5b6577}
   .b-inst h1{font-family:Georgia,"Times New Roman",serif;font-size:21px;color:#003366;margin:3px 0 2px;letter-spacing:.01em}
@@ -133,15 +134,18 @@ function encabezadoBoletin(est, nivelTexto) {
     inst.direccion || "Turumo - Caucagüita, Estado Miranda",
     "Código del plantel " + (inst.codigo || "PD13831519"),
   ].filter(Boolean); // el RIF va en los recibos, no en el boletín
+  // Logo del Ministerio (Configuración → Institución), pegado a la orilla derecha de la hoja, como en primaria
+  const ministerio = logoSeguro((configLogos || {}).ministerio);
   return `<img class="b-marca" src="data:image/png;base64,${LOGO}" alt=""/>
   <header class="b-enc">
     <img class="b-escudo" src="data:image/png;base64,${LOGO}" alt="Escudo"/>
     <div class="b-inst">
-      <div class="b-rep">República Bolivariana de Venezuela · Ministerio del Poder Popular para la Educación</div>
+      <div class="b-rep">República Bolivariana de Venezuela${ministerio ? "<br/>" : " · "}Ministerio del Poder Popular para la Educación</div>
       <h1>${escHtml(inst.nombre || "U.E.P. Josefa Joaquina Sánchez")}</h1>
       <div class="b-dir">${extra.map(escHtml).join(" · ")}</div>
     </div>
     <div class="b-sello"><span>Boletín de</span><strong>Calificaciones</strong><span>${escHtml(nivelTexto)}</span><em>${escHtml(anioBoletin(est))}</em></div>
+    ${ministerio ? `<img class="b-min" src="${ministerio}" alt="Ministerio del Poder Popular para la Educación"/>` : ""}
   </header>
   ${franjaBandera("9px 0 10px")}
   <section class="b-est">
