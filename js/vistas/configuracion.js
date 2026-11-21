@@ -1,7 +1,8 @@
 // Pestaña Configuración: docentes, materias, indicadores y datos de la institución.
 
 let configDocentes = [];
-let configMaterias = {}; // {grado: [materias]}
+let configMaterias = {}; // {grado: [materias]} — media general, una lista por año
+let configAreas = {}; // {primaria: [áreas], preescolar: [áreas]} — config/areas; vacío = las de siempre
 let configIndicadores = {}; // {grado__lapso__área: [indicadores], grado__área: [...] (todo el año), proyecto__grado__lapso: nombre}
 let configInst = {};
 let configLogos = {}; // {ministerio: "data:image/png;base64,…"} — logos que sube el director (config/logos)
@@ -10,22 +11,25 @@ let configRespaldo = null; // { ultimo: "YYYY-MM-DD" } — fecha del último res
 // La lista de docentes solo la carga el director: las reglas de Firestore no dejan leer "usuarios" a los demás.
 async function cargarConfig() {
   try {
-    const [instSnap, matSnap, indSnap] = await Promise.all([
+    // El logo del Ministerio lo usan los boletines y constancias, que también imprimen docentes y control de estudio
+    const [instSnap, matSnap, indSnap, logosSnap, areasSnap] = await Promise.all([
       db.collection("config").doc("institucion").get(),
       db.collection("config").doc("materias").get(),
       db.collection("config").doc("indicadores").get(),
+      db.collection("config").doc("logos").get(),
+      db.collection("config").doc("areas").get(),
     ]);
+    configAreas = areasSnap.exists ? areasSnap.data() : {};
     if (instSnap.exists) configInst = instSnap.data();
     if (matSnap.exists) configMaterias = matSnap.data();
     if (indSnap.exists) configIndicadores = indSnap.data();
+    configLogos = logosSnap.exists ? logosSnap.data() : {};
     if (rolUsuario === "director") {
-      const [docsSnap, respSnap, rqSnap, logosSnap] = await Promise.all([
+      const [docsSnap, respSnap, rqSnap] = await Promise.all([
         db.collection("usuarios").where("rol", "==", "docente").get(),
         db.collection("config").doc("respaldo").get(),
         db.collection("config").doc("resumenQuincenal").get(),
-        db.collection("config").doc("logos").get(),
       ]);
-      configLogos = logosSnap.exists ? logosSnap.data() : {};
       configDocentes = docsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
       configRespaldo = respSnap.exists ? respSnap.data() : { ultimo: "" };
       configResumenQ = rqSnap.exists ? rqSnap.data() : { visto: "" };
@@ -158,18 +162,49 @@ function renderConfigDocentes() {
   </div>`
   }`;
 }
+// En Materias se elige un año de media general o la lista de primaria (todos los grados) o de preescolar
+const NIVELES_MATERIAS = [
+  ["nivel:primaria", "Primaria (1er a 6to grado)"],
+  ["nivel:preescolar", "Preescolar"],
+];
+const nivelDeClave = (clave) => (String(clave).startsWith("nivel:") ? clave.slice(6) : null);
+const nombreListaMaterias = (clave) => (NIVELES_MATERIAS.find(([k]) => k === clave) || [clave, clave])[1];
+// La lista que se está editando. La de primaria o preescolar arranca con la de siempre si nunca se guardó.
+function listaMaterias(clave) {
+  const nivel = nivelDeClave(clave);
+  if (nivel) {
+    if (!Array.isArray(configAreas[nivel]) || !configAreas[nivel].length) configAreas[nivel] = areasDeNivel(nivel);
+    return configAreas[nivel];
+  }
+  if (!configMaterias[clave]) configMaterias[clave] = [];
+  return configMaterias[clave];
+}
 function renderConfigMaterias() {
   const grado = filtros.gradoConfig || GRADOS_MG[0];
-  const mats = configMaterias[grado] || [];
+  const nivel = nivelDeClave(grado);
+  const mats = nivel ? listaMaterias(grado) : configMaterias[grado] || [];
+  const nombre = escHtml(nombreListaMaterias(grado));
+  const chip = (g, texto, color) =>
+    `<button onclick="filtros.gradoConfig='${g}';renderTabContent()" style="padding:0.4rem 0.85rem;border-radius:20px;border:2px solid ${grado === g ? color : "#dde3f0"};background:${grado === g ? color : "#f8faff"};color:${grado === g ? "#fff" : "#555"};font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit">${escHtml(texto)}</button>`;
   return `
   <div style="margin-bottom:1rem">
     <label style="font-size:0.8rem;font-weight:700;color:#003366;display:block;margin-bottom:0.4rem">Selecciona el grado de Media General</label>
     <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
-      ${GRADOS_MG.map((g) => `<button onclick="filtros.gradoConfig='${g}';renderTabContent()" style="padding:0.4rem 0.85rem;border-radius:20px;border:2px solid ${grado === g ? "#003366" : "#dde3f0"};background:${grado === g ? "#003366" : "#f8faff"};color:${grado === g ? "#fff" : "#555"};font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit">${g}</button>`).join("")}
+      ${GRADOS_MG.map((g) => chip(g, g, "#003366")).join("")}
+    </div>
+    <label style="font-size:0.8rem;font-weight:700;color:#1a9e5c;display:block;margin:0.75rem 0 0.4rem">O las áreas de Primaria y Preescolar</label>
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+      ${NIVELES_MATERIAS.map(([k, t]) => chip(k, t, "#1a9e5c")).join("")}
     </div>
   </div>
+  ${
+    nivel
+      ? `<div class="ayuda" style="margin-bottom:0.75rem">Esta lista es la misma para todos los grados de ${nivel === "primaria" ? "primaria" : "preescolar"}: sale en Notas, en Indicadores y en la boleta, en este orden.
+      Si quitas o le cambias el nombre a un área, las notas e indicadores que ya estaban cargados con el nombre anterior no se borran, pero dejan de verse; si la vuelves a poner con el mismo nombre, aparecen otra vez.${nivel === "primaria" ? " «Inglés» se imprime como «Inglés y Computación»." : ""}</div>`
+      : ""
+  }
   <div style="background:#f8faff;border-radius:12px;padding:1rem;margin-bottom:1rem">
-    <div style="font-weight:700;color:#003366;margin-bottom:0.75rem;font-size:0.88rem">📚 Materias de ${grado} <span style="font-weight:400;color:#888">(${mats.length} materias)</span></div>
+    <div style="font-weight:700;color:#003366;margin-bottom:0.75rem;font-size:0.88rem">📚 ${nivel ? "Áreas" : "Materias"} de ${nombre} <span style="font-weight:400;color:#888">(${mats.length})</span></div>
     ${mats.length === 0 ? `<div style="color:#aaa;font-size:0.82rem;text-align:center;padding:1rem">Sin materias asignadas. Agrega la primera.</div>` : ""}
     <div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.75rem">
       ${mats
@@ -185,16 +220,17 @@ function renderConfigMaterias() {
         .join("")}
     </div>
     <div style="display:flex;gap:0.5rem">
-      <input class="inp" id="nueva-materia" placeholder="Nombre de la materia..." style="flex:1;padding:0.5rem 0.75rem;font-size:0.82rem" onkeydown="if(event.key==='Enter')agregarMateria('${grado}')"/>
+      <input class="inp" id="nueva-materia" placeholder="Nombre de ${nivel ? "el área" : "la materia"}..." style="flex:1;padding:0.5rem 0.75rem;font-size:0.82rem" onkeydown="if(event.key==='Enter')agregarMateria('${grado}')"/>
       <button class="btn btn-primary btn-sm" onclick="agregarMateria('${grado}')">+ Agregar</button>
     </div>
   </div>
-  <button class="btn btn-primary" onclick="guardarMaterias('${grado}')">💾 Guardar materias de ${grado}</button>`;
+  <button class="btn btn-primary" onclick="guardarMaterias('${grado}')">💾 Guardar ${nivel ? "áreas" : "materias"} de ${nombre}</button>
+  ${nivel ? `<button class="btn btn-gray" style="margin-left:0.5rem" onclick="restaurarAreas('${grado}')">↺ Volver a la lista original</button>` : ""}`;
 }
 function renderConfigIndicadores() {
   const grado = filtros.gradoIndConfig || GRADOS_PRIM[0];
   const esMaternal = ["Maternal", "Nivel I", "Nivel II", "Nivel III"].includes(grado);
-  const areas = esMaternal ? AREAS_MATERNAL : AREAS_PRIMARIA;
+  const areas = areasDeNivel(esMaternal ? "preescolar" : "primaria");
   const area = filtros.areaIndConfig || areas[0];
   const lapso = filtros.lapsoIndConfig || LAPSOS[0];
   // Cada lapso tiene sus indicadores; si el lapso todavía no tiene lista propia se muestra la de todo el año y
@@ -301,32 +337,51 @@ function renderConfigInstitucion() {
 function agregarMateria(grado) {
   const inp = document.getElementById("nueva-materia");
   if (!inp || !inp.value.trim()) return;
-  if (!configMaterias[grado]) configMaterias[grado] = [];
-  if (!configMaterias[grado].includes(inp.value.trim())) {
-    configMaterias[grado].push(inp.value.trim());
+  const lista = listaMaterias(grado);
+  const nombre = inp.value.trim();
+  if (!lista.includes(nombre)) {
+    lista.push(nombre);
     inp.value = "";
     renderTabContent();
   }
 }
 function eliminarMateria(grado, idx) {
-  if (!confirm("¿Eliminar esta materia?")) return;
-  configMaterias[grado].splice(idx, 1);
+  const aviso = nivelDeClave(grado)
+    ? "¿Quitar esta área? Las notas e indicadores ya cargados no se borran, pero dejan de verse mientras no esté en la lista."
+    : "¿Eliminar esta materia?";
+  if (!confirm(aviso)) return;
+  listaMaterias(grado).splice(idx, 1);
   renderTabContent();
 }
 function moverMateria(grado, idx, dir) {
-  const arr = configMaterias[grado];
+  const arr = listaMaterias(grado);
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= arr.length) return;
   [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
   renderTabContent();
 }
 async function guardarMaterias(grado) {
+  const nivel = nivelDeClave(grado);
   try {
-    await db.collection("config").doc("materias").set(configMaterias, { merge: true });
-    mostrarToast("✅ Materias de " + grado + " guardadas");
+    if (nivel) {
+      const lista = listaMaterias(grado);
+      if (!lista.length) return alert("La lista no puede quedar vacía: agrega al menos un área.");
+      await db
+        .collection("config")
+        .doc("areas")
+        .set({ [nivel]: lista }, { merge: true });
+    } else await db.collection("config").doc("materias").set(configMaterias, { merge: true });
+    mostrarToast("✅ " + (nivel ? "Áreas" : "Materias") + " de " + nombreListaMaterias(grado) + " guardadas");
   } catch (e) {
     alert("Error: " + e.message);
   }
+}
+// Deja la lista de primaria o preescolar como venía en la app (sin guardar hasta que se toque «Guardar»)
+function restaurarAreas(grado) {
+  const nivel = nivelDeClave(grado);
+  if (!nivel || !confirm("¿Volver a la lista original de áreas? Luego toca «Guardar» para que quede.")) return;
+  configAreas[nivel] = [...(nivel === "preescolar" ? AREAS_MATERNAL : AREAS_PRIMARIA)];
+  renderTabContent();
 }
 // La lista propia del lapso arranca como copia de la de todo el año (base), para no mover las notas ya cargadas
 function listaIndicadores(key, base) {

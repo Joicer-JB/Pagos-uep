@@ -147,7 +147,7 @@ function portadaBoletinPrimaria(est, esPreescolar) {
 function cuerpoBoletinPrimaria(est, lapso) {
   lapso = LAPSOS.includes(lapso) ? lapso : LAPSOS[0];
   const esPreescolar = getNivel(est.grado) === "preescolar";
-  const areas = esPreescolar ? AREAS_MATERNAL : AREAS_PRIMARIA;
+  const areas = areasDeNivel(esPreescolar ? "preescolar" : "primaria");
   const nl = LAPSOS.indexOf(lapso);
   const notasLapso = notas[`${est.id}_${lapso}`] || {};
   const proyecto = proyectoDe(est.grado, lapso);
