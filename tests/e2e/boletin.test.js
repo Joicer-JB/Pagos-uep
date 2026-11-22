@@ -109,10 +109,12 @@ test("media general: escudo, ficha, resumen y notas de cada lapso con la definit
     await p.textContent(".b-caja-info"),
     /Área a revisar\s*Lengua y Literatura\s*Definitiva: 8\s*Nota de revisión: por presentar/
   );
-  // Solo firman la directora y la coordinación (sin docente guía ni representante)
+  // Año y sección en negrita
+  assert.equal(await p.$eval(".b-nombre span", (e) => getComputedStyle(e).fontWeight), "800");
+  // Firman la directora, la coordinación y el representante (sin docente guía)
   const firmas = await p.textContent(".b-firmas");
-  assert.match(firmas, /Directora[\s\S]*Coordinación de Media General/);
-  assert.doesNotMatch(firmas, /Docente guía|Representante/);
+  assert.match(firmas, /Directora[\s\S]*Coordinación de Media General[\s\S]*Representante/);
+  assert.doesNotMatch(firmas, /Docente guía/);
   await p.close();
 });
 
@@ -137,16 +139,14 @@ test("en el boletín las notas van enteras (desde ,5 sube) y el cambio del conse
   await p.close();
 });
 
-test("primaria: un boletín por lapso con portada, la ✓ en la letra de cada indicador, la leyenda y las firmas", async () => {
+test("primaria: un boletín por lapso (portada solo en el 1er lapso), la ✓ en la letra de cada indicador, la leyenda y las firmas", async () => {
   await llamar(
     `configIndicadores["proyecto__3er Grado__Lapso 2"] = "Somos lectores"; configInst = { ...configInst, coordinadorPrimaria: "Prof. Luz M. Herrera" }; imprimirBoletin("est6", "Lapso 2")`
   );
   const p = await enPagina(await ultima());
-  assert.equal(await p.locator(".bp-hoja").count(), 2); // portada + indicadores
-  assert.match(await p.getAttribute(".bp-ninos", "src"), /^data:image\/jpeg;base64,\/9j\//); // la ilustración de la portada
-  assert.match(await p.textContent(".bp-titulo"), /SUBSISTEMA DE EDUCACIÓN PRIMARIA: 3ER GRADO/);
-  assert.match(await p.textContent(".bp-cuerpo"), /Miguel Ángel Torres[\s\S]*V-30666777[\s\S]*Laura Torres/);
-  assert.match(await p.textContent(".bp-autoridades"), /Prof. Luz M. Herrera[\s\S]*Lic. Ligia Herrera/);
+  // 2do lapso: sin portada (se imprime una sola vez, en el 1er lapso)
+  assert.equal(await p.locator(".bp-hoja").count(), 1);
+  assert.equal(await p.locator(".bp-titulo").count(), 0);
   assert.match(await p.textContent(".bp-lapso"), /Segundo lapso/);
   assert.match(await p.textContent(".bp-proyecto"), /Somos lectores/);
   // Lapso 2: «Suma y resta» A, «Multiplicación» B
@@ -162,9 +162,20 @@ test("primaria: un boletín por lapso con portada, la ✓ en la letra de cada in
   assert.match(await p.textContent(".bp-tabla"), /Inglés y Computación/);
   assert.equal(await p.locator(".bp-leyenda > div:not(.t)").count(), 5);
   assert.doesNotMatch(await p.textContent("body"), /asistencia/i); // sin asistencias ni inasistencias
-  assert.match(await p.textContent(".bp-firmas"), /Docente[\s\S]*Coordinadora[\s\S]*Directora/);
-  assert.doesNotMatch(await p.textContent(".bp-firmas"), /Representante/);
+  assert.match(
+    await p.textContent(".bp-firmas"),
+    /Docente[\s\S]*Coordinadora[\s\S]*Directora[\s\S]*Representante\s*Laura Torres/
+  );
   await p.close();
+  // 1er lapso: portada + indicadores
+  await llamar(`imprimirBoletin("est6", "Lapso 1")`);
+  const p1 = await enPagina(await ultima());
+  assert.equal(await p1.locator(".bp-hoja").count(), 2);
+  assert.match(await p1.getAttribute(".bp-ninos", "src"), /^data:image\/jpeg;base64,\/9j\//); // la ilustración de la portada
+  assert.match(await p1.textContent(".bp-titulo"), /SUBSISTEMA DE EDUCACIÓN PRIMARIA: 3ER GRADO/);
+  assert.match(await p1.textContent(".bp-cuerpo"), /Miguel Ángel Torres[\s\S]*V-30666777[\s\S]*Laura Torres/);
+  assert.match(await p1.textContent(".bp-autoridades"), /Prof. Luz M. Herrera[\s\S]*Lic. Ligia Herrera/);
+  await p1.close();
   // Inicial (Valentina, Nivel II): subsistema de Educación Inicial y firma la coordinadora de Inicial; sigue con «Inglés»
   await llamar(
     `configInst = { ...configInst, coordinadorInicial: "Lic. María Pérez" }; imprimirBoletin("est3", "Lapso 1")`
