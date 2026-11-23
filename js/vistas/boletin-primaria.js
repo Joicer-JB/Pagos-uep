@@ -1,7 +1,8 @@
 // Boletín informativo de preescolar y primaria, como el modelo del colegio: uno por lapso, con portada (membrete,
 // datos del estudiante, coordinadora y directora) y luego el proyecto del lapso y la tabla de áreas e indicadores
 // con la escala A-E marcada con ✓. Al final, observaciones (se llenan a mano), la leyenda y las
-// firmas de docente, coordinadora y directora con el sello.
+// firmas de docente, coordinadora, directora y representante con el sello. La portada se imprime una sola vez al año:
+// solo en el boletín del primer lapso (en el 2do y 3er lapso sale únicamente la hoja de indicadores).
 // Los indicadores de cada lapso y el nombre del proyecto se configuran en Configuración → Indicadores.
 
 const ORDINAL_LAPSO_LARGO = ["Primer", "Segundo", "Tercer"];
@@ -73,7 +74,7 @@ const ESTILOS_BOLETIN_PRIM = `
   .bp-leyenda{font-size:9px;line-height:1.4;font-weight:700;color:#1c2333}
   .bp-leyenda b{color:#003366}
   .bp-leyenda .t{font-size:8.5px;color:#5b6577;margin-bottom:3px}
-  .bp-firmas{display:flex;justify-content:space-between;gap:20px;margin-top:46px;text-align:center;font-weight:700;font-size:11.5px}
+  .bp-firmas{display:flex;justify-content:space-between;gap:16px;margin-top:46px;text-align:center;font-weight:700;font-size:11.5px}
   .bp-firmas div{flex:1;border-top:1.5px solid #1c2333;padding-top:4px}
   .bp-firmas small{display:block;font-weight:400;font-size:9.5px;color:#5b6577}
   .bp-sello{text-align:center;margin-top:20px;font-size:10px;color:#5b6577}
@@ -169,7 +170,7 @@ function cuerpoBoletinPrimaria(est, lapso) {
     })
     .join("");
   const inst = configInst || {};
-  return `${portadaBoletinPrimaria(est, esPreescolar)}
+  return `${nl === 0 ? portadaBoletinPrimaria(est, esPreescolar) : ""}
   <section class="bp-hoja">
     <div class="bp-mini"><span>${escHtml(est.nombre)}</span><span>${escHtml(est.grado || "")} · Sección ${escHtml(est.seccion || "U")} · Año escolar ${escHtml(anioBoletin(est))}</span></div>
     <div class="bp-lapso">${ORDINAL_LAPSO_LARGO[nl]} lapso</div>
@@ -188,6 +189,7 @@ function cuerpoBoletinPrimaria(est, lapso) {
         <div>Docente<small>${escHtml(docenteDeGrado(est.grado))}</small></div>
         <div>Coordinadora<small>${escHtml((esPreescolar ? inst.coordinadorInicial : inst.coordinadorPrimaria) || "")}</small></div>
         <div>Directora<small>${escHtml(inst.directora || "Lic. Ligia Herrera")}</small></div>
+        <div>Representante<small>${escHtml(est.acudiente || "")}</small></div>
       </div>
       <div class="bp-sello"><span>Sello</span></div>
     </div>

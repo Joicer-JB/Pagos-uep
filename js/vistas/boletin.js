@@ -1,7 +1,7 @@
 // Boletín de calificaciones para los representantes de media general, con el escudo del colegio (el de preescolar y
 // primaria está en boletin-primaria.js).
-// Hoja carta vertical: encabezado con el escudo, ficha del estudiante, resumen (promedio general, materias aprobadas y
-// promedio de cada lapso), las notas y, al pie, observaciones, firmas y sello. Las notas de media general salen de
+// Hoja carta vertical: encabezado con el escudo, ficha del estudiante (año y sección en negrita), resumen (promedio general, materias aprobadas y
+// promedio de cada lapso), las notas y, al pie, observaciones, firmas (directora, coordinación y representante) y sello. Las notas de media general salen de
 // servicios/calificaciones.js (ya con los cambios del consejo, sin marcarlos: eso solo se ve en la sábana). En el
 // boletín las notas van en números enteros (9,5 → 10) y los promedios con un decimal, como en la sábana. También se
 // imprimen los de todo un grado de una vez.
@@ -57,7 +57,7 @@ const ESTILOS_BOLETIN = `
   .b-est{display:grid;grid-template-columns:1fr 1fr 1fr 1.6fr;gap:6px 12px;border:1px solid #d9e2f1;border-radius:10px;padding:9px 12px;background:rgba(240,244,255,.55)}
   .b-est .b-nombre{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px dashed #c8d3e8;padding-bottom:5px;margin-bottom:2px}
   .b-nombre strong{font-family:Georgia,serif;font-size:16px;color:#003366}
-  .b-nombre span{font-size:10px;color:#5b6577}
+  .b-nombre span{font-size:13px;font-weight:800;color:#003366}
   .b-dato label{display:block;font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;color:#7a8599}
   .b-dato div{font-weight:700;font-size:10.5px}
   .b-kpis{display:grid;grid-template-columns:1.3fr 1fr repeat(3,.8fr);gap:7px;margin:10px 0}
@@ -236,6 +236,7 @@ function cuerpoBoletinMedia(est) {
   ${pieBoletin([
     [inst.directora || "Lic. Ligia Herrera", "Directora"],
     [inst.coordinador || "Lic. Carlos Carrascal", "Coordinación de Media General"],
+    [est.acudiente, "Representante"],
   ])}
   </section>`;
 }
