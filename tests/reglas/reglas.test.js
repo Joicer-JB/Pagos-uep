@@ -572,3 +572,32 @@ test("control de estudio: inscribe y edita datos personales en Estudiantes, sin 
   // La administradora tampoco lee la copia (ella lee la colección completa para cobrar)
   await assertFails(getDocs(collection(como("administradora"), "estudiantes_control")));
 });
+
+test("control de estudio carga materias, áreas e indicadores; el resto de la configuración no", async () => {
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "autorizaciones/uid-control"), { hasta: Date.now() + 3600e3 });
+  });
+  const ctl = como("control");
+  await assertSucceeds(setDoc(doc(ctl, "config/materias"), { "1er Año": ["Matemáticas", "Inglés"] }, { merge: true }));
+  await assertSucceeds(setDoc(doc(ctl, "config/areas"), { primaria: ["Lenguaje", "Matemática"] }, { merge: true }));
+  await assertSucceeds(
+    setDoc(
+      doc(ctl, "config/indicadores"),
+      { "1er Grado__1er Lapso__Lenguaje": ["Lee en voz alta"], "proyecto__1er Grado__1er Lapso": "Proyecto" },
+      { merge: true }
+    )
+  );
+  for (const d of ["institucion", "cobranza", "tasasBCV", "contadores", "anioEscolar", "logos", "horarios", "respaldo"])
+    await assertFails(setDoc(doc(ctl, "config/" + d), { recibo: 1, otro: 1 }, { merge: true }));
+  // Sin la autorización del día, tampoco
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "autorizaciones/uid-control"), { hasta: 0 });
+  });
+  await assertFails(setDoc(doc(ctl, "config/materias"), { "1er Año": ["Otra"] }, { merge: true }));
+  // Un docente común y la administradora no cambian materias ni indicadores
+  for (const rol of ["docente", "administradora"]) {
+    await assertFails(setDoc(doc(como(rol), "config/materias"), { "1er Año": ["Otra"] }, { merge: true }));
+    await assertFails(setDoc(doc(como(rol), "config/indicadores"), { x: ["y"] }, { merge: true }));
+    await assertFails(setDoc(doc(como(rol), "config/areas"), { primaria: ["x"] }, { merge: true }));
+  }
+});

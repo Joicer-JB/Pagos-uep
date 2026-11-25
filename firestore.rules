@@ -39,6 +39,9 @@ rules_version = '2';
 //  15. (Noviembre 2026) Control de estudio en Estudiantes: inscribe y edita los datos personales y del representante
 //      (camposEditaControl), sin ver nada financiero: lee "estudiantes_control", una copia sin mensualidad, beca ni
 //      deuda que mantiene el director.
+//  16. (Noviembre 2026) Control de estudio carga en ⚙️ Config las materias por año, las áreas de primaria y
+//      preescolar (config/materias, config/areas) y los indicadores de cada lapso (config/indicadores). El resto de la
+//      configuración (cobranza, tasas, contadores, institución, año escolar...) sigue siendo solo del director.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -248,6 +251,7 @@ service cloud.firestore {
     // ───────────── Configuración ─────────────
     // Todos los roles la leen (materias, indicadores, datos de la institución, tasa BCV...).
     // La administradora puede cargar la tasa BCV de un día que aún no la tenga (no cambiar ni borrar las guardadas);
+    // control de estudio carga las materias (config/materias y config/areas) y los indicadores (config/indicadores);
     // el resto de la configuración, solo el director.
     // El contador de recibos (config/contadores) lo usan director y administradora al cobrar: solo puede
     // avanzar de 1 en 1, así nadie puede retroceder o repetir números de recibo.
@@ -266,7 +270,8 @@ service cloud.firestore {
       allow read:  if isStaff() || isDocente();
       allow write: if isDirector()
         || (docId == 'tasasBCV' && isAdmin() && soloTasasNuevas())
-        || (docId == 'contadores' && isStaff() && siguienteRecibo());
+        || (docId == 'contadores' && isStaff() && siguienteRecibo())
+        || (docId in ['materias', 'areas', 'indicadores'] && isControl());
     }
 
     // ───────────── Todo lo demás: cerrado ─────────────

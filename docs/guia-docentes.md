@@ -10,7 +10,9 @@ menú del navegador → «Agregar a la pantalla principal»).
 llega un correo con un enlace para poner una contraseña nueva (revisa también la carpeta de spam).
 
 **Control de estudio** espera, al entrar, la autorización del director («⏳ Esperando la autorización del
-director»): cuando te autorice, la plataforma se abre sola y vale por todo el día.
+director»): cuando te autorice, la plataforma se abre sola y vale por todo el día. Además de Notas y
+Estudiantes, control de estudio carga en **⚙️ Configuración** las **materias** de cada año (y las áreas de primaria
+y preescolar) y los **indicadores** de cada lapso con el nombre del proyecto.
 
 ## Cargar notas
 

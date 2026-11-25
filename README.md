@@ -184,7 +184,9 @@ Las reglas están en [`firestore.rules`](firestore.rules), con comentarios. Resu
   mensualidad de su grado). **No lee** la colección `estudiantes`: lee `estudiantes_control`, una copia sin nada
   financiero (sin mensualidad, beca, deuda ni pagos) que la app del director mantiene al día, igual que las fichas.
   Hasta que publiques las reglas nuevas, control de estudio sigue viendo solo las fichas y no puede guardar
-  estudiantes.
+  estudiantes. También carga **materias, áreas e indicadores** (`config/materias`, `config/areas` y
+  `config/indicadores`); el resto de la configuración sigue siendo solo del director. Sin las reglas nuevas, al
+  guardar materias o indicadores le sale «Missing or insufficient permissions».
 - **Un pago ya registrado no se puede modificar**, ni siquiera por el director. Solo el director puede
   borrarlo. Lo mismo un **ingreso o gasto** de Finanzas.
 - **Auditoría:** cada pago e ingreso/gasto nuevo debe llevar la firma de quien lo registra (`registradoPor`, su

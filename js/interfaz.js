@@ -85,9 +85,12 @@ ${bannerTasa()}
 // Caja y Pagos) y no modifica nada más. Las reglas de Firestore lo exigen también (firestore.rules).
 const PESTANAS_ROL = { docente: ["notas"], administradora: ["dashboard", "caja", "pagos"] };
 const MODALES_ADMINISTRADORA = ["tasa", "recibo", "nuevo-pago", "buscar"];
-// Control de estudio (un docente con ese perfil) también entra a Estudiantes, sin nada financiero
+// Control de estudio (un docente con ese perfil) también entra a Estudiantes, sin nada financiero, y a
+// Configuración, pero solo a Materias e Indicadores (SUBPESTANAS_CONFIG_CONTROL en vistas/configuracion.js)
 const pestanasDelRol = () =>
-  typeof esControlEstudio === "function" && esControlEstudio() ? ["notas", "estudiantes"] : PESTANAS_ROL[rolUsuario];
+  typeof esControlEstudio === "function" && esControlEstudio()
+    ? ["notas", "estudiantes", "config"]
+    : PESTANAS_ROL[rolUsuario];
 const pestanaPermitida = (t) => !pestanasDelRol() || pestanasDelRol().includes(t);
 // Cambia de pestaña (cada rol solo entra a las suyas) y limpia los filtros
 function setTab(t) {

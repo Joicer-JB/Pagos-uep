@@ -132,6 +132,10 @@ Por ahora las notas las carga **la encargada de control de estudio**. Créale su
 marca **🗂️ Control de estudio**: ve todos los grados y carga todas las notas. En Media General carga **la nota final
 de cada lapso** en cada materia (la que entrega el profesor); en Inicial y Primaria, el literal de cada indicador.
 
+También entra a **⚙️ Config**, pero solo a **📚 Materias** (las materias de cada año y las áreas de primaria y
+preescolar) y a **📋 Indicadores** (los indicadores de cada lapso y el nombre del proyecto). Docentes, institución,
+año escolar, bitácora y avisos siguen siendo solo tuyos, y no ve nada de cobros, nómina ni finanzas.
+
 Cuando quieras que cada profesor cargue su plan de evaluación y sus evaluaciones, se activa `NOTAS_DETALLADAS` en
 `js/config.js` (ya está hecho y probado).
 
