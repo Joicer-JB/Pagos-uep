@@ -38,7 +38,14 @@ async function cargarConfig() {
     console.error(e);
   }
 }
+// Control de estudio entra a Configuración solo para cargar materias e indicadores (las reglas de Firestore solo le
+// dejan escribir config/materias, config/areas y config/indicadores). Docentes, institución, año escolar, bitácora
+// y avisos siguen siendo del director.
+const SUBPESTANAS_CONFIG_CONTROL = ["materias", "indicadores"];
+const subPestanaConfigPermitida = (k) =>
+  !(typeof esControlEstudio === "function" && esControlEstudio()) || SUBPESTANAS_CONFIG_CONTROL.includes(k);
 function renderConfig() {
+  if (!subPestanaConfigPermitida(subTab.config || "docentes")) subTab.config = SUBPESTANAS_CONFIG_CONTROL[0];
   const st = subTab.config || "docentes";
   const tabs = [
     ["docentes", "👨‍🏫 Docentes"],
@@ -48,7 +55,7 @@ function renderConfig() {
     ["anio", "📅 Año escolar"],
     ["bitacora", "🕵️ Bitácora"],
     ["avisos", "📲 Avisos"],
-  ];
+  ].filter(([k]) => subPestanaConfigPermitida(k));
   return `<div class="card">
     <div class="card-title"><div class="card-bar"></div><h2>⚙️ Configuración</h2></div>
     <div class="stabs">

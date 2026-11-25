@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Noviembre 2026 — Control de estudio carga materias e indicadores
+
+- **Control de estudio** ahora entra a **⚙️ Configuración**, solo a **📚 Materias** (materias de cada año de media
+  general y áreas de primaria y preescolar) y a **📋 Indicadores** (indicadores de cada lapso y nombre del proyecto).
+- No ve Docentes, Institución, Año escolar, Bitácora ni Avisos, ni nada de cobros, nómina o finanzas. Las reglas de
+  Firestore solo le dejan guardar esos tres documentos (`config/materias`, `config/areas`, `config/indicadores`).
+- Hay que **publicar las reglas nuevas** en Firebase para que pueda guardar.
+
 ## Noviembre 2026 — Diseño más serio, con el azul del colegio
 
 - **Nueva apariencia** en todas las pantallas: menú lateral azul marino con detalles dorados, fondo claro, tarjetas

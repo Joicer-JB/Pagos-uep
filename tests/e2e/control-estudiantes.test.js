@@ -113,3 +113,63 @@ test("inscribe un estudiante nuevo con la mensualidad de su grado, sin verla", a
   assert.equal(await llamar(`"mensualidad" in estudiantes.find((e) => e.nombre === "María Fernanda Ruiz")`), false);
   assert.deepEqual(s.errores, []);
 });
+
+test("en Configuración solo ve Materias e Indicadores, y los guarda", async () => {
+  assert.equal(await llamar(`pestanaPermitida("config")`), true);
+  // En el menú aparece Configuración, pero nada de cobros, nómina ni finanzas
+  const menu = await llamar(`menuDeRol().map((t) => t.k)`);
+  assert.deepEqual(menu.sort(), ["config", "estudiantes", "notas"]);
+  // Aunque se pida otra subpestaña (p. ej. desde un enlace), cae en Materias
+  await llamar(`(subTab.config = "docentes"), setTab("config")`);
+  await s.pagina.waitForSelector("text=Selecciona el grado de Media General");
+  const subs = await s.pagina.$$eval(".stabs .stab", (b) => b.map((x) => x.textContent.trim()));
+  assert.deepEqual(subs, ["Materias", "Indicadores"]); // sin-emojis.js les quita el ícono
+  for (const st of ["docentes", "institucion", "anio", "bitacora", "avisos"]) {
+    await llamar(`(subTab.config = ${JSON.stringify(st)}), renderTabContent()`);
+    assert.equal(await llamar(`subTab.config`), "materias", st);
+  }
+  // Materias de 1er Año
+  await llamar(`(filtros.gradoConfig = "1er Año"), renderTabContent()`);
+  await s.pagina.fill("#nueva-materia", "Orientación y Convivencia");
+  await s.pagina.click("text=+ Agregar");
+  await s.pagina.click("text=Guardar materias de 1er Año");
+  await s.pagina.waitForSelector("text=Materias de 1er Año guardadas");
+  const [mat] = await escrituras("config/materias");
+  assert.ok(mat.datos["1er Año"].includes("Orientación y Convivencia"));
+  // Áreas de primaria
+  await llamar(`(filtros.gradoConfig = "nivel:primaria"), renderTabContent()`);
+  await s.pagina.fill("#nueva-materia", "Ajedrez");
+  await s.pagina.click("text=+ Agregar");
+  await s.pagina.click("text=Guardar áreas");
+  await s.pagina.waitForSelector("text=guardadas");
+  const [areas] = await escrituras("config/areas");
+  assert.ok(areas.datos.primaria.includes("Ajedrez"));
+  // Indicadores y proyecto del lapso
+  await llamar(`(subTab.config = "indicadores"), renderTabContent()`);
+  await s.pagina.fill("#proyecto-lapso", "Mi proyecto del lapso");
+  await s.pagina.fill("#nuevo-indicador", "Lee textos sencillos en voz alta");
+  await s.pagina.click("text=+ Agregar");
+  await s.pagina.click("text=Guardar indicadores y proyecto");
+  await s.pagina.waitForSelector("text=Indicadores guardados");
+  const [ind] = await escrituras("config/indicadores");
+  assert.ok(Object.values(ind.datos).some((v) => Array.isArray(v) && v.includes("Lee textos sencillos en voz alta")));
+  assert.ok(Object.values(ind.datos).includes("Mi proyecto del lapso"));
+  // No escribió ninguna otra configuración
+  const otras = (await llamar(`__ESCRITURAS__`)).filter(
+    (e) => /^config\//.test(e.ruta) && !["config/materias", "config/areas", "config/indicadores"].includes(e.ruta)
+  );
+  assert.deepEqual(otras, []);
+  assert.deepEqual(s.errores, []);
+});
+
+test("el buscador le ofrece Materias e Indicadores, no las otras partes de Configuración", async () => {
+  const titulos = await llamar(`ACCIONES_BUSQ.filter(accionPermitida).map((a) => a.titulo)`);
+  assert.ok(titulos.includes("Materias de cada año y áreas"));
+  assert.ok(titulos.includes("Indicadores de primaria y preescolar"));
+  for (const t of ["Respaldo", "Cuentas de los docentes", "Datos de la institución", "Bitácora (quién borró qué)"])
+    assert.equal(titulos.includes(t), false, t);
+  assert.equal(
+    titulos.some((t) => /pago|caja|nómina|finanzas/i.test(t)),
+    false
+  );
+});

@@ -236,28 +236,64 @@ const ACCIONES_BUSQ = [
     () => ((filtros.notasVista = "honor"), setTab("notas")),
   ],
   ["📥", "Importar matrícula desde Excel", "importar", "importar excel matricula"],
-  ["💾", "Respaldo", "config", "respaldo copia seguridad backup", ir("config", "anio")],
-  ["📲", "Avisos al teléfono", "config", "avisos notificaciones telefono celular alertas", ir("config", "avisos")],
-  ["🕵️", "Bitácora (quién borró qué)", "config", "bitacora borrados quien borro auditoria", ir("config", "bitacora")],
-  ["👨‍🏫", "Cuentas de los docentes", "config", "docentes cuentas usuarios contrasena", ir("config", "docentes")],
-  ["🏫", "Datos de la institución", "config", "institucion rif director datos colegio", ir("config", "institucion")],
+  ["💾", "Respaldo", "config/anio", "respaldo copia seguridad backup", ir("config", "anio")],
+  [
+    "📲",
+    "Avisos al teléfono",
+    "config/avisos",
+    "avisos notificaciones telefono celular alertas",
+    ir("config", "avisos"),
+  ],
+  [
+    "🕵️",
+    "Bitácora (quién borró qué)",
+    "config/bitacora",
+    "bitacora borrados quien borro auditoria",
+    ir("config", "bitacora"),
+  ],
+  [
+    "👨‍🏫",
+    "Cuentas de los docentes",
+    "config/docentes",
+    "docentes cuentas usuarios contrasena",
+    ir("config", "docentes"),
+  ],
+  [
+    "📚",
+    "Materias de cada año y áreas",
+    "config/materias",
+    "materias areas asignaturas ano grado",
+    ir("config", "materias"),
+  ],
+  [
+    "📋",
+    "Indicadores de primaria y preescolar",
+    "config/indicadores",
+    "indicadores proyecto lapso boleta primaria preescolar inicial",
+    ir("config", "indicadores"),
+  ],
+  [
+    "🏫",
+    "Datos de la institución",
+    "config/institucion",
+    "institucion rif director datos colegio",
+    ir("config", "institucion"),
+  ],
   [
     "🎓",
     "Año escolar (cierre y pasar de grado)",
-    "config",
+    "config/anio",
     "ano escolar cierre de ano nuevo ano pasar de grado promocion",
     ir("config", "anio"),
   ],
-].map(([icono, titulo, tab, claves, fn, modal]) => ({
-  icono,
-  titulo,
-  tab,
-  claves: nB(titulo + " " + claves),
-  fn: fn || (() => setTab(tab)),
-  modal,
-}));
+].map(([icono, titulo, tabSub, claves, fn, modal]) => {
+  // «config/materias»: pestaña y subpestaña (control de estudio solo ve algunas de Configuración)
+  const [tab, sub] = tabSub.split("/");
+  return { icono, titulo, tab, sub, claves: nB(titulo + " " + claves), fn: fn || (() => setTab(tab)), modal };
+});
 const accionPermitida = (a) =>
-  pestanaPermitida(a.tab) || (a.modal && rolUsuario === "administradora" && MODALES_ADMINISTRADORA.includes(a.modal));
+  (pestanaPermitida(a.tab) && (a.tab !== "config" || !a.sub || subPestanaConfigPermitida(a.sub))) ||
+  (a.modal && rolUsuario === "administradora" && MODALES_ADMINISTRADORA.includes(a.modal));
 
 // ---- Respuestas a preguntas
 function lineasMetodo(lista) {
